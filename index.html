@@ -33,6 +33,11 @@
             padding-bottom: 1rem;
         }
 
+        /* Custom Scrollbar for Donate List */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+
         /* Hiệu ứng rung lắc khi sai mật khẩu */
         .shake {
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
@@ -111,7 +116,22 @@
                 <div class="flex justify-center mb-4">
                     <img src="https://sf-static.upanhlaylink.com/img/image_202512065f13eab34d2f066a8d2fcd562ebad743.jpg" alt="QR Donate" class="w-full max-w-[280px] rounded-xl shadow-lg border border-gray-200 object-cover">
                 </div>
-                <p class="text-xs text-gray-400 italic">Quét mã để ủng hộ Admin nhé!</p>
+                <p class="text-xs text-gray-400 italic mb-6">Quét mã để ủng hộ Admin nhé!</p>
+                
+                <!-- DANH SÁCH NGƯỜI ỦNG HỘ -->
+                <div class="border-t border-gray-100 pt-4">
+                    <p class="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Xin trân trọng cảm ơn rất nhiều tới:</p>
+                    <div class="space-y-2 max-h-32 overflow-y-auto custom-scrollbar px-1">
+                        <div class="flex justify-between items-center text-xs bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            <span class="font-medium text-gray-700">Le Tuan Huy</span>
+                            <span class="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">3.000đ</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs bg-gray-50 p-2 rounded-lg border border-gray-100">
+                            <span class="font-medium text-gray-700">Nguyen Ngoc Hang</span>
+                            <span class="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">5.000đ</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -139,12 +159,12 @@
         </div>
 
         <div class="space-y-3 mb-6">
+            <!-- Đã thêm hiệu ứng rung (shake) vào class CSS -->
             <input type="password" id="passwordInput" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center tracking-widest text-lg" placeholder="• • • •" maxlength="4" oninput="checkAutoLogin()">
             <p class="text-xs text-red-500 italic font-medium">Lưu ý: Mật khẩu sẽ được thay đổi thường xuyên</p>
-            <!-- Nút Mở khóa vẫn giữ nhưng logic tự động đã thêm vào oninput -->
             <button onclick="checkPassword()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Mở Khóa</button>
             <button onclick="openInstructions()" class="w-full text-indigo-600 font-semibold py-2 rounded-lg hover:bg-indigo-50 transition-colors text-sm">Lấy mã?</button>
-            <p id="loginError" class="text-red-500 text-sm font-medium hidden mt-2 transition-all">Mật mã không đúng!</p>
+            <p id="loginError" class="text-red-500 text-sm font-medium hidden mt-2">Mật mã không đúng!</p>
         </div>
 
         <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 text-left">
@@ -191,7 +211,7 @@
             <div class="mb-6 flex-1">
                 <div id="extraHeaderContent" class="hidden mb-5"></div>
                 
-                <!-- Dòng Update đã chỉnh font to hơn (text-xs) -->
+                <!-- Dòng Update -->
                 <div id="lastUpdateLabel" class="flex items-center justify-center gap-2 mb-2 text-xs text-blue-500 italic font-medium">
                     <span class="relative flex h-2 w-2">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -294,7 +314,8 @@
             
             DATA.forEach((folder, index) => {
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-4 group`;
+                // Trả về padding p-2.5 và gap-3 để gọn gàng
+                btn.className = `w-full text-left p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-3 group`;
                 
                 if (folder.maintenance) { btn.onclick = () => alert("Đang bảo trì, hãy quay lại sau"); btn.classList.add('opacity-75', 'bg-gray-50'); } 
                 else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('border-indigo-100', 'bg-gradient-to-r', 'from-white', 'to-indigo-50/30'); } 
@@ -302,15 +323,16 @@
                 else { btn.onclick = () => tryOpenFolder(index); }
                 
                 let subtitle = folder.maintenance ? "Đang bảo trì" : (folder.type === 'link' ? "Truy cập ngay" : (folder.type === 'donate' ? "Ủng hộ Admin" : `${folder.accounts.length} tài khoản`));
-                let iconBgClass = "w-14 h-14 rounded-full flex items-center justify-center font-bold text-2xl border-2 border-white shadow-sm overflow-hidden bg-gray-50";
+                // Icon size w-11 h-11
+                let iconBgClass = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-2xl border-2 border-white shadow-sm overflow-hidden bg-gray-50 flex-shrink-0";
                 
                 btn.innerHTML = `
                     <div class="${iconBgClass}">${folder.icon}</div>
-                    <div class="flex-1">
-                        <div class="font-bold text-gray-800 text-lg group-hover:text-indigo-700">${folder.name}</div>
-                        <div class="text-xs text-gray-400 font-medium">${subtitle}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 truncate">${folder.name}</div>
+                        <div class="text-[10px] text-gray-400 font-medium truncate">${subtitle}</div>
                     </div>
-                    <svg class="w-5 h-5 text-gray-300 group-hover:text-indigo-500 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 `;
                 listContainer.appendChild(btn);
             });
@@ -432,20 +454,15 @@
             const wrapper = targetDetail.parentElement;
             const btn = wrapper.querySelector('button');
             const chevron = btn.querySelector('.chevron-icon');
-            
             const nameEl = btn.querySelector('.acc-name');
             const userEl = btn.querySelector('.acc-user');
-
             const isClosed = targetDetail.classList.contains('hidden');
 
             allDetails.forEach(el => {
-                el.classList.add('hidden');
-                el.classList.remove('open'); 
+                el.classList.add('hidden'); el.classList.remove('open'); 
                 const parentBtn = el.parentElement.querySelector('button');
                 parentBtn.classList.remove('border-indigo-500', 'bg-indigo-50');
                 el.parentElement.querySelector('.chevron-icon').classList.remove('rotate-180');
-                
-                // Reset text colors
                 const pName = parentBtn.querySelector('.acc-name');
                 const pUser = parentBtn.querySelector('.acc-user');
                 if(pName) { pName.classList.remove('text-indigo-700', 'font-bold'); pName.classList.add('text-gray-700', 'font-medium'); }
@@ -457,16 +474,11 @@
                 setTimeout(() => { targetDetail.classList.add('open'); }, 10);
                 btn.classList.add('border-indigo-500', 'bg-indigo-50');
                 chevron.classList.add('rotate-180');
-                
                 if(nameEl) { nameEl.classList.remove('text-gray-700', 'font-medium'); nameEl.classList.add('text-indigo-700', 'font-bold'); }
                 if(userEl) { userEl.classList.remove('text-gray-400'); userEl.classList.add('text-indigo-600'); }
-
                 currentAccountIndex = accIndex; 
-                
                 if (DATA[currentFolderIndex].id !== 'capcut') updateOTP();
-            } else {
-                currentAccountIndex = -1;
-            }
+            } else { currentAccountIndex = -1; }
         }
 
         function copyToClipboardText(text, btnElement) {
@@ -479,7 +491,9 @@
         }
 
         function checkAutoLogin() {
-            const val = passwordInput.value; 
+            const val = document.getElementById('passwordInput').value; 
+            const loginError = document.getElementById('loginError');
+            const passwordInput = document.getElementById('passwordInput');
             loginError.classList.add('hidden');
             passwordInput.classList.remove('border-red-500', 'shake');
 
@@ -497,7 +511,9 @@
         }
 
         function checkPassword() {
-            const val = passwordInput.value;
+            const val = document.getElementById('passwordInput').value;
+            const loginError = document.getElementById('loginError');
+            const passwordInput = document.getElementById('passwordInput');
             if (val === '3066') { 
                 document.getElementById('loginScreen').style.display = 'none'; 
                 document.getElementById('mainApp').classList.remove('hidden'); 
@@ -507,7 +523,7 @@
                 passwordInput.classList.add('border-red-500', 'shake');
                 passwordInput.value = ''; 
                 passwordInput.focus(); 
-                setTimeout(() => { passwordInput.classList.remove('shake'); }, 500);
+                setTimeout(() => { passwordInput.classList.remove('shake'); }, 500); 
             }
         }
 
@@ -518,7 +534,6 @@
             
             if (currentFolderIndex !== -1 && currentAccountIndex !== -1 && DATA[currentFolderIndex].id !== 'capcut') {
                 updateOTP();
-                
                 const ring = document.getElementById(`timer-ring-${currentAccountIndex}`);
                 const text = document.getElementById(`timer-text-${currentAccountIndex}`);
                 const container = document.getElementById(`otp-container-${currentAccountIndex}`);
@@ -527,11 +542,8 @@
                     text.textContent = countDown;
                     const offset = circumference - ((countDown / 30) * 100 / 100) * circumference;
                     ring.style.strokeDashoffset = offset;
-                    if (countDown <= 5) {
-                        ring.style.stroke = "#ef4444"; text.classList.add('text-red-500');
-                    } else {
-                        ring.style.stroke = "#6366f1"; text.classList.remove('text-red-500');
-                    }
+                    if (countDown <= 5) { ring.style.stroke = "#ef4444"; text.classList.add('text-red-500'); } 
+                    else { ring.style.stroke = "#6366f1"; text.classList.remove('text-red-500'); }
                 }
 
                 if (container) {
@@ -567,7 +579,7 @@
 
         const DATA = [
             {
-                id: 'chatgpt-go', name: "CHAT GPT GO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT Go" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                id: 'chatgpt-go', name: "CHAT GPT GO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT Go" class="w-10 h-10 rounded-full object-cover border-2 border-white/50">`,
                 notes: ["Tài khoản dùng chung", "Không đổi mật khẩu"],
                 accounts: [
                     { name: "GPT Go 1", username: "gptgo1@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }, 
@@ -578,11 +590,11 @@
                 ]
             },
             {
-                id: 'chatgpt', name: "CHAT GPT PLUS", maintenance: true, icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT" class="w-full h-full rounded-full object-cover grayscale border-2 border-white/50">`,
+                id: 'chatgpt', name: "CHAT GPT PLUS", maintenance: true, icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT" class="w-10 h-10 rounded-full object-cover grayscale border-2 border-white/50">`,
                 notes: [], accounts: []
             },
             {
-                id: 'capcut', name: "CAPCUT PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_2025120621c345d39762430df4652d172b019245.jpg" alt="CapCut" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                id: 'capcut', name: "CAPCUT PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_2025120621c345d39762430df4652d172b019245.jpg" alt="CapCut" class="w-10 h-10 rounded-full object-cover border-2 border-white/50">`,
                 notes: ["Không đăng xuất thiết bị khác"],
                 accounts: [
                     { name: "CapCut 1", username: "capcut1@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
@@ -593,11 +605,11 @@
                 ]
             },
             {
-                id: 'canva-pro', name: "NHẬN CANVA PRO MIỄN PHÍ NGAY NÈ MẤY NÍ", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b1a69255ebd2141cd6c4d2bcae849ff6.jpg" alt="Canva" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                id: 'canva-pro', name: "NHẬN CANVA PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b1a69255ebd2141cd6c4d2bcae849ff6.jpg" alt="Canva" class="w-10 h-10 rounded-full object-cover border-2 border-white/50">`,
                 type: 'link', url: 'https://www.canva.com/'
             },
             {
-                id: 'donate', name: "ỦNG HỘ MÌNH 1 LY CAFE", icon: `<img src="https://cdn-icons-png.flaticon.com/512/2913/2913092.png" alt="Donate" class="w-full h-full object-contain p-1">`,
+                id: 'donate', name: "DONATE ỦNG HỘ", icon: `<img src="https://cdn-icons-png.flaticon.com/512/2913/2913092.png" alt="Donate" class="w-10 h-10 object-contain p-1">`,
                 type: 'donate'
             }
         ];
