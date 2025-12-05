@@ -87,15 +87,6 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH TÀI KHOẢN ---
-        const ACCOUNTS = [
-            { name: "Google / Gmail", secret: "JBSWY3DPEHPK3PXP", icon: "G" },
-            { name: "Facebook",       secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ", icon: "F" },
-            { name: "Binance",        secret: "M7L7747555555555", icon: "B" }
-        ];
-        
-        let currentAccountIndex = -1; // -1 nghĩa là chưa chọn gì
-
         // DOM Elements
         const buttonsContainer = document.getElementById('accountButtons');
         const placeholderState = document.getElementById('placeholderState');
@@ -106,6 +97,8 @@
         const globalTimerCircle = document.getElementById('globalTimerCircle');
         const globalTimerText = document.getElementById('globalTimerText');
         const errorMessage = document.getElementById('errorMessage');
+
+        let currentAccountIndex = -1; 
 
         // Khởi tạo các nút bấm
         function initButtons() {
@@ -136,7 +129,7 @@
             // Cập nhật giao diện nút (Active state)
             ACCOUNTS.forEach((_, i) => {
                 const btn = document.getElementById(`btn-${i}`);
-                const iconDiv = btn.querySelector('div'); // Circle icon
+                const iconDiv = btn.querySelector('div'); 
                 const textSpan = btn.querySelector('span');
                 const arrowSvg = btn.querySelector('svg');
 
@@ -144,7 +137,6 @@
                     btn.classList.add('btn-active');
                     btn.classList.remove('bg-white', 'hover:bg-gray-50', 'border-gray-200');
                     
-                    // Style icon bên trong khi active
                     iconDiv.classList.remove('bg-indigo-100', 'text-indigo-600', 'group-hover:bg-indigo-200');
                     iconDiv.classList.add('bg-white', 'bg-opacity-20', 'text-white');
                     
@@ -153,7 +145,6 @@
                     arrowSvg.classList.add('opacity-100', 'text-white');
                     arrowSvg.classList.remove('text-gray-300');
                 } else {
-                    // Reset về mặc định
                     btn.classList.remove('btn-active');
                     btn.classList.add('bg-white', 'border-gray-200');
                     
@@ -171,7 +162,6 @@
             placeholderState.classList.add('hidden');
             activeState.classList.remove('hidden');
             
-            // Cập nhật nội dung ngay lập tức
             selectedNameEl.textContent = ACCOUNTS[index].name;
             updateOTP();
         }
@@ -184,13 +174,11 @@
             const epoch = Math.round(new Date().getTime() / 1000.0);
             const countDown = 30 - (epoch % 30);
             
-            // Cập nhật Timer vòng tròn ở header (luôn chạy)
             globalTimerText.textContent = countDown;
             const percent = (countDown / 30) * 100;
             const offset = circumference - (percent / 100) * circumference;
             globalTimerCircle.style.strokeDashoffset = offset;
 
-            // Màu sắc timer báo động đỏ khi < 5s
             if (countDown <= 5) {
                 globalTimerCircle.classList.remove('stroke-white');
                 globalTimerCircle.classList.add('stroke-red-400');
@@ -203,10 +191,8 @@
                 globalTimerText.classList.add('text-white');
             }
 
-            // Cập nhật OTP nếu đang chọn tài khoản
             if (currentAccountIndex !== -1) {
                 updateOTP();
-                // Cập nhật thanh progress bar ngang
                 linearProgress.style.width = `${percent}%`;
                 if(countDown <= 5) {
                     linearProgress.classList.remove('bg-indigo-500');
@@ -258,7 +244,29 @@
             }, 1500);
         }
 
-        // Khởi động
+        // ==========================================
+        // KHU VỰC CẤU HÌNH (DỄ TÌM KIẾM)
+        // Thay đổi Secret Key của bạn tại đây
+        // ==========================================
+        const ACCOUNTS = [
+            { 
+                name: "gpt.go.3@daothaihai.qzz.io", 
+                secret: "JBSWY3DPEHPK3PXP", 
+                icon: "G" 
+            },
+            { 
+                name: "Facebook",       
+                secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ", 
+                icon: "F" 
+            },
+            { 
+                name: "Binance",        
+                secret: "M7L7747555555555", 
+                icon: "B" 
+            }
+        ];
+
+        // Khởi động ứng dụng
         initButtons();
         updateLoop();
         setInterval(updateLoop, 1000);
