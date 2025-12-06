@@ -52,7 +52,7 @@
 </head>
 <body class="min-h-screen flex items-center justify-center p-4">
 
-    <!-- MODAL NHẬP MẬT KHẨU (Mới) -->
+    <!-- MODAL NHẬP MẬT KHẨU (Khi bấm vào thư mục) -->
     <div id="passwordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 fade-in">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden relative">
             <button onclick="closePasswordModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
@@ -172,7 +172,7 @@
         </div>
     </div>
 
-    <!-- ỨNG DỤNG CHÍNH (Hiển thị ngay) -->
+    <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp" class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden h-auto flex flex-col transition-opacity duration-500 relative">
         <div class="bg-indigo-600 p-6 shadow-md z-10 text-center relative">
             <h1 class="text-xl font-bold text-white">Dự án chia sẻ tài khoản miễn phí</h1>
@@ -181,7 +181,7 @@
 
         <div class="p-6 flex-1 flex flex-col relative">
             
-            <!-- Phần Intro và Liên hệ (Chuyển vào đây) -->
+            <!-- Phần Intro và Liên hệ -->
             <div id="introSection" class="bg-blue-50 border border-blue-100 rounded-xl p-5 text-left mb-6">
                 <h2 class="text-base font-bold text-blue-800 mb-2 flex items-center gap-2"><span>👋</span> Xin chào!</h2>
                 <p class="text-sm text-blue-600 mb-4 leading-relaxed text-justify">Chào mừng bạn đến với <strong>Dự án chia sẻ tài khoản miễn phí</strong>. Chúng tôi cung cấp các tài khoản Premium phục vụ cộng đồng hoàn toàn phi lợi nhuận.</p>
@@ -222,6 +222,7 @@
 
     <!-- SCRIPT -->
     <script>
+        // DOM Elements
         const listContainer = document.getElementById('listContainer');
         const listTitle = document.getElementById('listTitle');
         const navBar = document.getElementById('navBar');
@@ -237,11 +238,6 @@
         const capcutGuideModal = document.getElementById('capcutGuideModal');
         const capcutGuideTitle = document.getElementById('capcutGuideTitle');
         const capcutGuideContent = document.getElementById('capcutGuideContent');
-        const otpSection = document.getElementById('otpSection'); 
-        const displayTimerCircle = document.getElementById('displayTimerCircle');
-        const displayTimerText = document.getElementById('displayTimerText');
-        const displayUsername = document.getElementById('displayUsername');
-        const displayPassword = document.getElementById('displayPassword');
         const lastUpdateLabel = document.getElementById('lastUpdateLabel');
         const introSection = document.getElementById('introSection');
         const passwordModal = document.getElementById('passwordModal');
@@ -253,6 +249,56 @@
         let pendingFolderIndex = -1; 
         let disclaimerTimer = null; 
 
+        // === DỮ LIỆU TÀI KHOẢN (Định nghĩa trước khi dùng) ===
+        const DATA = [
+            {
+                id: 'chatgpt-go', name: "CHAT GPT GO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT Go" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                notes: ["Tài khoản dùng chung", "Không đổi mật khẩu"],
+                accounts: [
+                    { name: "GPT Go 1", username: "gptgo1@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }, 
+                    { name: "GPT Go 2", username: "gptgo2@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "GPT Go 3", username: "gptgo3@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "GPT Go 4", username: "gptgo4@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "GPT Go 5", username: "gptgo5@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }
+                ]
+            },
+            {
+                id: 'chatgpt', name: "CHAT GPT PLUS", maintenance: true, icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT" class="w-full h-full rounded-full object-cover grayscale border-2 border-white/50">`,
+                notes: [], accounts: []
+            },
+            {
+                id: 'capcut', name: "CAPCUT PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_2025120621c345d39762430df4652d172b019245.jpg" alt="CapCut" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                notes: ["Không đăng xuất thiết bị khác"],
+                accounts: [
+                    { name: "CapCut 1", username: "capcut1@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
+                    { name: "CapCut 2", username: "capcut2@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
+                    { name: "CapCut 3", username: "capcut3@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
+                    { name: "CapCut 4", username: "capcut4@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
+                    { name: "CapCut 5", username: "capcut5@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" }
+                ]
+            },
+            {
+                id: 'studocu', name: "STUDOCU PREMIUM", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b36cdc7ce5265c711f4602636e1b786b.jpg" alt="Studocu" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                notes: ["Tài khoản dùng chung", "Không đổi mật khẩu"],
+                accounts: [
+                    { name: "Studocu 1", username: "studocu1@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "Studocu 2", username: "studocu2@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "Studocu 3", username: "studocu3@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "Studocu 4", username: "studocu4@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
+                    { name: "Studocu 5", username: "studocu5@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }
+                ]
+            },
+            {
+                id: 'canva-pro', name: "NHẬN CANVA PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b1a69255ebd2141cd6c4d2bcae849ff6.jpg" alt="Canva" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
+                type: 'link', url: 'https://www.canva.com/'
+            },
+            {
+                id: 'donate', name: "DONATE ỦNG HỘ", icon: `<img src="https://cdn-icons-png.flaticon.com/512/2913/2913092.png" alt="Donate" class="w-full h-full object-contain p-1">`,
+                type: 'donate'
+            }
+        ];
+
+        // === LOGIC ===
         function openDonate() { donateModal.classList.remove('hidden'); donateModal.classList.add('flex'); }
         function closeDonate() { donateModal.classList.add('hidden'); donateModal.classList.remove('flex'); }
         
@@ -295,7 +341,7 @@
         }
         function closeCapcutGuide() { capcutGuideModal.classList.add('hidden'); capcutGuideModal.classList.remove('flex'); }
 
-        // --- PASSWORD MODAL LOGIC ---
+        // --- LOGIC MODAL MẬT KHẨU ---
         function openPasswordModal(index) {
             pendingFolderIndex = index;
             modalLoginError.classList.add('hidden');
@@ -303,7 +349,6 @@
             modalPasswordInput.classList.remove('border-red-500', 'shake');
             passwordModal.classList.remove('hidden');
             passwordModal.classList.add('flex');
-            // Auto focus
             setTimeout(() => modalPasswordInput.focus(), 100);
         }
 
@@ -320,12 +365,10 @@
 
             if (val.length === 4) {
                 if (val === '3066') {
-                    // Password correct
                     passwordModal.classList.add('hidden');
                     passwordModal.classList.remove('flex');
-                    tryOpenFolder(pendingFolderIndex); // Proceed to disclaimer/content
+                    tryOpenFolder(pendingFolderIndex); 
                 } else {
-                    // Wrong password
                     modalLoginError.classList.remove('hidden');
                     modalPasswordInput.classList.add('border-red-500', 'shake');
                     setTimeout(() => { modalPasswordInput.classList.remove('shake'); }, 500);
@@ -347,7 +390,6 @@
                 setTimeout(() => { modalPasswordInput.classList.remove('shake'); }, 500); 
             }
         }
-        // ---------------------------
 
         function showFolders() {
             currentFolderIndex = -1; currentAccountIndex = -1;
@@ -361,31 +403,39 @@
             listContainer.innerHTML = '';
             
             DATA.forEach((folder, index) => {
-                // --- THÊM ĐƯỜNG GẠCH NGĂN CÁCH TRƯỚC MỤC DONATE ---
                 if (folder.type === 'donate') {
                     const divider = document.createElement('div');
                     divider.className = "border-t border-gray-200/60 my-1 mx-2";
                     listContainer.appendChild(divider);
                 }
-                // --------------------------------------------------
 
                 const btn = document.createElement('button');
-                // Trả về padding p-2.5 và gap-3 để gọn gàng
                 btn.className = `w-full text-left p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-3 group`;
                 
                 if (folder.maintenance) { btn.onclick = () => alert("Đang bảo trì, hãy quay lại sau"); btn.classList.add('opacity-75', 'bg-gray-50'); } 
                 else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('border-indigo-100', 'bg-gradient-to-r', 'from-white', 'to-indigo-50/30'); } 
                 else if (folder.type === 'donate') { btn.onclick = () => openDonate(); btn.classList.add('border-pink-100', 'bg-gradient-to-r', 'from-white', 'to-pink-50/30'); } 
-                else { btn.onclick = () => tryOpenFolder(index); }
+                else { 
+                    btn.onclick = () => openPasswordModal(index); 
+                }
                 
                 let subtitle = folder.maintenance ? "Đang bảo trì" : (folder.type === 'link' ? "Truy cập ngay" : (folder.type === 'donate' ? "Ủng hộ Admin" : `${folder.accounts.length} tài khoản`));
-                // Icon size w-11 h-11
                 let iconBgClass = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-2xl border-2 border-white shadow-sm overflow-hidden bg-gray-50 flex-shrink-0";
                 
+                // --- THÊM BIỂU TƯỢNG FREE ---
+                let badge = '';
+                if (folder.type !== 'donate') {
+                    badge = `<span class="ml-2 bg-green-100 text-green-600 text-[9px] px-1.5 py-0.5 rounded border border-green-200 font-bold flex-shrink-0">FREE</span>`;
+                }
+                // -----------------------------
+
                 btn.innerHTML = `
                     <div class="${iconBgClass}">${folder.icon}</div>
                     <div class="flex-1 min-w-0">
-                        <div class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 truncate">${folder.name}</div>
+                        <div class="flex items-center">
+                            <span class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 truncate">${folder.name}</span>
+                            ${badge}
+                        </div>
                         <div class="text-[10px] text-gray-400 font-medium truncate">${subtitle}</div>
                     </div>
                     <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
@@ -395,7 +445,7 @@
         }
 
         function tryOpenFolder(index) {
-            // pendingFolderIndex is already set by openPasswordModal
+            pendingFolderIndex = index;
             const folder = DATA[index];
             disclaimerList.innerHTML = ''; 
             (folder.notes || []).forEach(note => {
@@ -422,8 +472,7 @@
         function actuallyOpenFolder(index) {
             currentFolderIndex = index; currentAccountIndex = -1;
             const folder = DATA[index];
-            navBar.classList.remove('hidden'); 
-            homeFooter.classList.add('hidden'); 
+            navBar.classList.remove('hidden'); homeFooter.classList.add('hidden'); 
             introSection.classList.add('hidden');
             listTitle.textContent = `DANH SÁCH TÀI KHOẢN`; headerSubtitle.textContent = folder.name;
 
@@ -600,55 +649,8 @@
 
         function startApp() { showFolders(); updateLoop(); setInterval(updateLoop, 1000); }
 
-        const DATA = [
-            {
-                id: 'chatgpt-go', name: "CHAT GPT GO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT Go" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
-                notes: ["Tài khoản dùng chung", "Không đổi mật khẩu"],
-                accounts: [
-                    { name: "GPT Go 1", username: "gptgo1@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }, 
-                    { name: "GPT Go 2", username: "gptgo2@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "GPT Go 3", username: "gptgo3@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "GPT Go 4", username: "gptgo4@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "GPT Go 5", username: "gptgo5@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }
-                ]
-            },
-            {
-                id: 'chatgpt', name: "CHAT GPT PLUS", maintenance: true, icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT" class="w-full h-full rounded-full object-cover grayscale border-2 border-white/50">`,
-                notes: [], accounts: []
-            },
-            {
-                id: 'capcut', name: "CAPCUT PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_2025120621c345d39762430df4652d172b019245.jpg" alt="CapCut" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
-                notes: ["Không đăng xuất thiết bị khác"],
-                accounts: [
-                    { name: "CapCut 1", username: "capcut1@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
-                    { name: "CapCut 2", username: "capcut2@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
-                    { name: "CapCut 3", username: "capcut3@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
-                    { name: "CapCut 4", username: "capcut4@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" },
-                    { name: "CapCut 5", username: "capcut5@email.com", password: "123", secret: "HXDMVJECJJWSRB3HWIZR4IFUGFTMXBOZ" }
-                ]
-            },
-            {
-                id: 'studocu', name: "STUDOCU PREMIUM", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b36cdc7ce5265c711f4602636e1b786b.jpg" alt="Studocu" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
-                notes: ["Tài khoản dùng chung", "Không đổi mật khẩu"],
-                accounts: [
-                    { name: "Studocu 1", username: "studocu1@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "Studocu 2", username: "studocu2@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "Studocu 3", username: "studocu3@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "Studocu 4", username: "studocu4@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" },
-                    { name: "Studocu 5", username: "studocu5@email.com", password: "123", secret: "JBSWY3DPEHPK3PXP" }
-                ]
-            },
-            {
-                id: 'canva-pro', name: "NHẬN CANVA PRO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206b1a69255ebd2141cd6c4d2bcae849ff6.jpg" alt="Canva" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
-                type: 'link', url: 'https://www.canva.com/'
-            },
-            {
-                id: 'donate', name: "DONATE ỦNG HỘ", icon: `<img src="https://cdn-icons-png.flaticon.com/512/2913/2913092.png" alt="Donate" class="w-full h-full object-contain p-1">`,
-                type: 'donate'
-            }
-        ];
-        
-        startApp(); // Start immediately
+        // === KHỞI CHẠY NGAY LẬP TỨC ===
+        startApp();
     </script>
 </body>
 </html>
