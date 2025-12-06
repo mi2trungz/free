@@ -70,7 +70,7 @@
                     <p class="text-xs text-red-500 italic font-medium">Lưu ý: Mật khẩu sẽ được thay đổi thường xuyên</p>
                     <button onclick="checkModalPassword()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">Mở Khóa</button>
                     <button onclick="openInstructions()" class="w-full text-indigo-600 font-semibold py-2 rounded-lg hover:bg-indigo-50 transition-colors text-sm">Lấy mã?</button>
-                    <p id="modalLoginError" class="text-red-500 text-sm font-medium hidden mt-2">Mật mã không đúng!</p>
+                    <p id="modalLoginError" class="text-red-500 text-sm font-medium hidden mt-2 transition-all">Mật mã không đúng!</p>
                 </div>
             </div>
         </div>
@@ -172,7 +172,7 @@
         </div>
     </div>
 
-    <!-- ỨNG DỤNG CHÍNH -->
+    <!-- ỨNG DỤNG CHÍNH (Hiển thị ngay) -->
     <div id="mainApp" class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden h-auto flex flex-col transition-opacity duration-500 relative">
         <div class="bg-indigo-600 p-6 shadow-md z-10 text-center relative">
             <h1 class="text-xl font-bold text-white">Dự án chia sẻ tài khoản miễn phí</h1>
@@ -222,34 +222,7 @@
 
     <!-- SCRIPT -->
     <script>
-        // DOM Elements
-        const listContainer = document.getElementById('listContainer');
-        const listTitle = document.getElementById('listTitle');
-        const navBar = document.getElementById('navBar');
-        const currentFolderNameEl = document.getElementById('currentFolderName');
-        const headerSubtitle = document.getElementById('headerSubtitle');
-        const disclaimerModal = document.getElementById('disclaimerModal');
-        const disclaimerList = document.getElementById('disclaimerList'); 
-        const confirmBtn = document.getElementById('confirmBtn');
-        const instructionModal = document.getElementById('instructionModal');
-        const donateModal = document.getElementById('donateModal'); 
-        const homeFooter = document.getElementById('homeFooter'); 
-        const extraHeaderContent = document.getElementById('extraHeaderContent'); 
-        const capcutGuideModal = document.getElementById('capcutGuideModal');
-        const capcutGuideTitle = document.getElementById('capcutGuideTitle');
-        const capcutGuideContent = document.getElementById('capcutGuideContent');
-        const lastUpdateLabel = document.getElementById('lastUpdateLabel');
-        const introSection = document.getElementById('introSection');
-        const passwordModal = document.getElementById('passwordModal');
-        const modalPasswordInput = document.getElementById('modalPasswordInput');
-        const modalLoginError = document.getElementById('modalLoginError');
-
-        let currentFolderIndex = -1;
-        let currentAccountIndex = -1;
-        let pendingFolderIndex = -1; 
-        let disclaimerTimer = null; 
-
-        // === DỮ LIỆU TÀI KHOẢN (Định nghĩa trước khi dùng) ===
+        // === DỮ LIỆU TÀI KHOẢN ===
         const DATA = [
             {
                 id: 'chatgpt-go', name: "CHAT GPT GO", icon: `<img src="https://sf-static.upanhlaylink.com/img/image_20251206a747b4284acd312266df6c38d026cf9c.jpg" alt="ChatGPT Go" class="w-full h-full rounded-full object-cover border-2 border-white/50">`,
@@ -298,7 +271,34 @@
             }
         ];
 
-        // === LOGIC ===
+        // === DOM Elements ===
+        const listContainer = document.getElementById('listContainer');
+        const listTitle = document.getElementById('listTitle');
+        const navBar = document.getElementById('navBar');
+        const currentFolderNameEl = document.getElementById('currentFolderName');
+        const headerSubtitle = document.getElementById('headerSubtitle');
+        const disclaimerModal = document.getElementById('disclaimerModal');
+        const disclaimerList = document.getElementById('disclaimerList'); 
+        const confirmBtn = document.getElementById('confirmBtn');
+        const instructionModal = document.getElementById('instructionModal');
+        const donateModal = document.getElementById('donateModal'); 
+        const homeFooter = document.getElementById('homeFooter'); 
+        const extraHeaderContent = document.getElementById('extraHeaderContent'); 
+        const capcutGuideModal = document.getElementById('capcutGuideModal');
+        const capcutGuideTitle = document.getElementById('capcutGuideTitle');
+        const capcutGuideContent = document.getElementById('capcutGuideContent');
+        const lastUpdateLabel = document.getElementById('lastUpdateLabel');
+        const introSection = document.getElementById('introSection');
+        const passwordModal = document.getElementById('passwordModal');
+        const modalPasswordInput = document.getElementById('modalPasswordInput');
+        const modalLoginError = document.getElementById('modalLoginError');
+
+        let currentFolderIndex = -1;
+        let currentAccountIndex = -1;
+        let pendingFolderIndex = -1; 
+        let disclaimerTimer = null; 
+
+        // === FUNCTIONS ===
         function openDonate() { donateModal.classList.remove('hidden'); donateModal.classList.add('flex'); }
         function closeDonate() { donateModal.classList.add('hidden'); donateModal.classList.remove('flex'); }
         
@@ -341,7 +341,6 @@
         }
         function closeCapcutGuide() { capcutGuideModal.classList.add('hidden'); capcutGuideModal.classList.remove('flex'); }
 
-        // --- LOGIC MODAL MẬT KHẨU ---
         function openPasswordModal(index) {
             pendingFolderIndex = index;
             modalLoginError.classList.add('hidden');
@@ -399,6 +398,7 @@
             if(listTitle) listTitle.textContent = "DANH MỤC TÀI KHOẢN"; 
             if(headerSubtitle) headerSubtitle.textContent = "Chọn danh mục để xem";
             if(lastUpdateLabel) lastUpdateLabel.classList.remove('hidden');
+            if(introSection) introSection.classList.remove('hidden');
 
             listContainer.innerHTML = '';
             
@@ -410,9 +410,10 @@
                 }
 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-3 group`;
+                // --- GIẢM KÍCH THƯỚC Ở ĐÂY: p-2.5 -> p-2, gap-3 -> gap-2.5, rounded-xl -> rounded-lg ---
+                btn.className = `w-full text-left p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all flex items-center gap-2.5 group`;
                 
-                if (folder.maintenance) { btn.onclick = () => alert("Đang bảo trì, hãy quay lại sau"); btn.classList.add('opacity-75', 'bg-gray-50'); } 
+                if (folder.maintenance) { btn.onclick = () => alert("Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!"); btn.classList.add('opacity-75', 'bg-gray-50'); } 
                 else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('border-indigo-100', 'bg-gradient-to-r', 'from-white', 'to-indigo-50/30'); } 
                 else if (folder.type === 'donate') { btn.onclick = () => openDonate(); btn.classList.add('border-pink-100', 'bg-gradient-to-r', 'from-white', 'to-pink-50/30'); } 
                 else { 
@@ -420,25 +421,27 @@
                 }
                 
                 let subtitle = folder.maintenance ? "Đang bảo trì" : (folder.type === 'link' ? "Truy cập ngay" : (folder.type === 'donate' ? "Ủng hộ Admin" : `${folder.accounts.length} tài khoản`));
-                let iconBgClass = "w-11 h-11 rounded-full flex items-center justify-center font-bold text-2xl border-2 border-white shadow-sm overflow-hidden bg-gray-50 flex-shrink-0";
                 
-                // --- THÊM BIỂU TƯỢNG FREE ---
+                // --- GIẢM SIZE ICON: w-11 h-11 -> w-9 h-9 ---
+                let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center font-bold text-xl border-2 border-white shadow-sm overflow-hidden bg-gray-50 flex-shrink-0";
+                
+                // Badge nhỏ lại xíu
                 let badge = '';
                 if (folder.type !== 'donate') {
-                    badge = `<span class="ml-2 bg-green-100 text-green-600 text-[9px] px-1.5 py-0.5 rounded border border-green-200 font-bold flex-shrink-0">FREE</span>`;
+                    badge = `<span class="ml-2 bg-green-100 text-green-600 text-[9px] px-1 py-0 rounded border border-green-200 font-bold flex-shrink-0 leading-none">MIỄN PHÍ</span>`;
                 }
-                // -----------------------------
 
                 btn.innerHTML = `
                     <div class="${iconBgClass}">${folder.icon}</div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center">
-                            <span class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 truncate">${folder.name}</span>
+                            <!-- Font chữ nhỏ lại một chút: text-sm -> text-xs (hoặc giữ sm nhưng font-bold làm nổi bật) -->
+                            <span class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 truncate">${folder.name}</span>
                             ${badge}
                         </div>
-                        <div class="text-[10px] text-gray-400 font-medium truncate">${subtitle}</div>
+                        <div class="text-[10px] text-gray-400 font-medium truncate leading-tight">${subtitle}</div>
                     </div>
-                    <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    <svg class="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 `;
                 listContainer.appendChild(btn);
             });
@@ -498,17 +501,21 @@
             }
 
             folder.accounts.forEach((acc, accIndex) => {
-                const wrapper = document.createElement('div'); wrapper.className = "mb-3";
+                const wrapper = document.createElement('div'); wrapper.className = "mb-2"; // Giảm margin bottom
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-4 py-3 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10 relative`;
+                
+                // --- GIẢM KÍCH THƯỚC ACCOUNT ITEM: px-4 py-3 -> p-2.5 ---
+                btn.className = `w-full text-left p-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-indigo-500 z-10 relative`;
                 btn.onclick = () => selectAccount(accIndex);
+                
+                // Số thứ tự nhỏ lại: w-8 h-8 -> w-7 h-7
                 btn.innerHTML = `
-                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">${accIndex + 1}</div>
+                    <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xs group-hover:bg-indigo-600 group-hover:text-white transition-colors">${accIndex + 1}</div>
                     <div class="flex-1">
-                        <div class="acc-name font-medium text-gray-700 group-hover:text-gray-900">${acc.name}</div>
-                        <div class="acc-user text-xs text-gray-400 truncate w-32 font-mono">${acc.username}</div>
+                        <div class="acc-name font-medium text-sm text-gray-700 group-hover:text-gray-900">${acc.name}</div>
+                        <div class="acc-user text-[10px] text-gray-400 truncate w-36 font-mono">${acc.username}</div>
                     </div>
-                    <svg class="w-4 h-4 text-gray-300 group-hover:text-indigo-600 transform transition-transform duration-300 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg class="w-3.5 h-3.5 text-gray-300 group-hover:text-indigo-600 transform transition-transform duration-300 chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                 `;
 
                 const detailDiv = document.createElement('div');
@@ -521,18 +528,18 @@
                         <div id="otp-container-${accIndex}" class="flex items-center justify-between bg-white border-2 border-indigo-100 p-2 rounded-lg mt-2 transition-colors duration-1000">
                             <div class="flex flex-col">
                                 <span class="text-[10px] text-gray-400 font-bold uppercase">Mã 2FA</span>
-                                <div class="font-mono font-bold text-indigo-600 text-lg tracking-widest otp-display" id="otp-val-${accIndex}">... ...</div>
+                                <div class="font-mono font-bold text-indigo-600 text-base tracking-widest otp-display" id="otp-val-${accIndex}">... ...</div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="relative w-8 h-8 flex items-center justify-center">
-                                    <svg class="transform -rotate-90 w-8 h-8">
-                                        <circle cx="16" cy="16" r="13" stroke="#e2e8f0" stroke-width="2" fill="transparent" />
-                                        <circle id="timer-ring-${accIndex}" cx="16" cy="16" r="13" stroke="#6366f1" stroke-width="2" fill="transparent" class="progress-ring" stroke-dasharray="81.68" stroke-dashoffset="0" />
+                                <div class="relative w-7 h-7 flex items-center justify-center">
+                                    <svg class="transform -rotate-90 w-7 h-7">
+                                        <circle cx="14" cy="14" r="11" stroke="#e2e8f0" stroke-width="2" fill="transparent" />
+                                        <circle id="timer-ring-${accIndex}" cx="14" cy="14" r="11" stroke="#6366f1" stroke-width="2" fill="transparent" class="progress-ring" stroke-dasharray="69.11" stroke-dashoffset="0" />
                                     </svg>
-                                    <span id="timer-text-${accIndex}" class="absolute text-[10px] font-bold text-gray-600">30</span>
+                                    <span id="timer-text-${accIndex}" class="absolute text-[9px] font-bold text-gray-600">30</span>
                                 </div>
-                                <button onclick="copyToClipboardText(document.getElementById('otp-val-${accIndex}').innerText.replace(/\\s/g,''), this)" class="bg-indigo-50 text-indigo-600 p-2 rounded-md hover:bg-indigo-100 transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                <button onclick="copyToClipboardText(document.getElementById('otp-val-${accIndex}').innerText.replace(/\\s/g,''), this)" class="bg-indigo-50 text-indigo-600 p-1.5 rounded-md hover:bg-indigo-100 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                                 </button>
                             </div>
                         </div>
@@ -540,16 +547,16 @@
                 }
 
                 detailDiv.innerHTML = `
-                    <div class="space-y-2 py-4">
-                        <div class="flex items-center gap-2 bg-white border border-gray-200 p-2 rounded-lg">
-                            <input type="text" readonly value="${acc.username}" class="bg-transparent outline-none text-xs text-gray-600 font-mono w-full">
-                            <button onclick="copyToClipboardText('${acc.username}', this)" class="text-gray-400 hover:text-indigo-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+                    <div class="space-y-2 py-3">
+                        <div class="flex items-center gap-2 bg-white border border-gray-200 p-2 rounded-lg h-8">
+                            <input type="text" readonly value="${acc.username}" class="bg-transparent outline-none text-[11px] text-gray-600 font-mono w-full">
+                            <button onclick="copyToClipboardText('${acc.username}', this)" class="text-gray-400 hover:text-indigo-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
                         </div>
-                        <div class="flex items-center gap-2 bg-white border border-gray-200 p-2 rounded-lg">
-                            <input type="text" readonly value="${acc.password}" class="bg-transparent outline-none text-xs text-gray-600 font-mono w-full">
-                            <button onclick="copyToClipboardText('${acc.password}', this)" class="text-gray-400 hover:text-indigo-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
+                        <div class="flex items-center gap-2 bg-white border border-gray-200 p-2 rounded-lg h-8">
+                            <input type="text" readonly value="${acc.password}" class="bg-transparent outline-none text-[11px] text-gray-600 font-mono w-full">
+                            <button onclick="copyToClipboardText('${acc.password}', this)" class="text-gray-400 hover:text-indigo-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg></button>
                         </div>
-                        <p class="text-[10px] text-red-500 italic">Lưu ý: Mật khẩu thay đổi thường xuyên</p>
+                        <p class="text-[9px] text-red-500 italic">Lưu ý: Mật khẩu thay đổi thường xuyên</p>
                         ${otpHtml}
                     </div>
                 `;
