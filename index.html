@@ -515,6 +515,55 @@
         </div>
     </div>
 
+    <!-- MODAL THÔNG BÁO -->
+    <div id="alertModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+            <button onclick="closeAlertModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="p-6 text-center">
+                <div id="alertIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <!-- Icon sẽ được thay đổi động -->
+                </div>
+                <h3 id="alertTitle" class="text-xl font-bold text-gray-800 mb-2">Thông báo</h3>
+                <p id="alertMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></p>
+                <button onclick="closeAlertModal()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+                    Đã hiểu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL XÁC NHẬN -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+            <button onclick="closeConfirmModal(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 id="confirmTitle" class="text-xl font-bold text-gray-800 mb-2">Xác nhận</h3>
+                <p id="confirmMessage" class="text-sm text-gray-600 mb-6"></p>
+                <div class="flex gap-3">
+                    <button onclick="closeConfirmModal(false)" class="flex-1 bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-300 transition-all">
+                        Hủy
+                    </button>
+                    <button onclick="closeConfirmModal(true)" id="confirmOkBtn" class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white font-semibold py-3 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl">
+                        Xác nhận
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL HƯỚNG DẪN CAPCUT -->
     <div id="capcutGuideModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop p-4 fade-in">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
@@ -649,6 +698,68 @@
         let editingFolderIndex = -1;
         let editingAccountIndex = -1;
         let currentAdminFolderIndex = -1;
+        let confirmCallback = null;
+
+        // Custom Alert Modal
+        function showAlert(title, message, type = 'info') {
+            const modal = document.getElementById('alertModal');
+            const iconDiv = document.getElementById('alertIcon');
+            const titleEl = document.getElementById('alertTitle');
+            const messageEl = document.getElementById('alertMessage');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            // Set icon based on type
+            iconDiv.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4';
+            if (type === 'success') {
+                iconDiv.classList.add('bg-green-100');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            } else if (type === 'error') {
+                iconDiv.classList.add('bg-red-100');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            } else if (type === 'warning') {
+                iconDiv.classList.add('bg-yellow-100');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+            } else {
+                iconDiv.classList.add('bg-blue-100');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+            }
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById('alertModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Custom Confirm Modal
+        function showConfirm(title, message, onConfirm) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmTitle');
+            const messageEl = document.getElementById('confirmMessage');
+            
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            confirmCallback = onConfirm;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal(confirmed) {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            
+            if (confirmed && confirmCallback) {
+                confirmCallback();
+            }
+            confirmCallback = null;
+        }
 
         function openAuthModal() {
             const authModal = document.getElementById('authModal');
@@ -802,26 +913,26 @@
                 checkAuthState();
             } catch (error) {
                 console.error('Logout error:', error);
-                alert('Đăng xuất thất bại. Vui lòng thử lại.');
+                showAlert('Lỗi', 'Đăng xuất thất bại. Vui lòng thử lại.', 'error');
             }
         }
 
         async function forgotPassword() {
             const email = document.getElementById('loginEmail').value.trim();
             if (!email) {
-                alert('Vui lòng nhập email để khôi phục mật khẩu');
+                showAlert('Thông báo', 'Vui lòng nhập email để khôi phục mật khẩu', 'warning');
                 return;
             }
 
             try {
                 await window.firebaseSendPasswordReset(window.firebaseAuth, email);
-                alert('Email khôi phục mật khẩu đã được gửi! Vui lòng kiểm tra hộp thư của bạn.');
+                showAlert('Thành công', 'Email khôi phục mật khẩu đã được gửi! Vui lòng kiểm tra hộp thư của bạn.', 'success');
             } catch (error) {
                 let errorMessage = 'Không thể gửi email khôi phục.';
                 if (error.code === 'auth/user-not-found') {
                     errorMessage = 'Email không tồn tại trong hệ thống.';
                 }
-                alert(errorMessage);
+                showAlert('Lỗi', errorMessage, 'error');
             }
         }
 
@@ -1259,7 +1370,7 @@
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left p-4 rounded-xl bg-white hover:bg-gray-50 transition-all flex items-center gap-3 group card`;
                 
-                if (folder.maintenance) { btn.onclick = () => alert("Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!"); btn.classList.add('opacity-60'); } 
+                if (folder.maintenance) { btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning'); btn.classList.add('opacity-60'); } 
                 else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50'); } 
                 else { btn.onclick = () => tryOpenFolder(index); }
                 
@@ -1528,7 +1639,7 @@
         // Admin Functions
         function openAdminModal() {
             if (!isAdmin()) {
-                alert('Bạn không có quyền truy cập!');
+                showAlert('Thông báo', 'Bạn không có quyền truy cập!', 'warning');
                 return;
             }
             const adminModal = document.getElementById('adminModal');
@@ -1690,16 +1801,21 @@
         }
 
         function deleteFolder(index) {
-            if (!confirm(`Bạn có chắc muốn xóa danh mục "${DATA[index].name}"?`)) return;
-            DATA.splice(index, 1);
-            saveDataToStorage();
-            loadAdminFolders();
-            showFolders();
+            showConfirm(
+                'Xác nhận xóa',
+                `Bạn có chắc muốn xóa danh mục "${DATA[index].name}"?`,
+                () => {
+                    DATA.splice(index, 1);
+                    saveDataToStorage();
+                    loadAdminFolders();
+                    showFolders();
+                }
+            );
         }
 
         async function forceSyncToFirestore() {
             if (!isAdmin()) {
-                alert('Chỉ admin mới có quyền đồng bộ dữ liệu');
+                showAlert('Thông báo', 'Chỉ admin mới có quyền đồng bộ dữ liệu', 'warning');
                 return;
             }
             
@@ -1710,13 +1826,13 @@
             
             try {
                 await saveDataToStorage();
-                alert('✅ Đồng bộ dữ liệu thành công!\n\nTất cả người dùng sẽ thấy thay đổi trong vài giây.');
+                showAlert('Thành công', 'Đồng bộ dữ liệu thành công!\n\nTất cả người dùng sẽ thấy thay đổi trong vài giây.', 'success');
             } catch (error) {
                 console.error('Sync error:', error);
                 const errorMsg = error.message || error.toString();
                 
                 if (errorMsg.includes('ERR_BLOCKED_BY_CLIENT') || errorMsg.includes('blocked')) {
-                    alert('⚠️ LỖI: Kết nối bị chặn!\n\n' +
+                    showAlert('Lỗi: Kết nối bị chặn', 
                         'Nguyên nhân: Trình chặn quảng cáo hoặc extension đang chặn Firestore.\n\n' +
                         'Cách khắc phục:\n' +
                         '1. Tắt Ad Blocker (uBlock Origin, AdBlock, etc.)\n' +
@@ -1725,23 +1841,27 @@
                         '4. Thử trình duyệt khác (Chrome, Firefox, Edge)\n\n' +
                         'Hoặc:\n' +
                         '- Dữ liệu vẫn được lưu vào localStorage\n' +
-                        '- Người dùng khác cần refresh trang để thấy thay đổi');
+                        '- Người dùng khác cần refresh trang để thấy thay đổi', 
+                        'error');
                 } else if (errorMsg.includes('FIRESTORE_API_NOT_ENABLED') || errorMsg.includes('API has not been used') || errorMsg.includes('not been enabled')) {
-                    alert('⚠️ LỖI: Firestore API chưa được bật!\n\n' +
+                    showAlert('Lỗi: Firestore API chưa được bật', 
                         'Vui lòng làm theo các bước sau:\n\n' +
                         '1. Truy cập link sau:\n' +
                         'https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=trada3k-c402a\n\n' +
                         '2. Click nút "ENABLE" để bật Firestore API\n\n' +
                         '3. Đợi 1-2 phút để API được kích hoạt\n\n' +
                         '4. Refresh trang và thử lại\n\n' +
-                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage trong lúc chờ.');
+                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage trong lúc chờ.', 
+                        'error');
                 } else {
-                    alert('❌ Lỗi khi đồng bộ: ' + errorMsg + '\n\n' +
+                    showAlert('Lỗi khi đồng bộ', 
+                        'Lỗi: ' + errorMsg + '\n\n' +
                         'Vui lòng kiểm tra:\n' +
                         '1. Firestore đã được bật trong Firebase Console\n' +
                         '2. Security Rules đã được cấu hình đúng\n' +
                         '3. Mở Console (F12) để xem chi tiết lỗi\n\n' +
-                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage');
+                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage', 
+                        'error');
                 }
             } finally {
                 btn.disabled = false;
@@ -1851,7 +1971,7 @@
             `;
             addBtn.onclick = () => {
                 if (currentAdminFolderIndex === -1) {
-                    alert('Vui lòng chọn danh mục trước');
+                    showAlert('Thông báo', 'Vui lòng chọn danh mục trước', 'warning');
                     return;
                 }
                 openAddAccountModal();
@@ -1941,15 +2061,20 @@
         }
 
         function deleteAccount(folderIndex, accountIndex) {
-            if (!confirm(`Bạn có chắc muốn xóa tài khoản "${DATA[folderIndex].accounts[accountIndex].name}"?`)) return;
-            DATA[folderIndex].accounts.splice(accountIndex, 1);
-            saveDataToStorage();
-            if (currentAdminFolderIndex === folderIndex) {
-                loadAccountsForAdmin();
-            }
-            if (currentFolderIndex === folderIndex) {
-                actuallyOpenFolder(folderIndex);
-            }
+            showConfirm(
+                'Xác nhận xóa',
+                `Bạn có chắc muốn xóa tài khoản "${DATA[folderIndex].accounts[accountIndex].name}"?`,
+                () => {
+                    DATA[folderIndex].accounts.splice(accountIndex, 1);
+                    saveDataToStorage();
+                    if (currentAdminFolderIndex === folderIndex) {
+                        loadAccountsForAdmin();
+                    }
+                    if (currentFolderIndex === folderIndex) {
+                        actuallyOpenFolder(folderIndex);
+                    }
+                }
+            );
         }
 
         // Update admin folder select change handler
