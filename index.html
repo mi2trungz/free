@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dự án chia sẻ tài khoản miễn phí</title>
+    <title>Trada3k.Store</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/otpauth/9.1.4/otpauth.umd.min.js"></script>
     <!-- Firebase SDK -->
@@ -259,6 +259,43 @@
                 <button id="confirmBtn" onclick="confirmDisclaimer()" disabled
                     class="mt-6 w-full bg-gray-200 text-gray-500 font-bold py-3 rounded-xl transition-all cursor-not-allowed">Vui
                     lòng chờ 3s...</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL LIÊN HỆ HỖ TRỢ -->
+    <div id="contactSupportModal"
+        class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in" onclick="if(event.target === this) closeContactSupportModal()">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-6 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-white">Liên hệ hỗ trợ</h3>
+                <button onclick="closeContactSupportModal()" class="text-white hover:text-gray-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <a href="https://facebook.com/DTH.3006" target="_blank"
+                        class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#166fe5] transition-all shadow-sm hover:shadow-md whitespace-nowrap w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                        </svg> Đào Thái Hải
+                    </a>
+                    <a href="mailto:thaihai.3006@gmail.com"
+                        class="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 hover:text-red-600 transition-all shadow-sm hover:shadow-md whitespace-nowrap w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" viewBox="0 0 24 24"
+                            fill="currentColor">
+                            <path
+                                d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                            <path
+                                d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                        </svg> thaihai.3006@gmail.com
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -797,7 +834,7 @@
                                             class="text-[10px] text-indigo-800 font-bold uppercase tracking-wider block mb-1">Mã
                                             xác minh 2FA</span>
                                         <div class="flex items-center gap-3">
-                                            <div class="font-mono font-bold text-indigo-700 text-3xl tracking-widest"
+                                            <div class="font-mono font-bold text-indigo-700 text-xl tracking-widest"
                                                 id="modalOtpValue">... ...</div>
                                             <button
                                                 onclick="copyToClipboardText(document.getElementById('modalOtpValue').innerText.replace(/\s/g,''), this)"
@@ -818,7 +855,7 @@
                                     </div>
                                 </div>
                                 <p
-                                    class="text-[10px] text-indigo-600 font-medium mt-2 bg-white/50 inline-block px-2 py-1 rounded w-full text-center">
+                                    class="text-[10px] text-red-800 font-medium mt-2 bg-red-200 inline-block px-2 py-1 rounded w-full text-center">
                                     ⚠️ Mã sẽ bị vô hiệu sau mỗi 30 giây, sau mỗi 30 giây vui lòng dùng mã mới</p>
                             </div>
                         </div>
@@ -826,6 +863,15 @@
                         <div id="modalAdminControls" class="hidden mt-4 pt-4 border-t border-gray-100 flex gap-3">
                             <!-- Admin buttons injected here -->
                         </div>
+
+                        <!-- Nút báo lỗi -->
+                        <button onclick="openContactSupportModal()" 
+                            class="mt-4 w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            Báo lỗi
+                        </button>
                     </div>
                 </div>
             </div>
@@ -953,21 +999,6 @@
         </div>
 
         <div class="p-6 md:p-8 flex-1 flex flex-col">
-            <!-- Intro & Liên hệ -->
-            <div id="introSection"
-                class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 mb-4 shadow-sm">
-                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="text-center md:text-left">
-                        <h2
-                            class="text-sm md:text-base font-bold text-gray-900 mb-1 flex items-center justify-center md:justify-start gap-2">
-                            <span class="text-xl">👋</span> Xin chào!
-                        </h2>
-                        <p class="text-xs md:text-sm text-gray-700 leading-relaxed max-w-xl">Chào mừng đến với <strong
-                                class="text-indigo-700">Dự án chia sẻ tài khoản miễn phí</strong> phi lợi nhuận.</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Navbar -->
             <div id="navBar"
                 class="hidden flex items-center gap-2 mb-5 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 rounded-lg">
@@ -1670,6 +1701,22 @@
         }
         function closeCapcutGuide() { capcutGuideModal.classList.add('hidden'); capcutGuideModal.classList.remove('flex'); }
 
+        function openContactSupportModal() {
+            const modal = document.getElementById('contactSupportModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+        }
+
+        function closeContactSupportModal() {
+            const modal = document.getElementById('contactSupportModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
         function openPasswordModal(index) {
             pendingFolderIndex = index;
             modalLoginError.classList.add('hidden');
@@ -1737,7 +1784,7 @@
                 else { btn.onclick = () => tryOpenFolder(index); }
 
                 let subtitle = folder.maintenance ? "Đang bảo trì" : (folder.type === 'link' ? "Truy cập ngay" : `${folder.accounts.length} tài khoản`);
-                let iconBgClass = "w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+                let iconBgClass = "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
                 let badge = `<span class="ml-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 shadow-sm tracking-wide">MIỄN PHÍ</span>`;
 
                 btn.innerHTML = `
@@ -1793,7 +1840,7 @@
             currentFolderIndex = index; currentAccountIndex = -1;
             const folder = DATA[index];
             navBar.classList.remove('hidden'); homeFooter.classList.add('hidden');
-            introSection.classList.add('hidden');
+            if (introSection) introSection.classList.add('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
             listTitle.textContent = `DANH SÁCH TÀI KHOẢN`; headerSubtitle.textContent = folder.name;
@@ -1803,14 +1850,7 @@
             extraHeaderContent.innerHTML = '';
             extraHeaderContent.classList.remove('hidden');
 
-            let extraHtml = `
-                <a href="https://facebook.com/DTH.3006" target="_blank" class="bg-white w-fit mx-auto mb-4 flex items-center justify-center gap-2 py-3 px-6 text-indigo-700 rounded-xl text-sm font-bold shadow-sm border border-indigo-100 hover:shadow-md transition-all group">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                    Bấm vào đây để liên hệ Admin
-                </a>
-            `;
+            let extraHtml = ``;
 
             if (folder.id === 'capcut') {
                 extraHtml += `
@@ -1847,7 +1887,7 @@
                 btn.className = `w-full text-left px-5 py-4 rounded-xl card flex items-center gap-4 group focus:outline-none focus:ring-2 focus:ring-indigo-500 relative transition-transform hover:-translate-y-1`;
                 btn.onclick = () => selectAccount(accIndex);
                 btn.innerHTML = `
-                    <div class="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 group-hover:border-indigo-300 transition-colors shadow-sm flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 group-hover:border-indigo-300 transition-colors shadow-sm flex items-center justify-center">
                         ${folder.icon}
                     </div>
                     <div class="flex-1 min-w-0">
@@ -2028,7 +2068,7 @@
                 div.className = `flex items-center justify-between p-4 card mb-3 ${hiddenClass}`;
                 div.innerHTML = `
                         <div class="flex items-center gap-3 flex-1">
-                        <div class="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                        <div class="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                             ${folder.icon}
                         </div>
                         <div class="flex-1">
