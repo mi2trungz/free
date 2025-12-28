@@ -313,24 +313,14 @@
                 </button>
             </div>
             <div class="p-6">
-                <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
-                    <a href="https://facebook.com/DTH.3006" target="_blank"
+                <div class="flex items-center justify-center">
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
                         class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#166fe5] transition-all shadow-sm hover:shadow-md whitespace-nowrap w-full sm:w-auto">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor"
                             viewBox="0 0 24 24">
                             <path
                                 d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                        </svg> Đào Thái Hải
-                    </a>
-                    <a href="mailto:thaihai.3006@gmail.com"
-                        class="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 hover:border-gray-300 hover:text-red-600 transition-all shadow-sm hover:shadow-md whitespace-nowrap w-full sm:w-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" viewBox="0 0 24 24"
-                            fill="currentColor">
-                            <path
-                                d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                            <path
-                                d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-                        </svg> thaihai.3006@gmail.com
+                        </svg> TRÀ ĐÁ 3K
                     </a>
                 </div>
             </div>
@@ -637,6 +627,79 @@
                             class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="https://... hoặc paste HTML tag <img src='...'>">
                     </div>
+                    
+                    <!-- Loại danh mục -->
+                    <div class="border-2 border-indigo-200 rounded-xl p-4 bg-indigo-50">
+                        <label class="block text-sm font-bold text-indigo-800 mb-3">Loại danh mục</label>
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2">
+                                <input type="radio" id="folderTypeAccountsInput" name="folderType" value="accounts" 
+                                    class="w-4 h-4 text-indigo-600 mt-0.5" checked onchange="toggleFolderTypeFields()">
+                                <label for="folderTypeAccountsInput" class="text-sm text-gray-700">
+                                    <span class="font-semibold">Danh mục tài khoản</span>
+                                    <span class="block text-xs text-gray-500 mt-0.5">Chứa danh sách các tài khoản</span>
+                                </label>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <input type="radio" id="folderTypePopupInput" name="folderType" value="popup" 
+                                    class="w-4 h-4 text-purple-600 mt-0.5" onchange="toggleFolderTypeFields()">
+                                <label for="folderTypePopupInput" class="text-sm text-gray-700">
+                                    <span class="font-semibold">Danh mục popup nội dung</span>
+                                    <span class="block text-xs text-gray-500 mt-0.5">Hiển thị popup với nội dung tùy chỉnh khi click</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nội dung popup (chỉ hiện khi chọn loại popup) -->
+                    <div id="folderPopupContentSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nội dung hiển thị trong Popup</label>
+                        <div class="border-2 border-gray-300 rounded-xl overflow-hidden">
+                            <!-- Toolbar -->
+                            <div class="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-200">
+                                <button type="button" onclick="formatPopupText('bold')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="In đậm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatPopupText('italic')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="In nghiêng">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatPopupText('underline')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="Gạch chân">
+                                    <span class="text-sm underline">U</span>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                                <button type="button" onclick="formatPopupText('foreColor', '#ef4444')" class="p-2 hover:bg-gray-200 rounded transition-colors flex items-center gap-1" title="Màu đỏ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                    </svg>
+                                    <span class="text-xs text-red-500 font-bold">A</span>
+                                </button>
+                                <button type="button" onclick="formatPopupText('foreColor', '#3b82f6')" class="p-2 hover:bg-gray-200 rounded transition-colors flex items-center gap-1" title="Màu xanh">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                    </svg>
+                                    <span class="text-xs text-blue-500 font-bold">A</span>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                                <button type="button" onclick="insertFanpageBlock()" class="p-2 hover:bg-blue-100 rounded transition-colors flex items-center gap-1 bg-blue-50 border border-blue-200" title="Thêm khối Fanpage">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                    </svg>
+                                    <span class="text-xs text-blue-600 font-bold">FB</span>
+                                </button>
+                            </div>
+                            <!-- Editor -->
+                            <div id="folderPopupContentInput" contenteditable="true" 
+                                class="w-full min-h-[200px] max-h-[400px] px-4 py-3 overflow-y-auto focus:outline-none text-sm"
+                                placeholder="Nhập nội dung sẽ hiển thị trong popup..."
+                                style="outline: none;"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Nội dung này sẽ hiển thị trong popup khi người dùng click vào danh mục. Sử dụng các nút trên để định dạng text.</p>
+                    </div>
+                    
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="folderSkipDisclaimerInput" class="w-4 h-4 text-indigo-600 rounded">
                         <label for="folderSkipDisclaimerInput" class="text-sm text-gray-700">Không hiển thị popup lưu ý</label>
@@ -814,7 +877,8 @@
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
             <div class="p-6 text-center">
@@ -1010,6 +1074,35 @@
         </div>
     </div>
 
+    <!-- MODAL NỘI DUNG TÙY CHỈNH -->
+    <div id="customContentModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+            <button onclick="closeCustomContentModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 flex-shrink-0">
+                <div class="flex items-center gap-3">
+                    <div id="customContentIcon" class="w-12 h-12 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center"></div>
+                    <h3 id="customContentTitle" class="text-xl font-bold text-white">Thông tin</h3>
+                </div>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1">
+                <div id="customContentBody" class="prose prose-sm max-w-none text-gray-700"></div>
+            </div>
+            <div class="p-6 border-t border-gray-200 flex-shrink-0">
+                <button onclick="closeCustomContentModal()"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- LANDING PAGE (Disabled by default mechanism) -->
     <div id="landingPage" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl fade-in hidden">
         <div class="glass rounded-2xl overflow-hidden">
@@ -1055,7 +1148,7 @@
                             <span class="text-sm font-medium">100% Miễn phí</span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-700 bg-gray-50 px-4 py-2 rounded-lg">
-                            <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"></svg>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 13l4 4L19 7" />
                             </svg>
@@ -1151,24 +1244,14 @@
                 <div id="contactSection" class="mb-8 border-b border-dashed border-gray-200 pb-6">
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 text-center">Liên hệ hỗ trợ
                     </p>
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="https://facebook.com/DTH.3006" target="_blank"
-                            class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#166fe5] transition-all text-sm shadow-sm hover:shadow-md transform hover:-translate-y-0.5 whitespace-nowrap w-full sm:w-auto min-w-[140px]">
+                    <div class="flex items-center justify-center">
+                        <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
+                            class="flex items-center justify-center gap-2 bg-[#1877F2] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#166fe5] transition-all text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor"
                                 viewBox="0 0 24 24">
                                 <path
                                     d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                            </svg> Đào Thái Hải
-                        </a>
-                        <a href="mailto:thaihai.3006@gmail.com"
-                            class="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 hover:text-red-600 transition-all text-sm shadow-sm hover:shadow-md transform hover:-translate-y-0.5 whitespace-nowrap w-full sm:w-auto min-w-[140px]">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 24 24"
-                                fill="currentColor">
-                                <path
-                                    d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
-                                <path
-                                    d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
-                            </svg> thaihai.3006@gmail.com
+                            </svg> TRÀ ĐÁ 3K
                         </a>
                     </div>
                 </div>
@@ -1948,10 +2031,24 @@
                     btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning'); 
                     btn.classList.add('opacity-60'); 
                 }
-                else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50'); }
-                else { btn.onclick = () => tryOpenFolder(index); }
+                else if (folder.type === 'popup') { 
+                    // Danh mục loại popup - hiển thị popup nội dung
+                    btn.onclick = () => openCustomContentModal(index); 
+                    btn.classList.add('bg-gradient-to-br', 'from-purple-50', 'to-pink-50'); 
+                }
+                else if (folder.type === 'link') { 
+                    btn.onclick = () => window.open(folder.url, '_blank'); 
+                    btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50'); 
+                }
+                else { 
+                    // Danh mục loại accounts - mở danh sách tài khoản
+                    btn.onclick = () => tryOpenFolder(index); 
+                }
 
-                let subtitle = folder.maintenance ? "Đang bảo trì" : (folder.type === 'link' ? "Truy cập ngay" : `${folder.accounts.length} tài khoản`);
+                let subtitle = folder.maintenance ? "Đang bảo trì" : 
+                              (folder.type === 'popup' ? "Xem nội dung" : 
+                              (folder.type === 'link' ? "Truy cập ngay" : 
+                              `${folder.accounts.length} tài khoản`));
                 let iconBgClass = "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
                 let badge = `<span class="ml-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold flex-shrink-0 shadow-sm tracking-wide">MIỄN PHÍ</span>`;
 
@@ -2074,7 +2171,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            <span class="truncate">HUớng dẫn Đăng nhập</span>
+                            <span class="truncate">Hướng dẫn Đăng nhập</span>
                         </button>
                         <button onclick="quickAddAccount(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2258,6 +2355,71 @@
             }
         }
 
+        function formatPopupText(command, value = null) {
+            document.execCommand(command, false, value);
+            const editor = document.getElementById('folderPopupContentInput');
+            if (editor) {
+                editor.focus();
+            }
+        }
+
+        function insertFanpageBlock() {
+            const editor = document.getElementById('folderPopupContentInput');
+            if (!editor) return;
+            
+            const fanpageHTML = `
+<div onclick="window.open('https://www.facebook.com/trada3k.vn/', '_blank')" style="background: linear-gradient(135deg, #e0f2fe 0%, #ddd6fe 100%); border: 2px solid #bfdbfe; border-radius: 12px; padding: 16px; text-align: center; margin: 16px 0; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+    <p style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">TRUY CẬP FANPAGE</p>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #2563eb; font-weight: 700; font-size: 16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" style="animation: pulse 2s infinite;">
+            <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+        </svg>
+        <span>TRÀ ĐÁ 3K</span>
+    </div>
+    <p style="font-size: 10px; color: #64748b; margin-top: 8px;">Click để mở Fanpage</p>
+</div>`;
+            
+            // Insert at cursor position
+            editor.focus();
+            document.execCommand('insertHTML', false, fanpageHTML);
+        }
+
+        function toggleFolderTypeFields() {
+            const isPopupType = document.getElementById('folderTypePopupInput').checked;
+            const popupContentSection = document.getElementById('folderPopupContentSection');
+            
+            if (popupContentSection) {
+                if (isPopupType) {
+                    popupContentSection.classList.remove('hidden');
+                } else {
+                    popupContentSection.classList.add('hidden');
+                }
+            }
+        }
+
+        function openCustomContentModal(folderIndex) {
+            const folder = DATA[folderIndex];
+            if (!folder || !folder.popupContent) return;
+            
+            const modal = document.getElementById('customContentModal');
+            const iconDiv = document.getElementById('customContentIcon');
+            const title = document.getElementById('customContentTitle');
+            const body = document.getElementById('customContentBody');
+            
+            iconDiv.innerHTML = folder.icon.replace(/w-\d+\s+h-\d+/, 'w-full h-full');
+            title.textContent = folder.name;
+            body.innerHTML = folder.popupContent;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeCustomContentModal() {
+            const modal = document.getElementById('customContentModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         function copyToClipboardText(text, btnElement) {
             const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             if (btnElement) {
@@ -2387,9 +2549,13 @@
                         <div class="flex-1">
                             <div class="font-bold text-gray-800 flex items-center gap-2">
                                 ${folder.name}
+                                ${folder.type === 'popup' ? '<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popup</span>' : ''}
                                 ${folder.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Đã ẩn</span>' : ''}
                             </div>
-                            <div class="text-xs text-gray-500 font-mono mt-0.5">ID: ${folder.id} | ${folder.accounts ? folder.accounts.length : 0} tài khoản</div>
+                            <div class="text-xs text-gray-500 font-mono mt-0.5">
+                                ID: ${folder.id} | 
+                                ${folder.type === 'popup' ? 'Nội dung popup' : `${folder.accounts ? folder.accounts.length : 0} tài khoản`}
+                            </div>
                             ${folder.adminNote ? `<div class="text-xs text-indigo-600 mt-1 italic">📝 ${folder.adminNote}</div>` : ''}
                         </div>
                         ${folder.maintenance ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Bảo trì</span>' : ''}
@@ -2441,6 +2607,9 @@
             document.getElementById('folderNameInput').value = '';
             document.getElementById('folderIdInput').value = '';
             document.getElementById('folderIconInput').value = '';
+            document.getElementById('folderTypeAccountsInput').checked = true;
+            document.getElementById('folderTypePopupInput').checked = false;
+            document.getElementById('folderPopupContentInput').innerHTML = '';
             document.getElementById('folderSkipDisclaimerInput').checked = false;
             document.getElementById('folderMaintenanceInput').checked = false;
             document.getElementById('folderHiddenInput').checked = false;
@@ -2448,6 +2617,8 @@
             document.getElementById('folderCategoryNotesInput').value = '';
             document.getElementById('folderLoginGuideInput').innerHTML = '';
             document.getElementById('folderNoteInput').value = '';
+            // Toggle hiển thị fields theo loại danh mục
+            toggleFolderTypeFields();
             // Hiển thị phần note nếu là admin
             const folderNoteSection = document.getElementById('folderNoteSection');
             if (folderNoteSection) {
@@ -2465,6 +2636,19 @@
             document.getElementById('folderNameInput').value = folder.name;
             document.getElementById('folderIdInput').value = folder.id;
             document.getElementById('folderIconInput').value = folder.icon.match(/src="([^"]+)"/)?.[1] || '';
+            
+            // Set loại danh mục
+            if (folder.type === 'popup') {
+                document.getElementById('folderTypePopupInput').checked = true;
+                document.getElementById('folderTypeAccountsInput').checked = false;
+                document.getElementById('folderPopupContentInput').innerHTML = folder.popupContent || '';
+            } else {
+                document.getElementById('folderTypeAccountsInput').checked = true;
+                document.getElementById('folderTypePopupInput').checked = false;
+                document.getElementById('folderPopupContentInput').innerHTML = '';
+            }
+            toggleFolderTypeFields();
+            
             document.getElementById('folderSkipDisclaimerInput').checked = folder.skipDisclaimer || false;
             document.getElementById('folderMaintenanceInput').checked = folder.maintenance || false;
             document.getElementById('folderHiddenInput').checked = folder.hidden || false;
@@ -2501,6 +2685,8 @@
             const name = document.getElementById('folderNameInput').value.trim();
             const id = document.getElementById('folderIdInput').value.trim();
             let iconUrl = document.getElementById('folderIconInput').value.trim();
+            const folderType = document.getElementById('folderTypePopupInput').checked ? 'popup' : 'accounts';
+            const popupContent = document.getElementById('folderPopupContentInput').innerHTML.trim();
             const skipDisclaimer = document.getElementById('folderSkipDisclaimerInput').checked;
             const maintenance = document.getElementById('folderMaintenanceInput').checked;
             const hidden = document.getElementById('folderHiddenInput').checked;
@@ -2512,6 +2698,13 @@
 
             if (!name || !id) {
                 errorEl.textContent = 'Vui lòng điền đầy đủ thông tin';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            // Kiểm tra nếu là loại popup thì phải có nội dung
+            if (folderType === 'popup' && !popupContent) {
+                errorEl.textContent = 'Vui lòng nhập nội dung popup';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -2532,24 +2725,34 @@
 
             if (editingFolderIndex === -1) {
                 // Add new folder
-                DATA.push({
+                const newFolder = {
                     id: id,
                     name: name,
                     icon: iconHtml,
+                    type: folderType,
                     skipDisclaimer: skipDisclaimer,
                     maintenance: maintenance,
                     hidden: hidden,
                     notes: notes,
                     categoryNotes: categoryNotes,
                     loginGuide: loginGuideText,
-                    adminNote: adminNoteText,
-                    accounts: []
-                });
+                    adminNote: adminNoteText
+                };
+                
+                // Thêm field tùy theo loại danh mục
+                if (folderType === 'popup') {
+                    newFolder.popupContent = popupContent;
+                } else {
+                    newFolder.accounts = [];
+                }
+                
+                DATA.push(newFolder);
             } else {
                 // Edit existing folder
                 DATA[editingFolderIndex].name = name;
                 DATA[editingFolderIndex].id = id;
                 DATA[editingFolderIndex].icon = iconHtml;
+                DATA[editingFolderIndex].type = folderType;
                 DATA[editingFolderIndex].skipDisclaimer = skipDisclaimer;
                 DATA[editingFolderIndex].maintenance = maintenance;
                 DATA[editingFolderIndex].hidden = hidden;
@@ -2557,6 +2760,20 @@
                 DATA[editingFolderIndex].categoryNotes = categoryNotes;
                 DATA[editingFolderIndex].loginGuide = loginGuideText;
                 DATA[editingFolderIndex].adminNote = adminNoteText;
+                
+                // Cập nhật field tùy theo loại danh mục
+                if (folderType === 'popup') {
+                    DATA[editingFolderIndex].popupContent = popupContent;
+                    // Xóa field accounts nếu chuyển từ accounts sang popup
+                    delete DATA[editingFolderIndex].accounts;
+                } else {
+                    // Đảm bảo có field accounts nếu là loại accounts
+                    if (!DATA[editingFolderIndex].accounts) {
+                        DATA[editingFolderIndex].accounts = [];
+                    }
+                    // Xóa field popupContent nếu chuyển từ popup sang accounts
+                    delete DATA[editingFolderIndex].popupContent;
+                }
             }
 
             saveDataToStorage();
