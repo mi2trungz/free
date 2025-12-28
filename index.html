@@ -109,6 +109,32 @@
             animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+        @keyframes gentlePulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.9;
+                transform: scale(1.02);
+            }
+        }
+
+        .gentle-pulse {
+            animation: gentlePulse 2s ease-in-out infinite;
+        }
+
+        /* ContentEditable Placeholder */
+        [contenteditable="true"]:empty:before {
+            content: attr(placeholder);
+            color: #9ca3af;
+            pointer-events: none;
+        }
+
+        [contenteditable="true"]:focus {
+            outline: none;
+        }
+
         /* --- COMPONENT STYLES --- */
 
         /* Enhanced Cards for better visibility */
@@ -536,7 +562,7 @@
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Chọn danh mục</label>
                         <select id="adminFolderSelect" onchange="loadAccountsForAdmin()"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm">
                             <option value="">-- Chọn danh mục --</option>
                         </select>
                     </div>
@@ -548,8 +574,8 @@
 
     <!-- MODAL THÊM/SỬA DANH MỤC -->
     <div id="folderEditModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden relative my-8">
             <button onclick="closeFolderEditModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -557,40 +583,77 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-6">
+            <div class="p-6 max-h-[85vh] overflow-y-auto">
                 <h3 id="folderEditTitle" class="text-xl font-bold text-gray-800 mb-4">Thêm danh mục mới</h3>
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tên danh mục</label>
                         <input type="text" id="folderNameInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="VD: CHAT GPT GO">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">ID danh mục</label>
                         <input type="text" id="folderIdInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="VD: chatgpt-go">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">URL Icon</label>
                         <input type="text" id="folderIconInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                            placeholder="https://...">
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="https://... hoặc paste HTML tag <img src='...'>">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Lưu ý Popup (Disclaimer - Mỗi dòng 1
                             ý)</label>
                         <textarea id="folderNotesInput" rows="3"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="Hiện khi bấm vào folder..."></textarea>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Lưu ý trong danh mục (Mỗi dòng 1
                             ý)</label>
                         <textarea id="folderCategoryNotesInput" rows="3"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="Hiện ở đầu danh sách tài khoản..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hướng dẫn đăng nhập</label>
+                        <div class="border-2 border-gray-300 rounded-xl overflow-hidden">
+                            <!-- Toolbar -->
+                            <div class="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-200">
+                                <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="In đậm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="In nghiêng">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatText('underline')" class="p-2 hover:bg-gray-200 rounded transition-colors" title="Gạch chân">
+                                    <span class="text-sm underline">U</span>
+                                </button>
+                                <button type="button" onclick="formatText('strikethrough')" class="p-2 hover:bg-gray-200 rounded transition-colors font-bold" title="Gạch ngang">
+                                    <span class="text-sm">S̶</span>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                                <button type="button" onclick="formatText('foreColor', '#ef4444')" class="p-2 hover:bg-gray-200 rounded transition-colors flex items-center gap-1" title="Màu đỏ">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                                    </svg>
+                                    <span class="text-xs text-red-500 font-bold">A</span>
+                                </button>
+                            </div>
+                            <!-- Editor -->
+                            <div id="folderLoginGuideInput" contenteditable="true" 
+                                class="w-full min-h-[120px] max-h-[300px] px-4 py-2 overflow-y-auto focus:outline-none text-sm"
+                                placeholder="Nhập hướng dẫn đăng nhập cho danh mục này..."
+                                style="outline: none;"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Nội dung này sẽ hiển thị khi người dùng bấm nút "Hướng dẫn đăng nhập". Sử dụng các nút trên để định dạng text.</p>
                     </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="folderMaintenanceInput" class="w-4 h-4 text-indigo-600 rounded">
@@ -599,6 +662,13 @@
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="folderHiddenInput" class="w-4 h-4 text-orange-600 rounded">
                         <label for="folderHiddenInput" class="text-sm text-gray-700">Tạm ẩn danh mục</label>
+                    </div>
+                    <div id="folderNoteSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú (Chỉ Admin)</label>
+                        <textarea id="folderNoteInput" rows="3"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="Ghi chú riêng cho admin..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Ghi chú này chỉ admin mới thấy được</p>
                     </div>
 
                     <p id="folderEditError" class="text-red-500 text-sm hidden"></p>
@@ -613,8 +683,8 @@
 
     <!-- MODAL THÊM/SỬA TÀI KHOẢN -->
     <div id="accountEditModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden relative my-4">
             <button onclick="closeAccountEditModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -622,25 +692,25 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-6">
-                <h3 id="accountEditTitle" class="text-xl font-bold text-gray-800 mb-4">Thêm tài khoản mới</h3>
-                <div class="space-y-4">
+            <div class="p-4 max-h-[85vh] overflow-y-auto">
+                <h3 id="accountEditTitle" class="text-lg font-bold text-gray-800 mb-3">Thêm tài khoản mới</h3>
+                <div class="space-y-3">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tên tài khoản</label>
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Tên tài khoản</label>
                         <input type="text" id="accountNameInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="VD: GPT Go 1">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Username/Email</label>
                         <input type="text" id="accountUsernameInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="user@example.com">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mật khẩu</label>
                         <input type="text" id="accountPasswordInput"
-                            class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="Password123">
                     </div>
                     <div>
@@ -651,11 +721,18 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="accountShowOtpInput" class="w-4 h-4 text-indigo-600 rounded" checked>
-                        <label for="accountShowOtpInput" class="text-sm text-gray-700">Hiển thị mã 2FA</label>
+                        <label for="accountShowOtpInput" class="text-xs text-gray-700">Hiển thị mã 2FA</label>
                     </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="accountHiddenInput" class="w-4 h-4 text-orange-600 rounded">
-                        <label for="accountHiddenInput" class="text-sm text-gray-700">Tạm ẩn tài khoản</label>
+                        <label for="accountHiddenInput" class="text-xs text-gray-700">Tạm ẩn tài khoản</label>
+                    </div>
+                    <div id="accountNoteSection" class="hidden">
+                        <label class="block text-xs font-medium text-gray-700 mb-1.5">Ghi chú (Chỉ Admin)</label>
+                        <textarea id="accountNoteInput" rows="2"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="Ghi chú riêng cho admin..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Ghi chú này chỉ admin mới thấy được</p>
                     </div>
                     <p id="accountEditError" class="text-red-500 text-sm hidden"></p>
                     <button onclick="saveAccount()"
@@ -747,10 +824,38 @@
         </div>
     </div>
 
+    <!-- MODAL HƯỚNG DẪN ĐĂNG NHẬP -->
+    <div id="loginGuideModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+            <button onclick="closeLoginGuide()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="p-6">
+                <div class="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h3 id="loginGuideTitle" class="text-xl font-bold text-gray-800 mb-4">Hướng dẫn đăng nhập</h3>
+                <div id="loginGuideContent" class="text-sm text-gray-600"></div>
+                <button onclick="closeLoginGuide()"
+                    class="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">Đã
+                    hiểu</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL CHI TIẾT TÀI KHOẢN -->
     <div id="accountDetailModal" onclick="if(event.target === this) closeAccountDetailModal()"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden relative">
             <button onclick="closeAccountDetailModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -759,40 +864,35 @@
                 </svg>
             </button>
             <div class="p-0 overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-center relative overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-center relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-full opacity-10">
                         <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                             <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
                         </svg>
                     </div>
                     <div id="modalAccountIcon"
-                        class="w-20 h-20 rounded-2xl mx-auto mb-3 flex items-center justify-center overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg relative z-10">
+                        class="w-16 h-16 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg relative z-10">
                         <!-- Icon here -->
                     </div>
                 </div>
-                <div class="px-6 pb-6 pt-4">
-                    <div class="text-center mb-6">
-                        <h3 id="modalAccountName" class="text-xl font-bold text-gray-800">Account Name</h3>
-                        <p id="modalAccountSubtitle" class="text-sm text-gray-500 font-mono mt-1">Username</p>
+                <div class="px-4 pb-4 pt-3">
+                    <div class="text-center mb-4">
+                        <h3 id="modalAccountName" class="text-lg font-bold text-gray-800">Account Name</h3>
+                        <p id="modalAccountSubtitle" class="text-xs text-gray-500 font-mono mt-1">Username</p>
                     </div>
 
-                    <div class="space-y-4">
+                    <div class="space-y-3">
                         <div class="relative">
                             <label
                                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Tài
                                 khoản</label>
                             <div
-                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-3 rounded-xl hover:border-indigo-300 transition-colors group">
+                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2.5 rounded-lg hover:border-indigo-300 transition-colors group">
                                 <input type="text" id="modalAccountUsername" readonly
                                     class="bg-transparent outline-none text-sm text-gray-800 font-mono w-full font-bold">
                                 <button
                                     onclick="copyToClipboardText(document.getElementById('modalAccountUsername').value, this)"
-                                    class="text-gray-400 group-hover:text-indigo-600 transition-colors p-1.5 hover:bg-white rounded-lg shadow-sm"><svg
-                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg></button>
+                                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors px-3 py-1.5 rounded-lg border border-indigo-200 whitespace-nowrap">Sao chép</button>
                             </div>
                         </div>
 
@@ -801,17 +901,12 @@
                                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Mật
                                 khẩu</label>
                             <div
-                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-3 rounded-xl hover:border-indigo-300 transition-colors group">
+                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2.5 rounded-lg hover:border-indigo-300 transition-colors group">
                                 <input type="text" id="modalAccountPassword" readonly
                                     class="bg-transparent outline-none text-sm text-gray-800 font-mono w-full font-bold">
                                 <button
                                     onclick="copyToClipboardText(document.getElementById('modalAccountPassword').value, this)"
-                                    class="text-gray-400 group-hover:text-indigo-600 transition-colors p-1.5 hover:bg-white rounded-lg shadow-sm"><svg
-                                        xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                    </svg></button>
+                                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors px-3 py-1.5 rounded-lg border border-indigo-200 whitespace-nowrap">Sao chép</button>
                             </div>
                             <p class="text-[10px] text-gray-500 italic mt-1.5 ml-1">⚠️ Mật khẩu có thể thay đổi, vui
                                 lòng
@@ -820,7 +915,7 @@
 
                         <div id="modalOtpSection" class="hidden">
                             <div
-                                class="bg-indigo-50 border border-indigo-100 p-4 rounded-xl mt-4 relative overflow-hidden">
+                                class="bg-indigo-50 border border-indigo-100 p-3 rounded-lg mt-3 relative overflow-hidden">
                                 <div class="absolute top-0 right-0 p-2 opacity-10"><svg
                                         xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-indigo-600" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
@@ -834,7 +929,7 @@
                                             class="text-[10px] text-indigo-800 font-bold uppercase tracking-wider block mb-1">Mã
                                             xác minh 2FA</span>
                                         <div class="flex items-center gap-3">
-                                            <div class="font-mono font-bold text-indigo-700 text-xl tracking-widest"
+                                            <div class="font-mono font-bold text-indigo-700 text-lg tracking-widest"
                                                 id="modalOtpValue">... ...</div>
                                             <button
                                                 onclick="copyToClipboardText(document.getElementById('modalOtpValue').innerText.replace(/\s/g,''), this)"
@@ -855,7 +950,7 @@
                                     </div>
                                 </div>
                                 <p
-                                    class="text-[10px] text-red-800 font-medium mt-2 bg-red-200 inline-block px-2 py-1 rounded w-full text-center">
+                                    class="text-[10px] text-red-800 font-medium mt-2 bg-red-200 inline-block px-2 py-1 rounded w-full text-center gentle-pulse">
                                     ⚠️ Mã sẽ bị vô hiệu sau mỗi 30 giây, sau mỗi 30 giây vui lòng dùng mã mới</p>
                             </div>
                         </div>
@@ -1050,20 +1145,13 @@
                 </div>
 
                 <!-- Dòng Update (Đã chuyển xuống dưới) -->
-                <div id="lastUpdateLabel"
-                    class="flex items-center justify-center gap-2 mt-6 mb-2 text-[10px] md:text-xs text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full w-fit mx-auto border border-indigo-100">
-                    <span class="relative flex h-2 w-2"><span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span
-                            class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span></span> Updated:
-                    04:44 06/12/2025
-                </div>
 
 
             </div>
 
             <div id="homeFooter" class="mt-auto pt-5 border-t border-gray-200">
-                <p class="text-center text-xs text-gray-500 mt-2">Dự án được phát triển bởi <span
-                        class="font-semibold text-indigo-600">Đào Thái Hải</span></p>
+                <p class="text-center text-xs text-gray-500 mt-2">Được tài trợ 100% bởi<br><span
+                        class="font-semibold text-indigo-600">Trada3k.store - Shop sinh viên, giá siêu sinh viên</span></p>
             </div>
         </div>
     </div>
@@ -1701,6 +1789,29 @@
         }
         function closeCapcutGuide() { capcutGuideModal.classList.add('hidden'); capcutGuideModal.classList.remove('flex'); }
 
+        function openLoginGuide(folderIndex) {
+            const folder = DATA[folderIndex];
+            if (!folder || !folder.loginGuide || folder.loginGuide.trim() === '') {
+                showAlert('Thông báo', 'Danh mục này chưa có hướng dẫn đăng nhập.', 'info');
+                return;
+            }
+            const modal = document.getElementById('loginGuideModal');
+            const title = document.getElementById('loginGuideTitle');
+            const content = document.getElementById('loginGuideContent');
+            
+            title.textContent = `Hướng dẫn đăng nhập - ${folder.name}`;
+            content.innerHTML = folder.loginGuide;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLoginGuide() {
+            const modal = document.getElementById('loginGuideModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         function openContactSupportModal() {
             const modal = document.getElementById('contactSupportModal');
             if (modal) {
@@ -1779,7 +1890,10 @@
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left p-3 card flex items-center gap-3 group text-gray-800`;
 
-                if (folder.maintenance) { btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning'); btn.classList.add('opacity-60'); }
+                if (folder.maintenance && !isAdmin()) { 
+                    btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning'); 
+                    btn.classList.add('opacity-60'); 
+                }
                 else if (folder.type === 'link') { btn.onclick = () => window.open(folder.url, '_blank'); btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50'); }
                 else { btn.onclick = () => tryOpenFolder(index); }
 
@@ -1801,6 +1915,14 @@
 
         function tryOpenFolder(index) {
             pendingFolderIndex = index; const folder = DATA[index];
+            
+            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
+            if (folder.maintenance && !isAdmin()) {
+                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
+                pendingFolderIndex = -1;
+                return;
+            }
+            
             disclaimerList.innerHTML = '';
             (folder.notes || []).forEach(note => {
                 const li = document.createElement('li'); li.className = "flex items-start gap-2"; li.innerHTML = `<span class="text-red-500 font-bold">•</span><span>${note}</span>`; disclaimerList.appendChild(li);
@@ -1837,9 +1959,17 @@
         }
 
         function actuallyOpenFolder(index) {
-            currentFolderIndex = index; currentAccountIndex = -1;
             const folder = DATA[index];
-            navBar.classList.remove('hidden'); homeFooter.classList.add('hidden');
+            
+            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
+            if (folder.maintenance && !isAdmin()) {
+                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
+                showFolders();
+                return;
+            }
+            
+            currentFolderIndex = index; currentAccountIndex = -1;
+            navBar.classList.remove('hidden');
             if (introSection) introSection.classList.add('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
@@ -1852,13 +1982,49 @@
 
             let extraHtml = ``;
 
-            if (folder.id === 'capcut') {
-                extraHtml += `
-                    <div class="grid grid-cols-2 gap-3 fade-in">
-                        <button onclick="openCapcutGuide('mobile')" class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-xl text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg> HD Đăng nhập ĐT</button>
-                        <button onclick="openCapcutGuide('pc')" class="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 rounded-xl text-xs font-semibold border border-blue-200 hover:from-blue-100 hover:to-cyan-100 transition-all shadow-sm hover:shadow-md"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> HD Đăng nhập PC</button>
-                    </div>`;
+            // Nút hướng dẫn đăng nhập và thêm tài khoản (thu gọn)
+            const hasLoginGuide = folder.loginGuide && folder.loginGuide.trim() !== '';
+            const hasAddButton = isAdmin();
+            
+            if (hasLoginGuide || hasAddButton) {
+                if (hasLoginGuide && hasAddButton) {
+                    // Cả 2 nút - đặt cạnh nhau
+                    extraHtml += `<div class="grid grid-cols-2 gap-2 fade-in">`;
+                    extraHtml += `
+                        <button onclick="openLoginGuide(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            <span class="truncate">HD Đăng nhập</span>
+                        </button>
+                        <button onclick="quickAddAccount(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span class="truncate">Thêm tài khoản</span>
+                        </button>`;
+                    extraHtml += `</div>`;
+                } else if (hasLoginGuide) {
+                    // Chỉ có nút hướng dẫn
+                    extraHtml += `
+                        <button onclick="openLoginGuide(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md fade-in">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                            <span>HD Đăng nhập</span>
+                        </button>`;
+                } else if (hasAddButton) {
+                    // Chỉ có nút thêm tài khoản
+                    extraHtml += `
+                        <button onclick="quickAddAccount(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md fade-in">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>Thêm tài khoản</span>
+                        </button>`;
+                }
             }
+
 
             extraHeaderContent.innerHTML = extraHtml;
 
@@ -1886,6 +2052,10 @@
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left px-5 py-4 rounded-xl card flex items-center gap-4 group focus:outline-none focus:ring-2 focus:ring-indigo-500 relative transition-transform hover:-translate-y-1`;
                 btn.onclick = () => selectAccount(accIndex);
+                const timeAgo = acc.updatedAt ? formatTimeAgo(acc.updatedAt) : '';
+                const timeAgoHtml = timeAgo ? `<div class="text-[10px] text-indigo-600 font-medium mt-0.5">Lần cập nhật gần nhất: ${timeAgo}</div>` : '';
+                const adminNoteHtml = (isAdmin() && acc.adminNote) ? `<div class="text-[10px] text-indigo-600 italic mt-1">📝 ${acc.adminNote}</div>` : '';
+                
                 btn.innerHTML = `
                     <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 group-hover:border-indigo-300 transition-colors shadow-sm flex items-center justify-center">
                         ${folder.icon}
@@ -1893,6 +2063,8 @@
                     <div class="flex-1 min-w-0">
                         <div class="acc-name font-medium text-gray-700 group-hover:text-gray-900 truncate">${acc.name}${hiddenLabel}</div>
                         <div class="acc-user text-xs text-gray-500 truncate font-mono">${acc.username}</div>
+                        ${timeAgoHtml}
+                        ${adminNoteHtml}
                     </div>
                     <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 `;
@@ -1964,12 +2136,61 @@
             currentAccountIndex = -1;
         }
 
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = new Date();
+            const updatedAt = new Date(timestamp);
+            const diffInSeconds = Math.floor((now - updatedAt) / 1000);
+            
+            if (diffInSeconds < 60) {
+                return 'Vừa xong';
+            }
+            
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            if (diffInMinutes < 60) {
+                return `${diffInMinutes} phút trước`;
+            }
+            
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            if (diffInHours < 24) {
+                return `${diffInHours} giờ trước`;
+            }
+            
+            const diffInDays = Math.floor(diffInHours / 24);
+            if (diffInDays < 30) {
+                return `${diffInDays} ngày trước`;
+            }
+            
+            const diffInMonths = Math.floor(diffInDays / 30);
+            if (diffInMonths < 12) {
+                return `${diffInMonths} tháng trước`;
+            }
+            
+            const diffInYears = Math.floor(diffInMonths / 12);
+            return `${diffInYears} năm trước`;
+        }
+
+        function formatText(command, value = null) {
+            document.execCommand(command, false, value);
+            const editor = document.getElementById('folderLoginGuideInput');
+            if (editor) {
+                editor.focus();
+            }
+        }
+
         function copyToClipboardText(text, btnElement) {
             const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             if (btnElement) {
                 const original = btnElement.innerHTML;
-                btnElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
-                setTimeout(() => btnElement.innerHTML = original, 1000);
+                btnElement.innerHTML = 'Đã sao chép';
+                btnElement.classList.add('bg-green-50', 'text-green-600', 'border-green-300');
+                btnElement.classList.remove('text-indigo-600', 'hover:text-indigo-700', 'hover:bg-indigo-50', 'border-indigo-200');
+                setTimeout(() => {
+                    btnElement.innerHTML = original;
+                    btnElement.classList.remove('bg-green-50', 'text-green-600', 'border-green-300');
+                    btnElement.classList.add('text-indigo-600', 'hover:text-indigo-700', 'hover:bg-indigo-50', 'border-indigo-200');
+                }, 1000);
             }
         }
 
@@ -2077,6 +2298,7 @@
                                 ${folder.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Đã ẩn</span>' : ''}
                             </div>
                             <div class="text-xs text-gray-500 font-mono mt-0.5">ID: ${folder.id} | ${folder.accounts ? folder.accounts.length : 0} tài khoản</div>
+                            ${folder.adminNote ? `<div class="text-xs text-indigo-600 mt-1 italic">📝 ${folder.adminNote}</div>` : ''}
                         </div>
                         ${folder.maintenance ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Bảo trì</span>' : ''}
                     </div>
@@ -2103,6 +2325,13 @@
             document.getElementById('folderHiddenInput').checked = false;
             document.getElementById('folderNotesInput').value = '';
             document.getElementById('folderCategoryNotesInput').value = '';
+            document.getElementById('folderLoginGuideInput').innerHTML = '';
+            document.getElementById('folderNoteInput').value = '';
+            // Hiển thị phần note nếu là admin
+            const folderNoteSection = document.getElementById('folderNoteSection');
+            if (folderNoteSection) {
+                folderNoteSection.classList.toggle('hidden', !isAdmin());
+            }
             document.getElementById('folderEditError').classList.add('hidden');
             document.getElementById('folderEditModal').classList.remove('hidden');
             document.getElementById('folderEditModal').classList.add('flex');
@@ -2125,6 +2354,17 @@
             const categoryNotesText = (folder.categoryNotes || []).join('\n');
             document.getElementById('folderCategoryNotesInput').value = categoryNotesText;
 
+            // Load login guide
+            document.getElementById('folderLoginGuideInput').innerHTML = folder.loginGuide || '';
+
+            // Load admin note
+            document.getElementById('folderNoteInput').value = folder.adminNote || '';
+            // Hiển thị phần note nếu là admin
+            const folderNoteSection = document.getElementById('folderNoteSection');
+            if (folderNoteSection) {
+                folderNoteSection.classList.toggle('hidden', !isAdmin());
+            }
+
             document.getElementById('folderEditError').classList.add('hidden');
             document.getElementById('folderEditModal').classList.remove('hidden');
             document.getElementById('folderEditModal').classList.add('flex');
@@ -2138,11 +2378,13 @@
         function saveFolder() {
             const name = document.getElementById('folderNameInput').value.trim();
             const id = document.getElementById('folderIdInput').value.trim();
-            const iconUrl = document.getElementById('folderIconInput').value.trim();
+            let iconUrl = document.getElementById('folderIconInput').value.trim();
             const maintenance = document.getElementById('folderMaintenanceInput').checked;
             const hidden = document.getElementById('folderHiddenInput').checked;
             const notesText = document.getElementById('folderNotesInput').value.trim();
             const categoryNotesText = document.getElementById('folderCategoryNotesInput').value.trim();
+            const loginGuideText = document.getElementById('folderLoginGuideInput').innerHTML.trim();
+            const adminNoteText = isAdmin() ? document.getElementById('folderNoteInput').value.trim() : '';
             const errorEl = document.getElementById('folderEditError');
 
             if (!name || !id) {
@@ -2155,7 +2397,15 @@
             const notes = notesText ? notesText.split('\n').map(n => n.trim()).filter(n => n.length > 0) : [];
             const categoryNotes = categoryNotesText ? categoryNotesText.split('\n').map(n => n.trim()).filter(n => n.length > 0) : [];
 
-            const iconHtml = iconUrl ? `< img src = "${iconUrl}" alt = "${name}" class="w-full h-full rounded-full object-cover border-2 border-white/50" > ` : (editingFolderIndex >= 0 ? DATA[editingFolderIndex].icon : '');
+            // Nếu người dùng paste HTML tag, tự động extract URL
+            if (iconUrl && iconUrl.includes('<img')) {
+                const match = iconUrl.match(/src=["']([^"']+)["']/i);
+                if (match && match[1]) {
+                    iconUrl = match[1];
+                }
+            }
+
+            const iconHtml = iconUrl ? `<img src="${iconUrl}" alt="${name}" class="w-full h-full rounded-full object-cover border-2 border-white/50">` : (editingFolderIndex >= 0 ? DATA[editingFolderIndex].icon : '');
 
             if (editingFolderIndex === -1) {
                 // Add new folder
@@ -2167,6 +2417,8 @@
                     hidden: hidden,
                     notes: notes,
                     categoryNotes: categoryNotes,
+                    loginGuide: loginGuideText,
+                    adminNote: adminNoteText,
                     accounts: []
                 });
             } else {
@@ -2178,6 +2430,8 @@
                 DATA[editingFolderIndex].hidden = hidden;
                 DATA[editingFolderIndex].notes = notes;
                 DATA[editingFolderIndex].categoryNotes = categoryNotes;
+                DATA[editingFolderIndex].loginGuide = loginGuideText;
+                DATA[editingFolderIndex].adminNote = adminNoteText;
             }
 
             saveDataToStorage();
@@ -2342,6 +2596,7 @@
                     <div>Password: <span class="font-mono">${acc.password}</span></div>
                     <div>Secret: <span class="font-mono">${acc.secret || '(trống)'}</span></div>
                     <div>Hiển thị 2FA: ${acc.showOtp !== false ? 'Có' : 'Không'}</div>
+                    ${acc.adminNote ? `<div class="text-indigo-600 mt-2 italic border-l-2 border-indigo-300 pl-2">📝 ${acc.adminNote}</div>` : ''}
                 </div>
             `;
                 list.appendChild(div);
@@ -2365,6 +2620,15 @@
             list.appendChild(addBtn);
         }
 
+        function quickAddAccount(folderIndex) {
+            if (!isAdmin()) {
+                showAlert('Thông báo', 'Chỉ admin mới có quyền thêm tài khoản', 'warning');
+                return;
+            }
+            currentAdminFolderIndex = folderIndex;
+            openAddAccountModal();
+        }
+
         function openAddAccountModal() {
             if (currentAdminFolderIndex === -1) return;
             editingAccountIndex = -1;
@@ -2375,6 +2639,12 @@
             document.getElementById('accountSecretInput').value = '';
             document.getElementById('accountShowOtpInput').checked = true;
             document.getElementById('accountHiddenInput').checked = false;
+            document.getElementById('accountNoteInput').value = '';
+            // Hiển thị phần note nếu là admin
+            const accountNoteSection = document.getElementById('accountNoteSection');
+            if (accountNoteSection) {
+                accountNoteSection.classList.toggle('hidden', !isAdmin());
+            }
             document.getElementById('accountEditError').classList.add('hidden');
             document.getElementById('accountEditModal').classList.remove('hidden');
             document.getElementById('accountEditModal').classList.add('flex');
@@ -2391,6 +2661,13 @@
             document.getElementById('accountSecretInput').value = acc.secret || '';
             document.getElementById('accountShowOtpInput').checked = acc.showOtp !== false;
             document.getElementById('accountHiddenInput').checked = acc.hidden || false;
+            // Load admin note
+            document.getElementById('accountNoteInput').value = acc.adminNote || '';
+            // Hiển thị phần note nếu là admin
+            const accountNoteSection = document.getElementById('accountNoteSection');
+            if (accountNoteSection) {
+                accountNoteSection.classList.toggle('hidden', !isAdmin());
+            }
             document.getElementById('accountEditError').classList.add('hidden');
             document.getElementById('accountEditModal').classList.remove('hidden');
             document.getElementById('accountEditModal').classList.add('flex');
@@ -2410,6 +2687,7 @@
             const secret = document.getElementById('accountSecretInput').value.trim();
             const showOtp = document.getElementById('accountShowOtpInput').checked;
             const hidden = document.getElementById('accountHiddenInput').checked;
+            const adminNoteText = isAdmin() ? document.getElementById('accountNoteInput').value.trim() : '';
             const errorEl = document.getElementById('accountEditError');
 
             if (!name || !username || !password) {
@@ -2424,7 +2702,8 @@
                 password: password,
                 secret: secret,
                 showOtp: showOtp,
-                hidden: hidden
+                hidden: hidden,
+                adminNote: adminNoteText
             };
 
             if (editingAccountIndex === -1) {
@@ -2432,9 +2711,17 @@
                 if (!DATA[currentAdminFolderIndex].accounts) {
                     DATA[currentAdminFolderIndex].accounts = [];
                 }
+                // Lưu updatedAt cho tài khoản mới (tính là vừa cập nhật)
+                accountData.updatedAt = new Date().toISOString();
                 DATA[currentAdminFolderIndex].accounts.push(accountData);
             } else {
-                // Edit existing account
+                // Edit existing account - lưu thời gian cập nhật
+                accountData.updatedAt = new Date().toISOString();
+                // Giữ lại các field khác nếu có
+                const existingAccount = DATA[currentAdminFolderIndex].accounts[editingAccountIndex];
+                if (existingAccount.createdAt) {
+                    accountData.createdAt = existingAccount.createdAt;
+                }
                 DATA[currentAdminFolderIndex].accounts[editingAccountIndex] = accountData;
             }
 
