@@ -637,6 +637,10 @@
                             class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="https://... hoặc paste HTML tag <img src='...'>">
                     </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="folderSkipDisclaimerInput" class="w-4 h-4 text-indigo-600 rounded">
+                        <label for="folderSkipDisclaimerInput" class="text-sm text-gray-700">Không hiển thị popup lưu ý</label>
+                    </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Lưu ý Popup (Disclaimer - Mỗi dòng 1
                             ý)</label>
@@ -1965,6 +1969,20 @@
 
         function showDisclaimer(index) {
             const folder = DATA[index];
+            
+            // Kiểm tra nếu folder có bật tùy chọn "Không hiển thị popup lưu ý"
+            if (folder.skipDisclaimer === true) {
+                actuallyOpenFolder(index);
+                return;
+            }
+            
+            // Kiểm tra nếu không có notes hoặc notes rỗng
+            const hasNotes = folder.notes && folder.notes.length > 0 && folder.notes.some(note => note.trim() !== '');
+            if (!hasNotes) {
+                actuallyOpenFolder(index);
+                return;
+            }
+            
             disclaimerList.innerHTML = '';
             (folder.notes || []).forEach(note => {
                 const li = document.createElement('li'); li.className = "flex items-start gap-2"; li.innerHTML = `<span class="text-red-500 font-bold">•</span><span>${note}</span>`; disclaimerList.appendChild(li);
@@ -2423,6 +2441,7 @@
             document.getElementById('folderNameInput').value = '';
             document.getElementById('folderIdInput').value = '';
             document.getElementById('folderIconInput').value = '';
+            document.getElementById('folderSkipDisclaimerInput').checked = false;
             document.getElementById('folderMaintenanceInput').checked = false;
             document.getElementById('folderHiddenInput').checked = false;
             document.getElementById('folderNotesInput').value = '';
@@ -2446,6 +2465,7 @@
             document.getElementById('folderNameInput').value = folder.name;
             document.getElementById('folderIdInput').value = folder.id;
             document.getElementById('folderIconInput').value = folder.icon.match(/src="([^"]+)"/)?.[1] || '';
+            document.getElementById('folderSkipDisclaimerInput').checked = folder.skipDisclaimer || false;
             document.getElementById('folderMaintenanceInput').checked = folder.maintenance || false;
             document.getElementById('folderHiddenInput').checked = folder.hidden || false;
             // Load notes vào textarea (mỗi note là một dòng)
@@ -2481,6 +2501,7 @@
             const name = document.getElementById('folderNameInput').value.trim();
             const id = document.getElementById('folderIdInput').value.trim();
             let iconUrl = document.getElementById('folderIconInput').value.trim();
+            const skipDisclaimer = document.getElementById('folderSkipDisclaimerInput').checked;
             const maintenance = document.getElementById('folderMaintenanceInput').checked;
             const hidden = document.getElementById('folderHiddenInput').checked;
             const notesText = document.getElementById('folderNotesInput').value.trim();
@@ -2515,6 +2536,7 @@
                     id: id,
                     name: name,
                     icon: iconHtml,
+                    skipDisclaimer: skipDisclaimer,
                     maintenance: maintenance,
                     hidden: hidden,
                     notes: notes,
@@ -2528,6 +2550,7 @@
                 DATA[editingFolderIndex].name = name;
                 DATA[editingFolderIndex].id = id;
                 DATA[editingFolderIndex].icon = iconHtml;
+                DATA[editingFolderIndex].skipDisclaimer = skipDisclaimer;
                 DATA[editingFolderIndex].maintenance = maintenance;
                 DATA[editingFolderIndex].hidden = hidden;
                 DATA[editingFolderIndex].notes = notes;
