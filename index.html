@@ -226,6 +226,7 @@
                 max-width: 1400px;
             }
         }
+
     </style>
 </head>
 
@@ -256,12 +257,22 @@
                         class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-center tracking-widest text-xl font-bold bg-white shadow-inner"
                         placeholder="• • • •" maxlength="4" oninput="checkModalAutoLogin()">
                     <p class="text-xs text-red-500 italic font-medium">Lưu ý: Mật khẩu sẽ được thay đổi thường xuyên</p>
-                    <button onclick="checkModalPassword()"
-                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">Mở
-                        Khóa</button>
+                    
+                    <!-- Nút Lấy mã - Nổi bật -->
                     <button onclick="openInstructions()"
-                        class="w-full text-indigo-600 font-medium py-2 rounded-xl hover:bg-indigo-50 transition-colors text-sm border border-indigo-200">Lấy
-                        mã?</button>
+                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-3.5 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Hướng dẫn lấy mã</span>
+                    </button>
+                    
+                    <!-- Nút Mở Khóa - Thu nhỏ -->
+                    <button onclick="checkModalPassword()"
+                        class="w-full text-indigo-600 font-medium py-2 rounded-xl hover:bg-indigo-50 transition-colors text-sm border border-indigo-200">
+                        Mở Khóa
+                    </button>
+                    
                     <p id="modalLoginError" class="text-red-500 text-sm font-medium hidden mt-2">Mật mã không đúng!</p>
                 </div>
             </div>
@@ -347,9 +358,9 @@
                 <div class="space-y-4 text-sm text-gray-600 mt-4">
                     <p>Để nhận mật mã truy cập vào hệ thống, bạn vui lòng thực hiện các bước sau:</p>
                     <ol class="list-decimal pl-5 space-y-2 marker:text-indigo-600 marker:font-bold">
-                        <li>Liên hệ Admin qua Facebook.</li>
-                        <li>Gửi yêu cầu "Cấp quyền truy cập 2FA".</li>
-                        <li>Admin sẽ xác minh và gửi mã cho bạn.</li>
+                        <li>Nhắn tin vào Fanpage <strong>TRÀ ĐÁ 3K</strong>.</li>
+                        <li>Nhắn chính xác cú pháp: <strong class="text-indigo-700">LAYMA</strong></li>
+                        <li>Lấy mã và truy cập hệ thống.</li>
                     </ol>
                     <div
                         class="p-3 bg-red-50 text-red-600 text-xs rounded-lg font-medium border border-red-100 flex items-start gap-2">
@@ -360,17 +371,19 @@
                         </svg>
                         <span>Lưu ý: Mã sẽ được thay đổi mỗi ngày.</span>
                     </div>
-                    <a href="https://facebook.com/DTH.3006" target="_blank"
-                        class="block bg-slate-50 border border-slate-200 p-3 rounded-lg text-center mt-4 hover:bg-indigo-50 hover:border-indigo-200 transition-all group cursor-pointer decoration-0">
-                        <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Liên hệ Admin</p>
+                    <a href="https://www.facebook.com/trada3k.vn" target="_blank"
+                        class="block bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-center mt-4 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all group cursor-pointer decoration-0 shadow-sm hover:shadow-md">
+                        <p class="text-xs text-gray-600 uppercase font-semibold mb-2 tracking-wide">Truy cập Fanpage</p>
                         <div
-                            class="text-indigo-600 font-bold group-hover:text-indigo-700 flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                viewBox="0 0 16 16">
+                            class="text-blue-600 font-bold text-base group-hover:text-blue-700 flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                viewBox="0 0 16 16" class="animate-pulse">
                                 <path
                                     d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951" />
-                            </svg> Facebook: Đào Thái Hải
+                            </svg> 
+                            <span>TRÀ ĐÁ 3K</span>
                         </div>
+                        <p class="text-[10px] text-gray-500 mt-2">Click để mở Fanpage và nhắn "LAYMA"</p>
                     </a>
                 </div>
                 <button onclick="closeInstructions()"
@@ -526,6 +539,10 @@
                         class="px-6 py-3 font-semibold text-gray-500 hover:text-gray-700 transition-colors">
                         Quản lý Tài khoản
                     </button>
+                    <button id="adminSettingsTab" onclick="switchAdminTab('settings')"
+                        class="px-6 py-3 font-semibold text-gray-500 hover:text-gray-700 transition-colors">
+                        Cài đặt
+                    </button>
                 </div>
 
                 <!-- Folders Management -->
@@ -567,6 +584,22 @@
                         </select>
                     </div>
                     <div id="adminAccountsList" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar"></div>
+                </div>
+
+                <!-- Settings Management -->
+                <div id="adminSettingsContent" class="space-y-4 hidden">
+                    <h4 class="text-lg font-bold text-gray-800 mb-4">Cài đặt hệ thống</h4>
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mã bảo mật chung cho tất cả danh mục</label>
+                        <input type="text" id="globalAccessPasswordInput"
+                            class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="Nhập mã bảo mật (để trống = không yêu cầu)">
+                        <p class="text-xs text-gray-500 mt-2">Người dùng phải nhập mã này để truy cập bất kỳ danh mục nào (Admin không cần)</p>
+                        <button onclick="saveGlobalPassword()"
+                            class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
+                            Lưu mã bảo mật
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1053,36 +1086,36 @@
         class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-4 my-6 relative z-10">
         <div
             class="px-5 py-6 md:px-8 md:py-8 relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
-            <div class="absolute top-6 right-6 flex items-center gap-3 z-50">
+            <div class="absolute top-3 right-3 md:top-6 md:right-6 flex items-center gap-1.5 md:gap-3 z-50 flex-wrap justify-end max-w-[calc(100%-2rem)]">
                 <button id="headerLoginBtn" onclick="openAuthModal()"
-                    class="text-white hover:text-white transition-colors flex items-center gap-2 text-sm font-bold bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl transition-all backdrop-blur-sm border border-white/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    class="text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-bold bg-white/20 hover:bg-white/30 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all backdrop-blur-sm border border-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-                    Đăng nhập
+                    <span class="hidden sm:inline">Đăng nhập</span>
                 </button>
                 <button id="adminBtn" onclick="openAdminModal()"
-                    class="hidden text-white hover:text-white transition-colors flex items-center gap-2 text-sm font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg border border-white/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    class="hidden text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold bg-white/20 hover:bg-white/30 px-2 md:px-3 py-1.5 rounded-lg border border-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    Quản lý
+                    <span class="hidden sm:inline">Quản lý</span>
                 </button>
                 <button id="logoutBtn" onclick="handleLogout()"
-                    class="text-white hover:text-red-100 transition-colors flex items-center gap-2 text-sm font-semibold hidden hover:bg-red-500/20 px-3 py-1.5 rounded-lg border border-white/20 bg-white/10">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    class="text-white hover:text-red-100 transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold hidden hover:bg-red-500/20 px-2 md:px-3 py-1.5 rounded-lg border border-white/20 bg-white/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Đăng xuất
+                    <span class="hidden sm:inline">Đăng xuất</span>
                 </button>
             </div>
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-center text-white mb-2 drop-shadow-md">
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-center text-white mb-2 drop-shadow-md pt-10 md:pt-0">
                 Dự án chia sẻ tài khoản miễn
                 phí</h1>
             <p id="headerSubtitle" class="text-sm md:text-base text-indigo-100 text-center font-medium opacity-90">Danh
@@ -1161,6 +1194,7 @@
         // Firebase Auth Functions
         let currentUser = null;
         const ADMIN_EMAIL = 'cungbocap306@gmail.com';
+        let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let editingFolderIndex = -1;
         let editingAccountIndex = -1;
         let currentAdminFolderIndex = -1;
@@ -1527,6 +1561,7 @@
             try {
                 // Lưu vào localStorage như backup
                 localStorage.setItem('trada_data', JSON.stringify(DATA));
+                localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
                 console.log('Saved to localStorage');
 
                 // Lưu vào Firestore để đồng bộ cho tất cả người dùng
@@ -1535,34 +1570,28 @@
                         const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
                         await window.firebaseSetDoc(dataRef, {
                             data: DATA,
+                            globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
                         console.log('Saved to Firestore successfully');
                     } catch (firestoreError) {
                         console.error('Error saving to Firestore:', firestoreError);
                         const errorMsg = firestoreError.message || firestoreError.toString();
-                        // Nếu bị chặn, throw error để hiển thị thông báo
-                        if (errorMsg.includes('ERR_BLOCKED_BY_CLIENT') || errorMsg.includes('blocked')) {
-                            throw new Error('ERR_BLOCKED_BY_CLIENT');
-                        }
-                        // Nếu API chưa được bật
-                        if (errorMsg.includes('permission-denied') || errorMsg.includes('API has not been used') || errorMsg.includes('not been enabled')) {
-                            throw new Error('FIRESTORE_API_NOT_ENABLED');
-                        }
-                        // Với các lỗi khác, chỉ log và tiếp tục
+                        // Chỉ log và tiếp tục - dữ liệu đã được lưu vào localStorage
+                        console.warn('Firestore save failed (data is safe in localStorage):', errorMsg);
                     }
                 } else {
                     console.warn('Firestore not available for saving');
                 }
             } catch (e) {
-                console.error('Error saving data:', e);
-                throw e; // Re-throw để forceSyncToFirestore có thể bắt
+                console.error('Error saving data to localStorage:', e);
+                // Không throw - localStorage là fallback cuối cùng
             }
         }
 
         async function loadDataFromStorage() {
             try {
-                // Ưu tiên load từ Firestore
+                // Ưu tiên load từ Firestore (cho tất cả người dùng, kể cả khách)
                 if (window.firebaseDb && window.firebaseDoc && window.firebaseGetDoc) {
                     try {
                         const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
@@ -1571,7 +1600,7 @@
                         if (docSnap.exists()) {
                             const firestoreData = docSnap.data();
                             if (firestoreData.data && Array.isArray(firestoreData.data)) {
-                                console.log('Loaded data from Firestore:', firestoreData.data.length, 'folders');
+                                console.log('✅ Loaded data from Firestore:', firestoreData.data.length, 'folders');
                                 DATA = firestoreData.data;
                                 // Ensure showOtp property exists for all accounts
                                 DATA.forEach(folder => {
@@ -1585,6 +1614,17 @@
                                         folder.categoryNotes = ["Tài khoản nếu bị hết lượng dùng thì vào tài khoản khác nha"];
                                     }
                                 });
+                                // Load global access password
+                                if (firestoreData.globalAccessPassword !== undefined) {
+                                    GLOBAL_ACCESS_PASSWORD = firestoreData.globalAccessPassword || '';
+                                    localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
+                                } else {
+                                    // Fallback to localStorage
+                                    const savedPassword = localStorage.getItem('trada_global_password');
+                                    if (savedPassword) {
+                                        GLOBAL_ACCESS_PASSWORD = savedPassword;
+                                    }
+                                }
                                 // Cập nhật localStorage với dữ liệu mới nhất
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 return;
@@ -1595,11 +1635,9 @@
                     } catch (firestoreError) {
                         console.error('Firestore read error:', firestoreError);
                         const errorMsg = firestoreError.message || firestoreError.toString();
-                        if (errorMsg.includes('permission-denied') || errorMsg.includes('API has not been used') || errorMsg.includes('not been enabled')) {
-                            console.error('⚠️ Firestore API chưa được bật! Vui lòng bật API trong Google Cloud Console.');
-                            if (isAdmin()) {
-                                console.log('🔗 Link bật API: https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=trada3k-c402a');
-                            }
+                        if (errorMsg.includes('permission-denied')) {
+                            console.error('⚠️ Firestore Permission Denied! Dữ liệu sẽ chỉ lưu ở localStorage.');
+                            console.log('📋 Để sửa: Cập nhật Firestore Rules - cho phép read/write cho tất cả');
                         }
                         // Continue to localStorage fallback
                     }
@@ -1610,7 +1648,7 @@
                 // Fallback: load từ localStorage nếu Firestore chưa có dữ liệu
                 const saved = localStorage.getItem('trada_data');
                 if (saved) {
-                    console.log('Loaded data from localStorage');
+                    console.log('✅ Loaded data from localStorage');
                     DATA = JSON.parse(saved);
                     // Ensure showOtp property exists for all accounts
                     DATA.forEach(folder => {
@@ -1620,9 +1658,14 @@
                             });
                         }
                     });
-                    // Upload lên Firestore nếu chưa có (chỉ admin mới upload)
+                    // Load global access password from localStorage
+                    const savedPassword = localStorage.getItem('trada_global_password');
+                    if (savedPassword) {
+                        GLOBAL_ACCESS_PASSWORD = savedPassword;
+                    }
+                    // Upload lên Firestore nếu chưa có (cho admin hoặc nếu Firestore trống)
                     if (window.firebaseDb && isAdmin()) {
-                        console.log('Admin detected, uploading to Firestore...');
+                        console.log('👤 Admin detected - uploading to Firestore...');
                         saveDataToStorage();
                     }
                 } else {
@@ -1649,16 +1692,16 @@
                 dataListener = null;
             }
 
-            // Thiết lập real-time listener để tự động cập nhật khi admin thay đổi
+            // Thiết lập real-time listener để tự động cập nhật (cho tất cả người dùng, kể cả khách)
             if (window.firebaseDb && window.firebaseDoc && window.firebaseOnSnapshot) {
                 try {
                     const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
-                    console.log('Setting up Firestore real-time listener...');
+                    console.log('🔄 Setting up Firestore real-time listener (for all users)...');
                     dataListener = window.firebaseOnSnapshot(dataRef, (docSnap) => {
                         if (docSnap.exists()) {
                             const firestoreData = docSnap.data();
                             if (firestoreData.data && Array.isArray(firestoreData.data)) {
-                                console.log('Data updated from Firestore:', firestoreData.data.length, 'folders');
+                                console.log('✅ Data updated from Firestore:', firestoreData.data.length, 'folders');
                                 DATA = firestoreData.data;
                                 // Ensure showOtp property exists for all accounts
                                 DATA.forEach(folder => {
@@ -1668,8 +1711,13 @@
                                         });
                                     }
                                 });
+                                // Load global password nếu có
+                                if (firestoreData.globalAccessPassword !== undefined) {
+                                    GLOBAL_ACCESS_PASSWORD = firestoreData.globalAccessPassword || '';
+                                }
                                 // Cập nhật localStorage
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
+                                localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
                                 // Refresh UI
                                 if (currentFolderIndex === -1) {
                                     showFolders();
@@ -1688,20 +1736,18 @@
                             console.log('No data in Firestore snapshot');
                         }
                     }, (error) => {
-                        console.error('Error listening to data changes:', error);
+                        console.error('❌ Firestore listener error:', error);
                         const errorMsg = error.message || error.toString();
-                        if (errorMsg.includes('permission-denied') || errorMsg.includes('Missing or insufficient permissions')) {
-                            console.warn('⚠️ Firestore Permission Error: Data sync for guests requires "allow read: if true" in Firestore Rules.');
-                            if (isAdmin()) {
-                                showAlert('Cảnh báo hệ thống', 'Dữ liệu không đồng bộ được cho khách do thiếu quyền đọc.\nVui lòng cập nhật Firestore Rules.', 'warning');
-                            }
+                        if (errorMsg.includes('permission-denied')) {
+                            console.warn('⚠️ Firestore Permission Error! Khách không thể đọc/ghi dữ liệu.');
+                            console.log('📋 Cần cập nhật Firestore Security Rules để cho phép tất cả người dùng đọc/ghi');
                         }
                     });
                 } catch (error) {
                     console.error('Error setting up listener:', error);
                 }
             } else {
-                console.warn('Firestore not available for real-time updates');
+                console.warn('⚠️ Firestore not available for real-time updates');
             }
         }
 
@@ -1846,11 +1892,12 @@
             const val = modalPasswordInput.value;
             modalLoginError.classList.add('hidden');
             modalPasswordInput.classList.remove('border-red-500', 'shake');
-            if (val.length === 4) {
-                if (val === '3066') {
+            if (pendingFolderIndex >= 0 && pendingFolderIndex < DATA.length) {
+                const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
+                if (val === correctPassword) {
                     passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
-                    tryOpenFolder(pendingFolderIndex);
-                } else {
+                    showDisclaimer(pendingFolderIndex);
+                } else if (correctPassword && val.length >= correctPassword.length) {
                     modalLoginError.classList.remove('hidden'); modalPasswordInput.classList.add('border-red-500', 'shake'); setTimeout(() => { modalPasswordInput.classList.remove('shake'); }, 500);
                 }
             }
@@ -1858,11 +1905,14 @@
 
         function checkModalPassword() {
             const val = modalPasswordInput.value;
-            if (val === '3066') {
-                passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
-                tryOpenFolder(pendingFolderIndex);
-            } else {
-                modalLoginError.classList.remove('hidden'); modalPasswordInput.classList.add('border-red-500', 'shake'); modalPasswordInput.value = ''; modalPasswordInput.focus(); setTimeout(() => { modalPasswordInput.classList.remove('shake'); }, 500);
+            if (pendingFolderIndex >= 0 && pendingFolderIndex < DATA.length) {
+                const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
+                if (val === correctPassword) {
+                    passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
+                    showDisclaimer(pendingFolderIndex);
+                } else {
+                    modalLoginError.classList.remove('hidden'); modalPasswordInput.classList.add('border-red-500', 'shake'); modalPasswordInput.value = ''; modalPasswordInput.focus(); setTimeout(() => { modalPasswordInput.classList.remove('shake'); }, 500);
+                }
             }
         }
 
@@ -1913,16 +1963,8 @@
             });
         }
 
-        function tryOpenFolder(index) {
-            pendingFolderIndex = index; const folder = DATA[index];
-            
-            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
-            if (folder.maintenance && !isAdmin()) {
-                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
-                pendingFolderIndex = -1;
-                return;
-            }
-            
+        function showDisclaimer(index) {
+            const folder = DATA[index];
             disclaimerList.innerHTML = '';
             (folder.notes || []).forEach(note => {
                 const li = document.createElement('li'); li.className = "flex items-start gap-2"; li.innerHTML = `<span class="text-red-500 font-bold">•</span><span>${note}</span>`; disclaimerList.appendChild(li);
@@ -1951,6 +1993,25 @@
                     }
                 }, 1000);
             }
+        }
+
+        function tryOpenFolder(index) {
+            pendingFolderIndex = index; const folder = DATA[index];
+            
+            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
+            if (folder.maintenance && !isAdmin()) {
+                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
+                pendingFolderIndex = -1;
+                return;
+            }
+            
+            // Kiểm tra nếu có mã bảo mật chung và người dùng không phải admin
+            if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin()) {
+                openPasswordModal(index);
+                return;
+            }
+            
+            showDisclaimer(index);
         }
 
         function confirmDisclaimer() {
@@ -1995,7 +2056,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            <span class="truncate">HD Đăng nhập</span>
+                            <span class="truncate">HUớng dẫn Đăng nhập</span>
                         </button>
                         <button onclick="quickAddAccount(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -2011,7 +2072,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                            <span>HD Đăng nhập</span>
+                            <span>Hướng dẫn Đăng nhập</span>
                         </button>`;
                 } else if (hasAddButton) {
                     // Chỉ có nút thêm tài khoản
@@ -2257,25 +2318,38 @@
         function switchAdminTab(tab) {
             const foldersContent = document.getElementById('adminFoldersContent');
             const accountsContent = document.getElementById('adminAccountsContent');
+            const settingsContent = document.getElementById('adminSettingsContent');
             const foldersTab = document.getElementById('adminFoldersTab');
             const accountsTab = document.getElementById('adminAccountsTab');
+            const settingsTab = document.getElementById('adminSettingsTab');
+
+            // Reset all tabs
+            foldersContent.classList.add('hidden');
+            accountsContent.classList.add('hidden');
+            settingsContent.classList.add('hidden');
+            foldersTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            foldersTab.classList.add('text-gray-500');
+            accountsTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            accountsTab.classList.add('text-gray-500');
+            settingsTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
+            settingsTab.classList.add('text-gray-500');
 
             if (tab === 'folders') {
                 foldersContent.classList.remove('hidden');
-                accountsContent.classList.add('hidden');
                 foldersTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
                 foldersTab.classList.remove('text-gray-500');
-                accountsTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
-                accountsTab.classList.add('text-gray-500');
-            } else {
-                foldersContent.classList.add('hidden');
+            } else if (tab === 'accounts') {
                 accountsContent.classList.remove('hidden');
                 accountsTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
                 accountsTab.classList.remove('text-gray-500');
-                foldersTab.classList.remove('text-indigo-600', 'border-b-2', 'border-indigo-600');
-                foldersTab.classList.add('text-gray-500');
                 populateAdminFolderSelect();
                 loadAccountsForAdmin();
+            } else if (tab === 'settings') {
+                settingsContent.classList.remove('hidden');
+                settingsTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
+                settingsTab.classList.remove('text-gray-500');
+                // Load current password
+                document.getElementById('globalAccessPasswordInput').value = GLOBAL_ACCESS_PASSWORD || '';
             }
         }
 
@@ -2313,6 +2387,34 @@
                     `;
                 list.appendChild(div);
             });
+        }
+
+        function saveGlobalPassword() {
+            const password = document.getElementById('globalAccessPasswordInput').value.trim();
+            GLOBAL_ACCESS_PASSWORD = password;
+            
+            // Lưu vào localStorage
+            localStorage.setItem('trada_global_password', password);
+            
+            // Lưu vào Firestore nếu có
+            if (window.firebaseDb) {
+                try {
+                    const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
+                    window.firebaseUpdateDoc(dataRef, {
+                        globalAccessPassword: password
+                    }).then(() => {
+                        showAlert("Thành công", "Đã lưu mã bảo mật chung!", 'success');
+                    }).catch((error) => {
+                        console.error("Error saving global password:", error);
+                        showAlert("Lỗi", "Không thể lưu mã bảo mật lên Firestore, đã lưu vào localStorage", 'warning');
+                    });
+                } catch (error) {
+                    console.error("Error saving global password:", error);
+                    showAlert("Lỗi", "Không thể lưu mã bảo mật lên Firestore, đã lưu vào localStorage", 'warning');
+                }
+            } else {
+                showAlert("Thành công", "Đã lưu mã bảo mật chung vào localStorage!", 'success');
+            }
         }
 
         function openAddFolderModal() {
@@ -2469,40 +2571,7 @@
                 showAlert('Thành công', 'Đồng bộ dữ liệu thành công!\n\nTất cả người dùng sẽ thấy thay đổi trong vài giây.', 'success');
             } catch (error) {
                 console.error('Sync error:', error);
-                const errorMsg = error.message || error.toString();
-
-                if (errorMsg.includes('ERR_BLOCKED_BY_CLIENT') || errorMsg.includes('blocked')) {
-                    showAlert('Lỗi: Kết nối bị chặn',
-                        'Nguyên nhân: Trình chặn quảng cáo hoặc extension đang chặn Firestore.\n\n' +
-                        'Cách khắc phục:\n' +
-                        '1. Tắt Ad Blocker (uBlock Origin, AdBlock, etc.)\n' +
-                        '2. Tắt Privacy extensions (Privacy Badger, Ghostery, etc.)\n' +
-                        '3. Thêm trang này vào whitelist\n' +
-                        '4. Thử trình duyệt khác (Chrome, Firefox, Edge)\n\n' +
-                        'Hoặc:\n' +
-                        '- Dữ liệu vẫn được lưu vào localStorage\n' +
-                        '- Người dùng khác cần refresh trang để thấy thay đổi',
-                        'error');
-                } else if (errorMsg.includes('FIRESTORE_API_NOT_ENABLED') || errorMsg.includes('API has not been used') || errorMsg.includes('not been enabled')) {
-                    showAlert('Lỗi: Firestore API chưa được bật',
-                        'Vui lòng làm theo các bước sau:\n\n' +
-                        '1. Truy cập link sau:\n' +
-                        'https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=trada3k-c402a\n\n' +
-                        '2. Click nút "ENABLE" để bật Firestore API\n\n' +
-                        '3. Đợi 1-2 phút để API được kích hoạt\n\n' +
-                        '4. Refresh trang và thử lại\n\n' +
-                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage trong lúc chờ.',
-                        'error');
-                } else {
-                    showAlert('Lỗi khi đồng bộ',
-                        'Lỗi: ' + errorMsg + '\n\n' +
-                        'Vui lòng kiểm tra:\n' +
-                        '1. Firestore đã được bật trong Firebase Console\n' +
-                        '2. Security Rules đã được cấu hình đúng\n' +
-                        '3. Mở Console (F12) để xem chi tiết lỗi\n\n' +
-                        'Lưu ý: Dữ liệu vẫn được lưu vào localStorage',
-                        'error');
-                }
+                showAlert('Lỗi', 'Có lỗi xảy ra khi đồng bộ dữ liệu.\n\nVui lòng kiểm tra console để chi tiết.\n\nDữ liệu vẫn được lưu vào localStorage.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = originalText;
