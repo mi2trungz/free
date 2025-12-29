@@ -129,10 +129,13 @@
 
         /* Badge Animation */
         @keyframes badgePulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: scale(1);
                 box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             }
+
             50% {
                 transform: scale(1.05);
                 box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
@@ -143,6 +146,7 @@
             0% {
                 background-position: -200% center;
             }
+
             100% {
                 background-position: 200% center;
             }
@@ -155,6 +159,55 @@
 
         .badge-animate:hover {
             animation: badgePulse 2s ease-in-out infinite, badgeShine 1.5s linear infinite;
+        }
+
+        /* Banner Animations */
+        @keyframes bannerPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3), 0 8px 10px -6px rgba(79, 70, 229, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 20px 40px -5px rgba(79, 70, 229, 0.5), 0 15px 20px -6px rgba(79, 70, 229, 0.5);
+            }
+        }
+
+        .banner-pulse {
+            animation: bannerPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes bannerBreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .banner-zoom {
+            animation: bannerBreathe 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseSlow {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.85;
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulseSlow 2s ease-in-out infinite;
         }
 
         /* ContentEditable Placeholder */
@@ -308,6 +361,52 @@
                     </button>
 
                     <p id="modalLoginError" class="text-red-500 text-sm font-medium hidden mt-2">Mật mã không đúng!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BANNER QUẢNG CÁO -->
+    <div id="adBannerModal"
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden relative">
+            <button onclick="closeAdBanner()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="p-8 text-center">
+                <div class="mb-6">
+                    <p class="text-lg font-semibold text-indigo-600 mb-4">
+                        Huhu cho shop xin phép quảng cáo xíu để duy trì dự án 🥺
+                    </p>
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
+                        class="block rounded-xl overflow-hidden shadow-lg banner-pulse cursor-pointer">
+                        <img id="adBannerImage" src="" alt="Banner quảng cáo" class="w-full h-auto banner-zoom">
+                    </a>
+                </div>
+
+                <!-- Nút Truy cập Fanpage - Nổi bật -->
+                <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
+                    class="block w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 px-6 rounded-xl hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 mb-3 text-lg animate-pulse-slow flex items-center justify-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                    </svg>
+                    <span>Truy cập Fanpage TRÀ ĐÁ 3K - MUA NGAY!</span>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
+
+                <!-- Nút Bỏ qua - Thu nhỏ -->
+                <div class="flex justify-center">
+                    <button id="adBannerSkipBtn" onclick="confirmAdBanner()" disabled
+                        class="bg-gray-200 text-gray-500 font-medium py-2 px-6 rounded-lg transition-all cursor-not-allowed text-sm">
+                        Vui lòng chờ 3s...
+                    </button>
                 </div>
             </div>
         </div>
@@ -626,6 +725,19 @@
                         <button onclick="saveGlobalPassword()"
                             class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
                             Lưu mã bảo mật
+                        </button>
+                    </div>
+
+                    <!-- Banner Quảng Cáo Settings -->
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link banner quảng cáo</label>
+                        <input type="text" id="adBannerUrlInput"
+                            class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="https://... (URL hình ảnh banner)">
+                        <p class="text-xs text-gray-500 mt-2">Banner sẽ hiển thị khi người dùng click vào danh mục</p>
+                        <button onclick="saveAdBannerUrl()"
+                            class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
+                            Lưu link banner
                         </button>
                     </div>
                 </div>
@@ -1196,9 +1308,11 @@
                         </svg>
                     </div>
                     <h1
-                        class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 slide-up bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent pb-2">
-                        Dự án chia sẻ tài
-                        khoản miễn phí</h1>
+                        class="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-2 slide-up bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent pb-2">
+                        TRADA3K.STORE</h1>
+                    <p class="text-xl md:text-2xl lg:text-3xl font-bold mb-4 slide-up bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent"
+                        style="animation-delay: 0.05s">
+                        Shop sinh viên, giá siêu sinh viên</p>
                     <p class="text-lg md:text-xl text-gray-600 mb-2 slide-up font-medium" style="animation-delay: 0.1s">
                         Chia sẻ
                         tài khoản Premium cho cộng đồng</p>
@@ -1293,9 +1407,10 @@
                 </button>
             </div>
             <h1
-                class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-center text-white mb-2 drop-shadow-md pt-10 md:pt-0">
-                Dự án chia sẻ tài khoản miễn
-                phí</h1>
+                class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-center text-white mb-1 drop-shadow-md pt-10 md:pt-0">
+                TRADA3K.STORE</h1>
+            <p class="text-base md:text-lg lg:text-xl font-semibold text-center text-indigo-100 mb-2 drop-shadow-md">
+                Shop sinh viên, giá siêu sinh viên</p>
             <p id="headerSubtitle" class="text-sm md:text-base text-indigo-100 text-center font-medium opacity-90">Danh
                 mục
                 tài khoản</p>
@@ -1379,7 +1494,7 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <p class="text-center text-xs text-gray-500 mt-2">Được tài trợ 100% bởi<br><span
                         class="font-semibold text-indigo-600">Trada3k.store - Shop sinh viên, giá siêu sinh viên</span>
                 </p>
@@ -1393,10 +1508,49 @@
         let currentUser = null;
         const ADMIN_EMAIL = 'cungbocap306@gmail.com';
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
+        let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
+        let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
         let editingAccountIndex = -1;
         let currentAdminFolderIndex = -1;
         let confirmCallback = null;
+
+        // Assuming closeAdminModal() would be defined here or nearby.
+        // Inserting switchAdminTab function after the variable declarations and before showAlert.
+        function switchAdminTab(tab) {
+            // Update tab buttons
+            const foldersTab = document.getElementById('adminFoldersTab');
+            const accountsTab = document.getElementById('adminAccountsTab');
+            const settingsTab = document.getElementById('adminSettingsTab');
+            const foldersContent = document.getElementById('adminFoldersContent');
+            const accountsContent = document.getElementById('adminAccountsContent');
+            const settingsContent = document.getElementById('adminSettingsContent');
+
+            // Reset all tabs
+            [foldersTab, accountsTab, settingsTab].forEach(t => {
+                if (t) {
+                    t.className = 'px-6 py-3 font-semibold text-gray-500 hover:text-gray-700 transition-colors';
+                }
+            });
+            [foldersContent, accountsContent, settingsContent].forEach(c => {
+                if (c) c.classList.add('hidden');
+            });
+
+            // Activate selected tab
+            if (tab === 'folders') {
+                if (foldersTab) foldersTab.className = 'px-6 py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 transition-colors';
+                if (foldersContent) foldersContent.classList.remove('hidden');
+                loadAdminFolders();
+            } else if (tab === 'accounts') {
+                if (accountsTab) accountsTab.className = 'px-6 py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 transition-colors';
+                if (accountsContent) accountsContent.classList.remove('hidden');
+                loadAccountsForAdmin();
+            } else if (tab === 'settings') {
+                if (settingsTab) settingsTab.className = 'px-6 py-3 font-semibold text-indigo-600 border-b-2 border-indigo-600 transition-colors';
+                if (settingsContent) settingsContent.classList.remove('hidden');
+                loadAdminSettings(); // Load settings when tab is opened
+            }
+        }
 
         // Custom Alert Modal
         function showAlert(title, message, type = 'info') {
@@ -1823,6 +1977,17 @@
                                         GLOBAL_ACCESS_PASSWORD = savedPassword;
                                     }
                                 }
+                                // Load ad banner URL
+                                if (firestoreData.adBannerUrl !== undefined) {
+                                    AD_BANNER_URL = firestoreData.adBannerUrl || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
+                                    localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+                                } else {
+                                    // Fallback to localStorage
+                                    const savedBannerUrl = localStorage.getItem('trada_ad_banner_url');
+                                    if (savedBannerUrl) {
+                                        AD_BANNER_URL = savedBannerUrl;
+                                    }
+                                }
                                 // Cập nhật localStorage với dữ liệu mới nhất
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 return;
@@ -1860,6 +2025,11 @@
                     const savedPassword = localStorage.getItem('trada_global_password');
                     if (savedPassword) {
                         GLOBAL_ACCESS_PASSWORD = savedPassword;
+                    }
+                    // Load ad banner URL from localStorage
+                    const savedBannerUrl = localStorage.getItem('trada_ad_banner_url');
+                    if (savedBannerUrl) {
+                        AD_BANNER_URL = savedBannerUrl;
                     }
                     // Upload lên Firestore nếu chưa có (cho admin hoặc nếu Firestore trống)
                     if (window.firebaseDb && isAdmin()) {
@@ -1913,9 +2083,14 @@
                                 if (firestoreData.globalAccessPassword !== undefined) {
                                     GLOBAL_ACCESS_PASSWORD = firestoreData.globalAccessPassword || '';
                                 }
+                                // Load ad banner URL nếu có
+                                if (firestoreData.adBannerUrl !== undefined) {
+                                    AD_BANNER_URL = firestoreData.adBannerUrl || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
+                                }
                                 // Cập nhật localStorage
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
+                                localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                                 // Refresh UI
                                 if (currentFolderIndex === -1) {
                                     showFolders();
@@ -2000,6 +2175,132 @@
                 const original = btnElement.innerHTML;
                 btnElement.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
                 setTimeout(() => btnElement.innerHTML = original, 1000);
+            }
+        }
+
+        // Advertisement Banner Functions
+        function showAdBanner(index) {
+            pendingFolderIndex = index;
+            const adBannerModal = document.getElementById('adBannerModal');
+            const adBannerImage = document.getElementById('adBannerImage');
+            const adBannerSkipBtn = document.getElementById('adBannerSkipBtn');
+
+            // Set banner image
+            adBannerImage.src = AD_BANNER_URL;
+
+            // Show modal
+            adBannerModal.classList.remove('hidden');
+            adBannerModal.classList.add('flex');
+
+            // Setup countdown
+            let timeLeft = isAdmin() ? 0 : 3;
+
+            if (timeLeft > 0) {
+                adBannerSkipBtn.disabled = true;
+                adBannerSkipBtn.className = "bg-gray-200 text-gray-500 font-medium py-2 px-6 rounded-lg transition-all cursor-not-allowed text-sm";
+                adBannerSkipBtn.textContent = `Vui lòng chờ ${timeLeft}s...`;
+            } else {
+                adBannerSkipBtn.disabled = false;
+                adBannerSkipBtn.className = "bg-gray-300 text-gray-600 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition-all text-sm";
+                adBannerSkipBtn.textContent = "Bỏ qua";
+            }
+
+            // Clear existing timer
+            if (adBannerTimer) clearInterval(adBannerTimer);
+
+            // Start countdown
+            if (timeLeft > 0) {
+                adBannerTimer = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft > 0) {
+                        adBannerSkipBtn.textContent = `Vui lòng chờ ${timeLeft}s...`;
+                    } else {
+                        clearInterval(adBannerTimer);
+                        adBannerSkipBtn.disabled = false;
+                        adBannerSkipBtn.className = "bg-gray-300 text-gray-600 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition-all text-sm";
+                        adBannerSkipBtn.textContent = "Bỏ qua";
+                    }
+                }, 1000);
+            }
+        }
+
+        function closeAdBanner() {
+            const adBannerModal = document.getElementById('adBannerModal');
+            adBannerModal.classList.add('hidden');
+            adBannerModal.classList.remove('flex');
+            if (adBannerTimer) {
+                clearInterval(adBannerTimer);
+                adBannerTimer = null;
+            }
+            pendingFolderIndex = -1;
+        }
+
+        function confirmAdBanner() {
+            closeAdBanner();
+            if (pendingFolderIndex !== -1) {
+                continueAfterAdBanner(pendingFolderIndex);
+            }
+        }
+
+        function continueAfterAdBanner(index) {
+            const folder = DATA[index];
+
+            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
+            if (folder.maintenance && !isAdmin()) {
+                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
+                pendingFolderIndex = -1;
+                return;
+            }
+
+            // Kiểm tra nếu có mã bảo mật chung và người dùng không phải admin
+            if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin()) {
+                openPasswordModal(index);
+                return;
+            }
+
+            showDisclaimer(index);
+        }
+
+        // Password Modal Functions
+        function openPasswordModal(index) {
+            pendingFolderIndex = index;
+            const passwordModal = document.getElementById('passwordModal');
+            const modalPasswordInput = document.getElementById('modalPasswordInput');
+            const modalLoginError = document.getElementById('modalLoginError');
+
+            modalPasswordInput.value = '';
+            modalLoginError.classList.add('hidden');
+            passwordModal.classList.remove('hidden');
+            passwordModal.classList.add('flex');
+            modalPasswordInput.focus();
+        }
+
+        function closePasswordModal() {
+            const passwordModal = document.getElementById('passwordModal');
+            passwordModal.classList.add('hidden');
+            passwordModal.classList.remove('flex');
+            pendingFolderIndex = -1;
+        }
+
+        function checkModalPassword() {
+            const modalPasswordInput = document.getElementById('modalPasswordInput');
+            const modalLoginError = document.getElementById('modalLoginError');
+            const password = modalPasswordInput.value.trim();
+
+            if (password === GLOBAL_ACCESS_PASSWORD) {
+                closePasswordModal();
+                if (pendingFolderIndex !== -1) {
+                    showDisclaimer(pendingFolderIndex);
+                }
+            } else {
+                modalLoginError.classList.remove('hidden');
+            }
+        }
+
+        function checkModalAutoLogin() {
+            const modalPasswordInput = document.getElementById('modalPasswordInput');
+            if (modalPasswordInput.value.length === 4) {
+                checkModalPassword();
             }
         }
 
@@ -2153,7 +2454,7 @@
                 }
 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-3 card flex items-center gap-3 group text-gray-800`;
+                btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
 
                 if (folder.maintenance && !isAdmin()) {
                     btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
@@ -2178,19 +2479,20 @@
 
                 let subtitle = folder.maintenance ? "Đang bảo trì" :
                     (folder.type === 'popup' ? "Xem nội dung" :
-                        (folder.type === 'link' ? "Truy cập ngay" :
-                            `${folder.accounts.length} tài khoản`));
-                let iconBgClass = "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
-                let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-bold shadow-sm tracking-wide inline-block mb-1 badge-animate">MIỄN PHÍ</span>`;
+                        (folder.type === 'link' ? "Truy cập ngay" : ""));
+                let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+                let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">MIỄN PHÍ</span>`;
 
                 btn.innerHTML = `
                     <div class="${iconBgClass}">${folder.icon}</div>
-                    <div class="flex-1 min-w-0">
-                        ${badge}
-                        <div class="font-bold text-gray-800 text-sm group-hover:text-indigo-700 break-words">${folder.name}</div>
-                        <div class="text-[10px] text-gray-500 font-medium break-words">${subtitle}</div>
+                    <div class="flex-1 min-w-0 mr-2">
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
+                            ${badge}
+                        </div>
+                        ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
                     </div>
-                    <svg class="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 `;
 
                 // Add to appropriate container
@@ -2267,22 +2569,8 @@
         }
 
         function tryOpenFolder(index) {
-            pendingFolderIndex = index; const folder = DATA[index];
-
-            // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
-            if (folder.maintenance && !isAdmin()) {
-                showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
-                pendingFolderIndex = -1;
-                return;
-            }
-
-            // Kiểm tra nếu có mã bảo mật chung và người dùng không phải admin
-            if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin()) {
-                openPasswordModal(index);
-                return;
-            }
-
-            showDisclaimer(index);
+            // Show ad banner first
+            showAdBanner(index);
         }
 
         function confirmDisclaimer() {
@@ -2305,13 +2593,13 @@
             if (introSection) introSection.classList.add('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
-            
+
             // Ẩn các section trang chủ
             const accountCategoriesSection = document.getElementById('accountCategoriesSection');
             const popupCategoriesSection = document.getElementById('popupCategoriesSection');
             if (accountCategoriesSection) accountCategoriesSection.classList.add('hidden');
             if (popupCategoriesSection) popupCategoriesSection.classList.add('hidden');
-            
+
             listTitle.textContent = `DANH SÁCH TÀI KHOẢN`; headerSubtitle.textContent = folder.name;
 
             if (lastUpdateLabel) lastUpdateLabel.classList.add('hidden');
@@ -2692,8 +2980,8 @@
                 settingsContent.classList.remove('hidden');
                 settingsTab.classList.add('text-indigo-600', 'border-b-2', 'border-indigo-600');
                 settingsTab.classList.remove('text-gray-500');
-                // Load current password
-                document.getElementById('globalAccessPasswordInput').value = GLOBAL_ACCESS_PASSWORD || '';
+                // Load admin settings
+                loadAdminSettings();
             }
         }
 
@@ -2762,6 +3050,50 @@
                 }
             } else {
                 showAlert("Thành công", "Đã lưu mã bảo mật chung vào localStorage!", 'success');
+            }
+        }
+
+        // Save Ad Banner URL
+        function saveAdBannerUrl() {
+            const urlInput = document.getElementById('adBannerUrlInput');
+            const url = urlInput.value.trim();
+
+            AD_BANNER_URL = url || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
+            localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+
+            // Save to Firestore if available
+            if (window.firebaseDb && window.firebaseDoc && window.firebaseUpdateDoc) {
+                try {
+                    const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
+                    window.firebaseUpdateDoc(dataRef, {
+                        adBannerUrl: AD_BANNER_URL
+                    }).then(() => {
+                        showAlert("Thành công", "Đã lưu link banner quảng cáo!", 'success');
+                    }).catch((error) => {
+                        console.error("Error saving ad banner URL:", error);
+                        showAlert("Lỗi", "Không thể lưu link banner lên Firestore, đã lưu vào localStorage", 'warning');
+                    });
+                } catch (error) {
+                    console.error("Error saving ad banner URL:", error);
+                    showAlert("Lỗi", "Không thể lưu link banner lên Firestore, đã lưu vào localStorage", 'warning');
+                }
+            } else {
+                showAlert("Thành công", "Đã lưu link banner quảng cáo vào localStorage!", 'success');
+            }
+        }
+
+        // Load Admin Settings
+        function loadAdminSettings() {
+            // Load global password
+            const globalPasswordInput = document.getElementById('globalAccessPasswordInput');
+            if (globalPasswordInput) {
+                globalPasswordInput.value = GLOBAL_ACCESS_PASSWORD || '';
+            }
+
+            // Load ad banner URL
+            const adBannerUrlInput = document.getElementById('adBannerUrlInput');
+            if (adBannerUrlInput) {
+                adBannerUrlInput.value = AD_BANNER_URL || '';
             }
         }
 
