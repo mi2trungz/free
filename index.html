@@ -12,7 +12,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAnalytics } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js';
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58",
@@ -40,6 +40,7 @@
         window.firebaseSetDoc = setDoc;
         window.firebaseGetDoc = getDoc;
         window.firebaseOnSnapshot = onSnapshot;
+        window.firebaseUpdateDoc = updateDoc;
     </script>
     <style>
         .hidden {
@@ -369,15 +370,15 @@
     <!-- MODAL BANNER QUẢNG CÁO -->
     <div id="adBannerModal"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden relative">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
             <button onclick="closeAdBanner(); pendingFolderIndex = -1;"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-6 text-center">
+            <div class="p-5 text-center">
                 <div class="mb-6">
                     <p class="text-lg font-semibold text-indigo-600 mb-4">
                         Huhu cho shop xin phép quảng cáo xíu để duy trì dự án 🥺
@@ -1914,6 +1915,7 @@
                 // Lưu vào localStorage như backup
                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
+                localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                 console.log('Saved to localStorage');
 
                 // Lưu vào Firestore để đồng bộ cho tất cả người dùng
@@ -1923,6 +1925,7 @@
                         await window.firebaseSetDoc(dataRef, {
                             data: DATA,
                             globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
+                            adBannerUrl: AD_BANNER_URL,
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
                         console.log('Saved to Firestore successfully');
@@ -3071,7 +3074,7 @@
                     window.firebaseUpdateDoc(dataRef, {
                         adBannerUrl: AD_BANNER_URL
                     }).then(() => {
-                        showAlert("Thành công", "Đã lưu link banner quảng cáo!", 'success');
+                        showAlert("Thành công", "Đã lưu link banner quảng cáo lên Firestore!\n\nTất cả người dùng sẽ thấy banner mới trong vài giây.", 'success');
                     }).catch((error) => {
                         console.error("Error saving ad banner URL:", error);
                         showAlert("Lỗi", "Không thể lưu link banner lên Firestore, đã lưu vào localStorage", 'warning');
