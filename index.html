@@ -195,6 +195,55 @@
             animation: bannerBreathe 3s ease-in-out infinite;
         }
 
+        /* Fanpage Block Animations */
+        @keyframes subtleShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-1px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(1px);
+            }
+        }
+
+        @keyframes gentleBounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        .fanpage-block {
+            animation: subtleShake 3s ease-in-out infinite;
+        }
+
+        .fanpage-icon {
+            animation: gentleBounce 2s ease-in-out infinite;
+        }
+
+        .fanpage-block:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+
         @keyframes pulseSlow {
 
             0%,
@@ -316,7 +365,7 @@
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-4 md:p-6 lg:p-8">
+<body class="min-h-screen flex items-center justify-center p-2 md:p-3 lg:p-4">
 
     <!-- MODAL NHẬP MẬT KHẨU -->
     <div id="passwordModal"
@@ -633,17 +682,19 @@
 
     <!-- MODAL QUẢN LÝ ADMIN -->
     <div id="adminModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden relative my-8">
-            <button onclick="closeAdminModal()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-
-            <div class="bg-gradient-to-r from-red-600 to-pink-600 px-6 py-4">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+            <!-- Sticky Header with Close Button -->
+            <div class="sticky top-0 z-20 bg-gradient-to-r from-red-600 to-pink-600 px-6 py-4">
+                <button onclick="closeAdminModal()"
+                    class="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
                 <h3 class="text-xl font-bold text-white flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -654,7 +705,8 @@
                 </h3>
             </div>
 
-            <div class="p-6">
+            <!-- Scrollable Content Area -->
+            <div class="p-6 overflow-y-auto flex-1">
                 <!-- Tab Navigation -->
                 <div class="flex border-b border-gray-200 mb-6">
                     <button id="adminFoldersTab" onclick="switchAdminTab('folders')"
@@ -741,6 +793,40 @@
                             Lưu link banner
                         </button>
                     </div>
+
+                    <!-- Section Descriptions Settings -->
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-3">Mô tả các section</label>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Dịch vụ miễn phí</label>
+                                <input type="text" id="accountSectionDescInput"
+                                    class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                                    placeholder="VD: Tài khoản premium các ứng dụng phổ biến">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Nhận quà miễn phí</label>
+                                <input type="text" id="popupSectionDescInput"
+                                    class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none text-sm"
+                                    placeholder="VD: Nhận ngay các phần quà hấp dẫn">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Dịch vụ trả phí</label>
+                                <input type="text" id="premiumSectionDescInput"
+                                    class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
+                                    placeholder="VD: Các dịch vụ cao cấp với mức giá ưu đãi">
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-gray-500 mt-3">Mô tả sẽ hiển thị dưới tiêu đề mỗi section</p>
+                        <button onclick="saveSectionDescriptions()"
+                            class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
+                            Lưu mô tả sections
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -748,17 +834,23 @@
 
     <!-- MODAL THÊM/SỬA DANH MỤC -->
     <div id="folderEditModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden relative my-8">
-            <button onclick="closeFolderEditModal()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="p-6 max-h-[85vh] overflow-y-auto">
-                <h3 id="folderEditTitle" class="text-xl font-bold text-gray-800 mb-4">Thêm danh mục mới</h3>
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+            <!-- Sticky Header with Close Button -->
+            <div class="sticky top-0 z-20 bg-white px-6 pt-6 pb-2 border-b border-gray-200">
+                <button onclick="closeFolderEditModal()"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <h3 id="folderEditTitle" class="text-xl font-bold text-gray-800 mb-2">Thêm danh mục mới</h3>
+            </div>
+            <!-- Scrollable Content -->
+            <div class="p-6 overflow-y-auto flex-1">
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tên danh mục</label>
@@ -800,7 +892,26 @@
                                         chỉnh khi click</span>
                                 </label>
                             </div>
+                            <div class="flex items-start gap-2">
+                                <input type="radio" id="folderTypePremiumInput" name="folderType" value="premium"
+                                    class="w-4 h-4 text-orange-600 mt-0.5" onchange="toggleFolderTypeFields()">
+                                <label for="folderTypePremiumInput" class="text-sm text-gray-700">
+                                    <span class="font-semibold">Dịch vụ trả phí</span>
+                                    <span class="block text-xs text-gray-500 mt-0.5">Hiển thị popup với badge PRO màu
+                                        cam</span>
+                                </label>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Giá (chỉ hiện khi chọn loại premium) -->
+                    <div id="folderPriceSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Giá hiển thị</label>
+                        <input type="text" id="folderPriceInput"
+                            class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none text-sm"
+                            placeholder="VD: CHỈ TỪ 3K, 5K/THÁNG, ...">
+                        <p class="text-xs text-gray-500 mt-1">Văn bản hiển thị dưới tên danh mục (thay vì "Dịch vụ trả
+                            phí")</p>
                     </div>
 
                     <!-- Nội dung popup (chỉ hiện khi chọn loại popup) -->
@@ -829,6 +940,31 @@
                                 <button type="button" onclick="formatPopupText('underline')"
                                     class="p-2 hover:bg-gray-200 rounded transition-colors" title="Gạch chân">
                                     <span class="text-sm underline">U</span>
+                                </button>
+                                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                                <button type="button" onclick="formatPopupText('justifyLeft')"
+                                    class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn trái">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 6h16M4 12h10M4 18h16" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatPopupText('justifyCenter')"
+                                    class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn giữa">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 6h16M7 12h10M4 18h16" />
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="formatPopupText('justifyRight')"
+                                    class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn phải">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 6h16M10 12h10M4 18h16" />
+                                    </svg>
                                 </button>
                                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
                                 <button type="button" onclick="formatPopupText('foreColor', '#ef4444')"
@@ -1374,9 +1510,9 @@
 
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp"
-        class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-4 my-6 relative z-10">
+        class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-2 my-3 relative z-10">
         <div
-            class="px-5 py-6 md:px-8 md:py-8 relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
+            class="px-5 py-4 md:px-8 md:py-5 relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
             <div
                 class="absolute top-3 right-3 md:top-6 md:right-6 flex items-center gap-1.5 md:gap-3 z-50 flex-wrap justify-end max-w-[calc(100%-2rem)]">
                 <button id="headerLoginBtn" onclick="openAuthModal()"
@@ -1439,34 +1575,60 @@
                 <div id="extraHeaderContent" class="hidden mb-5"></div>
 
                 <!-- DANH MỤC TÀI KHOẢN -->
-                <div id="accountCategoriesSection">
-                    <div id="accountListTitle" class="flex items-center gap-2 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-600" fill="none"
+                <div id="accountCategoriesSection"
+                    class="bg-indigo-50/30 border-2 border-indigo-100 rounded-2xl p-5 mb-6">
+                    <div id="accountListTitle" class="flex items-center gap-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <span class="text-sm font-bold text-indigo-600 uppercase tracking-wider">Chia
-                            sẻ tài khoản miễn phí</span>
+                        <span class="text-base font-bold text-indigo-600 uppercase tracking-wider">Dịch vụ miễn
+                            phí</span>
                     </div>
+                    <p id="accountSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Tài khoản premium các
+                        ứng dụng
+                        phổ biến</p>
                     <div id="accountListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in pb-2">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
                     </div>
                 </div>
 
                 <!-- DANH MỤC POPUP NỘI DUNG -->
-                <div id="popupCategoriesSection" class="mt-8">
-                    <div id="popupListTitle" class="flex items-center gap-2 mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-pink-600" fill="none"
+                <div id="popupCategoriesSection" class="bg-pink-50/30 border-2 border-pink-100 rounded-2xl p-5 mb-6">
+                    <div id="popupListTitle" class="flex items-center gap-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-600" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                         </svg>
-                        <span class="text-sm font-bold text-pink-600 uppercase tracking-wider">Nhận
+                        <span class="text-base font-bold text-pink-600 uppercase tracking-wider">Nhận
                             quà miễn phí</span>
                     </div>
+                    <p id="popupSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Nhận ngay các phần quà
+                        hấp dẫn</p>
                     <div id="popupListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in pb-2">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
+                    </div>
+                </div>
+
+                <!-- DANH MỤC DỊCH VỤ TRẢ PHÍ -->
+                <div id="premiumCategoriesSection"
+                    class="bg-orange-50/30 border-2 border-orange-100 rounded-2xl p-5 mb-6">
+                    <div id="premiumListTitle" class="flex items-center gap-2 mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span class="text-base font-bold text-orange-600 uppercase tracking-wider">Dịch vụ trả
+                            phí</span>
+                    </div>
+                    <p id="premiumSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Các dịch vụ cao cấp
+                        với mức giá
+                        ưu đãi</p>
+                    <div id="premiumListContainer"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
                     </div>
                 </div>
 
@@ -1510,6 +1672,9 @@
         const ADMIN_EMAIL = 'cungbocap306@gmail.com';
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
+        let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ miễn phí
+        let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà miễn phí
+        let PREMIUM_SECTION_DESC = 'Các dịch vụ cao cấp với mức giá ưu đãi'; // Mô tả section dịch vụ trả phí
         let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
         let editingAccountIndex = -1;
@@ -1916,6 +2081,9 @@
                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+                localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
+                localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
+                localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
                 console.log('Saved to localStorage');
 
                 // Lưu vào Firestore để đồng bộ cho tất cả người dùng
@@ -1926,6 +2094,9 @@
                             data: DATA,
                             globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
                             adBannerUrl: AD_BANNER_URL,
+                            accountSectionDesc: ACCOUNT_SECTION_DESC,
+                            popupSectionDesc: POPUP_SECTION_DESC,
+                            premiumSectionDesc: PREMIUM_SECTION_DESC,
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
                         console.log('Saved to Firestore successfully');
@@ -1991,6 +2162,30 @@
                                         AD_BANNER_URL = savedBannerUrl;
                                     }
                                 }
+                                // Load section descriptions
+                                if (firestoreData.accountSectionDesc !== undefined) {
+                                    ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
+                                    localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
+                                } else {
+                                    const saved = localStorage.getItem('trada_account_section_desc');
+                                    if (saved) ACCOUNT_SECTION_DESC = saved;
+                                }
+                                if (firestoreData.popupSectionDesc !== undefined) {
+                                    POPUP_SECTION_DESC = firestoreData.popupSectionDesc || 'Nhận ngay các phần quà hấp dẫn';
+                                    localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
+                                } else {
+                                    const saved = localStorage.getItem('trada_popup_section_desc');
+                                    if (saved) POPUP_SECTION_DESC = saved;
+                                }
+                                if (firestoreData.premiumSectionDesc !== undefined) {
+                                    PREMIUM_SECTION_DESC = firestoreData.premiumSectionDesc || 'Các dịch vụ cao cấp với mức giá ưu đãi';
+                                    localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
+                                } else {
+                                    const saved = localStorage.getItem('trada_premium_section_desc');
+                                    if (saved) PREMIUM_SECTION_DESC = saved;
+                                }
+                                // Update UI with loaded descriptions
+                                updateSectionDescriptions();
                                 // Cập nhật localStorage với dữ liệu mới nhất
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 return;
@@ -2090,10 +2285,25 @@
                                 if (firestoreData.adBannerUrl !== undefined) {
                                     AD_BANNER_URL = firestoreData.adBannerUrl || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
                                 }
+                                // Load section descriptions
+                                if (firestoreData.accountSectionDesc !== undefined) {
+                                    ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
+                                }
+                                if (firestoreData.popupSectionDesc !== undefined) {
+                                    POPUP_SECTION_DESC = firestoreData.popupSectionDesc || 'Nhận ngay các phần quà hấp dẫn';
+                                }
+                                if (firestoreData.premiumSectionDesc !== undefined) {
+                                    PREMIUM_SECTION_DESC = firestoreData.premiumSectionDesc || 'Các dịch vụ cao cấp với mức giá ưu đãi';
+                                }
                                 // Cập nhật localStorage
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
                                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+                                localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
+                                localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
+                                localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
+                                // Update UI with loaded descriptions
+                                updateSectionDescriptions();
                                 // Refresh UI
                                 if (currentFolderIndex === -1) {
                                     showFolders();
@@ -2439,19 +2649,23 @@
                 listContainer.classList.add('hidden');
             }
 
-            // Get containers for account and popup categories
+            // Get containers for all category types
             const accountListContainer = document.getElementById('accountListContainer');
             const popupListContainer = document.getElementById('popupListContainer');
+            const premiumListContainer = document.getElementById('premiumListContainer');
             const accountCategoriesSection = document.getElementById('accountCategoriesSection');
             const popupCategoriesSection = document.getElementById('popupCategoriesSection');
+            const premiumCategoriesSection = document.getElementById('premiumCategoriesSection');
 
-            // Clear both containers
+            // Clear all containers
             if (accountListContainer) accountListContainer.innerHTML = '';
             if (popupListContainer) popupListContainer.innerHTML = '';
+            if (premiumListContainer) premiumListContainer.innerHTML = '';
 
             // Track if we have any items in each category
             let hasAccountCategories = false;
             let hasPopupCategories = false;
+            let hasPremiumCategories = false;
 
             DATA.forEach((folder, index) => {
                 // Bỏ qua danh mục bị ẩn (trừ khi là admin)
@@ -2472,6 +2686,12 @@
                     btn.classList.add('bg-gradient-to-br', 'from-purple-50', 'to-pink-50');
                     hasPopupCategories = true;
                 }
+                else if (folder.type === 'premium') {
+                    // Danh mục loại premium - hiển thị popup nội dung với badge PRO
+                    btn.onclick = () => openCustomContentModal(index);
+                    btn.classList.add('bg-gradient-to-br', 'from-orange-50', 'to-amber-50');
+                    hasPremiumCategories = true;
+                }
                 else if (folder.type === 'link') {
                     btn.onclick = () => window.open(folder.url, '_blank');
                     btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50');
@@ -2485,9 +2705,14 @@
 
                 let subtitle = folder.maintenance ? "Đang bảo trì" :
                     (folder.type === 'popup' ? "Xem nội dung" :
-                        (folder.type === 'link' ? "Truy cập ngay" : ""));
+                        (folder.type === 'premium' ? (folder.price || "") :
+                            (folder.type === 'link' ? "Truy cập ngay" : "")));
                 let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
-                let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">MIỄN PHÍ</span>`;
+
+                // Badge: MIỄN PHÍ (xanh) cho popup/accounts, PRO (cam) cho premium
+                let badge = folder.type === 'premium'
+                    ? `<span class="bg-gradient-to-r from-orange-400 to-amber-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">PRO</span>`
+                    : `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">MIỄN PHÍ</span>`;
 
                 btn.innerHTML = `
                     <div class="${iconBgClass}">${folder.icon}</div>
@@ -2496,7 +2721,16 @@
                             <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
                             ${badge}
                         </div>
-                        ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
+                        ${subtitle ? (folder.type === 'premium' && folder.price ?
+                        `<div class="flex items-center gap-1 mt-0.5">
+                                <svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                                </svg>
+                                <div class="text-[10px] font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">${subtitle}</div>
+                            </div>`
+                        : `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>`)
+                        : ''}
                     </div>
                     <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 `;
@@ -2504,6 +2738,8 @@
                 // Add to appropriate container
                 if (folder.type === 'popup') {
                     if (popupListContainer) popupListContainer.appendChild(btn);
+                } else if (folder.type === 'premium') {
+                    if (premiumListContainer) premiumListContainer.appendChild(btn);
                 } else {
                     if (accountListContainer) accountListContainer.appendChild(btn);
                 }
@@ -2526,6 +2762,15 @@
                     popupCategoriesSection.style.display = 'none';
                 }
             }
+            if (premiumCategoriesSection) {
+                if (hasPremiumCategories) {
+                    premiumCategoriesSection.style.display = 'block';
+                    premiumCategoriesSection.classList.remove('hidden');
+                } else {
+                    premiumCategoriesSection.style.display = 'none';
+                }
+            }
+
         }
 
         function showDisclaimer(index) {
@@ -2603,8 +2848,10 @@
             // Ẩn các section trang chủ
             const accountCategoriesSection = document.getElementById('accountCategoriesSection');
             const popupCategoriesSection = document.getElementById('popupCategoriesSection');
+            const premiumCategoriesSection = document.getElementById('premiumCategoriesSection');
             if (accountCategoriesSection) accountCategoriesSection.classList.add('hidden');
             if (popupCategoriesSection) popupCategoriesSection.classList.add('hidden');
+            if (premiumCategoriesSection) premiumCategoriesSection.classList.add('hidden');
 
             listTitle.textContent = `DANH SÁCH TÀI KHOẢN`; headerSubtitle.textContent = folder.name;
 
@@ -2844,10 +3091,11 @@
 
         function toggleFolderTypeFields() {
             const isPopupType = document.getElementById('folderTypePopupInput').checked;
+            const isPremiumType = document.getElementById('folderTypePremiumInput').checked;
             const popupContentSection = document.getElementById('folderPopupContentSection');
 
             if (popupContentSection) {
-                if (isPopupType) {
+                if (isPopupType || isPremiumType) {
                     popupContentSection.classList.remove('hidden');
                 } else {
                     popupContentSection.classList.add('hidden');
@@ -2998,6 +3246,9 @@
             DATA.forEach((folder, index) => {
                 const div = document.createElement('div');
                 const hiddenClass = folder.hidden ? 'opacity-60' : '';
+                const isFirst = index === 0;
+                const isLast = index === DATA.length - 1;
+
                 div.className = `flex items-center justify-between p-4 card mb-3 ${hiddenClass}`;
                 div.innerHTML = `
                         <div class="flex items-center gap-3 flex-1">
@@ -3008,17 +3259,35 @@
                             <div class="font-bold text-gray-800 flex items-center gap-2">
                                 ${folder.name}
                                 ${folder.type === 'popup' ? '<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popup</span>' : ''}
+                                ${folder.type === 'premium' ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Premium</span>' : ''}
+                                ${!folder.type || folder.type === 'accounts' ? '<span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Accounts</span>' : ''}
                                 ${folder.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Đã ẩn</span>' : ''}
                             </div>
                             <div class="text-xs text-gray-500 font-mono mt-0.5">
                                 ID: ${folder.id} | 
-                                ${folder.type === 'popup' ? 'Nội dung popup' : `${folder.accounts ? folder.accounts.length : 0} tài khoản`}
+                                ${folder.type === 'popup' || folder.type === 'premium' ? 'Nội dung popup' : `${folder.accounts ? folder.accounts.length : 0} tài khoản`}
                             </div>
                             ${folder.adminNote ? `<div class="text-xs text-indigo-600 mt-1 italic">📝 ${folder.adminNote}</div>` : ''}
                         </div>
                         ${folder.maintenance ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Bảo trì</span>' : ''}
                     </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 items-center">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="moveFolderUp(${index})" ${isFirst ? 'disabled' : ''} 
+                                    class="p-1 rounded ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'} transition-colors" 
+                                    title="Di chuyển lên">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                    </svg>
+                                </button>
+                                <button onclick="moveFolderDown(${index})" ${isLast ? 'disabled' : ''} 
+                                    class="p-1 rounded ${isLast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'} transition-colors" 
+                                    title="Di chuyển xuống">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
                             <button onclick="editFolder(${index})" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors">
                                 Sửa
                             </button>
@@ -3029,6 +3298,55 @@
                     `;
                 list.appendChild(div);
             });
+        }
+
+        // Move folder up in order
+        function moveFolderUp(index) {
+            if (index <= 0) return; // Already at top
+            // Swap with previous item
+            [DATA[index - 1], DATA[index]] = [DATA[index], DATA[index - 1]];
+            saveDataToStorage();
+            loadAdminFolders();
+            showFolders();
+        }
+
+        // Move folder down in order
+        function moveFolderDown(index) {
+            if (index >= DATA.length - 1) return; // Already at bottom
+            // Swap with next item
+            [DATA[index], DATA[index + 1]] = [DATA[index + 1], DATA[index]];
+            saveDataToStorage();
+            loadAdminFolders();
+            showFolders();
+        }
+
+        // Move account up in order
+        function moveAccountUp(folderIndex, accountIndex) {
+            if (accountIndex <= 0) return; // Already at top
+            const accounts = DATA[folderIndex].accounts;
+            if (!accounts) return;
+            // Swap with previous item
+            [accounts[accountIndex - 1], accounts[accountIndex]] = [accounts[accountIndex], accounts[accountIndex - 1]];
+            saveDataToStorage();
+            loadAccountsForAdmin();
+            // Update folder view if currently viewing this folder
+            if (currentFolderIndex === folderIndex) {
+                actuallyOpenFolder(folderIndex);
+            }
+        }
+
+        // Move account down in order
+        function moveAccountDown(folderIndex, accountIndex) {
+            const accounts = DATA[folderIndex].accounts;
+            if (!accounts || accountIndex >= accounts.length - 1) return; // Already at bottom
+            // Swap with next item
+            [accounts[accountIndex], accounts[accountIndex + 1]] = [accounts[accountIndex + 1], accounts[accountIndex]];
+            saveDataToStorage();
+            loadAccountsForAdmin();
+            // Update folder view if currently viewing this folder
+            if (currentFolderIndex === folderIndex) {
+                actuallyOpenFolder(folderIndex);
+            }
         }
 
         function saveGlobalPassword() {
@@ -3088,6 +3406,58 @@
             }
         }
 
+        // Save Section Descriptions
+        function saveSectionDescriptions() {
+            const accountDesc = document.getElementById('accountSectionDescInput').value.trim();
+            const popupDesc = document.getElementById('popupSectionDescInput').value.trim();
+            const premiumDesc = document.getElementById('premiumSectionDescInput').value.trim();
+
+            ACCOUNT_SECTION_DESC = accountDesc || 'Tài khoản premium các ứng dụng phổ biến';
+            POPUP_SECTION_DESC = popupDesc || 'Nhận ngay các phần quà hấp dẫn';
+            PREMIUM_SECTION_DESC = premiumDesc || 'Các dịch vụ cao cấp với mức giá ưu đãi';
+
+            // Lưu vào localStorage
+            localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
+            localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
+            localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
+
+            // Cập nhật UI ngay lập tức
+            updateSectionDescriptions();
+
+            // Lưu vào Firestore
+            if (window.firebaseDb && window.firebaseDoc && window.firebaseUpdateDoc) {
+                try {
+                    const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
+                    window.firebaseUpdateDoc(dataRef, {
+                        accountSectionDesc: ACCOUNT_SECTION_DESC,
+                        popupSectionDesc: POPUP_SECTION_DESC,
+                        premiumSectionDesc: PREMIUM_SECTION_DESC
+                    }).then(() => {
+                        showAlert("Thành công", "Đã lưu mô tả sections lên Firestore!\n\nTất cả người dùng sẽ thấy mô tả mới trong vài giây.", 'success');
+                    }).catch((error) => {
+                        console.error("Error saving section descriptions:", error);
+                        showAlert("Lỗi", "Không thể lưu mô tả lên Firestore, đã lưu vào localStorage", 'warning');
+                    });
+                } catch (error) {
+                    console.error("Error saving section descriptions:", error);
+                    showAlert("Lỗi", "Không thể lưu mô tả lên Firestore, đã lưu vào localStorage", 'warning');
+                }
+            } else {
+                showAlert("Thành công", "Đã lưu mô tả sections vào localStorage!", 'success');
+            }
+        }
+
+        // Update section descriptions in UI
+        function updateSectionDescriptions() {
+            const accountDescEl = document.getElementById('accountSectionDesc');
+            const popupDescEl = document.getElementById('popupSectionDesc');
+            const premiumDescEl = document.getElementById('premiumSectionDesc');
+
+            if (accountDescEl) accountDescEl.textContent = ACCOUNT_SECTION_DESC;
+            if (popupDescEl) popupDescEl.textContent = POPUP_SECTION_DESC;
+            if (premiumDescEl) premiumDescEl.textContent = PREMIUM_SECTION_DESC;
+        }
+
         // Load Admin Settings
         function loadAdminSettings() {
             // Load global password
@@ -3101,6 +3471,15 @@
             if (adBannerUrlInput) {
                 adBannerUrlInput.value = AD_BANNER_URL || '';
             }
+
+            // Load section descriptions
+            const accountDescInput = document.getElementById('accountSectionDescInput');
+            const popupDescInput = document.getElementById('popupSectionDescInput');
+            const premiumDescInput = document.getElementById('premiumSectionDescInput');
+
+            if (accountDescInput) accountDescInput.value = ACCOUNT_SECTION_DESC || '';
+            if (popupDescInput) popupDescInput.value = POPUP_SECTION_DESC || '';
+            if (premiumDescInput) premiumDescInput.value = PREMIUM_SECTION_DESC || '';
         }
 
         function openAddFolderModal() {
@@ -3131,6 +3510,21 @@
             document.getElementById('folderEditModal').classList.add('flex');
         }
 
+        // Toggle visibility of folder type-specific fields
+        function toggleFolderTypeFields() {
+            const popupSection = document.getElementById('folderPopupContentSection');
+            const priceSection = document.getElementById('folderPriceSection');
+            const isPopup = document.getElementById('folderTypePopupInput')?.checked;
+            const isPremium = document.getElementById('folderTypePremiumInput')?.checked;
+
+            if (popupSection) {
+                popupSection.classList.toggle('hidden', !isPopup && !isPremium);
+            }
+            if (priceSection) {
+                priceSection.classList.toggle('hidden', !isPremium);
+            }
+        }
+
         function editFolder(index) {
             editingFolderIndex = index;
             const folder = DATA[index];
@@ -3143,10 +3537,17 @@
             if (folder.type === 'popup') {
                 document.getElementById('folderTypePopupInput').checked = true;
                 document.getElementById('folderTypeAccountsInput').checked = false;
+                document.getElementById('folderTypePremiumInput').checked = false;
+                document.getElementById('folderPopupContentInput').innerHTML = folder.popupContent || '';
+            } else if (folder.type === 'premium') {
+                document.getElementById('folderTypePremiumInput').checked = true;
+                document.getElementById('folderTypeAccountsInput').checked = false;
+                document.getElementById('folderTypePopupInput').checked = false;
                 document.getElementById('folderPopupContentInput').innerHTML = folder.popupContent || '';
             } else {
                 document.getElementById('folderTypeAccountsInput').checked = true;
                 document.getElementById('folderTypePopupInput').checked = false;
+                document.getElementById('folderTypePremiumInput').checked = false;
                 document.getElementById('folderPopupContentInput').innerHTML = '';
             }
             toggleFolderTypeFields();
@@ -3164,6 +3565,9 @@
 
             // Load login guide
             document.getElementById('folderLoginGuideInput').innerHTML = folder.loginGuide || '';
+
+            // Load price (for premium folders)
+            document.getElementById('folderPriceInput').value = folder.price || '';
 
             // Load admin note
             document.getElementById('folderNoteInput').value = folder.adminNote || '';
@@ -3187,7 +3591,15 @@
             const name = document.getElementById('folderNameInput').value.trim();
             const id = document.getElementById('folderIdInput').value.trim();
             let iconUrl = document.getElementById('folderIconInput').value.trim();
-            const folderType = document.getElementById('folderTypePopupInput').checked ? 'popup' : 'accounts';
+
+            // Determine folder type
+            let folderType = 'accounts';
+            if (document.getElementById('folderTypePopupInput').checked) {
+                folderType = 'popup';
+            } else if (document.getElementById('folderTypePremiumInput').checked) {
+                folderType = 'premium';
+            }
+
             const popupContent = document.getElementById('folderPopupContentInput').innerHTML.trim();
             const skipDisclaimer = document.getElementById('folderSkipDisclaimerInput').checked;
             const maintenance = document.getElementById('folderMaintenanceInput').checked;
@@ -3195,6 +3607,7 @@
             const notesText = document.getElementById('folderNotesInput').value.trim();
             const categoryNotesText = document.getElementById('folderCategoryNotesInput').value.trim();
             const loginGuideText = document.getElementById('folderLoginGuideInput').innerHTML.trim();
+            const priceText = document.getElementById('folderPriceInput').value.trim();
             const adminNoteText = isAdmin() ? document.getElementById('folderNoteInput').value.trim() : '';
             const errorEl = document.getElementById('folderEditError');
 
@@ -3204,8 +3617,8 @@
                 return;
             }
 
-            // Kiểm tra nếu là loại popup thì phải có nội dung
-            if (folderType === 'popup' && !popupContent) {
+            // Kiểm tra nếu là loại popup hoặc premium thì phải có nội dung
+            if ((folderType === 'popup' || folderType === 'premium') && !popupContent) {
                 errorEl.textContent = 'Vui lòng nhập nội dung popup';
                 errorEl.classList.remove('hidden');
                 return;
@@ -3242,8 +3655,11 @@
                 };
 
                 // Thêm field tùy theo loại danh mục
-                if (folderType === 'popup') {
+                if (folderType === 'popup' || folderType === 'premium') {
                     newFolder.popupContent = popupContent;
+                    if (folderType === 'premium') {
+                        newFolder.price = priceText;
+                    }
                 } else {
                     newFolder.accounts = [];
                 }
@@ -3264,17 +3680,23 @@
                 DATA[editingFolderIndex].adminNote = adminNoteText;
 
                 // Cập nhật field tùy theo loại danh mục
-                if (folderType === 'popup') {
+                if (folderType === 'popup' || folderType === 'premium') {
                     DATA[editingFolderIndex].popupContent = popupContent;
-                    // Xóa field accounts nếu chuyển từ accounts sang popup
+                    if (folderType === 'premium') {
+                        DATA[editingFolderIndex].price = priceText;
+                    } else {
+                        delete DATA[editingFolderIndex].price;
+                    }
+                    // Xóa field accounts nếu chuyển từ accounts sang popup/premium
                     delete DATA[editingFolderIndex].accounts;
                 } else {
                     // Đảm bảo có field accounts nếu là loại accounts
                     if (!DATA[editingFolderIndex].accounts) {
                         DATA[editingFolderIndex].accounts = [];
                     }
-                    // Xóa field popupContent nếu chuyển từ popup sang accounts
+                    // Xóa field popupContent và price nếu chuyển từ popup/premium sang accounts
                     delete DATA[editingFolderIndex].popupContent;
+                    delete DATA[editingFolderIndex].price;
                 }
             }
 
@@ -3386,6 +3808,9 @@
             folder.accounts.forEach((acc, accIndex) => {
                 const div = document.createElement('div');
                 const hiddenClass = acc.hidden ? 'opacity-60' : '';
+                const isFirst = accIndex === 0;
+                const isLast = accIndex === folder.accounts.length - 1;
+
                 div.className = `p-5 card mb-3 ${hiddenClass}`;
                 div.innerHTML = `
                     <div class="flex items-center justify-between mb-3">
@@ -3393,7 +3818,23 @@
                             ${acc.name}
                             ${acc.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Đã ẩn</span>' : ''}
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2 items-center">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="moveAccountUp(${selectedIndex}, ${accIndex})" ${isFirst ? 'disabled' : ''} 
+                                    class="p-1 rounded ${isFirst ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'} transition-colors" 
+                                    title="Di chuyển lên">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                    </svg>
+                                </button>
+                                <button onclick="moveAccountDown(${selectedIndex}, ${accIndex})" ${isLast ? 'disabled' : ''} 
+                                    class="p-1 rounded ${isLast ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'} transition-colors" 
+                                    title="Di chuyển xuống">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
                             <button onclick="editAccount(${selectedIndex}, ${accIndex})" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors">
                                 Sửa
                             </button>
@@ -3568,6 +4009,38 @@
                 adminFolderSelect.addEventListener('change', loadAccountsForAdmin);
             }
         });
+
+        // Insert Fanpage Block with animations
+        function insertFanpageBlock() {
+            const editor = document.getElementById('folderPopupContentInput');
+            if (!editor) {
+                console.error('Editor not found');
+                return;
+            }
+
+            const fanpageHTML = `
+                <a href="https://www.facebook.com/profile.php?id=61570933838011" target="_blank" style="text-decoration: none; display: block;">
+                    <div class="fanpage-block text-center p-6 rounded-2xl my-4 transition-all duration-300 cursor-pointer" style="border: 2px solid #3b82f6; background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 50%, #fae8ff 100%);">
+                        <p class="text-gray-600 text-xs font-bold uppercase tracking-wider mb-3">TRUY CẬP FANPAGE</p>
+                        <div class="flex items-center justify-center gap-3 mb-2">
+                            <svg class="fanpage-icon w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                            <span class="text-blue-600 font-bold text-lg">TRÀ ĐÁ 3K</span>
+                        </div>
+                        <p class="text-gray-500 text-xs font-medium">Click để mở Fanpage</p>
+                    </div>
+                </a>
+            `;
+
+            // Simply append to editor content
+            editor.innerHTML += fanpageHTML;
+
+            // Focus editor
+            editor.focus();
+
+            console.log('Fanpage block inserted');
+        }
 
         function initApp() {
             // Load data when app initializes (before login)
