@@ -2827,6 +2827,28 @@
         function actuallyOpenFolder(index) {
             const folder = DATA[index];
 
+            // Initialize all DOM elements with null checks
+            const navBar = document.getElementById('navBar');
+            const introSection = document.getElementById('introSection');
+            const listTitle = document.getElementById('listTitle');
+            const headerSubtitle = document.getElementById('headerSubtitle');
+            const lastUpdateLabel = document.getElementById('lastUpdateLabel');
+            const extraHeaderContent = document.getElementById('extraHeaderContent');
+            const listContainer = document.getElementById('listContainer');
+            const homeFooter = document.getElementById('homeFooter');
+
+            console.log('🚀 actuallyOpenFolder called for:', folder.name);
+            console.log('📋 DOM Elements check:', {
+                navBar: !!navBar,
+                introSection: !!introSection,
+                listTitle: !!listTitle,
+                headerSubtitle: !!headerSubtitle,
+                lastUpdateLabel: !!lastUpdateLabel,
+                extraHeaderContent: !!extraHeaderContent,
+                listContainer: !!listContainer,
+                homeFooter: !!homeFooter
+            });
+
             // Kiểm tra nếu folder đang bảo trì và người dùng không phải admin
             if (folder.maintenance && !isAdmin()) {
                 showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
@@ -2835,7 +2857,7 @@
             }
 
             currentFolderIndex = index; currentAccountIndex = -1;
-            navBar.classList.remove('hidden');
+            if (navBar) navBar.classList.remove('hidden');
             if (introSection) introSection.classList.add('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
@@ -2848,12 +2870,15 @@
             if (popupCategoriesSection) popupCategoriesSection.classList.add('hidden');
             if (premiumCategoriesSection) premiumCategoriesSection.classList.add('hidden');
 
-            listTitle.textContent = `DANH SÁCH TÀI KHOẢN`; headerSubtitle.textContent = folder.name;
+            if (listTitle) listTitle.textContent = `DANH SÁCH TÀI KHOẢN`;
+            if (headerSubtitle) headerSubtitle.textContent = folder.name;
 
             if (lastUpdateLabel) lastUpdateLabel.classList.add('hidden');
 
-            extraHeaderContent.innerHTML = '';
-            extraHeaderContent.classList.remove('hidden');
+            if (extraHeaderContent) {
+                extraHeaderContent.innerHTML = '';
+                extraHeaderContent.classList.remove('hidden');
+            }
 
             let extraHtml = ``;
 
@@ -2901,7 +2926,13 @@
             }
 
 
-            extraHeaderContent.innerHTML = extraHtml;
+            if (extraHeaderContent) extraHeaderContent.innerHTML = extraHtml;
+
+            if (!listContainer) {
+                console.error('❌ listContainer element not found!');
+                showAlert('Lỗi', 'Không tìm thấy container để hiển thị tài khoản. Vui lòng tải lại trang.', 'error');
+                return;
+            }
 
             listContainer.innerHTML = '';
             listContainer.innerHTML = '';
@@ -2917,9 +2948,72 @@
                 });
             }
 
+            // Debug logging
+            console.log('📊 actuallyOpenFolder - Folder:', folder.name);
+            console.log('📊 folder.accounts:', folder.accounts);
+            console.log('📊 accounts length:', folder.accounts ? folder.accounts.length : 'undefined');
+            console.log('📊 listContainer:', listContainer);
+
+            // Safety check: Ensure folder.accounts exists and is an array
+            if (!folder.accounts) {
+                console.error('❌ folder.accounts is undefined or null!');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = "col-span-full text-center py-12";
+                errorDiv.innerHTML = `
+                    <div class="text-red-400 mb-2">
+                        <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p class="text-red-500 font-medium">Lỗi: Danh mục không có dữ liệu tài khoản</p>
+                    <p class="text-xs text-gray-400 mt-2">Vui lòng liên hệ admin để kiểm tra</p>
+                `;
+                listContainer.appendChild(errorDiv);
+                return;
+            }
+
+            if (!Array.isArray(folder.accounts)) {
+                console.error('❌ folder.accounts is not an array!', typeof folder.accounts);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = "col-span-full text-center py-12";
+                errorDiv.innerHTML = `
+                    <div class="text-red-400 mb-2">
+                        <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <p class="text-red-500 font-medium">Lỗi: Dữ liệu tài khoản không hợp lệ</p>
+                    <p class="text-xs text-gray-400 mt-2">Vui lòng liên hệ admin để kiểm tra</p>
+                `;
+                listContainer.appendChild(errorDiv);
+                return;
+            }
+
+            if (folder.accounts.length === 0) {
+                console.warn('⚠️ folder.accounts is empty');
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = "col-span-full text-center py-12";
+                emptyDiv.innerHTML = `
+                    <div class="text-gray-400 mb-2">
+                        <svg class="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                    </div>
+                    <p class="text-gray-500 font-medium">Chưa có tài khoản nào trong danh mục này</p>
+                    ${isAdmin() ? '<p class="text-xs text-gray-400 mt-2">Bạn có thể thêm tài khoản mới bằng nút "Thêm tài khoản" ở trên</p>' : ''}
+                `;
+                listContainer.appendChild(emptyDiv);
+                return;
+            }
+
+            console.log('✅ Starting to render', folder.accounts.length, 'accounts');
+
             folder.accounts.forEach((acc, accIndex) => {
+                console.log(`  📝 Rendering account ${accIndex}:`, acc.name, 'hidden:', acc.hidden);
+
                 // Bỏ qua tài khoản bị ẩn (trừ khi là admin)
                 if (acc.hidden && !isAdmin()) {
+                    console.log(`  ⏭️ Skipping hidden account: ${acc.name}`);
                     return;
                 }
 
@@ -2945,7 +3039,11 @@
                     <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 `;
                 listContainer.appendChild(btn);
+                console.log(`  ✅ Added account button for: ${acc.name}`);
             });
+
+            console.log('✅ Finished rendering accounts. Total buttons in listContainer:', listContainer.children.length);
+
         }
 
         function selectAccount(accIndex) {
