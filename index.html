@@ -1578,7 +1578,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
-                        <span class="text-base font-bold text-indigo-600 uppercase tracking-wider">Dịch vụ miễn
+                        <span class="text-base font-bold text-indigo-600 uppercase tracking-wider">Dịch
+                            vụ miễn
                             phí</span>
                     </div>
                     <p id="accountSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Tài khoản premium các
@@ -1616,7 +1617,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span class="text-base font-bold text-orange-600 uppercase tracking-wider">Dịch vụ trả
+                        <span class="text-base font-bold text-orange-600 uppercase tracking-wider">Dịch
+                            vụ trả
                             phí</span>
                     </div>
                     <p id="premiumSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Các dịch vụ cao cấp
@@ -2246,6 +2248,33 @@
             }
         }
 
+        // DOM Elements - Khai báo trước để tránh lỗi "Cannot access before initialization"
+        const listContainer = document.getElementById('listContainer');
+        const listTitle = document.getElementById('listTitle');
+        const navBar = document.getElementById('navBar');
+        const currentFolderNameEl = document.getElementById('currentFolderName');
+        const headerSubtitle = document.getElementById('headerSubtitle');
+        const disclaimerModal = document.getElementById('disclaimerModal');
+        const disclaimerList = document.getElementById('disclaimerList');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const instructionModal = document.getElementById('instructionModal');
+        const homeFooter = document.getElementById('homeFooter');
+        const landingPage = document.getElementById('landingPage');
+        const extraHeaderContent = document.getElementById('extraHeaderContent');
+        const capcutGuideModal = document.getElementById('capcutGuideModal');
+        const capcutGuideTitle = document.getElementById('capcutGuideTitle');
+        const capcutGuideContent = document.getElementById('capcutGuideContent');
+        const lastUpdateLabel = document.getElementById('lastUpdateLabel');
+        const introSection = document.getElementById('introSection');
+        const passwordModal = document.getElementById('passwordModal');
+        const modalPasswordInput = document.getElementById('modalPasswordInput');
+        const modalLoginError = document.getElementById('modalLoginError');
+
+        let currentFolderIndex = -1;
+        let currentAccountIndex = -1;
+        let pendingFolderIndex = -1;
+        let disclaimerTimer = null;
+
         function setupDataListener() {
             // Hủy listener cũ nếu có
             if (dataListener) {
@@ -2331,33 +2360,6 @@
                 console.warn('⚠️ Firestore not available for real-time updates');
             }
         }
-
-        // DOM Elements
-        const listContainer = document.getElementById('listContainer');
-        const listTitle = document.getElementById('listTitle');
-        const navBar = document.getElementById('navBar');
-        const currentFolderNameEl = document.getElementById('currentFolderName');
-        const headerSubtitle = document.getElementById('headerSubtitle');
-        const disclaimerModal = document.getElementById('disclaimerModal');
-        const disclaimerList = document.getElementById('disclaimerList');
-        const confirmBtn = document.getElementById('confirmBtn');
-        const instructionModal = document.getElementById('instructionModal');
-        const homeFooter = document.getElementById('homeFooter');
-        const landingPage = document.getElementById('landingPage');
-        const extraHeaderContent = document.getElementById('extraHeaderContent');
-        const capcutGuideModal = document.getElementById('capcutGuideModal');
-        const capcutGuideTitle = document.getElementById('capcutGuideTitle');
-        const capcutGuideContent = document.getElementById('capcutGuideContent');
-        const lastUpdateLabel = document.getElementById('lastUpdateLabel');
-        const introSection = document.getElementById('introSection');
-        const passwordModal = document.getElementById('passwordModal');
-        const modalPasswordInput = document.getElementById('modalPasswordInput');
-        const modalLoginError = document.getElementById('modalLoginError');
-
-        let currentFolderIndex = -1;
-        let currentAccountIndex = -1;
-        let pendingFolderIndex = -1;
-        let disclaimerTimer = null;
 
         function startApp() {
             // This function is now handled by Firebase auth
@@ -2657,6 +2659,16 @@
             if (popupListContainer) popupListContainer.innerHTML = '';
             if (premiumListContainer) premiumListContainer.innerHTML = '';
 
+            // Restore premium section to original position (before listContainer)
+            // listContainer is already declared globally at the top
+            if (premiumCategoriesSection && listContainer && listContainer.parentElement) {
+                // Remove from current position
+                premiumCategoriesSection.remove();
+                // Insert before listContainer to restore original order
+                listContainer.parentElement.insertBefore(premiumCategoriesSection, listContainer);
+                console.log('✅ Restored premium section to original position');
+            }
+
             // Track if we have any items in each category
             let hasAccountCategories = false;
             let hasPopupCategories = false;
@@ -2862,13 +2874,11 @@
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
 
-            // Ẩn các section trang chủ
+            // Ẩn các section trang chủ (giữ lại section dịch vụ trả phí)
             const accountCategoriesSection = document.getElementById('accountCategoriesSection');
             const popupCategoriesSection = document.getElementById('popupCategoriesSection');
-            const premiumCategoriesSection = document.getElementById('premiumCategoriesSection');
             if (accountCategoriesSection) accountCategoriesSection.classList.add('hidden');
             if (popupCategoriesSection) popupCategoriesSection.classList.add('hidden');
-            if (premiumCategoriesSection) premiumCategoriesSection.classList.add('hidden');
 
             if (listTitle) listTitle.textContent = `DANH SÁCH TÀI KHOẢN`;
             if (headerSubtitle) headerSubtitle.textContent = folder.name;
@@ -2937,7 +2947,7 @@
             listContainer.innerHTML = '';
             listContainer.innerHTML = '';
             listContainer.classList.remove('hidden');
-            listContainer.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in pb-2";
+            listContainer.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in mb-8";
 
             if (folder.categoryNotes && folder.categoryNotes.length > 0) {
                 folder.categoryNotes.forEach(note => {
@@ -3043,6 +3053,19 @@
             });
 
             console.log('✅ Finished rendering accounts. Total buttons in listContainer:', listContainer.children.length);
+
+            // Di chuyển section "Dịch vụ trả phí" xuống dưới danh sách tài khoản
+            const premiumCategoriesSection = document.getElementById('premiumCategoriesSection');
+            if (premiumCategoriesSection && listContainer.parentElement) {
+                // Remove from current position
+                premiumCategoriesSection.remove();
+                // Append after listContainer
+                listContainer.parentElement.appendChild(premiumCategoriesSection);
+                // Make sure it's visible
+                premiumCategoriesSection.classList.remove('hidden');
+                premiumCategoriesSection.style.display = 'block';
+                console.log('✅ Moved premium section below accounts');
+            }
 
         }
 
