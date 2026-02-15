@@ -47,57 +47,91 @@
             display: none !important;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap');
 
         /* --- GLOBAL & BACKGROUND --- */
         body {
             font-family: 'Be Vietnam Pro', sans-serif;
-            /* Restored Font */
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
             color: #1f2937;
-            line-height: 1.6;
+            line-height: 1.7;
             min-height: 100vh;
             overflow-x: hidden;
             background-attachment: fixed;
+            letter-spacing: -0.01em;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         /* --- UTILITIES --- */
-        .glass,
-        .glass-heavy,
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .glass-heavy {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.2),
+                0 0 0 1px rgba(255, 255, 255, 0.2) inset,
+                0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
         .glass-dark {
-            background-color: #ffffff;
-            border: 1px solid #cbd5e1;
-            /* Darker border for visibility */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background: rgba(30, 30, 50, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         /* --- SCROLLBAR --- */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 10px;
+            height: 10px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+            border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #c7c7c7;
-            border-radius: 4px;
+            background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
+            border-radius: 10px;
+            border: 2px solid #f3f4f6;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
+            background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: linear-gradient(to bottom, #818cf8, #c084fc);
+            background: linear-gradient(135deg, #818cf8, #c084fc);
         }
 
-        /* --- ANIMATIONS --- */
+        /* --- ENHANCED ANIMATIONS --- */
         @keyframes fadeInScale {
             from {
                 opacity: 0;
-                transform: scale(0.95) translateY(10px);
+                transform: scale(0.92) translateY(20px);
             }
 
             to {
@@ -107,7 +141,7 @@
         }
 
         .fade-in {
-            animation: fadeInScale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: fadeInScale 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         @keyframes gentlePulse {
@@ -119,13 +153,32 @@
             }
 
             50% {
-                opacity: 0.9;
-                transform: scale(1.02);
+                opacity: 0.92;
+                transform: scale(1.03);
             }
         }
 
         .gentle-pulse {
-            animation: gentlePulse 2s ease-in-out infinite;
+            animation: gentlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .shimmer {
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(255, 255, 255, 0.4) 50%,
+                    transparent 100%);
+            background-size: 1000px 100%;
+            animation: shimmer 3s infinite;
         }
 
         /* Badge Animation */
@@ -138,8 +191,8 @@
             }
 
             50% {
-                transform: scale(1.05);
-                box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+                transform: scale(1.08);
+                box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
             }
         }
 
@@ -154,12 +207,13 @@
         }
 
         .badge-animate {
-            animation: badgePulse 2s ease-in-out infinite;
+            animation: badgePulse 2.5s ease-in-out infinite;
+            background: linear-gradient(135deg, #10b981, #34d399, #6ee7b7);
             background-size: 200% auto;
         }
 
         .badge-animate:hover {
-            animation: badgePulse 2s ease-in-out infinite, badgeShine 1.5s linear infinite;
+            animation: badgePulse 2.5s ease-in-out infinite, badgeShine 2s linear infinite;
         }
 
         /* Banner Animations */
@@ -167,16 +221,18 @@
 
             0%,
             100% {
-                box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3), 0 8px 10px -6px rgba(79, 70, 229, 0.3);
+                box-shadow: 0 10px 40px -5px rgba(99, 102, 241, 0.4),
+                    0 8px 16px -6px rgba(99, 102, 241, 0.3);
             }
 
             50% {
-                box-shadow: 0 20px 40px -5px rgba(79, 70, 229, 0.5), 0 15px 20px -6px rgba(79, 70, 229, 0.5);
+                box-shadow: 0 20px 60px -5px rgba(99, 102, 241, 0.6),
+                    0 15px 30px -6px rgba(99, 102, 241, 0.5);
             }
         }
 
         .banner-pulse {
-            animation: bannerPulse 2s ease-in-out infinite;
+            animation: bannerPulse 3s ease-in-out infinite;
         }
 
         @keyframes bannerBreathe {
@@ -187,12 +243,12 @@
             }
 
             50% {
-                transform: scale(1.05);
+                transform: scale(1.03);
             }
         }
 
         .banner-zoom {
-            animation: bannerBreathe 3s ease-in-out infinite;
+            animation: bannerBreathe 4s ease-in-out infinite;
         }
 
         /* Fanpage Block Animations */
@@ -208,14 +264,14 @@
             50%,
             70%,
             90% {
-                transform: translateX(-1px);
+                transform: translateX(-2px);
             }
 
             20%,
             40%,
             60%,
             80% {
-                transform: translateX(1px);
+                transform: translateX(2px);
             }
         }
 
@@ -227,21 +283,21 @@
             }
 
             50% {
-                transform: scale(1.02);
+                transform: scale(1.05);
             }
         }
 
         .fanpage-block {
-            animation: subtleShake 3s ease-in-out infinite;
+            animation: subtleShake 4s ease-in-out infinite;
         }
 
         .fanpage-icon {
-            animation: gentleBounce 2s ease-in-out infinite;
+            animation: gentleBounce 2.5s ease-in-out infinite;
         }
 
         .fanpage-block:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         }
 
         @keyframes pulseSlow {
@@ -252,13 +308,31 @@
             }
 
             50% {
-                opacity: 0.85;
+                opacity: 0.88;
             }
         }
 
         .animate-pulse-slow {
-            animation: pulseSlow 2s ease-in-out infinite;
+            animation: pulseSlow 3s ease-in-out infinite;
         }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+
 
         /* ContentEditable Placeholder */
         [contenteditable="true"]:empty:before {
@@ -271,75 +345,119 @@
             outline: none;
         }
 
-        /* --- COMPONENT STYLES --- */
+        /* --- ENHANCED COMPONENT STYLES --- */
 
-        /* Enhanced Cards for better visibility */
+        /* Modern Cards with Depth */
         .card {
-            background-color: #ffffff;
-            border-radius: 0.75rem;
-            border: 1px solid #cbd5e1;
-            /* Slate-300: Darker border */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            /* Stronger shadow */
-            transition: all 0.2s;
+            background: #ffffff;
+            border-radius: 1rem;
+            border: 2px solid rgba(203, 213, 225, 0.6);
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.12),
+                0 3px 6px -2px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #818cf8, #c084fc, #f472b6);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .card:hover {
-            border-color: #94a3b8;
-            /* Slate-400 */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15),
+                0 10px 10px -5px rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(139, 92, 246, 0.15) inset;
+            transform: translateY(-4px) scale(1.01);
         }
 
-        /* Buttons */
-        /* Buttons */
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Enhanced Buttons */
         .btn-primary {
-            background-color: #4f46e5;
-            /* indigo-600 */
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem;
             font-weight: 600;
-            padding: 0.5rem 1rem;
-            transition: background-color 0.2s;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3),
+                0 2px 4px -1px rgba(99, 102, 241, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
         }
 
         .btn-primary:hover {
-            background-color: #4338ca;
-            /* indigo-700 */
-            transform: none;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4),
+                0 4px 6px -2px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
         }
 
         /* Text Gradients */
         .text-gradient {
-            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-weight: 700;
         }
 
-        /* Input Fields */
-        /* Input Fields */
+        /* Enhanced Input Fields */
         .input-field {
             background-color: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .input-field:focus {
-            border-color: #4f46e5;
-            outline: 2px solid #e0e7ff;
+            border-color: #8b5cf6;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1),
+                0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
         }
 
         /* Header Specifics */
         .header-glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         /* Utilities */
@@ -348,7 +466,13 @@
         }
 
         .slide-up {
-            animation: fadeInScale 0.6s ease-out;
+            animation: fadeInScale 0.7s ease-out;
+        }
+
+        /* Enhanced Modal Backdrop */
+        .modal-backdrop {
+            backdrop-filter: blur(12px) saturate(150%);
+            background: rgba(0, 0, 0, 0.5);
         }
 
         @media (min-width: 768px) {
@@ -361,6 +485,37 @@
             #mainApp {
                 max-width: 1400px;
             }
+        }
+
+        /* Ripple Effect */
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .ripple:active::after {
+            width: 300px;
+            height: 300px;
         }
     </style>
 </head>
@@ -1511,12 +1666,11 @@
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp"
         class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-2 my-3 relative z-10">
-        <div
-            class="px-5 py-4 md:px-8 md:py-5 relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white">
+        <div class="px-5 py-6 md:px-8 md:py-8 relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
             <div
                 class="absolute top-3 right-3 md:top-6 md:right-6 flex items-center gap-1.5 md:gap-3 z-50 flex-wrap justify-end max-w-[calc(100%-2rem)]">
                 <button id="headerLoginBtn" onclick="openAuthModal()"
-                    class="text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-bold bg-white/20 hover:bg-white/30 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl transition-all backdrop-blur-sm border border-white/20">
+                    class="text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-bold bg-white/20 hover:bg-white/30 px-2 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl backdrop-blur-sm border border-white/30">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1525,7 +1679,7 @@
                     <span class="hidden sm:inline">Đăng nhập</span>
                 </button>
                 <button id="adminBtn" onclick="openAdminModal()"
-                    class="hidden text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold bg-white/20 hover:bg-white/30 px-2 md:px-3 py-1.5 rounded-lg border border-white/20">
+                    class="hidden text-white hover:text-white transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold bg-white/20 hover:bg-white/30 px-2 md:px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1534,7 +1688,7 @@
                     <span class="hidden sm:inline">Quản lý</span>
                 </button>
                 <button id="logoutBtn" onclick="handleLogout()"
-                    class="text-white hover:text-red-100 transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold hidden hover:bg-red-500/20 px-2 md:px-3 py-1.5 rounded-lg border border-white/20 bg-white/10">
+                    class="text-white hover:text-red-100 transition-colors flex items-center gap-1 md:gap-2 text-xs md:text-sm font-semibold hidden hover:bg-red-500/20 px-2 md:px-3 py-1.5 rounded-lg border border-white/30 bg-white/10 backdrop-blur-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1543,11 +1697,26 @@
                     <span class="hidden sm:inline">Đăng xuất</span>
                 </button>
             </div>
-            <h1
-                class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-center text-white mb-1 drop-shadow-md pt-10 md:pt-0">
-                TRADA3K.STORE</h1>
-            <p class="text-base md:text-lg lg:text-xl font-semibold text-center text-indigo-100 mb-2 drop-shadow-md">
-                Shop sinh viên, giá siêu sinh viên</p>
+
+            <div class="relative z-10 pt-10 md:pt-0">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-black text-center text-white tracking-tight mb-3"
+                    style="text-shadow: 2px 2px 0px rgba(0,0,0,0.2);">
+                    TRADA3K.STORE
+                </h1>
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <div
+                        class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-lg font-bold text-sm md:text-base transform -rotate-2 shadow-md">
+                        GIÁ SINH VIÊN
+                    </div>
+                    <div
+                        class="bg-red-500 text-white px-3 py-1 rounded-lg font-bold text-sm md:text-base transform rotate-2 shadow-md">
+                        RẺ VÔ ĐỊCH
+                    </div>
+                </div>
+                <p class="text-sm md:text-base text-center text-white/90 font-medium italic">
+                    Túi sinh viên cạn? Đến đây!
+                </p>
+            </div>
 
         </div>
 
@@ -1571,61 +1740,68 @@
 
                 <!-- DANH MỤC TÀI KHOẢN -->
                 <div id="accountCategoriesSection"
-                    class="bg-indigo-50/30 border-2 border-indigo-100 rounded-2xl p-5 mb-6">
-                    <div id="accountListTitle" class="flex items-center gap-2 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <span class="text-base font-bold text-indigo-600 uppercase tracking-wider">Dịch
-                            vụ miễn
-                            phí</span>
+                    class="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-50 border-2 border-indigo-200/50 rounded-3xl p-4 mb-4 shadow-lg shadow-indigo-100/50 hover:shadow-xl hover:shadow-indigo-200/50 transition-all duration-300">
+                    <div id="accountListTitle" class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-lg font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-wide">Dịch
+                            vụ miễn phí</span>
                     </div>
-                    <p id="accountSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Tài khoản premium các
-                        ứng dụng
-                        phổ biến</p>
+                    <p id="accountSectionDesc" class="text-base text-gray-700 font-semibold mb-3">Tài khoản premium các
+                        ứng dụng phổ biến</p>
                     <div id="accountListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 fade-in">
                     </div>
                 </div>
 
                 <!-- DANH MỤC POPUP NỘI DUNG -->
-                <div id="popupCategoriesSection" class="bg-pink-50/30 border-2 border-pink-100 rounded-2xl p-5 mb-6">
-                    <div id="popupListTitle" class="flex items-center gap-2 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                        </svg>
-                        <span class="text-base font-bold text-pink-600 uppercase tracking-wider">Nhận
+                <div id="popupCategoriesSection"
+                    class="bg-gradient-to-br from-pink-50 via-rose-50 to-pink-50 border-2 border-pink-200/50 rounded-3xl p-4 mb-4 shadow-lg shadow-pink-100/50 hover:shadow-xl hover:shadow-pink-200/50 transition-all duration-300">
+                    <div id="popupListTitle" class="flex items-center gap-3 mb-3">
+                        <div class="p-2 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                        </div>
+                        <span
+                            class="text-lg font-extrabold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent uppercase tracking-wide">Nhận
                             quà miễn phí</span>
                     </div>
-                    <p id="popupSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Nhận ngay các phần quà
+                    <p id="popupSectionDesc" class="text-base text-gray-700 font-semibold mb-3">Nhận ngay các phần quà
                         hấp dẫn</p>
                     <div id="popupListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 fade-in">
                     </div>
                 </div>
 
                 <!-- DANH MỤC DỊCH VỤ TRẢ PHÍ -->
                 <div id="premiumCategoriesSection"
-                    class="bg-orange-50/30 border-2 border-orange-100 rounded-2xl p-5 mb-6">
-                    <div id="premiumListTitle" class="flex items-center gap-2 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-orange-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span class="text-base font-bold text-orange-600 uppercase tracking-wider">Dịch
-                            vụ trả
-                            phí</span>
+                    class="bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50 border-2 border-orange-200/50 rounded-3xl p-6 mb-4 shadow-lg shadow-orange-100/50 hover:shadow-xl hover:shadow-orange-200/50 transition-all duration-300">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h2 id="premiumListTitle" class="text-xl font-bold text-orange-600 uppercase">
+                            DỊCH VỤ TRẢ PHÍ
+                        </h2>
                     </div>
-                    <p id="premiumSectionDesc" class="text-sm text-gray-700 font-medium mb-4 ml-7">Các dịch vụ cao cấp
-                        với mức giá
-                        ưu đãi</p>
+                    <p id="premiumSectionDesc" class="text-sm text-gray-600 font-semibold mb-5">
+                        Tài khoản xài riêng một mình, ngon lành, ổn định
+                    </p>
                     <div id="premiumListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 fade-in">
+                        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 fade-in">
                     </div>
                 </div>
 
@@ -2681,22 +2857,89 @@
                 }
 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
+
+                // Different card styles for premium vs other types
+                if (folder.type === 'premium') {
+                    // Premium, high-end card design
+                    btn.className = `w-full text-left rounded-2xl overflow-hidden bg-white border-2 border-gray-100 hover:border-orange-200 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group`;
+
+                    // Light, transparent backgrounds with subtle color tints
+                    const iconBgs = [
+                        'bg-gradient-to-br from-blue-50 to-indigo-50',
+                        'bg-gradient-to-br from-purple-50 to-violet-50',
+                        'bg-gradient-to-br from-pink-50 to-rose-50',
+                        'bg-gradient-to-br from-orange-50 to-amber-50',
+                        'bg-gradient-to-br from-emerald-50 to-teal-50',
+                        'bg-gradient-to-br from-cyan-50 to-sky-50'
+                    ];
+
+                    const iconColors = [
+                        'text-blue-600',
+                        'text-purple-600',
+                        'text-pink-600',
+                        'text-orange-600',
+                        'text-emerald-600',
+                        'text-cyan-600'
+                    ];
+
+                    let iconBg = iconBgs[index % iconBgs.length];
+                    let iconColor = iconColors[index % iconColors.length];
+
+                    btn.innerHTML = `
+                        <div class="p-4">
+                            <div class="flex items-start gap-3">
+                                <div class="${iconBg} ${iconColor} p-2 rounded-xl flex items-center justify-center w-16 h-16 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
+                                    <div class="text-6xl leading-none">${folder.icon}</div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                        <h3 class="text-gray-900 font-bold text-sm leading-tight flex-1">${folder.name}</h3>
+                                        <span class="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[8px] px-2 py-1 rounded-full font-bold tracking-wider flex-shrink-0 uppercase shadow-sm">Pro</span>
+                                    </div>
+                                    ${folder.price ? `
+                                        <div class="flex items-baseline gap-1.5">
+                                            <span class="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">${folder.price}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Original horizontal card style for non-premium items
+                    btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
+
+                    let subtitle = folder.maintenance ? "Đang bảo trì" :
+                        (folder.type === 'popup' ? "Xem nội dung" :
+                            (folder.type === 'link' ? "Truy cập ngay" : ""));
+                    let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+
+                    let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">MIỄN PHÍ</span>`;
+
+                    btn.innerHTML = `
+                        <div class="${iconBgClass}">${folder.icon}</div>
+                        <div class="flex-1 min-w-0 mr-2">
+                            <div class="flex items-center gap-2 mb-0.5">
+                                <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
+                                ${badge}
+                            </div>
+                            ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    `;
+                }
 
                 if (folder.maintenance && !isAdmin()) {
                     btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
                     btn.classList.add('opacity-60');
                 }
                 else if (folder.type === 'popup') {
-                    // Danh mục loại popup - hiển thị popup nội dung
                     btn.onclick = () => openCustomContentModal(index);
-                    btn.classList.add('bg-gradient-to-br', 'from-purple-50', 'to-pink-50');
+                    if (!folder.type === 'premium') btn.classList.add('bg-gradient-to-br', 'from-purple-50', 'to-pink-50');
                     hasPopupCategories = true;
                 }
                 else if (folder.type === 'premium') {
-                    // Danh mục loại premium - hiển thị popup nội dung với badge PRO
                     btn.onclick = () => openCustomContentModal(index);
-                    btn.classList.add('bg-gradient-to-br', 'from-orange-50', 'to-amber-50');
                     hasPremiumCategories = true;
                 }
                 else if (folder.type === 'link') {
@@ -2705,42 +2948,9 @@
                     hasAccountCategories = true;
                 }
                 else {
-                    // Danh mục loại accounts - mở danh sách tài khoản
                     btn.onclick = () => tryOpenFolder(index);
                     hasAccountCategories = true;
                 }
-
-                let subtitle = folder.maintenance ? "Đang bảo trì" :
-                    (folder.type === 'popup' ? "Xem nội dung" :
-                        (folder.type === 'premium' ? (folder.price || "") :
-                            (folder.type === 'link' ? "Truy cập ngay" : "")));
-                let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
-
-                // Badge: MIỄN PHÍ (xanh) cho popup/accounts, PRO (cam) cho premium
-                let badge = folder.type === 'premium'
-                    ? `<span class="bg-gradient-to-r from-orange-400 to-amber-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">PRO</span>`
-                    : `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">MIỄN PHÍ</span>`;
-
-                btn.innerHTML = `
-                    <div class="${iconBgClass}">${folder.icon}</div>
-                    <div class="flex-1 min-w-0 mr-2">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
-                            ${badge}
-                        </div>
-                        ${subtitle ? (folder.type === 'premium' && folder.price ?
-                        `<div class="flex items-center gap-1 mt-0.5">
-                                <svg class="w-3 h-3 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
-                                </svg>
-                                <div class="text-[10px] font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">${subtitle}</div>
-                            </div>`
-                        : `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>`)
-                        : ''}
-                    </div>
-                    <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                `;
 
                 // Add to appropriate container
                 if (folder.type === 'popup') {
