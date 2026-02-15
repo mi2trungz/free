@@ -2886,22 +2886,20 @@
                     let iconColor = iconColors[index % iconColors.length];
 
                     btn.innerHTML = `
-                        <div class="p-4">
-                            <div class="flex items-start gap-3">
-                                <div class="${iconBg} ${iconColor} p-2 rounded-xl flex items-center justify-center w-16 h-16 flex-shrink-0 group-hover:scale-105 transition-transform duration-300">
-                                    <div class="text-6xl leading-none">${folder.icon}</div>
+                        <div class="p-4 flex flex-col items-center text-center">
+                            <div class="${iconBg} ${iconColor} p-2 rounded-xl flex items-center justify-center w-16 h-16 mb-3 group-hover:scale-105 transition-transform duration-300">
+                                <div class="text-6xl leading-none">${folder.icon}</div>
+                            </div>
+                            <div class="w-full">
+                                <div class="flex items-center justify-center gap-2 mb-2">
+                                    <h3 class="text-gray-900 font-bold text-sm leading-tight">${folder.name}</h3>
+                                    <span class="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[8px] px-2 py-1 rounded-full font-bold tracking-wider uppercase shadow-sm">Pro</span>
                                 </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-start justify-between gap-2 mb-2">
-                                        <h3 class="text-gray-900 font-bold text-sm leading-tight flex-1">${folder.name}</h3>
-                                        <span class="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[8px] px-2 py-1 rounded-full font-bold tracking-wider flex-shrink-0 uppercase shadow-sm">Pro</span>
+                                ${folder.price ? `
+                                    <div class="flex items-baseline justify-center gap-1.5">
+                                        <span class="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">${folder.price}</span>
                                     </div>
-                                    ${folder.price ? `
-                                        <div class="flex items-baseline gap-1.5">
-                                            <span class="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">${folder.price}</span>
-                                        </div>
-                                    ` : ''}
-                                </div>
+                                ` : ''}
                             </div>
                         </div>
                     `;
