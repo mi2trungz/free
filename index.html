@@ -889,6 +889,21 @@
                         </button>
                     </div>
 
+                    <!-- Banner Quảng Cáo Popup (Welcome Ad) Settings -->
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Link banner quảng cáo (Popup lúc mới
+                            vào)</label>
+                        <input type="text" id="popupAdImageUrlInput"
+                            class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="https://... (URL hình ảnh banner popup)">
+                        <p class="text-xs text-gray-500 mt-2">Banner sẽ hiển thị khi người dùng mới vào trang (Welcome
+                            Ad)</p>
+                        <button onclick="savePopupAdImageUrl()"
+                            class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
+                            Lưu link banner
+                        </button>
+                    </div>
+
                     <!-- Section Descriptions Settings -->
                     <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
                         <label class="block text-sm font-bold text-gray-700 mb-3">Mô tả các section</label>
@@ -1533,8 +1548,8 @@
             class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden relative border-4 border-indigo-500">
             <div class="p-1">
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank" class="block w-full cursor-pointer">
-                    <img src="popupqc.png" alt="Quảng cáo"
-                        class="w-full h-auto rounded-2xl object-cover hover:scale-[1.02] transition-transform duration-300">
+                    <img id="welcomeAdImage" src="popupqc.png" alt="Quảng cáo"
+                        class="w-full max-w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition-transform duration-300">
                 </a>
             </div>
             <div class="p-4 bg-gray-50 flex flex-col gap-3">
@@ -1868,6 +1883,7 @@
         const ADMIN_EMAIL = 'cungbocap306@gmail.com';
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
+        let POPUP_AD_IMAGE_URL = 'popupqc.png'; // Link banner popup lúc mới vào
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
         let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà FREE
         let PREMIUM_SECTION_DESC = 'Các dịch vụ cao cấp với mức giá ưu đãi'; // Mô tả section dịch vụ VIP
@@ -2199,6 +2215,10 @@
                 // Always load data
                 loadDataFromStorage().then(() => {
                     setupDataListener();
+                    if (typeof hasShownWelcomeAdThisSession !== 'undefined' && !hasShownWelcomeAdThisSession) {
+                        hasShownWelcomeAdThisSession = true;
+                        showWelcomeAd();
+                    }
                     setTimeout(() => {
                         if (currentFolderIndex === -1) showFolders();
                     }, 100);
@@ -2277,6 +2297,7 @@
                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+                localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
@@ -2290,6 +2311,7 @@
                             data: DATA,
                             globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
                             adBannerUrl: AD_BANNER_URL,
+                            popupAdImageUrl: POPUP_AD_IMAGE_URL,
                             accountSectionDesc: ACCOUNT_SECTION_DESC,
                             popupSectionDesc: POPUP_SECTION_DESC,
                             premiumSectionDesc: PREMIUM_SECTION_DESC,
@@ -2358,6 +2380,16 @@
                                         AD_BANNER_URL = savedBannerUrl;
                                     }
                                 }
+                                // Load popup ad image URL
+                                if (firestoreData.popupAdImageUrl !== undefined) {
+                                    POPUP_AD_IMAGE_URL = firestoreData.popupAdImageUrl || 'popupqc.png';
+                                    localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+                                } else {
+                                    const savedPopupBanner = localStorage.getItem('trada_popup_ad_image_url');
+                                    if (savedPopupBanner) {
+                                        POPUP_AD_IMAGE_URL = savedPopupBanner;
+                                    }
+                                }
                                 // Load section descriptions
                                 if (firestoreData.accountSectionDesc !== undefined) {
                                     ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
@@ -2424,6 +2456,11 @@
                     const savedBannerUrl = localStorage.getItem('trada_ad_banner_url');
                     if (savedBannerUrl) {
                         AD_BANNER_URL = savedBannerUrl;
+                    }
+                    // Load popup ad image URL from localStorage
+                    const savedPopupBannerUrl = localStorage.getItem('trada_popup_ad_image_url');
+                    if (savedPopupBannerUrl) {
+                        POPUP_AD_IMAGE_URL = savedPopupBannerUrl;
                     }
                     // Upload lên Firestore nếu chưa có (cho admin hoặc nếu Firestore trống)
                     if (window.firebaseDb && isAdmin()) {
@@ -2508,6 +2545,10 @@
                                 if (firestoreData.adBannerUrl !== undefined) {
                                     AD_BANNER_URL = firestoreData.adBannerUrl || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
                                 }
+                                // Load popup ad banner URL nếu có
+                                if (firestoreData.popupAdImageUrl !== undefined) {
+                                    POPUP_AD_IMAGE_URL = firestoreData.popupAdImageUrl || 'popupqc.png';
+                                }
                                 // Load section descriptions
                                 if (firestoreData.accountSectionDesc !== undefined) {
                                     ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
@@ -2522,6 +2563,7 @@
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
                                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
+                                localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
                                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
@@ -3673,7 +3715,15 @@
         // Save Ad Banner URL
         function saveAdBannerUrl() {
             const urlInput = document.getElementById('adBannerUrlInput');
-            const url = urlInput.value.trim();
+            let url = urlInput.value.trim();
+
+            // Nếu người dùng paste HTML tag, tự động extract URL
+            if (url && url.includes('<img')) {
+                const match = url.match(/src=["']([^"']+)["']/i);
+                if (match && match[1]) {
+                    url = match[1];
+                }
+            }
 
             AD_BANNER_URL = url || 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg';
             localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
@@ -3696,6 +3746,43 @@
                 }
             } else {
                 showAlert("Thành công", "Đã lưu link banner quảng cáo vào localStorage!", 'success');
+            }
+        }
+
+        // Save Popup Ad Image URL
+        function savePopupAdImageUrl() {
+            const urlInput = document.getElementById('popupAdImageUrlInput');
+            let url = urlInput.value.trim();
+
+            // Nếu người dùng paste HTML tag, tự động extract URL
+            if (url && url.includes('<img')) {
+                const match = url.match(/src=["']([^"']+)["']/i);
+                if (match && match[1]) {
+                    url = match[1];
+                }
+            }
+
+            POPUP_AD_IMAGE_URL = url || 'popupqc.png';
+            localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+
+            // Save to Firestore if available
+            if (window.firebaseDb && window.firebaseDoc && window.firebaseUpdateDoc) {
+                try {
+                    const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
+                    window.firebaseUpdateDoc(dataRef, {
+                        popupAdImageUrl: POPUP_AD_IMAGE_URL
+                    }).then(() => {
+                        showAlert("Thành công", "Đã lưu link banner popup lên Firestore!\n\nTất cả người dùng sẽ thấy popup mới khi tải lại trang.", 'success');
+                    }).catch((error) => {
+                        console.error("Error saving popup ad banner URL:", error);
+                        showAlert("Lỗi", "Không thể lưu link banner popup lên Firestore, đã lưu vào localStorage", 'warning');
+                    });
+                } catch (error) {
+                    console.error("Error saving popup ad banner URL:", error);
+                    showAlert("Lỗi", "Không thể lưu link banner popup lên Firestore, đã lưu vào localStorage", 'warning');
+                }
+            } else {
+                showAlert("Thành công", "Đã lưu link banner popup vào localStorage!", 'success');
             }
         }
 
@@ -3763,6 +3850,12 @@
             const adBannerUrlInput = document.getElementById('adBannerUrlInput');
             if (adBannerUrlInput) {
                 adBannerUrlInput.value = AD_BANNER_URL || '';
+            }
+
+            // Load popup ad image URL
+            const popupAdImageUrlInput = document.getElementById('popupAdImageUrlInput');
+            if (popupAdImageUrlInput) {
+                popupAdImageUrlInput.value = POPUP_AD_IMAGE_URL || '';
             }
 
             // Load section descriptions
@@ -4336,12 +4429,30 @@
         }
 
         // Welcome Ad Logic
+        let hasShownWelcomeAdThisSession = false;
+
         function showWelcomeAd() {
             const hasSeenAd = localStorage.getItem('hasSeenWelcomeAd');
             const skipTime = hasSeenAd ? 2 : 4;
 
             const modal = document.getElementById('welcomeAdModal');
             const skipBtn = document.getElementById('welcomeAdSkipBtn');
+            const welcomeAdImage = document.getElementById('welcomeAdImage');
+
+            if (welcomeAdImage) {
+                let imgUrl = POPUP_AD_IMAGE_URL || 'popupqc.png';
+                // Kiểm tra xem imgUrl có phải là một thẻ HTML dán nhầm không
+                if (imgUrl.includes('<img')) {
+                    const match = imgUrl.match(/src=["']([^"']+)["']/i);
+                    if (match && match[1]) {
+                        imgUrl = match[1];
+                    } else {
+                        imgUrl = 'popupqc.png';
+                    }
+                }
+                welcomeAdImage.src = imgUrl;
+            }
+
             modal.classList.remove('hidden');
 
             let timeLeft = skipTime;
@@ -4369,14 +4480,14 @@
             localStorage.setItem('hasSeenWelcomeAd', 'true');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            showWelcomeAd();
-        });
-
         function initApp() {
             // Load data when app initializes (before login)
             loadDataFromStorage().then(() => {
                 console.log('Initial data loaded');
+                if (!hasShownWelcomeAdThisSession) {
+                    hasShownWelcomeAdThisSession = true;
+                    showWelcomeAd();
+                }
             });
             updateLoop();
             setInterval(updateLoop, 1000);
