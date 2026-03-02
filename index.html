@@ -556,51 +556,6 @@
         </div>
     </div>
 
-    <!-- MODAL BANNER QUẢNG CÁO -->
-    <div id="adBannerModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
-            <button onclick="closeAdBanner(); pendingFolderIndex = -1;"
-                class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            <div class="p-5 text-center">
-                <div class="mb-6">
-                    <p class="text-lg font-semibold text-indigo-600 mb-4">
-                        Huhu cho shop xin phép quảng cáo xíu để duy trì dự án 🥺
-                    </p>
-                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
-                        class="block rounded-xl overflow-hidden shadow-lg banner-pulse cursor-pointer">
-                        <img id="adBannerImage" src="" alt="Banner quảng cáo" class="w-full h-auto banner-zoom">
-                    </a>
-                </div>
-
-                <!-- Nút Truy cập Fanpage - Nổi bật -->
-                <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
-                    class="block w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 px-6 rounded-xl hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all shadow-2xl hover:shadow-blue-500/50 transform hover:scale-105 mb-3 text-lg animate-pulse-slow flex items-center justify-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path
-                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    <span>Truy cập Fanpage TRÀ ĐÁ 3K - MUA NGAY!</span>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </a>
-
-                <!-- Nút Bỏ qua - Thu nhỏ -->
-                <div class="flex justify-center">
-                    <button id="adBannerSkipBtn" onclick="confirmAdBanner()" disabled
-                        class="bg-gray-200 text-gray-500 font-medium py-2 px-6 rounded-lg transition-all cursor-not-allowed text-sm">
-                        Vui lòng chờ 3s...
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- MODAL LƯU Ý -->
     <div id="disclaimerModal"
@@ -940,14 +895,14 @@
 
                         <div class="space-y-3">
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Dịch vụ FREE</label>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Dịch vụ MIỄN PHÍ</label>
                                 <input type="text" id="accountSectionDescInput"
                                     class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                                     placeholder="VD: Tài khoản premium các ứng dụng phổ biến">
                             </div>
 
                             <div>
-                                <label class="block text-xs font-medium text-gray-600 mb-1">Nhận quà FREE</label>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Nhận quà MIỄN PHÍ</label>
                                 <input type="text" id="popupSectionDescInput"
                                     class="w-full px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none text-sm"
                                     placeholder="VD: Nhận ngay các phần quà hấp dẫn">
@@ -1571,6 +1526,30 @@
         </div>
     </div>
 
+    <!-- MODAL WELCOME QUẢNG CÁO -->
+    <div id="welcomeAdModal"
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 fade-in">
+        <div
+            class="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden relative border-4 border-indigo-500">
+            <div class="p-1">
+                <a href="https://www.facebook.com/trada3k.vn/" target="_blank" class="block w-full cursor-pointer">
+                    <img src="popupqc.png" alt="Quảng cáo"
+                        class="w-full h-auto rounded-2xl object-cover hover:scale-[1.02] transition-transform duration-300">
+                </a>
+            </div>
+            <div class="p-4 bg-gray-50 flex flex-col gap-3">
+                <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
+                    class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-xl text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all text-sm sm:text-base animate-pulse-slow">
+                    TRUY CẬP FANPAGE ĐỂ MUA NGAY
+                </a>
+                <button id="welcomeAdSkipBtn" onclick="closeWelcomeAd()" disabled
+                    class="w-full bg-gray-200 text-gray-500 font-bold py-3 rounded-xl transition-all cursor-not-allowed text-sm hover:bg-gray-300">
+                    BỎ QUA (4s)
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- LANDING PAGE (Disabled by default mechanism) -->
     <div id="landingPage" class="w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl fade-in hidden">
         <div class="glass rounded-2xl overflow-hidden">
@@ -1615,7 +1594,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M5 13l4 4L19 7" />
                             </svg>
-                            <span class="text-sm font-medium">100% FREE</span>
+                            <span class="text-sm font-medium">100% MIỄN PHÍ</span>
                         </div>
                         <div class="flex items-center gap-2 text-gray-700 bg-gray-50 px-4 py-2 rounded-lg">
                             <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24"
@@ -1810,7 +1789,7 @@
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                         </div>
-                        <span class="text-base font-bold text-gray-800 uppercase tracking-wide">Dịch vụ FREE</span>
+                        <span class="text-base font-bold text-gray-800 uppercase tracking-wide">Dịch vụ MIỄN PHÍ</span>
                         <span
                             class="ml-auto text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap flex-shrink-0">FREE</span>
                     </div>
@@ -1835,7 +1814,7 @@
                                     d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                             </svg>
                         </div>
-                        <span class="text-base font-bold text-gray-800 uppercase tracking-wide">Nhận quà FREE</span>
+                        <span class="text-base font-bold text-gray-800 uppercase tracking-wide">Nhận quà MIỄN PHÍ</span>
                         <span
                             class="ml-auto text-[10px] font-bold bg-violet-100 text-violet-700 px-2.5 py-0.5 rounded-full border border-violet-200 whitespace-nowrap flex-shrink-0">FREE</span>
                     </div>
@@ -2608,72 +2587,9 @@
             }
         }
 
-        // Advertisement Banner Functions
-        function showAdBanner(index) {
-            pendingFolderIndex = index;
-            const adBannerModal = document.getElementById('adBannerModal');
-            const adBannerImage = document.getElementById('adBannerImage');
-            const adBannerSkipBtn = document.getElementById('adBannerSkipBtn');
+        // (Old ad banner code removed)
 
-            // Set banner image
-            adBannerImage.src = AD_BANNER_URL;
 
-            // Show modal
-            adBannerModal.classList.remove('hidden');
-            adBannerModal.classList.add('flex');
-
-            // Setup countdown
-            let timeLeft = isAdmin() ? 0 : 3;
-
-            if (timeLeft > 0) {
-                adBannerSkipBtn.disabled = true;
-                adBannerSkipBtn.className = "bg-gray-200 text-gray-500 font-medium py-2 px-6 rounded-lg transition-all cursor-not-allowed text-sm";
-                adBannerSkipBtn.textContent = `Vui lòng chờ ${timeLeft}s...`;
-            } else {
-                adBannerSkipBtn.disabled = false;
-                adBannerSkipBtn.className = "bg-gray-300 text-gray-600 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition-all text-sm";
-                adBannerSkipBtn.textContent = "Bỏ qua";
-            }
-
-            // Clear existing timer
-            if (adBannerTimer) clearInterval(adBannerTimer);
-
-            // Start countdown
-            if (timeLeft > 0) {
-                adBannerTimer = setInterval(() => {
-                    timeLeft--;
-                    if (timeLeft > 0) {
-                        adBannerSkipBtn.textContent = `Vui lòng chờ ${timeLeft}s...`;
-                    } else {
-                        clearInterval(adBannerTimer);
-                        adBannerSkipBtn.disabled = false;
-                        adBannerSkipBtn.className = "bg-gray-300 text-gray-600 font-medium py-2 px-6 rounded-lg hover:bg-gray-400 transition-all text-sm";
-                        adBannerSkipBtn.textContent = "Bỏ qua";
-                    }
-                }, 1000);
-            }
-        }
-
-        function closeAdBanner() {
-            const adBannerModal = document.getElementById('adBannerModal');
-            adBannerModal.classList.add('hidden');
-            adBannerModal.classList.remove('flex');
-            if (adBannerTimer) {
-                clearInterval(adBannerTimer);
-                adBannerTimer = null;
-            }
-            // Don't reset pendingFolderIndex here - it's needed for the next step
-        }
-
-        function confirmAdBanner() {
-            if (pendingFolderIndex !== -1) {
-                const folderIndex = pendingFolderIndex;
-                closeAdBanner();
-                continueAfterAdBanner(folderIndex);
-            } else {
-                closeAdBanner();
-            }
-        }
 
         function continueAfterAdBanner(index) {
             const folder = DATA[index];
@@ -3083,8 +2999,9 @@
         }
 
         function tryOpenFolder(index) {
-            // Show ad banner first
-            showAdBanner(index);
+            // Directly check for password or disclaimer without showing ad banner
+            pendingFolderIndex = index;
+            continueAfterAdBanner(index);
         }
 
         function confirmDisclaimer() {
@@ -4417,6 +4334,44 @@
 
             console.log('Fanpage block inserted');
         }
+
+        // Welcome Ad Logic
+        function showWelcomeAd() {
+            const hasSeenAd = localStorage.getItem('hasSeenWelcomeAd');
+            const skipTime = hasSeenAd ? 2 : 4;
+
+            const modal = document.getElementById('welcomeAdModal');
+            const skipBtn = document.getElementById('welcomeAdSkipBtn');
+            modal.classList.remove('hidden');
+
+            let timeLeft = skipTime;
+            skipBtn.innerText = `BỎ QUA (${timeLeft}s)`;
+            skipBtn.disabled = true;
+            skipBtn.classList.add('cursor-not-allowed', 'bg-gray-200', 'text-gray-500');
+            skipBtn.classList.remove('bg-gray-100', 'text-gray-700');
+
+            const countdownInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    skipBtn.innerText = `BỎ QUA (${timeLeft}s)`;
+                } else {
+                    clearInterval(countdownInterval);
+                    skipBtn.innerText = 'BỎ QUA';
+                    skipBtn.disabled = false;
+                    skipBtn.classList.remove('cursor-not-allowed', 'bg-gray-200', 'text-gray-500');
+                    skipBtn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                }
+            }, 1000);
+        }
+
+        function closeWelcomeAd() {
+            document.getElementById('welcomeAdModal').classList.add('hidden');
+            localStorage.setItem('hasSeenWelcomeAd', 'true');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            showWelcomeAd();
+        });
 
         function initApp() {
             // Load data when app initializes (before login)
