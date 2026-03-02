@@ -301,6 +301,24 @@
             animation: pulseSlow 3s ease-in-out infinite;
         }
 
+        @keyframes ctaBounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+            }
+
+            50% {
+                transform: scale(1.03);
+                box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.5);
+            }
+        }
+
+        .animate-cta-bounce {
+            animation: ctaBounce 2s ease-in-out infinite;
+        }
+
         @keyframes float {
 
             0%,
@@ -628,7 +646,7 @@
                 <div class="space-y-4 text-sm text-gray-600 mt-4">
                     <p>Để nhận mật mã truy cập vào hệ thống, bạn vui lòng thực hiện các bước sau:</p>
                     <ol class="list-decimal pl-5 space-y-2 marker:text-indigo-600 marker:font-bold">
-                        <li>Nhắn tin vào Fanpage <strong>TRÀ ĐÁ 3K</strong>.</li>
+                        <li>Nhắn tin vào Fanpage <strong>TRÀ ĐÁ 3K</strong>. (Link bên dưới)</li>
                         <li>Nhắn chính xác cú pháp: <strong class="text-indigo-700">LAYMA</strong></li>
                         <li>Lấy mã và truy cập hệ thống.</li>
                     </ol>
@@ -642,7 +660,7 @@
                         <span>Lưu ý: Mã sẽ được thay đổi mỗi ngày.</span>
                     </div>
                     <a href="https://www.facebook.com/trada3k.vn" target="_blank"
-                        class="block bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-center mt-4 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all group cursor-pointer decoration-0 shadow-sm hover:shadow-md">
+                        class="block bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-center mt-4 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all group cursor-pointer decoration-0 shadow-sm hover:shadow-md animate-cta-bounce">
                         <p class="text-xs text-gray-600 uppercase font-semibold mb-2 tracking-wide">Truy cập Fanpage</p>
                         <div
                             class="text-blue-600 font-bold text-base group-hover:text-blue-700 flex items-center justify-center gap-2">
@@ -1549,12 +1567,12 @@
             <div class="p-1">
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank" class="block w-full cursor-pointer">
                     <img id="welcomeAdImage" src="popupqc.png" alt="Quảng cáo"
-                        class="w-full max-w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition-transform duration-300">
+                        class="w-full max-w-full h-auto rounded-xl object-cover hover:scale-[1.02] transition-transform duration-300 animate-cta-bounce">
                 </a>
             </div>
             <div class="p-4 bg-gray-50 flex flex-col gap-3">
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
-                    class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-xl text-center shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all text-sm sm:text-base animate-pulse-slow">
+                    class="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-extrabold py-4 rounded-xl text-center shadow-lg hover:shadow-xl transition-all text-sm sm:text-base animate-cta-bounce inline-block">
                     TRUY CẬP FANPAGE ĐỂ MUA NGAY
                 </a>
                 <button id="welcomeAdSkipBtn" onclick="closeWelcomeAd()" disabled
@@ -1645,39 +1663,142 @@
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp"
         class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-2 my-3 relative z-10">
-        <!-- Floating auth buttons (top-right, no header bar) -->
-        <div class="absolute top-3 right-3 md:top-4 md:right-5 flex items-center gap-1.5 z-50">
-            <button id="headerLoginBtn" onclick="openAuthModal()"
-                class="text-gray-500 hover:text-orange-600 transition-all flex items-center gap-1.5 text-xs font-semibold bg-white/90 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg border border-gray-200/80 hover:border-orange-200 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+        <!-- Floating auth buttons (bottom-right, small and blurred) -->
+        <div class="fixed bottom-4 right-4 md:bottom-6 md:right-6 flex items-center gap-2 z-[100]">
+            <button id="headerLoginBtn" onclick="openAuthModal()" title="Đăng nhập"
+                class="text-gray-500 hover:text-gray-800 transition-all flex items-center justify-center w-10 h-10 bg-white/40 hover:bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
                         d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                 </svg>
-                <span class="hidden sm:inline">Đăng nhập</span>
             </button>
-            <button id="adminBtn" onclick="openAdminModal()"
-                class="hidden text-gray-500 hover:text-orange-600 transition-all flex items-center gap-1.5 text-xs font-semibold bg-white/90 hover:bg-orange-50 px-2.5 py-1.5 rounded-lg border border-gray-200/80 hover:border-orange-200 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+            <button id="adminBtn" onclick="openAdminModal()" title="Quản lý"
+                class="hidden text-gray-500 hover:text-gray-800 transition-all flex items-center justify-center w-10 h-10 bg-white/40 hover:bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span class="hidden sm:inline">Quản lý</span>
             </button>
-            <button id="logoutBtn" onclick="handleLogout()"
-                class="hidden text-gray-500 hover:text-red-500 transition-all flex items-center gap-1.5 text-xs font-semibold bg-white/90 hover:bg-red-50 px-2.5 py-1.5 rounded-lg border border-gray-200/80 hover:border-red-200 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+            <button id="logoutBtn" onclick="handleLogout()" title="Đăng xuất"
+                class="hidden text-gray-500 hover:text-red-500 transition-all flex items-center justify-center w-10 h-10 bg-white/40 hover:bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                <span class="hidden sm:inline">Đăng xuất</span>
             </button>
         </div>
 
 
-        <div class="px-6 pt-6 pb-6 md:px-8 md:pt-8 md:pb-8 flex-1 flex flex-col">
+        <div class="px-6 pt-6 pb-6 md:px-8 md:pt-8 md:pb-8 flex-1 flex flex-col relative">
+
+            <!-- STICKY NAVBAR -->
+            <nav id="mainNavbar"
+                class="sticky top-0 z-[60] bg-white/80 backdrop-blur-md border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-2xl mb-6 px-4 py-3 flex items-center justify-between transition-all duration-300">
+                <!-- Brand -->
+                <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;"
+                    class="flex items-center font-black text-xl tracking-tighter hover:opacity-80 transition-opacity">
+                    <span class="text-gray-900">TRADA</span><span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">3K.STORE</span>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="![display:none] md:![display:flex] items-center gap-1 lg:gap-2">
+                    <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;"
+                        class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
+                        data-target="home">
+                        TRANG CHỦ
+                        <span
+                            class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
+                    </a>
+                    <a href="#free"
+                        class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
+                        data-target="free">
+                        DỊCH VỤ MIỄN PHÍ
+                        <span
+                            class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
+                    </a>
+                    <a href="#vip"
+                        class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
+                        data-target="vip">
+                        DỊCH VỤ VIP
+                        <span
+                            class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
+                    </a>
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
+                        class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center">
+                        LIÊN HỆ
+                        <span
+                            class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
+                    </a>
+                </div>
+
+                <!-- Mobile Hamburger Btn -->
+                <button id="mobileMenuBtn" onclick="toggleMobileMenu()"
+                    class="md:hidden text-gray-600 hover:text-emerald-600 p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/50 relative z-50">
+                    <svg id="hamburgerIcon" xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6 transition-transform duration-300" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+
+                <!-- Mobile Menu Dropdown -->
+                <div id="mobileMenuDropdown"
+                    class="md:hidden absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex-col origin-top transition-all duration-300 transform scale-95 opacity-0 invisible">
+                    <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); toggleMobileMenu(); return false;"
+                        class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
+                        data-target="home">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        TRANG CHỦ
+                        <span
+                            class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
+                    </a>
+                    <a href="#free" onclick="toggleMobileMenu()"
+                        class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
+                        data-target="free">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        DỊCH VỤ MIỄN PHÍ
+                        <span
+                            class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
+                    </a>
+                    <a href="#vip" onclick="toggleMobileMenu()"
+                        class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
+                        data-target="vip">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        DỊCH VỤ VIP
+                        <span
+                            class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
+                    </a>
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank" onclick="toggleMobileMenu()"
+                        class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 flex items-center gap-3 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        LIÊN HỆ
+                        <span
+                            class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
+                    </a>
+                </div>
+            </nav>
+
             <!-- Navbar -->
             <div id="navBar"
                 class="hidden flex items-center gap-2 mb-5 text-sm text-gray-600 bg-gray-50 px-4 py-2.5 rounded-lg">
@@ -1696,7 +1817,7 @@
                 <div id="extraHeaderContent" class="hidden mb-5"></div>
 
                 <!-- HERO BLOCK -->
-                <div id="heroBlock" class="text-center py-6 mb-5 relative">
+                <div id="heroBlock" class="text-center py-6 mb-5 relative scroll-mt-32">
                     <!-- Subtle radial glow behind headline -->
                     <div class="absolute inset-0 pointer-events-none"
                         style="background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(74,222,128,0.10) 0%, transparent 70%);">
@@ -1760,10 +1881,61 @@
                     </button>
                 </div>
 
+                <!-- INTRO STATS BLOCK -->
+                <div id="introStatsBlock">
+                    <!-- SOFT DIVIDER -->
+                    <div class="w-full flex justify-center my-6 md:my-8 px-4">
+                        <div
+                            class="h-px w-full max-w-2xl bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent">
+                        </div>
+                    </div>
+
+                    <!-- MINI STATS -->
+                    <div class="max-w-4xl mx-auto px-4 pb-6 md:pb-8">
+                        <div class="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+                            <!-- STAT 1 -->
+                            <div class="text-center group transition-transform duration-300 hover:scale-[1.02]">
+                                <div
+                                    class="text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-emerald-600 to-teal-600 mb-1 leading-none tracking-tight">
+                                    300+
+                                </div>
+                                <div
+                                    class="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                                    Sinh viên đang sử dụng
+                                </div>
+                            </div>
+
+                            <!-- STAT 2 -->
+                            <div class="text-center group transition-transform duration-300 hover:scale-[1.02]">
+                                <div
+                                    class="text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-600 to-purple-600 mb-1 leading-none tracking-tight">
+                                    20+
+                                </div>
+                                <div
+                                    class="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                                    Dịch vụ premium
+                                </div>
+                            </div>
+
+                            <!-- STAT 3 -->
+                            <div class="text-center group transition-transform duration-300 hover:scale-[1.02]">
+                                <div
+                                    class="text-3xl lg:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-amber-500 mb-1 leading-none tracking-tight">
+                                    99%
+                                </div>
+                                <div
+                                    class="text-[11px] lg:text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                                    Phản hồi tích cực
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- DANH MỤC DỊCH VỤ VIP (lên đầu) -->
+                <div id="vip" class="scroll-mt-24 w-full h-px"></div>
                 <div id="premiumCategoriesSection"
-                    class="relative bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 border-2 border-orange-300/80 rounded-2xl p-3 sm:p-5 mb-5 shadow-lg shadow-orange-200/60 hover:shadow-xl hover:shadow-orange-300/60 transition-all duration-300"
+                    class="relative bg-gradient-to-br from-orange-100 via-amber-50 to-yellow-100 border-2 border-orange-300/80 rounded-2xl p-3 sm:p-5 mt-8 md:mt-10 lg:mt-14 shadow-lg shadow-orange-200/60 hover:shadow-xl hover:shadow-orange-300/60 transition-all duration-300"
                     style="box-shadow: 0 4px 20px rgba(251,146,60,0.18), 0 1px 4px rgba(251,146,60,0.10);">
                     <!-- Badge VIP góc trên phải container -->
                     <span
@@ -1792,9 +1964,12 @@
                     </div>
                 </div>
 
+
+
                 <!-- DANH MỤC TÀI KHOẢN -->
+                <div id="free" class="scroll-mt-24 w-full h-px"></div>
                 <div id="accountCategoriesSection"
-                    class="border border-emerald-200/70 rounded-2xl p-4 mb-4 shadow-sm hover:shadow-md transition-all duration-300"
+                    class="border border-emerald-200/70 rounded-2xl p-4 mt-8 md:mt-10 lg:mt-14 shadow-sm hover:shadow-md transition-all duration-300"
                     style="background: linear-gradient(135deg, rgba(209,250,229,0.45) 0%, rgba(255,255,255,0.98) 55%);">
                     <div id="accountListTitle" class="flex items-center gap-2.5 mb-3">
                         <div class="p-1.5 bg-emerald-100 rounded-lg">
@@ -1819,7 +1994,7 @@
 
                 <!-- DANH MỤC POPUP NỘI DUNG -->
                 <div id="popupCategoriesSection"
-                    class="border border-violet-200/70 rounded-2xl p-4 mb-4 shadow-sm hover:shadow-md transition-all duration-300"
+                    class="border border-violet-200/70 rounded-2xl p-4 mt-8 md:mt-10 lg:mt-14 shadow-sm hover:shadow-md transition-all duration-300"
                     style="background: linear-gradient(135deg, rgba(237,233,254,0.50) 0%, rgba(255,255,255,0.98) 55%);">
                     <div id="popupListTitle" class="flex items-center gap-2.5 mb-3">
                         <div class="p-1.5 bg-violet-100 rounded-lg">
@@ -1842,10 +2017,89 @@
                     </div>
                 </div>
 
-
                 <!-- Legacy container for backward compatibility (hidden) -->
                 <div id="listContainer" class="hidden"></div>
                 <div id="listTitle" class="hidden"></div>
+
+                <!-- TẠI SAO NÊN CHỌN TRADA3K.STORE -->
+                <div id="whyChooseUsSection" class="mt-8 md:mt-12 lg:mt-16 mb-4">
+                    <div class="text-center mb-6 md:mb-8">
+                        <h2 class="text-xl md:text-2xl font-black text-gray-800 tracking-tight uppercase">
+                            Tại sao nên chọn <span
+                                class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">TRADA3K.STORE?</span>
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+                        <!-- Feature 1 -->
+                        <div
+                            class="group bg-white/70 backdrop-blur-sm border border-emerald-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-bold text-gray-800 mb-2">Giá sinh viên thật sự</h3>
+                            <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                                Cam kết mức giá dễ tiếp cận, phù hợp với học sinh – sinh viên.
+                            </p>
+                        </div>
+
+                        <!-- Feature 2 -->
+                        <div
+                            class="group bg-white/70 backdrop-blur-sm border border-emerald-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-teal-500 group-hover:text-white transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-bold text-gray-800 mb-2">Cập nhật liên tục</h3>
+                            <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                                Tài khoản được kiểm tra và làm mới thường xuyên.
+                            </p>
+                        </div>
+
+                        <!-- Feature 3 -->
+                        <div
+                            class="group bg-white/70 backdrop-blur-sm border border-emerald-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-bold text-gray-800 mb-2">Hỗ trợ nhanh chóng</h3>
+                            <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                                Liên hệ fanpage để được hỗ trợ nhanh nhất khi có vấn đề.
+                            </p>
+                        </div>
+
+                        <!-- Feature 4 -->
+                        <div
+                            class="group bg-white/70 backdrop-blur-sm border border-emerald-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                            <div
+                                class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-base font-bold text-gray-800 mb-2">Minh bạch & ổn định</h3>
+                            <p class="text-sm text-gray-500 font-medium leading-relaxed">
+                                Thông tin rõ ràng, hạn chế tối đa lỗi phát sinh.
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Dòng Update (Đã chuyển xuống dưới) -->
 
@@ -2818,9 +3072,11 @@
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.remove('hidden');
 
-            // Hiện lại heroBlock khi về trang chủ
+            // Hiện lại heroBlock và introStatsBlock khi về trang chủ
             const heroBlock = document.getElementById('heroBlock');
             if (heroBlock) heroBlock.classList.remove('hidden');
+            const introStatsBlock = document.getElementById('introStatsBlock');
+            if (introStatsBlock) introStatsBlock.classList.remove('hidden');
 
             // Ẩn listContainer (danh sách tài khoản)
             if (listContainer) {
@@ -2850,6 +3106,10 @@
                 listContainer.parentElement.insertBefore(premiumCategoriesSection, listContainer);
                 console.log('✅ Restored premium section to original position');
             }
+
+            // Restore Why Choose Us section visibility on home screen
+            const whyChooseUsSection = document.getElementById('whyChooseUsSection');
+            if (whyChooseUsSection) whyChooseUsSection.classList.remove('hidden');
 
             // Track if we have any items in each category
             let hasAccountCategories = false;
@@ -2901,7 +3161,7 @@
                                 </div>
                                 <h3 class="text-gray-900 font-bold text-xs sm:text-sm leading-tight truncate w-full px-1 mb-1.5">${folder.name}</h3>
                                 ${folder.price ? `
-                                    <div class="inline-flex items-center justify-center bg-orange-50 border border-orange-200 rounded-full px-2.5 py-0.5 mb-2">
+                                    <div class="inline-flex items-center justify-center bg-orange-50 border border-orange-200 rounded-full px-2.5 py-0.5 mb-2 animate-cta-bounce">
                                         <span class="text-xs sm:text-sm font-extrabold text-orange-600 whitespace-nowrap">${folder.price}</span>
                                     </div>
                                 ` : ''}
@@ -3064,9 +3324,11 @@
             const listContainer = document.getElementById('listContainer');
             const homeFooter = document.getElementById('homeFooter');
 
-            // Ẩn heroBlock khi mở folder
+            // Ẩn heroBlock và introStatsBlock khi mở folder
             const heroBlockEl = document.getElementById('heroBlock');
             if (heroBlockEl) heroBlockEl.classList.add('hidden');
+            const introStatsBlock = document.getElementById('introStatsBlock');
+            if (introStatsBlock) introStatsBlock.classList.add('hidden');
 
             console.log('🚀 actuallyOpenFolder called for:', folder.name);
             console.log('📋 DOM Elements check:', {
@@ -3096,8 +3358,11 @@
             // Ẩn các section trang chủ (giữ lại section dịch vụ VIP)
             const accountCategoriesSection = document.getElementById('accountCategoriesSection');
             const popupCategoriesSection = document.getElementById('popupCategoriesSection');
+            const whyChooseUsSection = document.getElementById('whyChooseUsSection');
+
             if (accountCategoriesSection) accountCategoriesSection.classList.add('hidden');
             if (popupCategoriesSection) popupCategoriesSection.classList.add('hidden');
+            if (whyChooseUsSection) whyChooseUsSection.classList.add('hidden');
 
             if (listTitle) listTitle.textContent = `DANH SÁCH TÀI KHOẢN`;
             if (headerSubtitle) headerSubtitle.textContent = folder.name;
@@ -4427,6 +4692,63 @@
 
             console.log('Fanpage block inserted');
         }
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const dropdown = document.getElementById('mobileMenuDropdown');
+            const iconPath = document.querySelector('#hamburgerIcon path');
+            if (!dropdown) return;
+            if (dropdown.classList.contains('invisible')) {
+                // Open
+                dropdown.classList.remove('invisible', 'opacity-0', 'scale-95');
+                dropdown.classList.add('opacity-100', 'scale-100');
+                if (iconPath) iconPath.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+            } else {
+                // Close
+                dropdown.classList.add('invisible', 'opacity-0', 'scale-95');
+                dropdown.classList.remove('opacity-100', 'scale-100');
+                if (iconPath) iconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+            }
+        }
+
+        // Scroll Spy for Navbar
+        document.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener('scroll', () => {
+                // Use the mainApp wrapper or body scrolling
+                const scrollY = window.scrollY;
+                const sections = document.querySelectorAll('#heroBlock, #free, #vip');
+                const navLinks = document.querySelectorAll('.nav-link');
+
+                let current = 'home';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    // Offset handles sticky header height + padding
+                    if (scrollY >= sectionTop - 200) {
+                        current = section.getAttribute('id') === 'heroBlock' ? 'home' : section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    // Reset
+                    link.classList.remove('text-emerald-600');
+                    link.classList.add('text-gray-500');
+                    const indicator = link.querySelector('.nav-indicator');
+                    if (indicator) {
+                        indicator.classList.remove('opacity-100', 'scale-100', 'w-6', 'w-4');
+                        indicator.classList.add('opacity-0', 'scale-50');
+                    }
+
+                    if (link.getAttribute('data-target') === current) {
+                        link.classList.remove('text-gray-500');
+                        link.classList.add('text-emerald-600');
+                        if (indicator) {
+                            indicator.classList.remove('opacity-0', 'scale-50', 'w-4');
+                            indicator.classList.add('opacity-100', 'scale-100');
+                        }
+                    }
+                });
+            });
+        });
 
         // Welcome Ad Logic
         let hasShownWelcomeAdThisSession = false;
