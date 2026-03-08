@@ -659,7 +659,7 @@
                         </svg>
                         <span>Lưu ý: Mã sẽ được thay đổi mỗi ngày.</span>
                     </div>
-                    <a href="https://www.facebook.com/trada3k.vn" target="_blank"
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
                         class="block bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-center mt-4 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all group cursor-pointer decoration-0 shadow-sm hover:shadow-md animate-cta-bounce">
                         <p class="text-xs text-gray-600 uppercase font-semibold mb-2 tracking-wide">Truy cập Fanpage</p>
                         <div
@@ -2141,6 +2141,11 @@
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
         let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà FREE
         let PREMIUM_SECTION_DESC = 'Các dịch vụ cao cấp với mức giá ưu đãi'; // Mô tả section dịch vụ VIP
+        const FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
+        function sanitizeFacebookLinksInHtml(html) {
+            if (!html || typeof html !== 'string') return html;
+            return html.replace(/https?:\/\/(?:www\.)?facebook\.com\/profile\.php\?id=61570933838011/gi, FANPAGE_URL);
+        }
         let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
         let editingAccountIndex = -1;
@@ -3714,7 +3719,7 @@
 
             iconDiv.innerHTML = folder.icon.replace(/w-\d+\s+h-\d+/, 'w-full h-full');
             title.textContent = folder.name;
-            body.innerHTML = folder.popupContent;
+            body.innerHTML = sanitizeFacebookLinksInHtml(folder.popupContent);
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
