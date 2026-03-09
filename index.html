@@ -319,6 +319,107 @@
             animation: ctaBounce 2s ease-in-out infinite;
         }
 
+        .vip-cta-animated {
+            position: relative;
+            overflow: hidden;
+            animation: none;
+        }
+
+        .vip-cta-animated::before {
+            content: none;
+        }
+
+        .vip-cta-arrow {
+            display: inline-flex;
+            font-size: 1.45rem;
+            line-height: 1;
+            font-weight: 900;
+        }
+
+        @keyframes vipPricePulse {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+                box-shadow: 0 10px 20px -10px rgba(37, 99, 235, 0.55);
+            }
+
+            50% {
+                transform: translateY(-1px) scale(1.004);
+                box-shadow: 0 14px 22px -12px rgba(79, 70, 229, 0.45);
+            }
+        }
+
+        @keyframes vipPriceShine {
+            0% {
+                transform: translateX(-140%) skewX(-18deg);
+            }
+
+            100% {
+                transform: translateX(220%) skewX(-18deg);
+            }
+        }
+
+        @keyframes vipPriceValueBreathe {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.012);
+            }
+        }
+
+        .vip-price-card {
+            position: relative;
+            overflow: hidden;
+            animation: none;
+        }
+
+        .vip-price-card::before {
+            content: none;
+        }
+
+        .vip-price-value {
+            display: inline-block;
+            animation: vipPriceValueBreathe 4.2s ease-in-out infinite;
+            transform-origin: left center;
+        }
+
+        @keyframes vipHintBounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+
+        .vip-cta-hint {
+            margin-top: 10px;
+            text-align: center;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .vip-cta-hint-arrow {
+            display: inline-block;
+            color: #2563eb;
+            font-size: 18px;
+            line-height: 1;
+            animation: vipHintBounce 1s ease-in-out infinite;
+        }
+
         @keyframes float {
 
             0%,
@@ -1529,32 +1630,40 @@
 
     <!-- MODAL NỘI DUNG TÙY CHỈNH -->
     <div id="customContentModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div
-            class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in">
+        <div id="customContentCard"
+            class="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[92vh] sm:max-h-[90vh] flex flex-col">
             <button onclick="closeCustomContentModal()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
+                class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 flex-shrink-0">
+            <div id="customContentHeader" class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
                 <div class="flex items-center gap-3">
                     <div id="customContentIcon"
-                        class="w-12 h-12 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
+                        class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
                     </div>
-                    <h3 id="customContentTitle" class="text-xl font-bold text-white">Thông tin</h3>
+                    <h3 id="customContentTitle" class="text-lg sm:text-xl font-bold text-white">Thông tin</h3>
                 </div>
             </div>
-            <div class="p-6 overflow-y-auto flex-1">
+            <div class="p-4 sm:p-6 overflow-y-auto flex-1">
                 <div id="customContentBody" class="prose prose-sm max-w-none text-gray-700"></div>
             </div>
-            <div class="p-6 border-t border-gray-200 flex-shrink-0">
-                <button onclick="closeCustomContentModal()"
+            <div class="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
+                <button id="customContentCloseBtn" onclick="closeCustomContentModal()"
                     class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                     Đóng
                 </button>
+                <a id="customContentActionBtn" href="#" target="_blank" rel="noopener noreferrer"
+                    class="hidden w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl text-center shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all inline-block">
+                    TRUY CẬP FANPAGE ĐỂ MUA NGAY
+                </a>
+                <div id="customContentActionHint" class="vip-cta-hint hidden">
+                    <span class="vip-cta-hint-arrow">↑</span>
+                    <span>Bấm vào đây để truy cập fanpage</span>
+                </div>
             </div>
         </div>
     </div>
@@ -3713,13 +3822,81 @@
             if (!folder || !folder.popupContent) return;
 
             const modal = document.getElementById('customContentModal');
+            const card = document.getElementById('customContentCard');
+            const header = document.getElementById('customContentHeader');
             const iconDiv = document.getElementById('customContentIcon');
             const title = document.getElementById('customContentTitle');
             const body = document.getElementById('customContentBody');
+            const closeBtn = document.getElementById('customContentCloseBtn');
+            const actionBtn = document.getElementById('customContentActionBtn');
+            const actionHint = document.getElementById('customContentActionHint');
+            const topCloseBtn = card.querySelector('button[onclick="closeCustomContentModal()"]');
+
+            const isPremium = folder.type === 'premium';
+            const safePrice = String(folder.price || '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[ch]));
 
             iconDiv.innerHTML = folder.icon.replace(/w-\d+\s+h-\d+/, 'w-full h-full');
             title.textContent = folder.name;
-            body.innerHTML = sanitizeFacebookLinksInHtml(folder.popupContent);
+
+            if (isPremium) {
+                card.classList.remove('max-w-2xl');
+                card.classList.add('max-w-xl');
+
+                header.className = 'p-4 sm:p-6 flex-shrink-0 bg-white border-b border-slate-100';
+                iconDiv.className = 'w-12 h-12 sm:w-14 sm:h-14 rounded-2xl overflow-hidden bg-white flex items-center justify-center shadow-sm ring-1 ring-slate-200';
+                title.className = 'text-2xl sm:text-4xl leading-tight font-black text-slate-900 tracking-tight';
+                body.className = 'max-w-none text-gray-700';
+                if (topCloseBtn) {
+                    topCloseBtn.className = 'absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors flex items-center justify-center';
+                }
+
+                body.innerHTML = `
+                    <div class="text-left space-y-4 sm:space-y-5">
+                        ${safePrice ? `<div class="vip-price-card rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white shadow-md"><p class="text-[32px] sm:text-[48px] leading-none font-black tracking-tight"><span class="vip-price-value">${safePrice}</span></p><p class="text-[13px] sm:text-sm text-blue-100 mt-1.5 sm:mt-2">Giá tốt trong thời gian ngắn, liên hệ sớm để chốt đơn.</p></div>` : ''}
+                        <div class="rounded-2xl bg-white border border-slate-200 p-4 sm:p-5 text-[14px] sm:text-base leading-relaxed text-slate-700">
+                            <p class="text-xs font-bold uppercase tracking-[0.08em] text-slate-500 mb-2.5">Mô tả dịch vụ</p>
+                            ${sanitizeFacebookLinksInHtml(folder.popupContent)}
+                        </div>
+                        <p class="text-[13px] sm:text-sm text-slate-500 text-center">Hỗ trợ mua qua fanpage ngay sau khi gửi tin nhắn.</p>
+                    </div>
+                `;
+
+                if (closeBtn) closeBtn.classList.add('hidden');
+                if (actionBtn) {
+                    actionBtn.href = FANPAGE_URL;
+                    actionBtn.className = 'vip-cta-animated w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold py-3.5 sm:py-4 px-3 rounded-2xl text-center text-[13px] sm:text-base leading-tight shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all inline-flex items-center justify-center gap-2 uppercase tracking-wide';
+                    actionBtn.innerHTML = '<span>TRUY CẬP FANPAGE ĐỂ MUA NGAY</span><span class="vip-cta-arrow">→</span>';
+                    actionBtn.classList.remove('hidden');
+                }
+                if (actionHint) actionHint.classList.remove('hidden');
+            } else {
+                card.classList.remove('max-w-xl');
+                card.classList.add('max-w-2xl');
+
+                header.className = 'bg-gradient-to-r from-indigo-500 to-purple-600 p-6 flex-shrink-0';
+                iconDiv.className = 'w-12 h-12 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center';
+                title.className = 'text-xl font-bold text-white';
+                body.className = 'prose prose-sm max-w-none text-gray-700';
+                body.innerHTML = sanitizeFacebookLinksInHtml(folder.popupContent);
+                if (topCloseBtn) {
+                    topCloseBtn.className = 'absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10';
+                }
+
+                if (closeBtn) closeBtn.classList.remove('hidden');
+                if (actionBtn) {
+                    actionBtn.classList.add('hidden');
+                    actionBtn.href = '#';
+                    actionBtn.className = 'hidden w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-xl text-center shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all inline-block';
+                    actionBtn.textContent = 'TRUY CẬP FANPAGE ĐỂ MUA NGAY';
+                }
+                if (actionHint) actionHint.classList.add('hidden');
+            }
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
@@ -4833,3 +5010,4 @@
 </body>
 
 </html>
+
