@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -2212,6 +2212,24 @@
                 <span id="currentFolderName" class="text-indigo-600 font-semibold truncate max-w-[150px]">...</span>
             </div>
 
+            <div id="folderPageTitleWrap" class="hidden mb-4 text-center">
+                <div
+                    class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50/80 px-3 py-1 text-[11px] sm:text-xs font-extrabold uppercase tracking-[0.14em] text-emerald-700">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    Danh mục đang xem
+                </div>
+                <h1 id="folderPageTitle"
+                    class="mt-2 text-[1.75rem] sm:text-[2.2rem] md:text-[2.6rem] font-black tracking-tight uppercase leading-tight">
+                    <span id="folderPageTitleText"
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-emerald-700 to-teal-600">
+                        ...
+                    </span>
+                </h1>
+                <div class="mt-2 flex justify-center">
+                    <div class="h-1 w-24 rounded-full bg-gradient-to-r from-emerald-400 via-teal-500 to-cyan-500"></div>
+                </div>
+            </div>
+
             <div class="mb-6 flex-1">
                 <div id="extraHeaderContent" class="hidden mb-5"></div>
 
@@ -2432,7 +2450,7 @@
                         <span class="text-base flex-shrink-0">🎓</span>Tài khoản xài chung nhiều người
                     </p>
                     <div id="accountListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 fade-in">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 fade-in">
                     </div>
                 </div>
 
@@ -2457,7 +2475,7 @@
                         <span class="text-base flex-shrink-0">🎁</span>Nhận ngay các phần quà hấp dẫn
                     </p>
                     <div id="popupListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 fade-in">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 fade-in">
                     </div>
                 </div>
 
@@ -3298,6 +3316,9 @@
         const listTitle = document.getElementById('listTitle');
         const navBar = document.getElementById('navBar');
         const currentFolderNameEl = document.getElementById('currentFolderName');
+        const folderPageTitleWrap = document.getElementById('folderPageTitleWrap');
+        const folderPageTitle = document.getElementById('folderPageTitle');
+        const folderPageTitleText = document.getElementById('folderPageTitleText');
         const headerSubtitle = document.getElementById('headerSubtitle');
         const disclaimerModal = document.getElementById('disclaimerModal');
         const disclaimerList = document.getElementById('disclaimerList');
@@ -4061,6 +4082,10 @@
             if (mainNavbar) mainNavbar.classList.add('hidden');
 
             if (navBar) navBar.classList.add('hidden');
+            if (currentFolderNameEl) currentFolderNameEl.textContent = '...';
+            if (folderPageTitleWrap) folderPageTitleWrap.classList.add('hidden');
+            if (folderPageTitleText) folderPageTitleText.textContent = '...';
+            else if (folderPageTitle) folderPageTitle.textContent = '...';
             if (extraHeaderContent) {
                 extraHeaderContent.innerHTML = '';
                 extraHeaderContent.classList.add('hidden');
@@ -4124,6 +4149,10 @@
             const mainNavbar = document.getElementById('mainNavbar');
             if (mainNavbar) mainNavbar.classList.remove('hidden');
             if (navBar) navBar.classList.add('hidden');
+            if (currentFolderNameEl) currentFolderNameEl.textContent = '...';
+            if (folderPageTitleWrap) folderPageTitleWrap.classList.add('hidden');
+            if (folderPageTitleText) folderPageTitleText.textContent = '...';
+            else if (folderPageTitle) folderPageTitle.textContent = '...';
             if (extraHeaderContent) extraHeaderContent.classList.add('hidden');
             if (homeFooter) homeFooter.classList.remove('hidden');
             if (listTitle) listTitle.textContent = "DANH MỤC TÀI KHOẢN";
@@ -4186,6 +4215,7 @@
             let hasAccountCategories = false;
             let hasPopupCategories = false;
             let hasPremiumCategories = false;
+            const isDesktopView = window.innerWidth >= 1024;
 
             DATA.forEach((folder, index) => {
                 // Bỏ qua danh mục bị ẩn (trừ khi là admin)
@@ -4241,27 +4271,112 @@
                         </div>
                     `;
                 } else {
-                    // Original horizontal card style for non-premium items
-                    btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
+                    const shouldUseDesktopPopupCard = isDesktopView && folder.type === 'popup';
+                    const shouldUseDesktopFreeCard = isDesktopView && folder.type !== 'popup';
 
-                    let subtitle = folder.maintenance ? "Đang bảo trì" :
-                        (folder.type === 'popup' ? "Xem nội dung" :
-                            (folder.type === 'link' ? "Truy cập ngay" : ""));
-                    let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+                    if (shouldUseDesktopPopupCard) {
+                        // Desktop-only square card for free gift/popup services
+                        btn.className = `relative w-full text-left rounded-xl overflow-hidden bg-white border border-violet-100 hover:border-violet-300 shadow hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group`;
+                        btn.style.minHeight = '160px';
 
-                    let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">FREE</span>`;
+                        const iconBgs = [
+                            'bg-gradient-to-br from-violet-50 to-purple-50',
+                            'bg-gradient-to-br from-fuchsia-50 to-pink-50',
+                            'bg-gradient-to-br from-indigo-50 to-violet-50',
+                            'bg-gradient-to-br from-sky-50 to-indigo-50'
+                        ];
+                        const iconColors = [
+                            'text-violet-600',
+                            'text-fuchsia-600',
+                            'text-indigo-600',
+                            'text-sky-600'
+                        ];
 
-                    btn.innerHTML = `
-                        <div class="${iconBgClass}">${folder.icon}</div>
-                        <div class="flex-1 min-w-0 mr-2">
-                            <div class="flex items-center gap-2 mb-0.5">
-                                <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
-                                ${badge}
+                        const iconBg = iconBgs[index % iconBgs.length];
+                        const iconColor = iconColors[index % iconColors.length];
+
+                        btn.innerHTML = `
+                            <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">FREE</span>
+                            <div class="p-3 flex flex-col items-center text-center h-full justify-between">
+                                <div class="flex flex-col items-center">
+                                    <div class="${iconBg} ${iconColor} rounded-full flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 mb-2 flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md ring-2 ring-white">
+                                        <div class="text-4xl sm:text-5xl leading-none">${folder.icon}</div>
+                                    </div>
+                                    <h3 class="text-gray-900 font-bold text-xs sm:text-sm leading-tight truncate w-full px-1 mb-1.5">${folder.name}</h3>
+                                    <div class="inline-flex items-center justify-center bg-violet-50 border border-violet-200 rounded-full px-2.5 py-0.5 mb-2">
+                                        <span class="text-xs sm:text-sm font-extrabold text-violet-600 whitespace-nowrap">MIỄN PHÍ</span>
+                                    </div>
+                                </div>
+                                <span class="w-full mt-1 inline-block bg-gradient-to-r from-violet-500 to-indigo-500 hover:from-violet-600 hover:to-indigo-600 text-white text-[10px] sm:text-xs font-bold py-1.5 rounded-lg shadow-sm tracking-wide transition-all">XEM CÁCH NHẬN</span>
                             </div>
-                            ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
-                        </div>
-                        <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                    `;
+                        `;
+                    }
+                    else if (shouldUseDesktopFreeCard) {
+
+                        // Desktop-only square card for free account services
+                        btn.className = `relative w-full text-left rounded-xl overflow-hidden bg-white border border-emerald-100 hover:border-emerald-300 shadow hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group`;
+                        btn.style.minHeight = '160px';
+
+                        const iconBgs = [
+                            'bg-gradient-to-br from-emerald-50 to-teal-50',
+                            'bg-gradient-to-br from-cyan-50 to-sky-50',
+                            'bg-gradient-to-br from-indigo-50 to-blue-50',
+                            'bg-gradient-to-br from-green-50 to-lime-50'
+                        ];
+                        const iconColors = [
+                            'text-emerald-600',
+                            'text-cyan-600',
+                            'text-indigo-600',
+                            'text-green-600'
+                        ];
+
+                        const iconBg = iconBgs[index % iconBgs.length];
+                        const iconColor = iconColors[index % iconColors.length];
+                        const subtitle = folder.type === 'link' ? 'Truy cập trực tiếp' : '';
+                        const ctaText = folder.maintenance ? 'ĐANG BẢO TRÌ' : 'TRUY CẬP NGAY';
+                        const ctaClass = folder.maintenance
+                            ? 'bg-gray-300 text-gray-600'
+                            : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white';
+
+                        btn.innerHTML = `
+                            <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">FREE</span>
+                            <div class="p-3 flex flex-col items-center text-center h-full justify-between">
+                                <div class="flex flex-col items-center">
+                                    <div class="${iconBg} ${iconColor} rounded-full flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 mb-2 flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md ring-2 ring-white">
+                                        <div class="text-4xl sm:text-5xl leading-none">${folder.icon}</div>
+                                    </div>
+                                    <h3 class="text-gray-900 font-bold text-xs sm:text-sm leading-tight truncate w-full px-1 mb-1.5">${folder.name}</h3>
+                                    <div class="inline-flex items-center justify-center bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5 mb-2">
+                                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600 whitespace-nowrap">MIỄN PHÍ</span>
+                                    </div>
+                                    ${subtitle ? `<div class="text-[10px] text-gray-500 font-medium -mt-1 mb-2">${subtitle}</div>` : ''}
+                                </div>
+                                <span class="w-full mt-1 inline-block ${ctaClass} text-[10px] sm:text-xs font-bold py-1.5 rounded-lg shadow-sm tracking-wide transition-all">${ctaText}</span>
+                            </div>
+                        `;
+                    } else {
+                        // Original horizontal card style (mobile + popup)
+                        btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
+
+                        let subtitle = folder.maintenance ? "Đang bảo trì" :
+                            (folder.type === 'popup' ? "Xem nội dung" :
+                                (folder.type === 'link' ? "Truy cập ngay" : ""));
+                        let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+
+                        let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">FREE</span>`;
+
+                        btn.innerHTML = `
+                            <div class="${iconBgClass}">${folder.icon}</div>
+                            <div class="flex-1 min-w-0 mr-2">
+                                <div class="flex items-center gap-2 mb-0.5">
+                                    <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
+                                    ${badge}
+                                </div>
+                                ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
+                            </div>
+                            <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        `;
+                    }
                 }
 
                 if (folder.maintenance && !isAdmin()) {
@@ -4425,6 +4540,10 @@
 
             currentFolderIndex = index; currentAccountIndex = -1;
             if (navBar) navBar.classList.remove('hidden');
+            if (currentFolderNameEl) currentFolderNameEl.textContent = folder.name || '...';
+            if (folderPageTitleWrap) folderPageTitleWrap.classList.remove('hidden');
+            if (folderPageTitleText) folderPageTitleText.textContent = folder.name || '...';
+            else if (folderPageTitle) folderPageTitle.textContent = folder.name || '...';
             if (introSection) introSection.classList.add('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.add('hidden');
@@ -6164,6 +6283,16 @@
             showFolders({ syncHash: false });
         });
 
+        let homeLayoutResizeTimer = null;
+        window.addEventListener('resize', () => {
+            if (homeLayoutResizeTimer) clearTimeout(homeLayoutResizeTimer);
+            homeLayoutResizeTimer = setTimeout(() => {
+                if (currentView === 'home' && currentFolderIndex === -1) {
+                    showFolders({ syncHash: false });
+                }
+            }, 120);
+        });
+
         // Scroll Spy for Navbar
         document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('scroll', () => {
@@ -6300,7 +6429,7 @@
                 const timeString = new Date().toLocaleTimeString('vi-VN');
 
                 if (response.ok && data && data.nftoken) {
-                    const finalUrl = 'https://netflix.com/unsupported?nftoken=' + data.nftoken;
+                    const finalUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
 
                     // LƯU LÊN FIREBASE
                     if (window.firebaseSetDoc && window.firebaseDoc && window.firebaseDb) {
