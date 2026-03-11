@@ -2381,7 +2381,7 @@
 
                 <div id="pricingPage" class="hidden mt-3 md:mt-4 mb-4">
                     <div class="mx-auto max-w-5xl">
-                        <div class="mb-4 flex flex-col gap-2.5 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                        <div class="mb-4 flex items-center justify-center sm:mb-5">
                             <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
                                 class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 sm:w-auto">
                                 Liên hệ fanpage
@@ -2394,7 +2394,7 @@
                                         TRADA3K.STORE
                                     </p>
                                     <h2 class="mt-4 text-xl sm:text-2xl font-black tracking-tight text-gray-900 md:text-4xl">Bảng giá sản phẩm</h2>
-                                    <p class="hidden mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base">Các sản phẩm và gói giá được cập nhật trực tiếp từ hệ thống quản trị.</p>
+                                    <p class="hidden mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base" style="display:none !important;">Các sản phẩm và gói giá được cập nhật trực tiếp từ hệ thống quản trị.</p>
                                 </div>
                                 <div id="pricingLastUpdated" class="text-sm font-semibold text-emerald-700"></div>
                             </div>
@@ -3982,6 +3982,15 @@
 
             const pricingPage = document.getElementById('pricingPage');
             if (pricingPage) pricingPage.classList.remove('hidden');
+            if (pricingPage) {
+                const controls = pricingPage.querySelectorAll('a, button');
+                controls.forEach(control => {
+                    const text = (control.textContent || '').trim().toLowerCase();
+                    if (text === 'về trang chủ' || text === 've trang chu') {
+                        control.classList.add('hidden');
+                    }
+                });
+            }
 
             if (listContainer) {
                 listContainer.innerHTML = '';
