@@ -6383,18 +6383,20 @@
             }
         }
 
-        function ensureUnsupportedParam(rawUrl, fallbackValue = '1') {
+        function ensureUnsupportedPath(rawUrl) {
             if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
             try {
                 const url = new URL(rawUrl);
-                if (!url.searchParams.has('unsupported')) {
-                    url.searchParams.set('unsupported', fallbackValue);
-                }
+                url.pathname = '/unsupported';
                 return url.toString();
             } catch (e) {
-                const hasQuery = rawUrl.includes('?');
-                if (/([?&])unsupported=/i.test(rawUrl)) return rawUrl;
-                return rawUrl + (hasQuery ? '&' : '?') + 'unsupported=' + encodeURIComponent(fallbackValue);
+                if (/^https?:\/\/[^/]+\/unsupported(?:[/?#]|$)/i.test(rawUrl)) {
+                    return rawUrl;
+                }
+                const parts = rawUrl.split('?');
+                const base = parts[0].replace(/\/+$/, '');
+                const query = parts[1] ? ('?' + parts[1]) : '';
+                return base + '/unsupported' + query;
             }
         }
 
@@ -6509,7 +6511,6 @@
             setNetflixDirectLoginLoading(btnLink, true);
 
             try {
-                const preserveUnsupported = btnLink.dataset.preserveUnsupported === '1';
                 let targetUrl = btnLink.href && btnLink.href !== '#' ? btnLink.href : '';
 
                 const savedCookie = localStorage.getItem('netflix_admin_cookie');
@@ -6539,8 +6540,9 @@
                     return;
                 }
 
+                const preserveUnsupported = btnLink.dataset.preserveUnsupported === '1';
                 if (preserveUnsupported) {
-                    targetUrl = ensureUnsupportedParam(targetUrl, '1');
+                    targetUrl = ensureUnsupportedPath(targetUrl);
                 } else {
                     targetUrl = removeUnsupportedParam(targetUrl);
                 }
