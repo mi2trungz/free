@@ -46,27 +46,101 @@
             border: 1px solid rgba(16, 185, 129, 0.12);
             box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
         }
+    
+        @keyframes bestSellerGlow {
+            0%,
+            100% {
+                box-shadow: 0 12px 30px rgba(249, 115, 22, 0.22), 0 0 0 1px rgba(251, 146, 60, 0.28) inset;
+            }
+
+            50% {
+                box-shadow: 0 18px 38px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(248, 113, 113, 0.45) inset;
+            }
+        }
+
+        @keyframes bestSellerBadgePulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.04);
+            }
+        }
+
+        .pricing-best-seller-card {
+            border-color: rgba(251, 146, 60, 0.55) !important;
+            background: linear-gradient(140deg, rgba(255, 247, 237, 0.96) 0%, rgba(255, 255, 255, 1) 58%);
+            animation: bestSellerGlow 2.2s ease-in-out infinite;
+        }
+
+        .pricing-best-seller-badge {
+            animation: bestSellerBadgePulse 1.6s ease-in-out infinite;
+        }
+        @keyframes promoPulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 8px 22px rgba(239, 68, 68, 0.22);
+            }
+
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 12px 28px rgba(234, 88, 12, 0.3);
+            }
+        }
+
+        @keyframes promoShine {
+            0% {
+                background-position: -220% 0;
+            }
+
+            100% {
+                background-position: 220% 0;
+            }
+        }
+
+        .promo-offer {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-weight: 900;
+            letter-spacing: 0;
+            white-space: nowrap;
+            font-size: clamp(9px, 2.5vw, 16px);
+            color: #ffffff;
+            border-radius: 9999px;
+            padding: 0.62rem 1.05rem;
+            background-image: linear-gradient(120deg, #ef4444 0%, #f97316 40%, #f59e0b 52%, #f97316 64%, #ef4444 100%);
+            background-size: 220% 100%;
+            animation: promoPulse 1.9s ease-in-out infinite, promoShine 2.8s linear infinite;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 640px) {
+            .promo-offer {
+                width: 100%;
+                padding: 0.58rem 0.7rem;
+            }
+        }
     </style>
 </head>
 
 <body class="min-h-screen">
-    <main class="mx-auto max-w-5xl px-4 py-5 md:px-6 md:py-8">
-        <div class="mb-5 flex items-center justify-between gap-4">
-            <a href="/"
-                class="inline-flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm ring-1 ring-emerald-100 transition-all hover:bg-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-                Về trang chủ
-            </a>
+    <main class="mx-auto max-w-5xl px-2.5 py-5 sm:px-4 md:px-6 md:py-8">
+        <div class="mb-5 flex flex-col items-center justify-center gap-2">
             <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
-                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700">
-                Liên hệ fanpage
+                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold uppercase text-white shadow-sm transition-all hover:bg-emerald-700">
+                NHẮN TIN QUA FANPAGE ĐỂ MUA NGAY
             </a>
+            <p class="text-xs font-semibold text-emerald-700">
+                <span class="mr-1 text-sm leading-none">↑</span>Bấm vào nút để truy cập fanpage
+            </p>
         </div>
 
-        <section class="price-card overflow-hidden rounded-[1.75rem] px-5 py-5 md:px-7 md:py-7">
+        <section class="price-card overflow-hidden rounded-2xl px-3 py-5 sm:rounded-[1.75rem] sm:px-5 md:px-7 md:py-7">
             <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                     <p
@@ -74,9 +148,6 @@
                         Trada3k.Store
                     </p>
                     <h1 class="mt-4 text-3xl font-black tracking-tight text-gray-900 md:text-5xl">Bảng giá sản phẩm</h1>
-                    <p class="mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base">
-                        Các sản phẩm và gói giá được cập nhật trực tiếp từ hệ thống quản trị.
-                    </p>
                 </div>
                 <div id="lastUpdated" class="text-sm font-semibold text-emerald-700"></div>
             </div>
@@ -114,8 +185,20 @@
                     Giải trí
                 </button>
             </div>
-            <div id="pricingGrid" class="hidden grid grid-cols-1 items-start gap-4 md:grid-cols-2"></div>
+            <div class="mb-6 flex justify-center">
+                <div class="promo-offer uppercase">&#431;U &#272;&#195;I GI&#7842;M GI&#193; S&#7888; L&#431;&#7906;NG C&#211; H&#7840;N, MUA NGAY NH&#201;!</div>
+            </div>
+            <div id="pricingGrid" class="hidden grid grid-cols-1 items-start gap-4 md:gap-x-7 md:grid-cols-2"></div>
         </section>
+        <div class="mt-6 flex flex-col items-center justify-center gap-2">
+            <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold uppercase text-white shadow-sm transition-all hover:bg-emerald-700">
+                NHẮN TIN QUA FANPAGE ĐỂ MUA NGAY
+            </a>
+            <p class="text-xs font-semibold text-emerald-700">
+                <span class="mr-1 text-sm leading-none">↑</span>Bấm vào nút để truy cập fanpage
+            </p>
+        </div>
     </main>
 
     <div id="pricingDetailModal"
@@ -133,7 +216,7 @@
                 <div class="flex items-start gap-4 pr-12">
                     <div id="pricingDetailLogo"
                         class="hidden h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm"></div>
-                    <div class="min-w-0">
+                    <div class="min-w-max">
                         <h2 id="pricingDetailTitle" class="text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">Sản phẩm</h2>
                         <p id="pricingDetailSubtitle" class="hidden mt-2 text-sm font-medium text-slate-500 sm:text-base"></p>
                     </div>
@@ -371,32 +454,52 @@
 
             if (salePrice) {
                 return `
-                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black text-gray-800 whitespace-nowrap md:w-[3.2rem] md:text-[1rem]">${originalPrice}</span>
-                    <span class="w-[6.6rem] text-right text-[0.88rem] font-black whitespace-nowrap md:w-[8.7rem] md:text-[1rem]">
-                        <span class="text-emerald-600">GIẢM CÒN</span>
-                        <span class="text-red-600 ml-1">${salePrice}</span>
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black text-gray-800 whitespace-nowrap md:text-[1rem]">${originalPrice}</span>
+                    <span class="inline-flex shrink-0 w-[6.4rem] items-center justify-end gap-1 text-right text-sm font-black whitespace-nowrap md:w-[8.4rem] md:gap-1 md:text-[1rem]">
+                        <span class="text-emerald-600">GI&#7842;M C&#210;N</span>
+                        <span class="text-red-600">${salePrice}</span>
                     </span>
                 `;
             }
 
             if (legacyPrice) {
                 return `
-                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black whitespace-nowrap text-gray-800 md:w-[3.2rem] md:text-[1rem]">${legacyPrice}</span>
-                    <span class="w-[6.6rem] md:w-[8.7rem]"></span>
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black whitespace-nowrap text-gray-800 md:text-[1rem]">${legacyPrice}</span>
+                    <span class="inline-block shrink-0 w-[6.4rem] md:w-[8.4rem]"></span>
                 `;
             }
 
             if (originalPrice) {
                 return `
-                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black whitespace-nowrap text-gray-800 md:w-[3.2rem] md:text-[1rem]">${originalPrice}</span>
-                    <span class="w-[6.6rem] md:w-[8.7rem]"></span>
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black whitespace-nowrap text-gray-800 md:text-[1rem]">${originalPrice}</span>
+                    <span class="inline-block shrink-0 w-[6.4rem] md:w-[8.4rem]"></span>
                 `;
             }
 
             return `
-                <span class="w-[3.5rem]"></span>
-                <span class="w-[9.5rem] text-right text-base font-black whitespace-nowrap text-gray-400 md:text-[1.05rem]">Liên hệ</span>
+                <span class="inline-block shrink-0 w-[3.1rem]"></span>
+                <span class="inline-block shrink-0 w-[6.4rem] text-right text-sm font-black whitespace-nowrap text-gray-400 md:w-[8.4rem] md:text-[1.05rem]">LIEN HE</span>
             `;
+        }
+
+
+        function renderPackageNameWithHighlight(name = '') {
+            const raw = String(name || '').trim() || 'GOI DICH VU';
+            const safeRaw = escapeHtml(raw);
+            const normalized = raw
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase();
+
+            if (normalized.startsWith('GOI')) {
+                const rest = raw.slice(3).trim();
+                if (rest) {
+                    return `<span class="text-gray-900">G&#211;I</span> <span class="text-red-600 font-black">${escapeHtml(rest)}</span>`;
+                }
+                return `<span class="text-gray-900">G&#211;I</span>`;
+            }
+
+            return `<span class="text-gray-900">${safeRaw}</span>`;
         }
 
         function getPricingCategory(product = {}) {
@@ -469,7 +572,8 @@
 
             filteredProducts.forEach(product => {
                 const card = document.createElement('article');
-                card.className = 'w-full max-w-[38rem] cursor-pointer rounded-[1.4rem] border border-emerald-200 bg-white ring-1 ring-emerald-100/80 p-4 shadow-[0_10px_24px_rgba(16,185,129,0.08)] transition-all hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_16px_34px_rgba(16,185,129,0.14)] md:p-5';
+                const isBestSeller = !!product.bestSeller;
+                card.className = 'w-full max-w-[38rem] cursor-pointer rounded-xl sm:rounded-[1.4rem] border border-emerald-200 bg-white ring-1 ring-emerald-100/80 p-2.5 sm:p-4 shadow-[0_10px_24px_rgba(16,185,129,0.08)] transition-all hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_16px_34px_rgba(16,185,129,0.14)] md:p-5 ' + (isBestSeller ? 'pricing-best-seller-card' : '');
                 card.onclick = () => openPricingDetailModal(product);
                 const category = getPricingCategory(product);
                 const categoryBadgeClass = category === 'work'
@@ -483,24 +587,27 @@
                        </div>`
                     : '';
 
+                const productSubtitle = String(product.subtitle || '').replace(/\s+/g, ' ').trim();
+
                 const packagesHtml = (product.packages || []).map(pkg => `
-                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 rounded-[1rem] border border-gray-100 bg-gray-50 px-2.5 py-2 md:px-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-black uppercase text-gray-900 md:text-base">${pkg.name || 'Gói dịch vụ'}</div>
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-lg md:rounded-[1rem] border border-gray-100 bg-gray-50 px-1 py-2 md:gap-2 md:px-3">
+                        <div class="min-w-max">
+                            <div class="text-sm font-black uppercase text-gray-900 whitespace-nowrap overflow-visible md:text-base">${renderPackageNameWithHighlight(pkg.name)}</div>
                             ${pkg.note ? `<div class="mt-1 text-xs font-medium text-gray-500">${pkg.note}</div>` : ''}
                         </div>
-                        <div class="flex min-w-[145px] items-center justify-end gap-1.5 text-right md:min-w-[188px] md:gap-2">${renderPackagePrice(pkg)}</div>
+                        <div class="flex min-w-[10.9rem] items-center justify-end gap-1.5 text-right md:min-w-[188px] md:gap-2">${renderPackagePrice(pkg)}</div>
                     </div>
                 `).join('');
 
                 card.innerHTML = `
-                    <div class="mb-3 flex items-start justify-between gap-3">
+                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-center sm:gap-3">
                         <div class="min-w-0 flex-1">
                         <h2 class="text-xl font-black tracking-tight text-gray-900">${product.title || 'Sản phẩm'}</h2>
-                        ${product.subtitle ? `<p class="mt-2 text-sm font-medium text-gray-500">${product.subtitle}</p>` : ''}
+                        ${productSubtitle ? `<p class="mt-2 text-sm font-medium text-gray-500 whitespace-normal">${productSubtitle}</p>` : ''}
                         </div>
-                        <div class="flex items-start gap-2">
+                        <div class="flex items-center gap-2 self-start sm:self-auto">
                             <span class="rounded-full px-2.5 py-1 text-[10px] font-bold ${categoryBadgeClass}">${getPricingCategoryLabel(category)}</span>
+                            ${isBestSeller ? '<span class="pricing-best-seller-badge rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2.5 py-1 text-[10px] font-black text-white">B&#193;N CH&#7840;Y</span>' : ''}
                             ${logoHtml}
                         </div>
                     </div>
@@ -618,3 +725,38 @@
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
