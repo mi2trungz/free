@@ -2359,8 +2359,8 @@
                 </div>
 
                 <!-- NÚT XEM NETFLIX TỰ ĐỘNG -->
-                <div id="netflixAutoLinkContainer" class="max-w-4xl mx-auto px-4 mt-2 mb-8 hidden">
-                    <a id="btnNetflixDirectLogin" href="#" target="_blank"
+                <div id="netflixAutoLinkContainer" class="max-w-4xl mx-auto px-4 mt-2 mb-8 hidden space-y-3">
+                    <a id="btnNetflixDirectLoginDesktop" href="#" target="_blank" data-preserve-unsupported="0"
                         class="relative w-full overflow-hidden flex items-center justify-between bg-black text-white p-4 sm:p-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-800"
                         style="box-shadow: 0 10px 30px rgba(229, 9, 20, 0.3);">
                         <div
@@ -2384,6 +2384,37 @@
                             <div
                                 class="hidden sm:flex flex-shrink-0 items-center justify-center bg-gray-900 rounded-full px-4 py-2 border border-gray-800">
                                 <span class="text-xs font-bold text-red-500 mr-2">TRỰC TIẾP</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
+                    <a id="btnNetflixDirectLoginMobile" href="#" target="_blank" data-preserve-unsupported="1"
+                        class="relative w-full overflow-hidden flex items-center justify-between bg-black text-white p-4 sm:p-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-800"
+                        style="box-shadow: 0 10px 30px rgba(229, 9, 20, 0.3);">
+                        <div
+                            class="absolute top-0 right-0 w-32 h-32 bg-red-600 rounded-full blur-3xl opacity-20 -mr-10 -mt-10">
+                        </div>
+                        <div class="flex items-center gap-4 relative z-10 w-full">
+                            <div
+                                class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center flex-shrink-0 animate-pulse">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"
+                                    class="w-6 h-6 fill-current text-white">
+                                    <path d="M19 19v62l16 0v-46l27 46l19 0v-62l-16 0v46l-27 -46z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 text-left min-w-0">
+                                <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide truncate">XEM PHIM
+                                    NETFLIX</h3>
+                                <p class="text-xs sm:text-sm text-gray-400 truncate mt-0.5">Điện thoại: giữ nguyên
+                                    link gốc (kể cả unsupported)</p>
+                            </div>
+                            <div
+                                class="hidden sm:flex flex-shrink-0 items-center justify-center bg-gray-900 rounded-full px-4 py-2 border border-gray-800">
+                                <span class="text-xs font-bold text-red-500 mr-2">MOBILE</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -6341,8 +6372,18 @@
         let netflixIntervalId = null;
         let isNetflixDirectLoginLoading = false;
 
-        function setNetflixDirectLoginLoading(isLoading) {
-            const btnLink = document.getElementById('btnNetflixDirectLogin');
+        function removeUnsupportedParam(rawUrl) {
+            if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+            try {
+                const url = new URL(rawUrl);
+                url.searchParams.delete('unsupported');
+                return url.toString();
+            } catch (e) {
+                return rawUrl.replace(/([?&])unsupported=[^&]*&?/gi, '$1').replace(/[?&]$/, '');
+            }
+        }
+
+        function setNetflixDirectLoginLoading(btnLink, isLoading) {
             if (!btnLink) return;
 
             if (isLoading) {
@@ -6445,12 +6486,12 @@
         async function handleNetflixDirectLoginClick(event) {
             if (event) event.preventDefault();
 
-            const btnLink = document.getElementById('btnNetflixDirectLogin');
+            const btnLink = event && event.currentTarget ? event.currentTarget : null;
             if (!btnLink) return;
             if (isNetflixDirectLoginLoading) return;
 
             isNetflixDirectLoginLoading = true;
-            setNetflixDirectLoginLoading(true);
+            setNetflixDirectLoginLoading(btnLink, true);
 
             try {
                 let targetUrl = btnLink.href && btnLink.href !== '#' ? btnLink.href : '';
@@ -6458,16 +6499,22 @@
                 const savedCookie = localStorage.getItem('netflix_admin_cookie');
                 if (savedCookie) {
                     const { netflixId, secureNetflixId } = extractNetflixIdsFromCookie(savedCookie);
-                    if (netflixId) {
-                        const latestUrl = await runNetflixApi(netflixId, secureNetflixId);
-                        if (latestUrl) {
-                            targetUrl = latestUrl;
-                            btnLink.href = latestUrl;
-                        }
-                        if (!netflixIntervalId) {
-                            // Bật auto refresh sau lần click đầu tiên
-                            startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: false, runImmediately: false });
-                        }
+                    if (!netflixId) {
+                        showAlert('Lỗi', 'Cookie Netflix không hợp lệ. Vui lòng cập nhật cookie mới.', 'error');
+                        return;
+                    }
+
+                    const latestUrl = await runNetflixApi(netflixId, secureNetflixId);
+                    if (!latestUrl) {
+                        showAlert('Lỗi', 'Cookie Netflix lỗi hoặc đã hết hạn. Vui lòng cập nhật cookie mới.', 'error');
+                        return;
+                    }
+
+                    targetUrl = latestUrl;
+                    btnLink.href = latestUrl;
+                    if (!netflixIntervalId) {
+                        // Bật auto refresh sau lần click đầu tiên
+                        startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: false, runImmediately: false });
                     }
                 }
 
@@ -6476,10 +6523,15 @@
                     return;
                 }
 
+                const preserveUnsupported = btnLink.dataset.preserveUnsupported === '1';
+                if (!preserveUnsupported) {
+                    targetUrl = removeUnsupportedParam(targetUrl);
+                }
+
                 window.open(targetUrl, '_blank');
             } finally {
                 isNetflixDirectLoginLoading = false;
-                setNetflixDirectLoginLoading(false);
+                setNetflixDirectLoginLoading(btnLink, false);
             }
         }
 
@@ -6640,10 +6692,12 @@
             if (window.firebaseOnSnapshot && window.firebaseDoc && window.firebaseDb) {
                 window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDb, 'settings', 'netflix'), (docSnap) => {
                     const btnContainer = document.getElementById('netflixAutoLinkContainer');
-                    const btnLink = document.getElementById('btnNetflixDirectLogin');
+                    const btnDesktop = document.getElementById('btnNetflixDirectLoginDesktop');
+                    const btnMobile = document.getElementById('btnNetflixDirectLoginMobile');
 
                     if (docSnap.exists() && docSnap.data().url) {
-                        btnLink.href = docSnap.data().url;
+                        if (btnDesktop) btnDesktop.href = docSnap.data().url;
+                        if (btnMobile) btnMobile.href = docSnap.data().url;
                         // XÓA: btnContainer.classList.remove('hidden'); -> Bây giờ do actuallyOpenFolder quyết định
                     } else {
                         btnContainer.classList.add('hidden');
@@ -6651,11 +6705,16 @@
                 });
             }
 
-            const btnLink = document.getElementById('btnNetflixDirectLogin');
-            if (btnLink && !btnLink.dataset.autoFetchBound) {
-                btnLink.addEventListener('click', handleNetflixDirectLoginClick);
-                btnLink.dataset.autoFetchBound = '1';
-            }
+            const netflixButtons = [
+                document.getElementById('btnNetflixDirectLoginDesktop'),
+                document.getElementById('btnNetflixDirectLoginMobile')
+            ];
+            netflixButtons.forEach((btn) => {
+                if (btn && !btn.dataset.autoFetchBound) {
+                    btn.addEventListener('click', handleNetflixDirectLoginClick);
+                    btn.dataset.autoFetchBound = '1';
+                }
+            });
 
             // Load data when app initializes (before login)
             loadDataFromStorage().then(() => {
