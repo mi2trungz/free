@@ -5102,6 +5102,9 @@
                 const cookieInput = document.getElementById('netflixCookieInput');
                 if (cookieInput) cookieInput.value = savedNetflixCookie;
             }
+
+            bindNetflixCookieInputAutoSave();
+            syncNetflixCookieFromInputToServer({ immediate: true, silent: true });
         }
 
         function closeAdminModal() {
@@ -5442,6 +5445,7 @@
             if (accountDescInput) accountDescInput.value = ACCOUNT_SECTION_DESC || '';
             if (popupDescInput) popupDescInput.value = POPUP_SECTION_DESC || '';
             if (premiumDescInput) premiumDescInput.value = PREMIUM_SECTION_DESC || '';
+            bindNetflixCookieInputAutoSave();
             renderAdminPricingProducts();
         }
 
@@ -6371,6 +6375,7 @@
         // --- NETFLIX AUTO UPDATE LOGIC ---
         let netflixIntervalId = null;
         let isNetflixDirectLoginLoading = false;
+        let netflixCookieSyncTimer = null;
 
         function removeUnsupportedParam(rawUrl) {
             if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
@@ -6518,6 +6523,60 @@
                 const msg = data.error || 'Khong the luu cookie len server';
                 throw new Error(msg);
             }
+        }
+
+        function syncNetflixCookieFromInputToServer(options = {}) {
+            const { immediate = false, silent = true } = options;
+            const cookieInput = document.getElementById('netflixCookieInput');
+            const textEl = document.getElementById('netflixLastUpdatedText');
+            if (!cookieInput) return;
+
+            const cookieVal = cookieInput.value ? cookieInput.value.trim() : '';
+            if (!cookieVal) return;
+
+            localStorage.setItem('netflix_admin_cookie', cookieVal);
+
+            const { netflixId, secureNetflixId } = extractNetflixIdsFromCookie(cookieVal);
+            if (!netflixId) {
+                if (textEl && !silent) {
+                    textEl.textContent = 'Cookie chua hop le, chua luu len server';
+                    textEl.className = 'text-xs text-red-500 ml-auto font-medium';
+                }
+                return;
+            }
+
+            const doSync = async () => {
+                try {
+                    await saveNetflixCookieToServer(netflixId, secureNetflixId);
+                    if (textEl) {
+                        textEl.textContent = 'Da luu cookie len server luc: ' + new Date().toLocaleTimeString('vi-VN');
+                        textEl.className = 'text-xs text-green-600 ml-auto font-medium';
+                    }
+                } catch (e) {
+                    if (textEl) {
+                        textEl.textContent = 'Khong the luu cookie len server';
+                        textEl.className = 'text-xs text-red-500 ml-auto font-medium';
+                    }
+                }
+            };
+
+            if (immediate) {
+                doSync();
+                return;
+            }
+
+            if (netflixCookieSyncTimer) {
+                clearTimeout(netflixCookieSyncTimer);
+            }
+            netflixCookieSyncTimer = setTimeout(doSync, 800);
+        }
+
+        function bindNetflixCookieInputAutoSave() {
+            const cookieInput = document.getElementById('netflixCookieInput');
+            if (!cookieInput || cookieInput.dataset.serverSyncBound === '1') return;
+            cookieInput.addEventListener('input', () => syncNetflixCookieFromInputToServer({ immediate: false, silent: true }));
+            cookieInput.addEventListener('blur', () => syncNetflixCookieFromInputToServer({ immediate: true, silent: false }));
+            cookieInput.dataset.serverSyncBound = '1';
         }
 
         async function handleNetflixDirectLoginClick(event) {
