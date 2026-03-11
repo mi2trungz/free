@@ -1015,7 +1015,38 @@
                 <!-- Settings Management -->
                 <div id="adminSettingsContent" class="space-y-4 hidden">
                     <h4 class="text-lg font-bold text-gray-800 mb-4">Cài đặt hệ thống</h4>
-                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200">
+
+                    <!-- Cấu hình lấy link Netflix tự động -->
+                    <div class="bg-indigo-50 rounded-xl p-4 border-2 border-indigo-200">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-bold text-indigo-800">Tự động lấy link Netflix</label>
+                            <span id="netflixStatusBadge"
+                                class="text-xs font-semibold px-2 py-1 rounded bg-gray-200 text-gray-600">Đã dừng</span>
+                        </div>
+                        <p class="text-xs text-indigo-600 mb-3">Hệ thống sẽ tự động gọi API mỗi 50 phút để chuyển đổi
+                            Cookie thành Direct Login Link và cập nhật cho nút "Xem Netflix" ở giao diện chính.</p>
+
+                        <textarea id="netflixCookieInput" rows="3"
+                            class="w-full px-3 py-2 rounded-lg border-2 border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-xs font-mono mb-3"
+                            placeholder="Dán nội dung Netscape Cookie vào đây... (Cookie sẽ chỉ lưu ở trình duyệt của Admin)"></textarea>
+
+                        <div class="flex gap-2 items-center">
+                            <button id="btnToggleNetflix" onclick="toggleNetflixAutoUpdate()"
+                                class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Bắt đầu tự động lấy link (50 phút)</span>
+                            </button>
+                            <span id="netflixLastUpdatedText" class="text-xs text-gray-500 ml-auto"></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mã bảo mật chung cho tất cả danh
                             mục</label>
                         <input type="text" id="globalAccessPasswordInput"
@@ -1095,7 +1126,8 @@
                         <div class="flex items-center justify-between gap-3 mb-4">
                             <div>
                                 <label class="block text-sm font-bold text-gray-700">Bảng giá sản phẩm</label>
-                                <p class="text-xs text-gray-500 mt-1">Tự thêm sản phẩm và các gói giá hiển thị ở trang Bảng giá</p>
+                                <p class="text-xs text-gray-500 mt-1">Tự thêm sản phẩm và các gói giá hiển thị ở trang
+                                    Bảng giá</p>
                             </div>
                             <button onclick="openAddPricingProductModal()"
                                 class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all text-sm font-semibold whitespace-nowrap">
@@ -1688,7 +1720,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div id="customContentHeader" class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
+            <div id="customContentHeader"
+                class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
                 <div class="flex items-center gap-3">
                     <div id="customContentIcon"
                         class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 flex items-center justify-center">
@@ -1718,7 +1751,8 @@
 
     <div id="pricingProductModal"
         class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
             <button onclick="closePricingProductModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -1763,8 +1797,8 @@
                         <div class="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-200 flex-wrap">
                             <button type="button" onclick="formatPricingDetailText('bold')"
                                 class="p-2 hover:bg-gray-200 rounded transition-colors" title="In đậm">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
                                 </svg>
@@ -1782,24 +1816,24 @@
                             <div class="w-px h-6 bg-gray-300 mx-1"></div>
                             <button type="button" onclick="formatPricingDetailText('justifyLeft')"
                                 class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn trái">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 6h16M4 12h10M4 18h16" />
                                 </svg>
                             </button>
                             <button type="button" onclick="formatPricingDetailText('justifyCenter')"
                                 class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn giữa">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 6h16M7 12h10M4 18h16" />
                                 </svg>
                             </button>
                             <button type="button" onclick="formatPricingDetailText('justifyRight')"
                                 class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn phải">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 6h16M10 12h10M4 18h16" />
                                 </svg>
@@ -1807,7 +1841,8 @@
                         </div>
                         <div id="pricingProductDetailDescriptionInput" contenteditable="true"
                             class="w-full min-h-[170px] max-h-[320px] px-4 py-3 overflow-y-auto focus:outline-none text-sm"
-                            placeholder="Nhập mô tả chi tiết sẽ hiện trong popup khi khách bấm vào sản phẩm..." style="outline: none;"></div>
+                            placeholder="Nhập mô tả chi tiết sẽ hiện trong popup khi khách bấm vào sản phẩm..."
+                            style="outline: none;"></div>
                     </div>
                 </div>
                 <div>
@@ -1818,11 +1853,13 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="pricingProductBestSellerInput" class="w-4 h-4 text-amber-600 rounded">
-                    <label for="pricingProductBestSellerInput" class="text-sm text-gray-700">Đánh dấu là sản phẩm bán chạy</label>
+                    <label for="pricingProductBestSellerInput" class="text-sm text-gray-700">Đánh dấu là sản phẩm bán
+                        chạy</label>
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="pricingProductHiddenInput" class="w-4 h-4 text-orange-600 rounded">
-                    <label for="pricingProductHiddenInput" class="text-sm text-gray-700">Tạm ẩn sản phẩm khỏi trang bảng giá</label>
+                    <label for="pricingProductHiddenInput" class="text-sm text-gray-700">Tạm ẩn sản phẩm khỏi trang bảng
+                        giá</label>
                 </div>
                 <div class="bg-gray-50 rounded-xl border-2 border-gray-200 p-4">
                     <div class="flex items-center justify-between gap-3 mb-4">
@@ -1875,7 +1912,8 @@
     <div id="pricingDetailModal"
         class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in"
         onclick="if(event.target === this) closePricingDetailModal()">
-        <div class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[92vh] flex flex-col">
+        <div
+            class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[92vh] flex flex-col">
             <button onclick="closePricingDetailModal()"
                 class="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -1886,10 +1924,14 @@
             <div class="px-6 py-7 border-b border-slate-200">
                 <div class="flex items-start gap-4 pr-12">
                     <div id="pricingDetailModalLogo"
-                        class="hidden w-16 h-16 rounded-full overflow-hidden bg-white border border-slate-200 shadow-sm shrink-0"></div>
+                        class="hidden w-16 h-16 rounded-full overflow-hidden bg-white border border-slate-200 shadow-sm shrink-0">
+                    </div>
                     <div class="min-w-0">
-                        <h3 id="pricingDetailModalTitle" class="text-2xl sm:text-4xl leading-tight font-black text-slate-900 tracking-tight">Sản phẩm</h3>
-                        <p id="pricingDetailModalSubtitle" class="hidden mt-2 text-sm sm:text-base font-medium text-slate-500"></p>
+                        <h3 id="pricingDetailModalTitle"
+                            class="text-2xl sm:text-4xl leading-tight font-black text-slate-900 tracking-tight">Sản phẩm
+                        </h3>
+                        <p id="pricingDetailModalSubtitle"
+                            class="hidden mt-2 text-sm sm:text-base font-medium text-slate-500"></p>
                     </div>
                 </div>
             </div>
@@ -1901,7 +1943,8 @@
                         class="mt-3 text-[15px] sm:text-base leading-relaxed font-medium whitespace-pre-line"></div>
                 </div>
                 <p id="pricingDetailModalFallback"
-                    class="hidden mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500 whitespace-pre-line"></p>
+                    class="hidden mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500 whitespace-pre-line">
+                </p>
                 <p id="pricingDetailModalNote" class="mt-6 text-center text-sm font-medium text-slate-500"></p>
             </div>
             <div class="px-6 py-5 border-t border-slate-200">
@@ -2103,7 +2146,8 @@
                         <span
                             class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
                     </a>
-                    <a href="#free" onclick="navigateToHomeSection('accountCategoriesSection'); toggleMobileMenu(); return false;"
+                    <a href="#free"
+                        onclick="navigateToHomeSection('accountCategoriesSection'); toggleMobileMenu(); return false;"
                         class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
                         data-target="free">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
@@ -2115,7 +2159,8 @@
                         <span
                             class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
                     </a>
-                    <a href="#vip" onclick="navigateToHomeSection('premiumCategoriesSection'); toggleMobileMenu(); return false;"
+                    <a href="#vip"
+                        onclick="navigateToHomeSection('premiumCategoriesSection'); toggleMobileMenu(); return false;"
                         class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
                         data-target="vip">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
@@ -2238,7 +2283,8 @@
                         Xem bảng giá
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </button>
                 </div>
@@ -2292,6 +2338,42 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- NÚT XEM NETFLIX TỰ ĐỘNG -->
+                <div id="netflixAutoLinkContainer" class="max-w-4xl mx-auto px-4 mt-2 mb-8 hidden">
+                    <a id="btnNetflixDirectLogin" href="#" target="_blank"
+                        class="relative w-full overflow-hidden flex items-center justify-between bg-black text-white p-4 sm:p-5 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-800"
+                        style="box-shadow: 0 10px 30px rgba(229, 9, 20, 0.3);">
+                        <div
+                            class="absolute top-0 right-0 w-32 h-32 bg-red-600 rounded-full blur-3xl opacity-20 -mr-10 -mt-10">
+                        </div>
+                        <div class="flex items-center gap-4 relative z-10 w-full">
+                            <div
+                                class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center flex-shrink-0 animate-pulse">
+                                <!-- Netflix N Logo simple SVG -->
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"
+                                    class="w-6 h-6 fill-current text-white">
+                                    <path d="M19 19v62l16 0v-46l27 46l19 0v-62l-16 0v46l-27 -46z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 text-left min-w-0">
+                                <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide truncate">XEM PHIM
+                                    NETFLIX</h3>
+                                <p class="text-xs sm:text-sm text-gray-400 truncate mt-0.5">Click để đăng nhập tự động
+                                    trực tiếp vào App (Làm mới mỗi 50 phút)</p>
+                            </div>
+                            <div
+                                class="hidden sm:flex flex-shrink-0 items-center justify-center bg-gray-900 rounded-full px-4 py-2 border border-gray-800">
+                                <span class="text-xs font-bold text-red-500 mr-2">TRỰC TIẾP</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                                </svg>
+                            </div>
+                        </div>
+                    </a>
                 </div>
 
                 <!-- DANH MỤC DỊCH VỤ VIP (lên đầu) -->
@@ -2387,14 +2469,20 @@
                                 Liên hệ fanpage
                             </a>
                         </div>
-                        <div class="rounded-[1.75rem] border border-emerald-100 bg-white/90 px-3.5 py-4 sm:px-5 sm:py-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] md:px-7 md:py-7">
+                        <div
+                            class="rounded-[1.75rem] border border-emerald-100 bg-white/90 px-3.5 py-4 sm:px-5 sm:py-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] md:px-7 md:py-7">
                             <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                                 <div>
-                                    <p class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                                    <p
+                                        class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
                                         TRADA3K.STORE
                                     </p>
-                                    <h2 class="mt-4 text-xl sm:text-2xl font-black tracking-tight text-gray-900 md:text-4xl">Bảng giá sản phẩm</h2>
-                                    <p class="hidden mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base" style="display:none !important;">Các sản phẩm và gói giá được cập nhật trực tiếp từ hệ thống quản trị.</p>
+                                    <h2
+                                        class="mt-4 text-xl sm:text-2xl font-black tracking-tight text-gray-900 md:text-4xl">
+                                        Bảng giá sản phẩm</h2>
+                                    <p class="hidden mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base"
+                                        style="display:none !important;">Các sản phẩm và gói giá được cập nhật trực tiếp
+                                        từ hệ thống quản trị.</p>
                                 </div>
                                 <div id="pricingLastUpdated" class="text-sm font-semibold text-emerald-700"></div>
                             </div>
@@ -2413,7 +2501,9 @@
                                     Giải trí
                                 </button>
                             </div>
-                            <div id="pricingProductsContainer" class="grid grid-cols-1 items-start gap-3.5 sm:gap-4 md:grid-cols-2 md:gap-x-8 lg:gap-x-10"></div>
+                            <div id="pricingProductsContainer"
+                                class="grid grid-cols-1 items-start gap-3.5 sm:gap-4 md:grid-cols-2 md:gap-x-8 lg:gap-x-10">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -4042,8 +4132,11 @@
             if (introSection) introSection.classList.remove('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.remove('hidden');
-            const pricingPage = document.getElementById('pricingPage');
             if (pricingPage) pricingPage.classList.add('hidden');
+
+            // MỚI THÊM: Ẩn nút Netflix khi ở trang chủ
+            const netflixBtnContainer = document.getElementById('netflixAutoLinkContainer');
+            if (netflixBtnContainer) netflixBtnContainer.classList.add('hidden');
 
             // Hiện lại heroBlock và introStatsBlock khi về trang chủ
             const heroBlock = document.getElementById('heroBlock');
@@ -4355,6 +4448,16 @@
             if (extraHeaderContent) {
                 extraHeaderContent.innerHTML = '';
                 extraHeaderContent.classList.remove('hidden');
+            }
+
+            // MỚI THÊM: CHỈ HIỆN NÚT NETFLIX KHI MỞ THƯ MỤC CÓ TÊN NETFLIX
+            const netflixBtnContainer = document.getElementById('netflixAutoLinkContainer');
+            if (netflixBtnContainer) {
+                if (folder.name.toLowerCase().includes('netflix')) {
+                    netflixBtnContainer.classList.remove('hidden');
+                } else {
+                    netflixBtnContainer.classList.add('hidden');
+                }
             }
 
             let extraHtml = ``;
@@ -4842,6 +4945,13 @@
             adminModal.classList.add('flex');
             switchAdminTab('folders');
             loadAdminFolders();
+
+            // Khôi phục cookie Netflix nếu có
+            const savedNetflixCookie = localStorage.getItem('netflix_admin_cookie');
+            if (savedNetflixCookie) {
+                const cookieInput = document.getElementById('netflixCookieInput');
+                if (cookieInput) cookieInput.value = savedNetflixCookie;
+            }
         }
 
         function closeAdminModal() {
@@ -5259,23 +5369,23 @@
                             ${product.logoUrl ? `<p class="text-[11px] text-emerald-600 mt-1 break-all">${product.logoUrl}</p>` : ''}
                             <div class="mt-2 flex flex-wrap gap-2">
                                 ${(product.packages || []).map(pkg => {
-                                    const salePrice = (pkg.salePrice || '').trim();
-                                    const originalPrice = (pkg.originalPrice || '').trim();
-                                    const legacyPrice = (pkg.price || '').trim();
-                                    let priceLabel = `${pkg.name || 'Gói'}: Liên hệ`;
+                    const salePrice = (pkg.salePrice || '').trim();
+                    const originalPrice = (pkg.originalPrice || '').trim();
+                    const legacyPrice = (pkg.price || '').trim();
+                    let priceLabel = `${pkg.name || 'Gói'}: Liên hệ`;
 
-                                    if (salePrice) {
-                                        priceLabel = originalPrice
-                                            ? `${pkg.name || 'Gói'}: ${originalPrice} -> GIẢM CÒN ${salePrice}`
-                                            : `${pkg.name || 'Gói'}: GIẢM CÒN ${salePrice}`;
-                                    } else if (legacyPrice) {
-                                        priceLabel = `${pkg.name || 'Gói'}: ${legacyPrice}`;
-                                    } else if (originalPrice) {
-                                        priceLabel = `${pkg.name || 'Gói'}: ${originalPrice}`;
-                                    }
+                    if (salePrice) {
+                        priceLabel = originalPrice
+                            ? `${pkg.name || 'Gói'}: ${originalPrice} -> GIẢM CÒN ${salePrice}`
+                            : `${pkg.name || 'Gói'}: GIẢM CÒN ${salePrice}`;
+                    } else if (legacyPrice) {
+                        priceLabel = `${pkg.name || 'Gói'}: ${legacyPrice}`;
+                    } else if (originalPrice) {
+                        priceLabel = `${pkg.name || 'Gói'}: ${originalPrice}`;
+                    }
 
-                                    return `<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">${priceLabel}</span>`;
-                                }).join('')}
+                    return `<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">${priceLabel}</span>`;
+                }).join('')}
                             </div>
                             </div>
                         </div>
@@ -6098,6 +6208,134 @@
             });
         });
 
+        // --- NETFLIX AUTO UPDATE LOGIC ---
+        let netflixIntervalId = null;
+
+        function toggleNetflixAutoUpdate() {
+            const btn = document.getElementById('btnToggleNetflix');
+            const badge = document.getElementById('netflixStatusBadge');
+            const input = document.getElementById('netflixCookieInput');
+
+            if (netflixIntervalId) {
+                // Dừng tự động lấy link
+                clearInterval(netflixIntervalId);
+                netflixIntervalId = null;
+                badge.textContent = "Đã dừng";
+                badge.className = "text-xs font-semibold px-2 py-1 rounded bg-gray-200 text-gray-600";
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Bắt đầu tự động lấy link (50 phút)</span>
+                `;
+                btn.className = "bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2";
+                input.disabled = false;
+            } else {
+                // Bắt đầu tự động lấy link
+                const cookieVal = input.value.trim();
+                if (!cookieVal) {
+                    showAlert('Lỗi', 'Vui lòng dán Netscape Cookie của Netflix vào ô nhập liệu', 'error');
+                    return;
+                }
+
+                let netflixId = '';
+                let secureNetflixId = '';
+
+                const lines = cookieVal.split('\n');
+                for (const line of lines) {
+                    const parts = line.split('\t');
+                    if (parts.length >= 7) {
+                        const name = parts[5].trim();
+                        const value = parts[6].trim();
+                        if (name === 'NetflixId') netflixId = value;
+                        if (name === 'SecureNetflixId') secureNetflixId = value;
+                    } else if (line.includes('NetflixId=')) {
+                        const match = line.match(/NetflixId=([^;\s]+)/);
+                        if (match) netflixId = match[1];
+                        const match2 = line.match(/SecureNetflixId=([^;\s]+)/);
+                        if (match2) secureNetflixId = match2[1];
+                    }
+                }
+
+                if (!netflixId) {
+                    showAlert('Lỗi', 'Không tìm thấy NetflixId trong Cookie cung cấp. Vui lòng kiểm tra lại.', 'error');
+                    return;
+                }
+
+                // Lưu cookie local để lần sau mở modal vẫn còn
+                localStorage.setItem('netflix_admin_cookie', cookieVal);
+
+                input.disabled = true;
+                badge.textContent = "Đang chạy";
+                badge.className = "text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-700 animate-pulse";
+                btn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Đang tự động lấy link...</span>
+                `;
+                btn.className = "bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-semibold flex items-center gap-2";
+
+                // Gửi API lần đầu ngay lập tức
+                runNetflixApi(netflixId, secureNetflixId);
+
+                // Sau đó lặp lại mỗi 50 phút
+                netflixIntervalId = setInterval(() => {
+                    runNetflixApi(netflixId, secureNetflixId);
+                }, 50 * 60 * 1000);
+            }
+        }
+
+        async function runNetflixApi(netflixId, secureNetflixId) {
+            try {
+                const response = await fetch('/api/nftoken', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ netflixId, secureNetflixId })
+                });
+
+                const data = await response.json();
+                const textEl = document.getElementById('netflixLastUpdatedText');
+                const timeString = new Date().toLocaleTimeString('vi-VN');
+
+                if (response.ok && data && data.nftoken) {
+                    const finalUrl = 'https://netflix.com/unsupported?nftoken=' + data.nftoken;
+
+                    // LƯU LÊN FIREBASE
+                    if (window.firebaseSetDoc && window.firebaseDoc && window.firebaseDb) {
+                        try {
+                            const dataRef = window.firebaseDoc(window.firebaseDb, 'settings', 'netflix');
+                            await window.firebaseSetDoc(dataRef, {
+                                url: finalUrl,
+                                lastUpdated: new Date().getTime()
+                            }, { merge: true });
+                        } catch (fbError) {
+                            console.error('Firebase save error:', fbError);
+                        }
+                    }
+
+                    if (textEl) {
+                        textEl.textContent = 'Cập nhật thành công lúc: ' + timeString;
+                        textEl.className = "text-xs text-green-600 ml-auto font-medium";
+                    }
+                } else {
+                    if (textEl) {
+                        textEl.textContent = 'Lỗi API lúc: ' + timeString;
+                        textEl.className = "text-xs text-red-500 ml-auto font-medium";
+                    }
+                    console.error('API Error:', data.error || data);
+                }
+            } catch (e) {
+                console.error('Netflix fetch error:', e);
+                const textEl = document.getElementById('netflixLastUpdatedText');
+                if (textEl) {
+                    textEl.textContent = 'Lỗi hệ thống lúc: ' + new Date().toLocaleTimeString('vi-VN');
+                    textEl.className = "text-xs text-red-500 ml-auto font-medium";
+                }
+            }
+        }
+
         // Welcome Ad Logic
         let hasShownWelcomeAdThisSession = false;
 
@@ -6151,6 +6389,21 @@
         }
 
         function initApp() {
+            // Khởi tạo listener cho Netflix
+            if (window.firebaseOnSnapshot && window.firebaseDoc && window.firebaseDb) {
+                window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDb, 'settings', 'netflix'), (docSnap) => {
+                    const btnContainer = document.getElementById('netflixAutoLinkContainer');
+                    const btnLink = document.getElementById('btnNetflixDirectLogin');
+
+                    if (docSnap.exists() && docSnap.data().url) {
+                        btnLink.href = docSnap.data().url;
+                        // XÓA: btnContainer.classList.remove('hidden'); -> Bây giờ do actuallyOpenFolder quyết định
+                    } else {
+                        btnContainer.classList.add('hidden');
+                    }
+                });
+            }
+
             // Load data when app initializes (before login)
             loadDataFromStorage().then(() => {
                 console.log('Initial data loaded');
@@ -6176,4 +6429,3 @@
 </body>
 
 </html>
-
