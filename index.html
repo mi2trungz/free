@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -6339,6 +6339,149 @@
 
         // --- NETFLIX AUTO UPDATE LOGIC ---
         let netflixIntervalId = null;
+        let isNetflixDirectLoginLoading = false;
+
+        function setNetflixDirectLoginLoading(isLoading) {
+            const btnLink = document.getElementById('btnNetflixDirectLogin');
+            if (!btnLink) return;
+
+            if (isLoading) {
+                if (!btnLink.dataset.originalHtml) {
+                    btnLink.dataset.originalHtml = btnLink.innerHTML;
+                }
+                btnLink.classList.add('pointer-events-none', 'opacity-80', 'cursor-wait');
+                btnLink.innerHTML = `
+                    <div class="flex items-center gap-4 relative z-10 w-full">
+                        <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 text-left min-w-0">
+                            <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide truncate">ĐANG CẬP NHẬT LINK...</h3>
+                            <p class="text-xs sm:text-sm text-gray-400 truncate mt-0.5">Vui lòng chờ, hệ thống đang lấy link Netflix mới nhất</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                btnLink.classList.remove('pointer-events-none', 'opacity-80', 'cursor-wait');
+                if (btnLink.dataset.originalHtml) {
+                    btnLink.innerHTML = btnLink.dataset.originalHtml;
+                    delete btnLink.dataset.originalHtml;
+                }
+            }
+        }
+
+        function extractNetflixIdsFromCookie(cookieVal) {
+            if (!cookieVal || typeof cookieVal !== 'string') {
+                return { netflixId: '', secureNetflixId: '' };
+            }
+
+            let netflixId = '';
+            let secureNetflixId = '';
+
+            const lines = cookieVal.split('\n');
+            for (const line of lines) {
+                const parts = line.split('\t');
+                if (parts.length >= 7) {
+                    const name = parts[5].trim();
+                    const value = parts[6].trim();
+                    if (name === 'NetflixId') netflixId = value;
+                    if (name === 'SecureNetflixId') secureNetflixId = value;
+                } else if (line.includes('NetflixId=')) {
+                    const match = line.match(/NetflixId=([^;\s]+)/);
+                    if (match) netflixId = match[1];
+                    const match2 = line.match(/SecureNetflixId=([^;\s]+)/);
+                    if (match2) secureNetflixId = match2[1];
+                }
+            }
+
+            return { netflixId, secureNetflixId };
+        }
+
+        function startNetflixAutoUpdate(netflixId, secureNetflixId, options = {}) {
+            const { updateUi = true, runImmediately = true } = options;
+            const btn = document.getElementById('btnToggleNetflix');
+            const badge = document.getElementById('netflixStatusBadge');
+            const input = document.getElementById('netflixCookieInput');
+
+            if (!netflixId) return false;
+
+            if (netflixIntervalId) {
+                clearInterval(netflixIntervalId);
+                netflixIntervalId = null;
+            }
+
+            if (updateUi) {
+                if (input) input.disabled = true;
+                if (badge) {
+                    badge.textContent = "Đang chạy";
+                    badge.className = "text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-700 animate-pulse";
+                }
+                if (btn) {
+                    btn.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Đang tự động lấy link...</span>
+                    `;
+                    btn.className = "bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-semibold flex items-center gap-2";
+                }
+            }
+
+            // Gửi API lần đầu ngay lập tức (nếu cần)
+            if (runImmediately) {
+                runNetflixApi(netflixId, secureNetflixId);
+            }
+
+            // Sau đó lặp lại mỗi 50 phút
+            netflixIntervalId = setInterval(() => {
+                runNetflixApi(netflixId, secureNetflixId);
+            }, 50 * 60 * 1000);
+
+            return true;
+        }
+
+        async function handleNetflixDirectLoginClick(event) {
+            if (event) event.preventDefault();
+
+            const btnLink = document.getElementById('btnNetflixDirectLogin');
+            if (!btnLink) return;
+            if (isNetflixDirectLoginLoading) return;
+
+            isNetflixDirectLoginLoading = true;
+            setNetflixDirectLoginLoading(true);
+
+            try {
+                let targetUrl = btnLink.href && btnLink.href !== '#' ? btnLink.href : '';
+
+                const savedCookie = localStorage.getItem('netflix_admin_cookie');
+                if (savedCookie) {
+                    const { netflixId, secureNetflixId } = extractNetflixIdsFromCookie(savedCookie);
+                    if (netflixId) {
+                        const latestUrl = await runNetflixApi(netflixId, secureNetflixId);
+                        if (latestUrl) {
+                            targetUrl = latestUrl;
+                            btnLink.href = latestUrl;
+                        }
+                        if (!netflixIntervalId) {
+                            // Bật auto refresh sau lần click đầu tiên
+                            startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: false, runImmediately: false });
+                        }
+                    }
+                }
+
+                if (!targetUrl) {
+                    showAlert('Lỗi', 'Chưa có link Netflix khả dụng. Vui lòng thử lại sau ít giây.', 'error');
+                    return;
+                }
+
+                window.open(targetUrl, '_blank');
+            } finally {
+                isNetflixDirectLoginLoading = false;
+                setNetflixDirectLoginLoading(false);
+            }
+        }
 
         function toggleNetflixAutoUpdate() {
             const btn = document.getElementById('btnToggleNetflix');
@@ -6362,30 +6505,13 @@
                 input.disabled = false;
             } else {
                 // Bắt đầu tự động lấy link
-                const cookieVal = input.value.trim();
+                const cookieVal = input ? input.value.trim() : '';
                 if (!cookieVal) {
                     showAlert('Lỗi', 'Vui lòng dán Netscape Cookie của Netflix vào ô nhập liệu', 'error');
                     return;
                 }
 
-                let netflixId = '';
-                let secureNetflixId = '';
-
-                const lines = cookieVal.split('\n');
-                for (const line of lines) {
-                    const parts = line.split('\t');
-                    if (parts.length >= 7) {
-                        const name = parts[5].trim();
-                        const value = parts[6].trim();
-                        if (name === 'NetflixId') netflixId = value;
-                        if (name === 'SecureNetflixId') secureNetflixId = value;
-                    } else if (line.includes('NetflixId=')) {
-                        const match = line.match(/NetflixId=([^;\s]+)/);
-                        if (match) netflixId = match[1];
-                        const match2 = line.match(/SecureNetflixId=([^;\s]+)/);
-                        if (match2) secureNetflixId = match2[1];
-                    }
-                }
+                const { netflixId, secureNetflixId } = extractNetflixIdsFromCookie(cookieVal);
 
                 if (!netflixId) {
                     showAlert('Lỗi', 'Không tìm thấy NetflixId trong Cookie cung cấp. Vui lòng kiểm tra lại.', 'error');
@@ -6394,25 +6520,7 @@
 
                 // Lưu cookie local để lần sau mở modal vẫn còn
                 localStorage.setItem('netflix_admin_cookie', cookieVal);
-
-                input.disabled = true;
-                badge.textContent = "Đang chạy";
-                badge.className = "text-xs font-semibold px-2 py-1 rounded bg-green-100 text-green-700 animate-pulse";
-                btn.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Đang tự động lấy link...</span>
-                `;
-                btn.className = "bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all text-sm font-semibold flex items-center gap-2";
-
-                // Gửi API lần đầu ngay lập tức
-                runNetflixApi(netflixId, secureNetflixId);
-
-                // Sau đó lặp lại mỗi 50 phút
-                netflixIntervalId = setInterval(() => {
-                    runNetflixApi(netflixId, secureNetflixId);
-                }, 50 * 60 * 1000);
+                startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: true });
             }
         }
 
@@ -6445,23 +6553,33 @@
                     }
 
                     if (textEl) {
-                        textEl.textContent = 'Cập nhật thành công lúc: ' + timeString;
+                        textEl.textContent = 'COOKIE LIVE • Cập nhật link lúc: ' + timeString;
                         textEl.className = "text-xs text-green-600 ml-auto font-medium";
                     }
+                    return finalUrl;
                 } else {
+                    const errorText = (data && (data.error || data.message)) ? String(data.error || data.message) : '';
+                    const isLikelyDeadCookie =
+                        response.status === 401 ||
+                        response.status === 403 ||
+                        /cookie|expired|invalid|unauthor|forbidden|auth/i.test(errorText);
                     if (textEl) {
-                        textEl.textContent = 'Lỗi API lúc: ' + timeString;
+                        textEl.textContent = isLikelyDeadCookie
+                            ? ('COOKIE DIE • Kiểm tra lại cookie (' + timeString + ')')
+                            : ('Lỗi API lúc: ' + timeString);
                         textEl.className = "text-xs text-red-500 ml-auto font-medium";
                     }
-                    console.error('API Error:', data.error || data);
+                    console.error('API Error:', errorText || data);
+                    return null;
                 }
             } catch (e) {
                 console.error('Netflix fetch error:', e);
                 const textEl = document.getElementById('netflixLastUpdatedText');
                 if (textEl) {
-                    textEl.textContent = 'Lỗi hệ thống lúc: ' + new Date().toLocaleTimeString('vi-VN');
+                    textEl.textContent = 'Không xác định trạng thái cookie • Lỗi hệ thống lúc: ' + new Date().toLocaleTimeString('vi-VN');
                     textEl.className = "text-xs text-red-500 ml-auto font-medium";
                 }
+                return null;
             }
         }
 
@@ -6531,6 +6649,12 @@
                         btnContainer.classList.add('hidden');
                     }
                 });
+            }
+
+            const btnLink = document.getElementById('btnNetflixDirectLogin');
+            if (btnLink && !btnLink.dataset.autoFetchBound) {
+                btnLink.addEventListener('click', handleNetflixDirectLoginClick);
+                btnLink.dataset.autoFetchBound = '1';
             }
 
             // Load data when app initializes (before login)
