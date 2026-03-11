@@ -6489,15 +6489,35 @@
 
             // Gửi API lần đầu ngay lập tức (nếu cần)
             if (runImmediately) {
-                runNetflixApi(netflixId, secureNetflixId);
+                runNetflixApi();
             }
 
             // Sau đó lặp lại mỗi 50 phút
             netflixIntervalId = setInterval(() => {
-                runNetflixApi(netflixId, secureNetflixId);
+                runNetflixApi();
             }, 50 * 60 * 1000);
 
             return true;
+        }
+
+        async function saveNetflixCookieToServer(netflixId, secureNetflixId) {
+            const response = await fetch('/api/netflix-cookie', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ netflixId, secureNetflixId })
+            });
+
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (e) {
+                data = {};
+            }
+
+            if (!response.ok) {
+                const msg = data.error || 'Khong the luu cookie len server';
+                throw new Error(msg);
+            }
         }
 
         async function handleNetflixDirectLoginClick(event) {
@@ -6512,27 +6532,10 @@
 
             try {
                 let targetUrl = btnLink.href && btnLink.href !== '#' ? btnLink.href : '';
-
-                const savedCookie = localStorage.getItem('netflix_admin_cookie');
-                if (savedCookie) {
-                    const { netflixId, secureNetflixId } = extractNetflixIdsFromCookie(savedCookie);
-                    if (!netflixId) {
-                        showAlert('Lỗi', 'Cookie Netflix không hợp lệ. Vui lòng cập nhật cookie mới.', 'error');
-                        return;
-                    }
-
-                    const latestUrl = await runNetflixApi(netflixId, secureNetflixId);
-                    if (!latestUrl) {
-                        showAlert('Lỗi', 'Cookie Netflix lỗi hoặc đã hết hạn. Vui lòng cập nhật cookie mới.', 'error');
-                        return;
-                    }
-
+                const latestUrl = await runNetflixApi();
+                if (latestUrl) {
                     targetUrl = latestUrl;
                     btnLink.href = latestUrl;
-                    if (!netflixIntervalId) {
-                        // Bật auto refresh sau lần click đầu tiên
-                        startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: false, runImmediately: false });
-                    }
                 }
 
                 if (!targetUrl) {
@@ -6555,7 +6558,7 @@
             }
         }
 
-        function toggleNetflixAutoUpdate() {
+        async function toggleNetflixAutoUpdate() {
             const btn = document.getElementById('btnToggleNetflix');
             const badge = document.getElementById('netflixStatusBadge');
             const input = document.getElementById('netflixCookieInput');
@@ -6590,18 +6593,25 @@
                     return;
                 }
 
+                try {
+                    await saveNetflixCookieToServer(netflixId, secureNetflixId);
+                } catch (e) {
+                    showAlert('Lỗi', 'Không thể lưu cookie lên máy chủ. Vui lòng thử lại.\n' + (e.message || ''), 'error');
+                    return;
+                }
+
                 // Lưu cookie local để lần sau mở modal vẫn còn
                 localStorage.setItem('netflix_admin_cookie', cookieVal);
                 startNetflixAutoUpdate(netflixId, secureNetflixId, { updateUi: true });
             }
         }
 
-        async function runNetflixApi(netflixId, secureNetflixId) {
+        async function runNetflixApi() {
             try {
                 const response = await fetch('/api/nftoken', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ netflixId, secureNetflixId })
+                    body: JSON.stringify({})
                 });
 
                 const data = await response.json();

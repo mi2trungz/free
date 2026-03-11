@@ -4,6 +4,8 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 3005;
+const DATA_DIR = path.join(__dirname, 'data');
+const NETFLIX_COOKIE_STORE = path.join(DATA_DIR, 'netflix-cookie.json');
 
 const MIME_TYPES = {
     '.html': 'text/html',
@@ -14,6 +16,46 @@ const MIME_TYPES = {
     '.jpg': 'image/jpeg',
     '.svg': 'image/svg+xml'
 };
+
+function readStoredNetflixCookie() {
+    try {
+        if (!fs.existsSync(NETFLIX_COOKIE_STORE)) return null;
+        const raw = fs.readFileSync(NETFLIX_COOKIE_STORE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.netflixId) return null;
+        return {
+            netflixId: parsed.netflixId,
+            secureNetflixId: parsed.secureNetflixId || ''
+        };
+    } catch (e) {
+        return null;
+    }
+}
+
+function writeStoredNetflixCookie(netflixId, secureNetflixId) {
+    if (!netflixId) return false;
+    try {
+        if (!fs.existsSync(DATA_DIR)) {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+        }
+        fs.writeFileSync(
+            NETFLIX_COOKIE_STORE,
+            JSON.stringify(
+                {
+                    netflixId,
+                    secureNetflixId: secureNetflixId || '',
+                    updatedAt: new Date().toISOString()
+                },
+                null,
+                2
+            ),
+            'utf-8'
+        );
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
 
 const server = http.createServer((req, res) => {
     // Enable CORS for local development just in case
@@ -26,6 +68,41 @@ const server = http.createServer((req, res) => {
         return res.end();
     }
 
+    if (req.method === 'GET' && req.url === '/api/netflix-cookie') {
+        const saved = readStoredNetflixCookie();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ hasCookie: !!(saved && saved.netflixId) }));
+    }
+
+    if (req.method === 'POST' && req.url === '/api/netflix-cookie') {
+        let body = '';
+        req.on('data', chunk => {
+            body += chunk.toString();
+        });
+
+        req.on('end', () => {
+            try {
+                const data = JSON.parse(body || '{}');
+                const { netflixId, secureNetflixId } = data;
+                if (!netflixId) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ error: 'Missing NetflixId' }));
+                }
+                const ok = writeStoredNetflixCookie(netflixId, secureNetflixId);
+                if (!ok) {
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    return res.end(JSON.stringify({ error: 'Failed to save cookie on server' }));
+                }
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ success: true }));
+            } catch (e) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ error: 'Bad Request JSON' }));
+            }
+        });
+        return;
+    }
+
     // API Endpoint
     if (req.method === 'POST' && req.url === '/api/nftoken') {
         let body = '';
@@ -35,12 +112,18 @@ const server = http.createServer((req, res) => {
 
         req.on('end', () => {
             try {
-                const data = JSON.parse(body);
-                const { netflixId, secureNetflixId } = data;
+                JSON.parse(body || '{}');
+                let netflixId = '';
+                let secureNetflixId = '';
+                const saved = readStoredNetflixCookie();
+                if (saved && saved.netflixId) {
+                    netflixId = saved.netflixId;
+                    secureNetflixId = saved.secureNetflixId || '';
+                }
 
                 if (!netflixId) {
                     res.writeHead(400, { 'Content-Type': 'application/json' });
-                    return res.end(JSON.stringify({ error: 'Missing NetflixId' }));
+                    return res.end(JSON.stringify({ error: 'Missing NetflixId on server. Admin must save cookie first.' }));
                 }
 
                 // Construct Cookie String
