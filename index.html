@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -621,10 +621,44 @@
             width: 300px;
             height: 300px;
         }
+
+        @keyframes bestSellerGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 12px 30px rgba(249, 115, 22, 0.22), 0 0 0 1px rgba(251, 146, 60, 0.28) inset;
+            }
+
+            50% {
+                box-shadow: 0 18px 38px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(248, 113, 113, 0.45) inset;
+            }
+        }
+
+        @keyframes bestSellerBadgePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.04);
+            }
+        }
+
+        .pricing-best-seller-card {
+            border-color: rgba(251, 146, 60, 0.55) !important;
+            background: linear-gradient(140deg, rgba(255, 247, 237, 0.96) 0%, rgba(255, 255, 255, 1) 58%);
+            animation: bestSellerGlow 2.2s ease-in-out infinite;
+        }
+
+        .pricing-best-seller-badge {
+            animation: bestSellerBadgePulse 1.6s ease-in-out infinite;
+        }
     </style>
 </head>
 
-<body class="min-h-screen flex items-center justify-center p-2 md:p-3 lg:p-4">
+<body class="min-h-screen flex items-center justify-center p-1 sm:p-2 md:p-3 lg:p-4">
 
     <!-- MODAL NHẬP MẬT KHẨU -->
     <div id="passwordModal"
@@ -1055,6 +1089,20 @@
                             class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
                             Lưu mô tả sections
                         </button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700">Bảng giá sản phẩm</label>
+                                <p class="text-xs text-gray-500 mt-1">Tự thêm sản phẩm và các gói giá hiển thị ở trang Bảng giá</p>
+                            </div>
+                            <button onclick="openAddPricingProductModal()"
+                                class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-teal-700 transition-all text-sm font-semibold whitespace-nowrap">
+                                Thêm sản phẩm
+                            </button>
+                        </div>
+                        <div id="adminPricingProductsList" class="space-y-3"></div>
                     </div>
                 </div>
             </div>
@@ -1668,6 +1716,138 @@
         </div>
     </div>
 
+    <div id="pricingProductModal"
+        class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden relative max-h-[90vh] flex flex-col">
+            <button onclick="closePricingProductModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="px-6 py-5 border-b border-gray-200">
+                <h3 id="pricingProductModalTitle" class="text-xl font-bold text-gray-800">Thêm sản phẩm bảng giá</h3>
+                <p class="text-sm text-gray-500 mt-1">Mỗi sản phẩm có thể có nhiều gói với mức giá khác nhau.</p>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiêu đề sản phẩm</label>
+                    <input type="text" id="pricingProductTitleInput"
+                        class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                        placeholder="VD: NETFLIX PREMIUM">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả ngắn</label>
+                    <input type="text" id="pricingProductSubtitleInput"
+                        class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                        placeholder="VD: Tài khoản riêng, ổn định, hỗ trợ nhanh">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phân loại sản phẩm</label>
+                    <select id="pricingProductCategoryInput"
+                        class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm bg-white">
+                        <option value="work">Công việc</option>
+                        <option value="entertainment">Giải trí</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Link logo sản phẩm</label>
+                    <input type="text" id="pricingProductLogoInput"
+                        class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                        placeholder="https://... (để trống nếu không dùng)">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mô tả chi tiết dịch vụ</label>
+                    <div class="border-2 border-gray-300 rounded-xl overflow-hidden">
+                        <div class="flex items-center gap-1 p-2 bg-gray-50 border-b border-gray-200 flex-wrap">
+                            <button type="button" onclick="formatPricingDetailText('bold')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors" title="In đậm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6zM6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z" />
+                                </svg>
+                            </button>
+                            <button type="button" onclick="formatPricingDetailText('foreColor', '#2563eb')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors flex items-center gap-1"
+                                title="Màu xanh">
+                                <span class="text-xs font-bold text-blue-600">A</span>
+                            </button>
+                            <button type="button" onclick="formatPricingDetailText('foreColor', '#dc2626')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors flex items-center gap-1"
+                                title="Màu đỏ">
+                                <span class="text-xs font-bold text-red-600">A</span>
+                            </button>
+                            <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                            <button type="button" onclick="formatPricingDetailText('justifyLeft')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn trái">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M4 12h10M4 18h16" />
+                                </svg>
+                            </button>
+                            <button type="button" onclick="formatPricingDetailText('justifyCenter')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn giữa">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M7 12h10M4 18h16" />
+                                </svg>
+                            </button>
+                            <button type="button" onclick="formatPricingDetailText('justifyRight')"
+                                class="p-2 hover:bg-gray-200 rounded transition-colors" title="Căn phải">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M10 12h10M4 18h16" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="pricingProductDetailDescriptionInput" contenteditable="true"
+                            class="w-full min-h-[170px] max-h-[320px] px-4 py-3 overflow-y-auto focus:outline-none text-sm"
+                            placeholder="Nhập mô tả chi tiết sẽ hiện trong popup khi khách bấm vào sản phẩm..." style="outline: none;"></div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Chú thích dưới nút mua</label>
+                    <input type="text" id="pricingProductDetailNoteInput"
+                        class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                        placeholder="VD: Hỗ trợ mua qua fanpage ngay sau khi gửi tin nhắn.">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="pricingProductBestSellerInput" class="w-4 h-4 text-amber-600 rounded">
+                    <label for="pricingProductBestSellerInput" class="text-sm text-gray-700">Đánh dấu là sản phẩm bán chạy</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="pricingProductHiddenInput" class="w-4 h-4 text-orange-600 rounded">
+                    <label for="pricingProductHiddenInput" class="text-sm text-gray-700">Tạm ẩn sản phẩm khỏi trang bảng giá</label>
+                </div>
+                <div class="bg-gray-50 rounded-xl border-2 border-gray-200 p-4">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-800">Danh sách gói</h4>
+                            <p class="text-xs text-gray-500 mt-1">Mỗi gói gồm tên gói, giá và ghi chú tùy chọn.</p>
+                        </div>
+                        <button type="button" onclick="addPricingPackageRow()"
+                            class="bg-white border border-emerald-200 text-emerald-700 px-3 py-2 rounded-lg hover:bg-emerald-50 transition-all text-sm font-semibold">
+                            Thêm gói
+                        </button>
+                    </div>
+                    <div id="pricingPackagesEditor" class="space-y-3 overflow-x-hidden"></div>
+                </div>
+                <p id="pricingProductError" class="text-red-500 text-sm hidden"></p>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200">
+                <button onclick="savePricingProduct()"
+                    class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold py-3 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all">
+                    Lưu sản phẩm
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL WELCOME QUẢNG CÁO -->
     <div id="welcomeAdModal"
         class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 fade-in">
@@ -1688,6 +1868,52 @@
                     class="w-full bg-gray-200 text-gray-500 font-bold py-3 rounded-xl transition-all cursor-not-allowed text-sm hover:bg-gray-300">
                     BỎ QUA (4s)
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pricingDetailModal"
+        class="hidden fixed inset-0 z-[95] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in"
+        onclick="if(event.target === this) closePricingDetailModal()">
+        <div class="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full overflow-hidden relative max-h-[92vh] flex flex-col">
+            <button onclick="closePricingDetailModal()"
+                class="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="px-6 py-7 border-b border-slate-200">
+                <div class="flex items-start gap-4 pr-12">
+                    <div id="pricingDetailModalLogo"
+                        class="hidden w-16 h-16 rounded-full overflow-hidden bg-white border border-slate-200 shadow-sm shrink-0"></div>
+                    <div class="min-w-0">
+                        <h3 id="pricingDetailModalTitle" class="text-2xl sm:text-4xl leading-tight font-black text-slate-900 tracking-tight">Sản phẩm</h3>
+                        <p id="pricingDetailModalSubtitle" class="hidden mt-2 text-sm sm:text-base font-medium text-slate-500"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 sm:p-7 overflow-y-auto flex-1">
+                <div
+                    class="rounded-[1.75rem] bg-gradient-to-r from-blue-600 to-indigo-600 p-5 sm:p-6 text-white shadow-lg">
+                    <p class="text-[13px] sm:text-sm font-semibold text-blue-100">Chi tiết dịch vụ</p>
+                    <div id="pricingDetailModalDescription"
+                        class="mt-3 text-[15px] sm:text-base leading-relaxed font-medium whitespace-pre-line"></div>
+                </div>
+                <p id="pricingDetailModalFallback"
+                    class="hidden mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500 whitespace-pre-line"></p>
+                <p id="pricingDetailModalNote" class="mt-6 text-center text-sm font-medium text-slate-500"></p>
+            </div>
+            <div class="px-6 py-5 border-t border-slate-200">
+                <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-extrabold py-4 rounded-2xl text-center shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all inline-flex items-center justify-center gap-2 uppercase tracking-wide">
+                    <span>TRUY CẬP FANPAGE ĐỂ MUA NGAY</span>
+                    <span class="text-2xl leading-none">→</span>
+                </a>
+                <div class="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-slate-600">
+                    <span class="text-blue-600 text-xl leading-none">↑</span>
+                    <span>Bấm vào đây để truy cập fanpage</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1771,7 +1997,7 @@
 
     <!-- ỨNG DỤNG CHÍNH -->
     <div id="mainApp"
-        class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-2 my-3 relative z-10">
+        class="bg-white w-full max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-6xl rounded-2xl overflow-hidden h-auto flex flex-col hidden shadow-2xl ring-1 ring-black/5 mx-1 sm:mx-2 my-2 sm:my-3 relative z-10">
         <!-- Floating auth buttons (bottom-right, small and blurred) -->
         <div class="fixed bottom-4 right-4 md:bottom-6 md:right-6 flex items-center gap-2 z-[100]">
             <button id="headerLoginBtn" onclick="openAuthModal()" title="Đăng nhập"
@@ -1801,13 +2027,13 @@
         </div>
 
 
-        <div class="px-6 pt-6 pb-6 md:px-8 md:pt-8 md:pb-8 flex-1 flex flex-col relative">
+        <div class="px-4 pt-5 pb-5 sm:px-6 sm:pt-6 sm:pb-6 md:px-8 md:pt-8 md:pb-8 flex-1 flex flex-col relative">
 
             <!-- STICKY NAVBAR -->
             <nav id="mainNavbar"
                 class="sticky top-0 z-[60] bg-white/80 backdrop-blur-md border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.05)] rounded-2xl mb-6 px-4 py-3 flex items-center justify-between transition-all duration-300">
                 <!-- Brand -->
-                <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;"
+                <a href="#" onclick="navigateToHomeSection(); return false;"
                     class="flex items-center font-black text-xl tracking-tighter hover:opacity-80 transition-opacity">
                     <span class="text-gray-900">TRADA</span><span
                         class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">3K.STORE</span>
@@ -1815,24 +2041,31 @@
 
                 <!-- Desktop Menu -->
                 <div class="![display:none] md:![display:flex] items-center gap-1 lg:gap-2">
-                    <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); return false;"
+                    <a href="#" onclick="navigateToHomeSection(); return false;"
                         class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
                         data-target="home">
                         TRANG CHỦ
                         <span
                             class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
                     </a>
-                    <a href="#free"
+                    <a href="#free" onclick="navigateToHomeSection('accountCategoriesSection'); return false;"
                         class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
                         data-target="free">
                         DỊCH VỤ MIỄN PHÍ
                         <span
                             class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
                     </a>
-                    <a href="#vip"
+                    <a href="#vip" onclick="navigateToHomeSection('premiumCategoriesSection'); return false;"
                         class="nav-link relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
                         data-target="vip">
                         DỊCH VỤ VIP
+                        <span
+                            class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
+                    </a>
+                    <a href="#" onclick="showPricingPage(); return false;"
+                        class="nav-link hidden relative text-sm font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50/80 rounded-lg px-3 py-2 transition-all duration-300 flex flex-col items-center justify-center"
+                        data-target="pricing">
+                        BẢNG GIÁ
                         <span
                             class="nav-indicator absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] bg-emerald-500 rounded-t-lg opacity-0 w-4 transition-all duration-300"></span>
                     </a>
@@ -1858,7 +2091,7 @@
                 <!-- Mobile Menu Dropdown -->
                 <div id="mobileMenuDropdown"
                     class="md:hidden absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex-col origin-top transition-all duration-300 transform scale-95 opacity-0 invisible">
-                    <a href="#" onclick="window.scrollTo({top:0, behavior:'smooth'}); toggleMobileMenu(); return false;"
+                    <a href="#" onclick="navigateToHomeSection(); toggleMobileMenu(); return false;"
                         class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
                         data-target="home">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
@@ -1870,7 +2103,7 @@
                         <span
                             class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
                     </a>
-                    <a href="#free" onclick="toggleMobileMenu()"
+                    <a href="#free" onclick="navigateToHomeSection('accountCategoriesSection'); toggleMobileMenu(); return false;"
                         class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
                         data-target="free">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
@@ -1882,7 +2115,7 @@
                         <span
                             class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
                     </a>
-                    <a href="#vip" onclick="toggleMobileMenu()"
+                    <a href="#vip" onclick="navigateToHomeSection('premiumCategoriesSection'); toggleMobileMenu(); return false;"
                         class="nav-link relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
                         data-target="vip">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
@@ -1891,6 +2124,18 @@
                                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         DỊCH VỤ VIP
+                        <span
+                            class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
+                    </a>
+                    <a href="#" onclick="showPricingPage(); toggleMobileMenu(); return false;"
+                        class="nav-link hidden relative px-5 py-4 font-semibold text-gray-500 hover:text-emerald-600 hover:bg-gray-50 active:bg-gray-100 border-b border-gray-50 flex items-center gap-3 transition-colors"
+                        data-target="pricing">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        BẢNG GIÁ
                         <span
                             class="nav-indicator absolute left-0 top-0 bottom-0 w-[3px] bg-emerald-500 opacity-0 scale-y-50 transition-all duration-300"></span>
                     </a>
@@ -1986,6 +2231,14 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <button onclick="showPricingPage()"
+                        class="hidden ml-3 inline-flex items-center gap-2 bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50 font-extrabold px-7 py-3 rounded-full transition-all text-sm sm:text-base shadow-sm">
+                        Xem bảng giá
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </button>
                 </div>
@@ -2123,6 +2376,45 @@
                     </p>
                     <div id="popupListContainer"
                         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 fade-in">
+                    </div>
+                </div>
+
+                <div id="pricingPage" class="hidden mt-3 md:mt-4 mb-4">
+                    <div class="mx-auto max-w-5xl">
+                        <div class="mb-4 flex flex-col gap-2.5 sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                            <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-700 sm:w-auto">
+                                Liên hệ fanpage
+                            </a>
+                        </div>
+                        <div class="rounded-[1.75rem] border border-emerald-100 bg-white/90 px-3.5 py-4 sm:px-5 sm:py-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)] md:px-7 md:py-7">
+                            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                                <div>
+                                    <p class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                                        TRADA3K.STORE
+                                    </p>
+                                    <h2 class="mt-4 text-xl sm:text-2xl font-black tracking-tight text-gray-900 md:text-4xl">Bảng giá sản phẩm</h2>
+                                    <p class="hidden mt-3 max-w-2xl text-sm font-medium text-gray-500 md:text-base">Các sản phẩm và gói giá được cập nhật trực tiếp từ hệ thống quản trị.</p>
+                                </div>
+                                <div id="pricingLastUpdated" class="text-sm font-semibold text-emerald-700"></div>
+                            </div>
+                            <div id="pricingCategoryFilters" class="mb-5 flex flex-wrap gap-2 sm:mb-6">
+                                <button type="button" onclick="setPricingCategoryFilter('all')" data-category="all"
+                                    class="pricing-filter-btn rounded-full border border-emerald-200 bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all">
+                                    Tất cả
+                                </button>
+                                <button type="button" onclick="setPricingCategoryFilter('work')" data-category="work"
+                                    class="pricing-filter-btn rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-emerald-200 hover:text-emerald-700">
+                                    Công việc
+                                </button>
+                                <button type="button" onclick="setPricingCategoryFilter('entertainment')"
+                                    data-category="entertainment"
+                                    class="pricing-filter-btn rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-emerald-200 hover:text-emerald-700">
+                                    Giải trí
+                                </button>
+                            </div>
+                            <div id="pricingProductsContainer" class="grid grid-cols-1 items-start gap-3.5 sm:gap-4 md:grid-cols-2 md:gap-x-8 lg:gap-x-10"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -2281,6 +2573,7 @@
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
         let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà FREE
         let PREMIUM_SECTION_DESC = 'Các dịch vụ cao cấp với mức giá ưu đãi'; // Mô tả section dịch vụ VIP
+        let PRICING_PRODUCTS = [];
         const FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
         function sanitizeFacebookLinksInHtml(html) {
             if (!html || typeof html !== 'string') return html;
@@ -2291,6 +2584,9 @@
         let editingAccountIndex = -1;
         let currentAdminFolderIndex = -1;
         let confirmCallback = null;
+        let editingPricingProductIndex = -1;
+        let currentView = 'home';
+        let currentPricingCategoryFilter = 'all';
 
         // Assuming closeAdminModal() would be defined here or nearby.
         // Inserting switchAdminTab function after the variable declarations and before showAlert.
@@ -2614,12 +2910,16 @@
                 // Always load data
                 loadDataFromStorage().then(() => {
                     setupDataListener();
-                    if (typeof hasShownWelcomeAdThisSession !== 'undefined' && !hasShownWelcomeAdThisSession) {
+                    if (
+                        typeof hasShownWelcomeAdThisSession !== 'undefined' &&
+                        !hasShownWelcomeAdThisSession &&
+                        !isPricingRouteRequested()
+                    ) {
                         hasShownWelcomeAdThisSession = true;
                         showWelcomeAd();
                     }
                     setTimeout(() => {
-                        if (currentFolderIndex === -1) showFolders();
+                        if (currentFolderIndex === -1) applyRouteFromUrl();
                     }, 100);
                 });
             });
@@ -2700,6 +3000,7 @@
                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
+                localStorage.setItem('trada_pricing_products', JSON.stringify(PRICING_PRODUCTS));
                 console.log('Saved to localStorage');
 
                 // Lưu vào Firestore để đồng bộ cho tất cả người dùng
@@ -2714,6 +3015,7 @@
                             accountSectionDesc: ACCOUNT_SECTION_DESC,
                             popupSectionDesc: POPUP_SECTION_DESC,
                             premiumSectionDesc: PREMIUM_SECTION_DESC,
+                            pricingProducts: PRICING_PRODUCTS,
                             updatedAt: new Date().toISOString()
                         }, { merge: true });
                         console.log('Saved to Firestore successfully');
@@ -2811,8 +3113,18 @@
                                     const saved = localStorage.getItem('trada_premium_section_desc');
                                     if (saved) PREMIUM_SECTION_DESC = saved;
                                 }
+                                if (Array.isArray(firestoreData.pricingProducts)) {
+                                    PRICING_PRODUCTS = firestoreData.pricingProducts;
+                                    localStorage.setItem('trada_pricing_products', JSON.stringify(PRICING_PRODUCTS));
+                                } else {
+                                    const savedPricingProducts = localStorage.getItem('trada_pricing_products');
+                                    if (savedPricingProducts) {
+                                        PRICING_PRODUCTS = JSON.parse(savedPricingProducts);
+                                    }
+                                }
                                 // Update UI with loaded descriptions
                                 updateSectionDescriptions();
+                                renderPricingPage();
                                 // Cập nhật localStorage với dữ liệu mới nhất
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 return;
@@ -2861,6 +3173,10 @@
                     if (savedPopupBannerUrl) {
                         POPUP_AD_IMAGE_URL = savedPopupBannerUrl;
                     }
+                    const savedPricingProducts = localStorage.getItem('trada_pricing_products');
+                    if (savedPricingProducts) {
+                        PRICING_PRODUCTS = JSON.parse(savedPricingProducts);
+                    }
                     // Upload lên Firestore nếu chưa có (cho admin hoặc nếu Firestore trống)
                     if (window.firebaseDb && isAdmin()) {
                         console.log('👤 Admin detected - uploading to Firestore...');
@@ -2876,6 +3192,10 @@
                     const saved = localStorage.getItem('trada_data');
                     if (saved) {
                         DATA = JSON.parse(saved);
+                    }
+                    const savedPricingProducts = localStorage.getItem('trada_pricing_products');
+                    if (savedPricingProducts) {
+                        PRICING_PRODUCTS = JSON.parse(savedPricingProducts);
                     }
                 } catch (e2) {
                     console.error('Error loading from localStorage:', e2);
@@ -2958,6 +3278,9 @@
                                 if (firestoreData.premiumSectionDesc !== undefined) {
                                     PREMIUM_SECTION_DESC = firestoreData.premiumSectionDesc || 'Các dịch vụ cao cấp với mức giá ưu đãi';
                                 }
+                                if (Array.isArray(firestoreData.pricingProducts)) {
+                                    PRICING_PRODUCTS = firestoreData.pricingProducts;
+                                }
                                 // Cập nhật localStorage
                                 localStorage.setItem('trada_data', JSON.stringify(DATA));
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
@@ -2966,10 +3289,15 @@
                                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
+                                localStorage.setItem('trada_pricing_products', JSON.stringify(PRICING_PRODUCTS));
                                 // Update UI with loaded descriptions
                                 updateSectionDescriptions();
+                                renderPricingPage();
+                                renderAdminPricingProducts();
                                 // Refresh UI
-                                if (currentFolderIndex === -1) {
+                                if (currentView === 'pricing') {
+                                    showPricingPage();
+                                } else if (currentFolderIndex === -1) {
                                     showFolders();
                                 } else {
                                     actuallyOpenFolder(currentFolderIndex);
@@ -3205,8 +3533,497 @@
             }
         }
 
-        function showFolders() {
+        function setHomeSectionsVisibility(visible) {
+            const sectionIds = [
+                'heroBlock',
+                'introStatsBlock',
+                'premiumCategoriesSection',
+                'accountCategoriesSection',
+                'popupCategoriesSection',
+                'whyChooseUsSection',
+                'feedbackSection'
+            ];
+
+            sectionIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (visible) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function renderPricingPage() {
+            const container = document.getElementById('pricingProductsContainer');
+            if (!container) return;
+            const pricingLastUpdated = document.getElementById('pricingLastUpdated');
+            if (pricingLastUpdated) {
+                const now = new Date();
+                pricingLastUpdated.textContent = `Cập nhật: ${now.toLocaleTimeString('vi-VN')} ${now.toLocaleDateString('vi-VN')}`;
+            }
+
+            container.innerHTML = '';
+
+            updatePricingCategoryFilterButtons();
+
+            const visibleProducts = PRICING_PRODUCTS.filter(product => !product.hidden || isAdmin());
+            const filteredProducts = visibleProducts.filter(product => {
+                if (currentPricingCategoryFilter === 'all') return true;
+                return getPricingProductCategory(product) === currentPricingCategoryFilter;
+            });
+
+            if (filteredProducts.length === 0) {
+                const emptyTitle = visibleProducts.length === 0
+                    ? 'Chưa có sản phẩm nào trong bảng giá'
+                    : `Không có sản phẩm thuộc mục ${getPricingCategoryLabel(currentPricingCategoryFilter)}`;
+                const emptyDesc = visibleProducts.length === 0
+                    ? 'Admin có thể thêm sản phẩm ở phần quản lý.'
+                    : 'Hãy thử chuyển sang mục khác hoặc chọn "Tất cả".';
+                container.innerHTML = `
+                    <div class="lg:col-span-2 bg-white border border-dashed border-emerald-200 rounded-3xl p-8 text-center">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800">${emptyTitle}</h3>
+                        <p class="text-sm text-gray-500 mt-2">${emptyDesc}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement('div');
+                const isBestSeller = !!product.bestSeller;
+                card.className = `bg-white rounded-[1.3rem] border border-emerald-200 ring-1 ring-emerald-100/80 shadow-[0_10px_24px_rgba(16,185,129,0.08)] hover:border-emerald-300 hover:shadow-[0_16px_34px_rgba(16,185,129,0.14)] transition-all p-3.5 sm:p-4 md:p-5 cursor-pointer ${isBestSeller ? 'pricing-best-seller-card' : ''}`;
+                card.onclick = () => openPricingDetailModal(product);
+                const category = getPricingProductCategory(product);
+                const categoryBadgeClass = category === 'work'
+                    ? 'bg-blue-100 text-blue-700'
+                    : category === 'entertainment'
+                        ? 'bg-pink-100 text-pink-700'
+                        : 'bg-slate-100 text-slate-700';
+                const logoHtml = product.logoUrl
+                    ? `<div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-100 bg-white shadow-sm">
+                            <img src="${product.logoUrl}" alt="${product.title || 'Logo sản phẩm'}" class="h-full w-full object-cover">
+                       </div>`
+                    : '';
+
+                const packagesHtml = (product.packages || []).map(pkg => `
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-[1rem] border border-gray-100 bg-gray-50/80 px-2 py-2 sm:gap-2.5 sm:px-2.5 md:px-3">
+                        <div class="min-w-0">
+                            <div class="text-[0.9rem] leading-tight font-bold uppercase text-gray-900 sm:text-[0.95rem] md:text-base">${pkg.name || 'Gói dịch vụ'}</div>
+                            ${pkg.note ? `<div class="text-xs text-gray-500 mt-1">${pkg.note}</div>` : ''}
+                        </div>
+                        <div class="flex min-w-[122px] items-center justify-end gap-1 text-right sm:min-w-[145px] sm:gap-1.5 md:min-w-[188px] md:gap-2">${renderPricingPackagePrice(pkg)}</div>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="mb-3">
+                        <div class="flex items-start justify-between gap-2.5">
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-xl leading-tight font-black text-gray-900 tracking-tight sm:text-2xl">${product.title || 'Sản phẩm'}</h3>
+                                ${product.subtitle ? `<p class="mt-1.5 min-w-0 text-sm leading-snug text-gray-500">${product.subtitle}</p>` : ''}
+                            </div>
+                            <div class="flex shrink-0 items-center gap-2">
+                                ${logoHtml}
+                            </div>
+                        </div>
+                        <div class="mt-2 flex items-center justify-end gap-1.5">
+                        ${isBestSeller ? '<span class="pricing-best-seller-badge inline-flex items-center gap-1 text-[10px] font-black bg-gradient-to-r from-orange-500 to-red-500 text-white px-2.5 py-1 rounded-full">🔥 BÁN CHẠY</span>' : ''}
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full ${categoryBadgeClass}">${getPricingCategoryLabel(category)}</span>
+                        ${product.hidden && isAdmin() ? '<span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2.5 py-1 rounded-full">Đang ẩn</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="space-y-2">${packagesHtml}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function getPricingProductCategory(product = {}) {
+            const category = String(product.category || '').trim().toLowerCase();
+            if (category === 'work' || category === 'entertainment') return category;
+            return 'uncategorized';
+        }
+
+        function getPricingCategoryLabel(category = '') {
+            if (category === 'work') return 'Công việc';
+            if (category === 'entertainment') return 'Giải trí';
+            return 'Chưa phân loại';
+        }
+
+        function updatePricingCategoryFilterButtons() {
+            const buttons = document.querySelectorAll('#pricingCategoryFilters .pricing-filter-btn');
+            if (!buttons.length) return;
+
+            buttons.forEach(btn => {
+                const category = btn.dataset.category;
+                const isActive = category === currentPricingCategoryFilter;
+                btn.className = isActive
+                    ? 'pricing-filter-btn px-4 py-2 rounded-full border border-emerald-200 bg-emerald-600 text-white text-sm font-bold transition-all'
+                    : 'pricing-filter-btn px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:border-emerald-200 hover:text-emerald-700 transition-all';
+            });
+        }
+
+        function setPricingCategoryFilter(category = 'all') {
+            const nextCategory = ['all', 'work', 'entertainment'].includes(category) ? category : 'all';
+            if (currentPricingCategoryFilter === nextCategory) return;
+            currentPricingCategoryFilter = nextCategory;
+            updatePricingCategoryFilterButtons();
+            renderPricingPage();
+        }
+
+        function escapeHtml(value = '') {
+            return String(value).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[ch]));
+        }
+
+        function stripHtml(html = '') {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            return temp.textContent || temp.innerText || '';
+        }
+
+        function sanitizePricingDetailHtml(html = '') {
+            if (!html) return '';
+
+            const decoded = html
+                .replace(/&lt;/gi, '<')
+                .replace(/&gt;/gi, '>')
+                .replace(/&quot;/gi, '"')
+                .replace(/&#39;/gi, "'")
+                .replace(/&amp;/gi, '&');
+
+            const container = document.createElement('div');
+            container.innerHTML = decoded;
+
+            const allowedTags = new Set(['DIV', 'P', 'BR', 'SPAN', 'B', 'STRONG', 'I', 'EM', 'U']);
+            const allowedStyleMap = {
+                color: value => value,
+                'text-align': value => ['left', 'center', 'right', 'justify'].includes(value) ? value : '',
+                'font-weight': value => (value === 'bold' || /^\d{3}$/.test(value)) ? value : '',
+                'font-style': value => value === 'italic' ? value : '',
+                'text-decoration': value => value.includes('underline') ? 'underline' : ''
+            };
+
+            const walk = node => {
+                if (node.nodeType === Node.TEXT_NODE) return;
+                if (node.nodeType !== Node.ELEMENT_NODE) {
+                    node.remove();
+                    return;
+                }
+
+                if (!allowedTags.has(node.tagName)) {
+                    const fragment = document.createDocumentFragment();
+                    while (node.firstChild) fragment.appendChild(node.firstChild);
+                    node.replaceWith(fragment);
+                    Array.from(fragment.childNodes).forEach(walk);
+                    return;
+                }
+
+                const rawStyle = node.getAttribute('style') || '';
+                node.removeAttribute('class');
+                node.removeAttribute('id');
+                Array.from(node.attributes).forEach(attr => {
+                    if (attr.name !== 'style') node.removeAttribute(attr.name);
+                });
+
+                if (rawStyle) {
+                    const safeStyles = rawStyle
+                        .split(';')
+                        .map(part => part.trim())
+                        .filter(Boolean)
+                        .map(part => {
+                            const [prop, ...rest] = part.split(':');
+                            const name = (prop || '').trim().toLowerCase();
+                            const value = rest.join(':').trim().toLowerCase();
+                            const validator = allowedStyleMap[name];
+                            if (!validator) return '';
+                            const safeValue = validator(value);
+                            return safeValue ? `${name}: ${safeValue}` : '';
+                        })
+                        .filter(Boolean);
+
+                    if (safeStyles.length > 0) {
+                        node.setAttribute('style', safeStyles.join('; '));
+                    } else {
+                        node.removeAttribute('style');
+                    }
+                }
+
+                Array.from(node.childNodes).forEach(walk);
+            };
+
+            Array.from(container.childNodes).forEach(walk);
+            return container.innerHTML.trim();
+        }
+
+        function normalizePricingDetailHtml(html = '') {
+            const sanitized = sanitizePricingDetailHtml(html);
+            const plain = stripHtml(sanitized).trim();
+            return plain ? sanitized : '';
+        }
+
+        function parseCssColorToRgb(value = '') {
+            const input = String(value || '').trim().toLowerCase();
+            if (!input) return null;
+
+            if (input.startsWith('#')) {
+                const hex = input.slice(1);
+                if (hex.length === 3) {
+                    return {
+                        r: parseInt(hex[0] + hex[0], 16),
+                        g: parseInt(hex[1] + hex[1], 16),
+                        b: parseInt(hex[2] + hex[2], 16)
+                    };
+                }
+                if (hex.length === 6) {
+                    return {
+                        r: parseInt(hex.slice(0, 2), 16),
+                        g: parseInt(hex.slice(2, 4), 16),
+                        b: parseInt(hex.slice(4, 6), 16)
+                    };
+                }
+            }
+
+            const rgbMatch = input.match(/^rgba?\(([^)]+)\)$/);
+            if (rgbMatch) {
+                const parts = rgbMatch[1].split(',').map(part => Number.parseFloat(part.trim()));
+                if (parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite)) {
+                    return {
+                        r: Math.max(0, Math.min(255, Math.round(parts[0]))),
+                        g: Math.max(0, Math.min(255, Math.round(parts[1]))),
+                        b: Math.max(0, Math.min(255, Math.round(parts[2])))
+                    };
+                }
+            }
+
+            const named = {
+                black: { r: 0, g: 0, b: 0 },
+                white: { r: 255, g: 255, b: 255 },
+                red: { r: 239, g: 68, b: 68 },
+                blue: { r: 59, g: 130, b: 246 },
+                green: { r: 34, g: 197, b: 94 },
+                yellow: { r: 250, g: 204, b: 21 }
+            };
+
+            return named[input] || null;
+        }
+
+        function remapPricingDetailColorForDarkCard(value = '') {
+            const rgb = parseCssColorToRgb(value);
+            if (!rgb) return '';
+
+            // Keep only explicit accent colors from toolbar.
+            const isBlueAccent = rgb.b >= 120 && (rgb.b - rgb.r) >= 25 && (rgb.b - rgb.g) >= 5;
+            const isRedAccent = rgb.r >= 120 && (rgb.r - rgb.b) >= 25 && (rgb.r - rgb.g) >= 5;
+
+            if (isBlueAccent) return '#93c5fd';
+            if (isRedAccent) return '#fda4af';
+            return '';
+        }
+
+        function enhancePricingDetailContrast(html = '') {
+            if (!html) return '';
+            const container = document.createElement('div');
+            container.innerHTML = html;
+
+            container.querySelectorAll('[style]').forEach(node => {
+                const rawStyle = node.getAttribute('style') || '';
+                if (!rawStyle) return;
+
+                const updatedStyle = rawStyle
+                    .split(';')
+                    .map(part => part.trim())
+                    .filter(Boolean)
+                    .map(part => {
+                        const [prop, ...rest] = part.split(':');
+                        const name = (prop || '').trim().toLowerCase();
+                        const value = rest.join(':').trim();
+                        if (name !== 'color') return part;
+                        const mappedColor = remapPricingDetailColorForDarkCard(value);
+                        return mappedColor ? `color: ${mappedColor}` : '';
+                    })
+                    .filter(Boolean)
+                    .join('; ');
+
+                if (updatedStyle) {
+                    node.setAttribute('style', updatedStyle);
+                } else {
+                    node.removeAttribute('style');
+                }
+            });
+
+            return container.innerHTML;
+        }
+
+        function formatPricingDetailDescription(html = '') {
+            const withBetterContrast = enhancePricingDetailContrast(html);
+            return sanitizeFacebookLinksInHtml(withBetterContrast);
+        }
+
+        function formatPricingDetailText(command, value = null) {
+            const editor = document.getElementById('pricingProductDetailDescriptionInput');
+            if (!editor) return;
+            editor.focus();
+            document.execCommand(command, false, value);
+        }
+
+        function openPricingDetailModal(product) {
+            if (!product) return;
+
+            const modal = document.getElementById('pricingDetailModal');
+            const title = document.getElementById('pricingDetailModalTitle');
+            const subtitle = document.getElementById('pricingDetailModalSubtitle');
+            const logo = document.getElementById('pricingDetailModalLogo');
+            const description = document.getElementById('pricingDetailModalDescription');
+            const fallback = document.getElementById('pricingDetailModalFallback');
+            const note = document.getElementById('pricingDetailModalNote');
+
+            const detailDescription = normalizePricingDetailHtml(product.detailDescription || '');
+            const detailNote = (product.detailNote || '').trim() || 'Hỗ trợ mua qua fanpage ngay sau khi gửi tin nhắn.';
+
+            title.textContent = product.title || 'Sản phẩm';
+
+            if ((product.subtitle || '').trim()) {
+                subtitle.textContent = product.subtitle.trim();
+                subtitle.classList.remove('hidden');
+            } else {
+                subtitle.textContent = '';
+                subtitle.classList.add('hidden');
+            }
+
+            if ((product.logoUrl || '').trim()) {
+                logo.innerHTML = `<img src="${product.logoUrl}" alt="${escapeHtml(product.title || 'Logo sản phẩm')}" class="h-full w-full object-cover">`;
+                logo.classList.remove('hidden');
+            } else {
+                logo.innerHTML = '';
+                logo.classList.add('hidden');
+            }
+
+            if (detailDescription) {
+                description.innerHTML = formatPricingDetailDescription(detailDescription);
+                description.parentElement.classList.remove('hidden');
+                fallback.classList.add('hidden');
+                fallback.textContent = '';
+            } else {
+                description.innerHTML = '';
+                description.parentElement.classList.add('hidden');
+                fallback.textContent = 'Sản phẩm này chưa có mô tả chi tiết. Vui lòng truy cập fanpage để được tư vấn nhanh.';
+                fallback.classList.remove('hidden');
+            }
+
+            note.textContent = detailNote;
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePricingDetailModal() {
+            const modal = document.getElementById('pricingDetailModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function isPricingRouteRequested() {
+            const hash = (window.location.hash || '').toLowerCase();
+            const pathname = (window.location.pathname || '').toLowerCase().replace(/\/+$/, '');
+            return hash === '#banggia' || hash === '#pricing' || pathname.endsWith('/banggia');
+        }
+
+        function setPricingRouteHash() {
+            const desiredHash = '#banggia';
+            if ((window.location.hash || '').toLowerCase() === desiredHash) return;
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${desiredHash}`);
+            } else {
+                window.location.hash = 'banggia';
+            }
+        }
+
+        function clearPricingRouteHash() {
+            const hash = (window.location.hash || '').toLowerCase();
+            if (hash !== '#banggia' && hash !== '#pricing') return;
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+            } else {
+                window.location.hash = '';
+            }
+        }
+
+        function showPricingPage(options = {}) {
+            const { syncHash = true } = options;
+            currentView = 'pricing';
+            currentFolderIndex = -1;
+            currentAccountIndex = -1;
+            const mainNavbar = document.getElementById('mainNavbar');
+            if (mainNavbar) mainNavbar.classList.add('hidden');
+
+            if (navBar) navBar.classList.add('hidden');
+            if (extraHeaderContent) {
+                extraHeaderContent.innerHTML = '';
+                extraHeaderContent.classList.add('hidden');
+            }
+            if (homeFooter) homeFooter.classList.remove('hidden');
+
+            const contactSection = document.getElementById('contactSection');
+            if (contactSection) contactSection.classList.remove('hidden');
+
+            const pricingPage = document.getElementById('pricingPage');
+            if (pricingPage) pricingPage.classList.remove('hidden');
+
+            if (listContainer) {
+                listContainer.innerHTML = '';
+                listContainer.classList.add('hidden');
+            }
+
+            setHomeSectionsVisibility(false);
+            updatePricingCategoryFilterButtons();
+            renderPricingPage();
+            if (syncHash) setPricingRouteHash();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.dispatchEvent(new Event('scroll'));
+        }
+
+        function navigateToHomeSection(sectionId = '') {
+            showFolders();
+            setTimeout(() => {
+                if (sectionId) {
+                    const target = document.getElementById(sectionId);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        return;
+                    }
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 80);
+        }
+
+        function applyRouteFromUrl() {
+            if (isPricingRouteRequested()) {
+                showPricingPage({ syncHash: false });
+                return;
+            }
+            showFolders({ syncHash: false });
+        }
+
+        function showFolders(options = {}) {
+            const { syncHash = true } = options;
+            currentView = 'home';
             currentFolderIndex = -1; currentAccountIndex = -1;
+            const mainNavbar = document.getElementById('mainNavbar');
+            if (mainNavbar) mainNavbar.classList.remove('hidden');
             if (navBar) navBar.classList.add('hidden');
             if (extraHeaderContent) extraHeaderContent.classList.add('hidden');
             if (homeFooter) homeFooter.classList.remove('hidden');
@@ -3216,6 +4033,8 @@
             if (introSection) introSection.classList.remove('hidden');
             const contactSection = document.getElementById('contactSection');
             if (contactSection) contactSection.classList.remove('hidden');
+            const pricingPage = document.getElementById('pricingPage');
+            if (pricingPage) pricingPage.classList.add('hidden');
 
             // Hiện lại heroBlock và introStatsBlock khi về trang chủ
             const heroBlock = document.getElementById('heroBlock');
@@ -3257,6 +4076,9 @@
             if (whyChooseUsSection) whyChooseUsSection.classList.remove('hidden');
             const feedbackSection = document.getElementById('feedbackSection');
             if (feedbackSection) feedbackSection.classList.remove('hidden');
+            renderPricingPage();
+            if (syncHash) clearPricingRouteHash();
+            window.dispatchEvent(new Event('scroll'));
 
             // Track if we have any items in each category
             let hasAccountCategories = false;
@@ -3460,6 +4282,7 @@
 
         function actuallyOpenFolder(index) {
             const folder = DATA[index];
+            currentView = 'folder';
 
             // Initialize all DOM elements with null checks
             const navBar = document.getElementById('navBar');
@@ -3476,6 +4299,8 @@
             if (heroBlockEl) heroBlockEl.classList.add('hidden');
             const introStatsBlock = document.getElementById('introStatsBlock');
             if (introStatsBlock) introStatsBlock.classList.add('hidden');
+            const pricingPage = document.getElementById('pricingPage');
+            if (pricingPage) pricingPage.classList.add('hidden');
 
             console.log('🚀 actuallyOpenFolder called for:', folder.name);
             console.log('📋 DOM Elements check:', {
@@ -4348,6 +5173,289 @@
             if (accountDescInput) accountDescInput.value = ACCOUNT_SECTION_DESC || '';
             if (popupDescInput) popupDescInput.value = POPUP_SECTION_DESC || '';
             if (premiumDescInput) premiumDescInput.value = PREMIUM_SECTION_DESC || '';
+            renderAdminPricingProducts();
+        }
+
+        function renderPricingPackagePrice(pkg = {}) {
+            const originalPrice = (pkg.originalPrice || '').trim();
+            const salePrice = (pkg.salePrice || '').trim();
+            const legacyPrice = (pkg.price || '').trim();
+
+            if (salePrice) {
+                return `
+                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black text-gray-800 whitespace-nowrap md:w-[3.2rem] md:text-[1rem]">${originalPrice}</span>
+                    <span class="w-[6.6rem] text-right text-[0.88rem] font-black whitespace-nowrap md:w-[8.7rem] md:text-[1rem]">
+                        <span class="text-emerald-600">GIẢM CÒN</span>
+                        <span class="text-red-600 ml-1">${salePrice}</span>
+                    </span>
+                `;
+            }
+
+            if (legacyPrice) {
+                return `
+                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black text-gray-800 whitespace-nowrap md:w-[3.2rem] md:text-[1rem]">${legacyPrice}</span>
+                    <span class="w-[6.6rem] md:w-[8.7rem]"></span>
+                `;
+            }
+
+            if (originalPrice) {
+                return `
+                    <span class="w-[2.6rem] text-right text-[0.88rem] font-black text-gray-800 whitespace-nowrap md:w-[3.2rem] md:text-[1rem]">${originalPrice}</span>
+                    <span class="w-[6.6rem] md:w-[8.7rem]"></span>
+                `;
+            }
+
+            return `
+                <span class="w-[3.5rem]"></span>
+                <span class="w-[9.5rem] text-right text-base font-black text-gray-400 whitespace-nowrap">Liên hệ</span>
+            `;
+        }
+
+        function renderAdminPricingProducts() {
+            const list = document.getElementById('adminPricingProductsList');
+            if (!list) return;
+
+            list.innerHTML = '';
+
+            if (PRICING_PRODUCTS.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-6 rounded-xl border border-dashed border-gray-300 bg-white">
+                        <p class="text-sm font-medium text-gray-600">Chưa có sản phẩm nào trong bảng giá</p>
+                    </div>
+                `;
+                return;
+            }
+
+            PRICING_PRODUCTS.forEach((product, index) => {
+                const div = document.createElement('div');
+                div.className = `bg-white rounded-xl border border-gray-200 p-4 ${product.hidden ? 'opacity-60' : ''}`;
+                div.innerHTML = `
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex flex-1 items-start gap-3">
+                            ${product.logoUrl ? `<div class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-100 bg-white shadow-sm">
+                                <img src="${product.logoUrl}" alt="${product.title || 'Logo sản phẩm'}" class="h-full w-full object-cover">
+                            </div>` : ''}
+                            <div class="flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">#${index + 1}</span>
+                                <h5 class="text-sm font-bold text-gray-800">${product.title || 'Sản phẩm chưa đặt tên'}</h5>
+                                <span class="text-[10px] font-bold ${getPricingProductCategory(product) === 'work' ? 'bg-blue-100 text-blue-700' : getPricingProductCategory(product) === 'entertainment' ? 'bg-pink-100 text-pink-700' : 'bg-slate-100 text-slate-700'} px-2 py-0.5 rounded-full">${getPricingCategoryLabel(getPricingProductCategory(product))}</span>
+                                ${product.bestSeller ? '<span class="text-[10px] font-black bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-0.5 rounded-full">🔥 BÁN CHẠY</span>' : ''}
+                                ${product.hidden ? '<span class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Đang ẩn</span>' : ''}
+                                <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">${(product.packages || []).length} gói</span>
+                            </div>
+                            ${product.subtitle ? `<p class="text-xs text-gray-500 mt-1">${product.subtitle}</p>` : ''}
+                            ${product.detailDescription ? `<p class="text-xs text-slate-500 mt-2">${escapeHtml((() => { const plain = stripHtml(product.detailDescription); return plain.length > 140 ? `${plain.slice(0, 140)}...` : plain; })())}</p>` : ''}
+                            ${product.detailNote ? `<p class="text-[11px] text-indigo-600 mt-2">${escapeHtml(product.detailNote)}</p>` : ''}
+                            ${product.logoUrl ? `<p class="text-[11px] text-emerald-600 mt-1 break-all">${product.logoUrl}</p>` : ''}
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                ${(product.packages || []).map(pkg => {
+                                    const salePrice = (pkg.salePrice || '').trim();
+                                    const originalPrice = (pkg.originalPrice || '').trim();
+                                    const legacyPrice = (pkg.price || '').trim();
+                                    let priceLabel = `${pkg.name || 'Gói'}: Liên hệ`;
+
+                                    if (salePrice) {
+                                        priceLabel = originalPrice
+                                            ? `${pkg.name || 'Gói'}: ${originalPrice} -> GIẢM CÒN ${salePrice}`
+                                            : `${pkg.name || 'Gói'}: GIẢM CÒN ${salePrice}`;
+                                    } else if (legacyPrice) {
+                                        priceLabel = `${pkg.name || 'Gói'}: ${legacyPrice}`;
+                                    } else if (originalPrice) {
+                                        priceLabel = `${pkg.name || 'Gói'}: ${originalPrice}`;
+                                    }
+
+                                    return `<span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-lg">${priceLabel}</span>`;
+                                }).join('')}
+                            </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap justify-end">
+                            <button onclick="movePricingProduct(${index}, ${index - 1})" ${index === 0 ? 'disabled' : ''}
+                                class="px-2.5 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                title="Đưa sản phẩm lên trên">↑</button>
+                            <button onclick="movePricingProduct(${index}, ${index + 1})" ${index === PRICING_PRODUCTS.length - 1 ? 'disabled' : ''}
+                                class="px-2.5 py-2 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                title="Đưa sản phẩm xuống dưới">↓</button>
+                            <button onclick="editPricingProduct(${index})"
+                                class="px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-semibold transition-all">Sửa</button>
+                            <button onclick="deletePricingProduct(${index})"
+                                class="px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold transition-all">Xóa</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function movePricingProduct(fromIndex, toIndex) {
+            if (fromIndex < 0 || fromIndex >= PRICING_PRODUCTS.length) return;
+            if (toIndex < 0 || toIndex >= PRICING_PRODUCTS.length) return;
+            if (fromIndex === toIndex) return;
+
+            const [product] = PRICING_PRODUCTS.splice(fromIndex, 1);
+            PRICING_PRODUCTS.splice(toIndex, 0, product);
+
+            saveDataToStorage();
+            renderPricingPage();
+            renderAdminPricingProducts();
+        }
+
+        function buildPricingPackageRow(pkg = {}) {
+            const row = document.createElement('div');
+            const salePrice = pkg.salePrice || pkg.price || '';
+            row.className = 'pricing-package-row grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1.1fr_0.8fr_0.8fr_1fr_auto] gap-3 items-start';
+            row.innerHTML = `
+                <input type="text" class="pricing-package-name px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    placeholder="Tên gói" value="${(pkg.name || '').replace(/"/g, '&quot;')}">
+                <input type="text" class="pricing-package-original-price px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    placeholder="Giá gốc" value="${(pkg.originalPrice || '').replace(/"/g, '&quot;')}">
+                <input type="text" class="pricing-package-sale-price px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    placeholder="Giá sau giảm" value="${salePrice.replace(/"/g, '&quot;')}">
+                <input type="text" class="pricing-package-note px-3 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm"
+                    placeholder="Ghi chú (tùy chọn)" value="${(pkg.note || '').replace(/"/g, '&quot;')}">
+                <button type="button" onclick="removePricingPackageRow(this)"
+                    class="px-3 py-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 text-sm font-semibold transition-all">Xóa</button>
+            `;
+            return row;
+        }
+
+        function addPricingPackageRow(pkg = {}) {
+            const editor = document.getElementById('pricingPackagesEditor');
+            if (!editor) return;
+            editor.appendChild(buildPricingPackageRow(pkg));
+        }
+
+        function removePricingPackageRow(button) {
+            const row = button.closest('.pricing-package-row');
+            if (row) row.remove();
+        }
+
+        function openAddPricingProductModal() {
+            editingPricingProductIndex = -1;
+            const modal = document.getElementById('pricingProductModal');
+            document.getElementById('pricingProductModalTitle').textContent = 'Thêm sản phẩm bảng giá';
+            document.getElementById('pricingProductTitleInput').value = '';
+            document.getElementById('pricingProductSubtitleInput').value = '';
+            document.getElementById('pricingProductCategoryInput').value = 'work';
+            document.getElementById('pricingProductLogoInput').value = '';
+            document.getElementById('pricingProductDetailDescriptionInput').innerHTML = '';
+            document.getElementById('pricingProductDetailNoteInput').value = '';
+            document.getElementById('pricingProductBestSellerInput').checked = false;
+            document.getElementById('pricingProductHiddenInput').checked = false;
+            document.getElementById('pricingProductError').classList.add('hidden');
+            const editor = document.getElementById('pricingPackagesEditor');
+            if (editor) editor.innerHTML = '';
+            addPricingPackageRow();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function editPricingProduct(index) {
+            const product = PRICING_PRODUCTS[index];
+            if (!product) return;
+
+            editingPricingProductIndex = index;
+            const modal = document.getElementById('pricingProductModal');
+            document.getElementById('pricingProductModalTitle').textContent = 'Sửa sản phẩm bảng giá';
+            document.getElementById('pricingProductTitleInput').value = product.title || '';
+            document.getElementById('pricingProductSubtitleInput').value = product.subtitle || '';
+            document.getElementById('pricingProductCategoryInput').value = getPricingProductCategory(product) === 'uncategorized' ? 'work' : getPricingProductCategory(product);
+            document.getElementById('pricingProductLogoInput').value = product.logoUrl || '';
+            document.getElementById('pricingProductDetailDescriptionInput').innerHTML = product.detailDescription || '';
+            document.getElementById('pricingProductDetailNoteInput').value = product.detailNote || '';
+            document.getElementById('pricingProductBestSellerInput').checked = !!product.bestSeller;
+            document.getElementById('pricingProductHiddenInput').checked = !!product.hidden;
+            document.getElementById('pricingProductError').classList.add('hidden');
+
+            const editor = document.getElementById('pricingPackagesEditor');
+            if (editor) {
+                editor.innerHTML = '';
+                if (Array.isArray(product.packages) && product.packages.length > 0) {
+                    product.packages.forEach(pkg => addPricingPackageRow(pkg));
+                } else {
+                    addPricingPackageRow();
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closePricingProductModal() {
+            const modal = document.getElementById('pricingProductModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            editingPricingProductIndex = -1;
+        }
+
+        function savePricingProduct() {
+            const title = document.getElementById('pricingProductTitleInput').value.trim();
+            const subtitle = document.getElementById('pricingProductSubtitleInput').value.trim();
+            const categoryInput = document.getElementById('pricingProductCategoryInput').value;
+            const category = ['work', 'entertainment'].includes(categoryInput) ? categoryInput : 'work';
+            const logoUrl = document.getElementById('pricingProductLogoInput').value.trim();
+            const detailDescriptionEditor = document.getElementById('pricingProductDetailDescriptionInput');
+            const detailDescription = normalizePricingDetailHtml(detailDescriptionEditor.innerHTML);
+            const detailNote = document.getElementById('pricingProductDetailNoteInput').value.trim();
+            const bestSeller = document.getElementById('pricingProductBestSellerInput').checked;
+            const hidden = document.getElementById('pricingProductHiddenInput').checked;
+            const errorEl = document.getElementById('pricingProductError');
+            const packageRows = Array.from(document.querySelectorAll('#pricingPackagesEditor .pricing-package-row'));
+
+            const packages = packageRows.map(row => ({
+                name: row.querySelector('.pricing-package-name')?.value.trim() || '',
+                originalPrice: row.querySelector('.pricing-package-original-price')?.value.trim() || '',
+                salePrice: row.querySelector('.pricing-package-sale-price')?.value.trim() || '',
+                note: row.querySelector('.pricing-package-note')?.value.trim() || ''
+            })).filter(pkg => pkg.name && (pkg.originalPrice || pkg.salePrice));
+
+            if (!title) {
+                errorEl.textContent = 'Vui lòng nhập tiêu đề sản phẩm';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (packages.length === 0) {
+                errorEl.textContent = 'Vui lòng thêm ít nhất 1 gói có tên và ít nhất một mức giá';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const product = {
+                title,
+                subtitle,
+                category,
+                logoUrl,
+                detailDescription,
+                detailNote,
+                bestSeller,
+                hidden,
+                packages
+            };
+
+            if (editingPricingProductIndex === -1) {
+                PRICING_PRODUCTS.push(product);
+            } else {
+                PRICING_PRODUCTS[editingPricingProductIndex] = product;
+            }
+
+            saveDataToStorage();
+            renderPricingPage();
+            renderAdminPricingProducts();
+            closePricingProductModal();
+            showAlert('Thành công', 'Đã lưu sản phẩm vào bảng giá.', 'success');
+        }
+
+        function deletePricingProduct(index) {
+            const product = PRICING_PRODUCTS[index];
+            if (!product) return;
+            showConfirm('Xác nhận xóa', `Bạn có chắc muốn xóa sản phẩm "${product.title}" khỏi bảng giá?`, () => {
+                PRICING_PRODUCTS.splice(index, 1);
+                saveDataToStorage();
+                renderPricingPage();
+                renderAdminPricingProducts();
+            });
         }
 
         function openAddFolderModal() {
@@ -4928,6 +6036,15 @@
             }
         }
 
+        window.addEventListener('hashchange', () => {
+            if (currentFolderIndex !== -1) return;
+            if (isPricingRouteRequested()) {
+                showPricingPage({ syncHash: false });
+                return;
+            }
+            showFolders({ syncHash: false });
+        });
+
         // Scroll Spy for Navbar
         document.addEventListener('DOMContentLoaded', () => {
             window.addEventListener('scroll', () => {
@@ -4937,13 +6054,18 @@
                 const navLinks = document.querySelectorAll('.nav-link');
 
                 let current = 'home';
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop;
-                    // Offset handles sticky header height + padding
-                    if (scrollY >= sectionTop - 200) {
-                        current = section.getAttribute('id') === 'heroBlock' ? 'home' : section.getAttribute('id');
-                    }
-                });
+                const pricingPage = document.getElementById('pricingPage');
+
+                if (currentView === 'pricing' && pricingPage && !pricingPage.classList.contains('hidden')) {
+                    current = 'pricing';
+                } else {
+                    sections.forEach(section => {
+                        const sectionTop = section.offsetTop;
+                        if (scrollY >= sectionTop - 200) {
+                            current = section.getAttribute('id') === 'heroBlock' ? 'home' : section.getAttribute('id');
+                        }
+                    });
+                }
 
                 navLinks.forEach(link => {
                     // Reset
@@ -5023,7 +6145,7 @@
             // Load data when app initializes (before login)
             loadDataFromStorage().then(() => {
                 console.log('Initial data loaded');
-                if (!hasShownWelcomeAdThisSession) {
+                if (!hasShownWelcomeAdThisSession && !isPricingRouteRequested()) {
                     hasShownWelcomeAdThisSession = true;
                     showWelcomeAd();
                 }
