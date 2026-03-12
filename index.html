@@ -319,6 +319,58 @@
             animation: ctaBounce 2s ease-in-out infinite;
         }
 
+        @keyframes noticeDealPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 8px 16px rgba(225, 29, 72, 0.25);
+            }
+
+            50% {
+                transform: scale(1.07);
+                box-shadow: 0 12px 24px rgba(225, 29, 72, 0.4);
+            }
+        }
+
+        .notice-deal-badge {
+            animation: noticeDealPulse 1.4s ease-in-out infinite;
+        }
+
+        .account-detail-compact #modalAccountUsernameSection,
+        .account-detail-compact #modalAccountPasswordSection {
+            max-width: 460px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .account-detail-compact #modalOtpSection {
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10 {
+            justify-content: center;
+            position: relative;
+        }
+
+        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:first-child {
+            text-align: center;
+        }
+
+        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:first-child .flex.items-center.gap-3 {
+            justify-content: center;
+        }
+
+        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:last-child {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+
         .vip-cta-animated {
             position: relative;
             overflow: hidden;
@@ -1593,7 +1645,8 @@
     <!-- MODAL CHI TIẾT TÀI KHOẢN -->
     <div id="accountDetailModal" onclick="if(event.target === this) closeAccountDetailModal()"
         class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm sm:max-w-3xl w-full overflow-hidden relative">
+        <div id="accountDetailCard"
+            class="bg-white rounded-2xl shadow-2xl max-w-sm sm:max-w-xl md:max-w-2xl w-full overflow-hidden relative">
             <button onclick="closeAccountDetailModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -1668,11 +1721,13 @@
                                         <span
                                             class="text-[10px] text-indigo-800 font-bold uppercase tracking-wider block mb-1">Mã
                                             xác minh 2FA</span>
-                                        <div class="flex items-center gap-3">
-                                            <div class="font-mono font-bold text-indigo-700 text-lg tracking-widest"
-                                                id="modalOtpValue">... ...</div>
-                                            <button
-                                                onclick="copyToClipboardText(document.getElementById('modalOtpValue').innerText.replace(/\s/g,''), this)"
+                                        <div class="flex flex-col items-center gap-2">
+                                            <button type="button"
+                                                onclick="copyOtpCode()"
+                                                class="font-mono font-bold text-indigo-700 text-2xl tracking-widest hover:text-indigo-800 transition-colors cursor-pointer"
+                                                id="modalOtpValue">... ...</button>
+                                            <button type="button"
+                                                onclick="copyOtpCode(this)"
                                                 class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm active:scale-95">Sao
                                                 chép</button>
                                         </div>
@@ -1700,36 +1755,39 @@
                         </div>
 
                         <div id="modalNetflixActions" class="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
-                            <div class="grid grid-cols-3 gap-4">
+                            <p class="text-center text-xs sm:text-sm font-black uppercase tracking-wide text-indigo-700">
+                                HÃY CHỌN NỀN TẢNG BẠN MUỐN XEM
+                            </p>
+                            <div class="grid grid-cols-3 gap-2 sm:gap-4">
                                 <button id="modalNetflixDesktopBtn" onclick="openNetflixForCurrentAccountByPlatform('desktop')"
-                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-950 via-black to-gray-900 text-white border border-gray-800 transition-all shadow-[0_12px_28px_rgba(0,0,0,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.45)] flex flex-col items-center justify-center gap-2 p-3 pt-6 overflow-visible">
+                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-gray-950 via-black to-gray-900 text-white border border-gray-800 transition-all shadow-[0_12px_28px_rgba(0,0,0,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(0,0,0,0.45)] flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 pt-5 sm:pt-6 overflow-visible">
                                     <span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] sm:text-[12px] font-black tracking-wide bg-emerald-400 text-emerald-950 px-3 py-1 rounded-full z-10 whitespace-nowrap">MIỄN PHÍ</span>
                                     <span class="inline-flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/12 border border-white/20 backdrop-blur-sm shadow-inner mt-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L3 17m18 0h-6.75m-10.5 0v1.75A1.25 1.25 0 005 20h14a1.25 1.25 0 001.25-1.25V17M5.5 4h13A1.5 1.5 0 0120 5.5v8A1.5 1.5 0 0118.5 15h-13A1.5 1.5 0 014 13.5v-8A1.5 1.5 0 015.5 4z" />
                                         </svg>
                                     </span>
-                                    <span class="text-[13px] sm:text-[18px] leading-tight font-black text-center uppercase tracking-wide">Máy tính</span>
+                                    <span class="text-[11px] sm:text-[18px] leading-[1.05] sm:leading-tight font-black text-center uppercase tracking-wide">XEM TRÊN<br>MÁY TÍNH</span>
                                 </button>
                                 <button id="modalNetflixMobileBtn" onclick="openNetflixForCurrentAccountByPlatform('mobile')"
-                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-blue-500 via-sky-600 to-cyan-600 text-white border border-blue-400 transition-all shadow-[0_12px_28px_rgba(2,132,199,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(2,132,199,0.45)] flex flex-col items-center justify-center gap-2 p-3 pt-6 overflow-visible">
+                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-blue-500 via-sky-600 to-cyan-600 text-white border border-blue-400 transition-all shadow-[0_12px_28px_rgba(2,132,199,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(2,132,199,0.45)] flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 pt-5 sm:pt-6 overflow-visible">
                                     <span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] sm:text-[12px] font-black tracking-wide bg-amber-300 text-amber-950 px-3 py-1 rounded-full z-10 whitespace-nowrap">PRO</span>
                                     <span class="inline-flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/12 border border-white/20 backdrop-blur-sm shadow-inner mt-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8.5 3.75h7A1.75 1.75 0 0117.25 5.5v13A1.75 1.75 0 0115.5 20.25h-7A1.75 1.75 0 016.75 18.5v-13A1.75 1.75 0 018.5 3.75z" />
                                         </svg>
                                     </span>
-                                    <span class="text-[13px] sm:text-[18px] leading-tight font-black text-center uppercase tracking-wide">Di động</span>
+                                    <span class="text-[11px] sm:text-[18px] leading-[1.05] sm:leading-tight font-black text-center uppercase tracking-wide">XEM TRÊN<br>ĐIỆN THOẠI</span>
                                 </button>
                                 <button id="modalNetflixTvBtn" onclick="openNetflixForCurrentAccountByPlatform('tv')"
-                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-fuchsia-500 via-pink-600 to-rose-600 text-white border border-pink-400 transition-all shadow-[0_12px_28px_rgba(219,39,119,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(219,39,119,0.45)] flex flex-col items-center justify-center gap-2 p-3 pt-6 overflow-visible">
+                                    class="relative aspect-square rounded-2xl bg-gradient-to-br from-fuchsia-500 via-pink-600 to-rose-600 text-white border border-pink-400 transition-all shadow-[0_12px_28px_rgba(219,39,119,0.35)] hover:-translate-y-1 hover:shadow-[0_18px_36px_rgba(219,39,119,0.45)] flex flex-col items-center justify-center gap-1.5 sm:gap-2 p-2 sm:p-3 pt-5 sm:pt-6 overflow-visible">
                                     <span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] sm:text-[12px] font-black tracking-wide bg-amber-300 text-amber-950 px-3 py-1 rounded-full z-10 whitespace-nowrap">PRO</span>
                                     <span class="inline-flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-white/12 border border-white/20 backdrop-blur-sm shadow-inner mt-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 7.5A1.75 1.75 0 015.5 5.75h13A1.75 1.75 0 0120.25 7.5v7A1.75 1.75 0 0118.5 16.25h-13A1.75 1.75 0 013.75 14.5v-7zM9.5 18.25h5" />
                                         </svg>
                                     </span>
-                                    <span class="text-[13px] sm:text-[18px] leading-tight font-black text-center uppercase tracking-wide">Tivi</span>
+                                    <span class="text-[11px] sm:text-[18px] leading-[1.05] sm:leading-tight font-black text-center uppercase tracking-wide">XEM TRÊN<br>TIVI</span>
                                 </button>
                             </div>
                             <button id="modalNetflixCheckBtn" onclick="checkNetflixCookieStatusForCurrentAccount()"
@@ -1757,46 +1815,34 @@
 
     <div id="netflixUsageNoticeModal" onclick="if(event.target === this) closeNetflixUsageNoticeModal()"
         class="hidden fixed inset-0 z-[108] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-indigo-100 relative">
-            <div class="absolute -top-10 -left-10 w-36 h-36 rounded-full bg-blue-200/40 blur-2xl pointer-events-none"></div>
-            <div class="absolute -bottom-12 -right-8 w-40 h-40 rounded-full bg-purple-200/40 blur-2xl pointer-events-none"></div>
-            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 px-5 py-4 text-white text-center relative">
-                <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide relative z-10">LƯU Ý TRƯỚC KHI SỬ DỤNG</h3>
-            </div>
-            <div class="px-5 pt-4 pb-1 relative z-10">
-                <div class="rounded-2xl bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border border-indigo-100 p-3 flex items-center justify-center gap-2 sm:gap-3">
-                    <div class="w-11 h-11 rounded-xl bg-white border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-sm float">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L3 17m18 0h-6.75m-10.5 0v1.75A1.25 1.25 0 005 20h14a1.25 1.25 0 001.25-1.25V17M5.5 4h13A1.5 1.5 0 0120 5.5v8A1.5 1.5 0 0118.5 15h-13A1.5 1.5 0 014 13.5v-8A1.5 1.5 0 015.5 4z" />
-                        </svg>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-white border border-blue-200 text-blue-600 flex items-center justify-center shadow-sm float" style="animation-delay:.2s">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8.5 3.75h7A1.75 1.75 0 0117.25 5.5v13A1.75 1.75 0 0115.5 20.25h-7A1.75 1.75 0 016.75 18.5v-13A1.75 1.75 0 018.5 3.75z" />
-                        </svg>
-                    </div>
-                    <div class="w-11 h-11 rounded-xl bg-white border border-fuchsia-200 text-fuchsia-600 flex items-center justify-center shadow-sm float" style="animation-delay:.4s">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 7.5A1.75 1.75 0 015.5 5.75h13A1.75 1.75 0 0120.25 7.5v7A1.75 1.75 0 0118.5 16.25h-13A1.75 1.75 0 013.75 14.5v-7zM9.5 18.25h5" />
-                        </svg>
-                    </div>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-200 text-amber-700 font-bold text-xs gentle-pulse">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h15.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z" />
-                        </svg>
-                        Xem miễn phí trên máy tính
-                    </span>
-                </div>
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-amber-200">
+            <div class="bg-amber-100 border-b border-amber-200 px-5 py-4 text-center">
+                <h3 class="inline-flex items-center justify-center gap-2 text-lg sm:text-xl font-black uppercase tracking-wide text-amber-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-rose-600" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
+                            d="M12 9v3m0 4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h16.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z" />
+                    </svg>
+                    <span>CẢNH BÁO - LƯU Ý</span>
+                </h3>
             </div>
             <div class="p-5 sm:p-6">
-                <ul class="space-y-2 text-sm sm:text-base text-slate-700 font-semibold">
-                    <li>- <span class="text-blue-700 font-black">Tài khoản miễn phí</span> là tài khoản <span class="text-blue-700 font-black">dùng chung nhiều người</span> nên hay <span class="text-blue-700 font-black">bị nghẽn</span></li>
-                    <li>- <span class="text-blue-700 font-black">Tài khoản miễn phí</span> <span class="text-blue-700 font-black">chỉ xem</span> được trên máy tính</li>
-                </ul>
-                <p
-                    class="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm sm:text-base font-extrabold text-rose-700 leading-relaxed">
-                    "Muốn xem tài khoản Netflix ổn định và xem được trên mọi thiết bị thì mua acc ủng hộ sốp nhé"
-                </p>
+                <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                    <ul class="mt-2 space-y-2 text-sm sm:text-base font-semibold text-slate-800 leading-relaxed list-disc pl-5">
+                        <li>Tài khoản miễn phí là chia sẻ xài chung nhiều người nên <span class="text-rose-700 font-black">đôi khi sẽ bị nghẽn</span></li>
+                        <li>Tài khoản miễn phí chỉ có thể xem trên <span class="text-blue-700 font-black">thiết bị máy tính</span></li>
+                    </ul>
+                </div>
+                <div class="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                    <p class="text-sm sm:text-base font-extrabold text-rose-700 leading-relaxed">
+                        Nếu muốn xem được trên <span class="text-indigo-700 font-black">mọi thiết bị</span>, <span class="text-orange-600 font-black">bao ngon</span>, <span class="text-emerald-700 font-black">bao ổn định</span> thì mua tài khoản để ủng hộ sốp duy trì nha!!
+                    </p>
+                    <div class="mt-2 flex justify-center">
+                        <p class="notice-deal-badge inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-sm font-black text-white">
+                            CHỈ TỪ 19K hoiiiiiii
+                        </p>
+                    </div>
+                </div>
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
                     class="mt-5 block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md">
                     TRUY CẬP FANPAGE ĐỂ MUA NGAY
@@ -2017,16 +2063,14 @@
         onclick="if(event.target === this) closeNetflixProModal()">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-indigo-100">
             <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 text-white text-center">
-                <h3 class="text-lg sm:text-2xl font-black uppercase tracking-wide">LƯU Ý TRƯỚC KHI SỬ DỤNG</h3>
+                <h3 class="text-lg sm:text-2xl font-black uppercase tracking-wide">THÔNG BÁO</h3>
             </div>
             <div class="p-5 sm:p-6">
-                <ul class="space-y-2 text-sm sm:text-base text-slate-700 font-semibold">
-                    <li>- <span class="text-blue-700 font-black">Tài khoản miễn phí</span> là tài khoản <span class="text-blue-700 font-black">dùng chung nhiều người</span> nên hay <span class="text-blue-700 font-black">bị nghẽn</span></li>
-                    <li>- <span class="text-blue-700 font-black">Tài khoản miễn phí</span> <span class="text-blue-700 font-black">chỉ xem</span> được trên máy tính</li>
-                </ul>
-                <p
-                    class="mt-4 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm sm:text-base font-extrabold text-rose-700 leading-relaxed">
-                    "Muốn xem tài khoản Netflix ổn định và xem được trên mọi thiết bị thì mua acc ủng hộ sốp nhé"
+                <p class="text-center text-base sm:text-lg font-extrabold text-slate-800 leading-relaxed">
+                    Tài khoản dùng chung miễn phí chỉ có thể xem trên máy tính
+                </p>
+                <p class="mt-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-center text-sm sm:text-base font-extrabold text-rose-700 leading-relaxed">
+                    Nếu muốn xài được trên tất cả thiết bị hãy mua nick ủng hộ shop nhé
                 </p>
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
                     class="mt-5 block w-full text-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md">
@@ -2594,26 +2638,26 @@
                 <!-- DANH MỤC TÀI KHOẢN -->
                 <div id="free" class="scroll-mt-24 w-full h-px"></div>
                 <div id="accountCategoriesSection"
-                    class="border border-emerald-200/70 rounded-2xl p-4 mt-8 md:mt-10 lg:mt-14 shadow-sm hover:shadow-md transition-all duration-300"
-                    style="background: linear-gradient(135deg, rgba(209,250,229,0.45) 0%, rgba(255,255,255,0.98) 55%);">
-                    <div id="accountListTitle" class="flex items-center gap-2.5 mb-3">
-                        <div class="p-1.5 bg-emerald-100 rounded-lg">
+                    class="border border-emerald-300/70 rounded-2xl p-4 sm:p-5 mt-8 md:mt-10 lg:mt-14 shadow-md hover:shadow-lg transition-all duration-300"
+                    style="background: linear-gradient(135deg, rgba(209,250,229,0.60) 0%, rgba(255,255,255,0.99) 55%);">
+                    <div id="accountListTitle" class="flex items-center gap-2.5 mb-3.5">
+                        <div class="p-2 bg-emerald-100 rounded-lg ring-1 ring-emerald-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                             </svg>
                         </div>
-                        <span class="text-base font-bold text-gray-800 uppercase tracking-wide">Dịch vụ MIỄN PHÍ</span>
+                        <span class="text-base sm:text-lg font-extrabold text-gray-800 uppercase tracking-wide">Dịch vụ MIỄN PHÍ</span>
                         <span
-                            class="ml-auto text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap flex-shrink-0">FREE</span>
+                            class="ml-auto text-[10px] font-black bg-emerald-200 text-emerald-800 px-2.5 py-0.5 rounded-full border border-emerald-300 whitespace-nowrap flex-shrink-0 shadow-sm">FREE</span>
                     </div>
                     <p id="accountSectionDesc"
-                        class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800 mb-4 mt-2 leading-snug bg-emerald-50/80 border-l-4 border-emerald-400 rounded-r-lg px-3 py-1.5 w-fit shadow-sm backdrop-blur-sm">
+                        class="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-800 mb-3 mt-1 leading-snug bg-emerald-100/90 border-l-4 border-emerald-500 rounded-r-lg px-3 py-1.5 w-fit shadow-sm backdrop-blur-sm">
                         <span class="text-base flex-shrink-0">🎓</span>Tài khoản xài chung nhiều người
                     </p>
                     <div id="accountListContainer"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 fade-in">
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-3.5 fade-in">
                     </div>
                 </div>
 
@@ -4480,8 +4524,8 @@
                     else if (shouldUseDesktopFreeCard) {
 
                         // Desktop-only square card for free account services
-                        btn.className = `relative w-full text-left rounded-xl overflow-hidden bg-white border border-emerald-100 hover:border-emerald-300 shadow hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 group`;
-                        btn.style.minHeight = '160px';
+                        btn.className = `relative w-full text-left rounded-xl overflow-hidden bg-white border border-emerald-200 hover:border-emerald-300 shadow-[0_8px_20px_rgba(16,185,129,0.10)] hover:shadow-[0_14px_28px_rgba(16,185,129,0.16)] transition-all duration-300 transform hover:-translate-y-1 group`;
+                        btn.style.minHeight = '172px';
 
                         const iconBgs = [
                             'bg-gradient-to-br from-emerald-50 to-teal-50',
@@ -4505,42 +4549,42 @@
                             : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white';
 
                         btn.innerHTML = `
-                            <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">FREE</span>
-                            <div class="p-3 flex flex-col items-center text-center h-full justify-between">
+                            <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase shadow-sm z-10">FREE</span>
+                            <div class="p-3.5 flex flex-col items-center text-center h-full justify-between">
                                 <div class="flex flex-col items-center">
-                                    <div class="${iconBg} ${iconColor} rounded-full flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 mb-2 flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md ring-2 ring-white">
+                                    <div class="${iconBg} ${iconColor} rounded-full flex items-center justify-center w-16 h-16 sm:w-[4.25rem] sm:h-[4.25rem] mb-2.5 flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md ring-2 ring-white">
                                         <div class="text-4xl sm:text-5xl leading-none">${folder.icon}</div>
                                     </div>
-                                    <h3 class="text-gray-900 font-bold text-xs sm:text-sm leading-tight truncate w-full px-1 mb-1.5">${folder.name}</h3>
-                                    <div class="inline-flex items-center justify-center bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-0.5 mb-2">
-                                        <span class="text-xs sm:text-sm font-extrabold text-emerald-600 whitespace-nowrap">MIỄN PHÍ</span>
+                                    <h3 class="text-gray-900 font-extrabold text-sm sm:text-[15px] leading-tight truncate w-full px-1 mb-1.5">${folder.name}</h3>
+                                    <div class="inline-flex items-center justify-center bg-emerald-100 border border-emerald-300 rounded-full px-2.5 py-0.5 mb-2">
+                                        <span class="text-xs sm:text-sm font-black text-emerald-700 whitespace-nowrap">MIỄN PHÍ</span>
                                     </div>
-                                    ${subtitle ? `<div class="text-[10px] text-gray-500 font-medium -mt-1 mb-2">${subtitle}</div>` : ''}
+                                    ${subtitle ? `<div class="text-[11px] text-gray-600 font-semibold -mt-1 mb-2">${subtitle}</div>` : ''}
                                 </div>
-                                <span class="w-full mt-1 inline-block ${ctaClass} text-[10px] sm:text-xs font-bold py-1.5 rounded-lg shadow-sm tracking-wide transition-all">${ctaText}</span>
+                                <span class="w-full mt-1 inline-block ${ctaClass} text-[10px] sm:text-xs font-extrabold py-1.5 rounded-lg shadow-sm tracking-wide transition-all">${ctaText}</span>
                             </div>
                         `;
                     } else {
                         // Original horizontal card style (mobile + popup)
-                        btn.className = `w-full text-left p-2.5 card flex items-center gap-2.5 group text-gray-800`;
+                        btn.className = `w-full text-left p-3 card flex items-center gap-3 group text-gray-800 border border-emerald-200 shadow-[0_6px_14px_rgba(16,185,129,0.10)] hover:shadow-[0_10px_20px_rgba(16,185,129,0.15)]`;
 
                         let subtitle = folder.maintenance ? "Đang bảo trì" :
                             (folder.type === 'popup' ? "Xem nội dung" :
                                 (folder.type === 'link' ? "Truy cập ngay" : ""));
-                        let iconBgClass = "w-9 h-9 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 flex-shrink-0";
+                        let iconBgClass = "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200 flex-shrink-0";
 
-                        let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold shadow-sm tracking-wide badge-animate">FREE</span>`;
+                        let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-sm tracking-wide badge-animate">FREE</span>`;
 
                         btn.innerHTML = `
                             <div class="${iconBgClass}">${folder.icon}</div>
                             <div class="flex-1 min-w-0 mr-2">
                                 <div class="flex items-center gap-2 mb-0.5">
-                                    <div class="font-bold text-gray-800 text-xs group-hover:text-indigo-700 break-words leading-tight">${folder.name}</div>
+                                    <div class="font-extrabold text-gray-800 text-sm group-hover:text-emerald-700 break-words leading-tight">${folder.name}</div>
                                     ${badge}
                                 </div>
-                                ${subtitle ? `<div class="text-[9px] text-gray-500 font-medium break-words">${subtitle}</div>` : ''}
+                                ${subtitle ? `<div class="text-[10px] text-gray-600 font-semibold break-words">${subtitle}</div>` : ''}
                             </div>
-                            <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-500 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-all flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                         `;
                     }
                 }
@@ -4975,7 +5019,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                     </span>
-                    <span class="text-[13px] sm:text-[18px] leading-tight font-black text-center uppercase tracking-wide">Đang lấy link</span>
+                    <span class="text-[13px] sm:text-[18px] leading-tight font-black text-center uppercase tracking-wide">Đang lấy link xem trên máy tính</span>
                 `;
             } else {
                 btn.disabled = false;
@@ -5259,6 +5303,19 @@
             const modalAccountUsernameSection = document.getElementById('modalAccountUsernameSection');
             const modalAccountPasswordSection = document.getElementById('modalAccountPasswordSection');
             const modalPasswordHint = document.getElementById('modalPasswordHint');
+            const accountDetailCard = document.getElementById('accountDetailCard');
+
+            if (accountDetailCard) {
+                if (netflixFolderActive) {
+                    accountDetailCard.classList.remove('sm:max-w-md', 'md:max-w-lg', 'account-detail-compact');
+                    accountDetailCard.classList.add('sm:max-w-xl', 'md:max-w-2xl');
+                    accountDetailCard.style.maxWidth = '';
+                } else {
+                    accountDetailCard.classList.remove('sm:max-w-xl', 'md:max-w-2xl');
+                    accountDetailCard.classList.add('sm:max-w-md', 'md:max-w-lg', 'account-detail-compact');
+                    accountDetailCard.style.maxWidth = '22rem';
+                }
+            }
 
             if (modalAccountUsernameSection) modalAccountUsernameSection.classList.toggle('hidden', netflixFolderActive);
             if (modalAccountPasswordSection) modalAccountPasswordSection.classList.toggle('hidden', netflixFolderActive);
@@ -5311,7 +5368,7 @@
                     modalNetflixDesktopBtn.disabled = false;
                     modalNetflixDesktopBtn.classList.remove('opacity-60', 'cursor-not-allowed');
                     setModalNetflixProButtonsDisabled(false);
-                    modalNetflixCookieState.textContent = 'Chọn nền tảng xem: Máy tính (miễn phí), Di động/Tivi (PRO)';
+                    modalNetflixCookieState.textContent = 'Chọn nền tảng xem: Xem trên máy tính (miễn phí), xem trên điện thoại/tivi (PRO)';
                     modalNetflixCookieState.className = 'text-[11px] text-gray-500 mt-2 text-center';
                 } else {
                     modalNetflixDesktopBtn.disabled = true;
@@ -5534,6 +5591,15 @@
                     btnElement.classList.add('text-indigo-600', 'hover:text-indigo-700', 'hover:bg-indigo-50', 'border-indigo-200');
                 }, 1000);
             }
+        }
+
+        function copyOtpCode(btnElement = null) {
+            const otpEl = document.getElementById('modalOtpValue');
+            if (!otpEl) return;
+            const otpValue = otpEl.innerText.replace(/\s/g, '');
+            if (!otpValue || otpValue === '...') return;
+            copyToClipboardText(otpValue, btnElement);
+            showAlert('Thành công', 'Đã sao chép mã 2FA', 'success');
         }
 
         const circumference = 113.1; // 2 * PI * 18
@@ -6765,6 +6831,7 @@
                 // Edit existing account - lưu thời gian cập nhật
                 accountData.updatedAt = new Date().toISOString();
                 // Giữ lại các field khác nếu có
+                const existingAccount = DATA[currentAdminFolderIndex].accounts[editingAccountIndex];
                 if (existingAccount && existingAccount.createdAt) {
                     accountData.createdAt = existingAccount.createdAt;
                 }
