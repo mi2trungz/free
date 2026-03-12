@@ -23,7 +23,11 @@ function httpRequest(options, body) {
     });
 }
 
-async function writeCookieToFirestore(netflixId, secureNetflixId) {
+function sanitizeAccountKey(value) {
+    return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
+}
+
+async function writeCookieToFirestore(netflixId, secureNetflixId, docPath = FIRESTORE_DOC) {
     const payload = JSON.stringify({
         fields: {
             netflixId: { stringValue: netflixId },
@@ -32,7 +36,7 @@ async function writeCookieToFirestore(netflixId, secureNetflixId) {
         }
     });
 
-    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${FIRESTORE_DOC}?key=${FIREBASE_API_KEY}`;
+    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
     const response = await httpRequest(
         {
             hostname: 'firestore.googleapis.com',
@@ -50,8 +54,8 @@ async function writeCookieToFirestore(netflixId, secureNetflixId) {
     return response.statusCode >= 200 && response.statusCode < 300;
 }
 
-async function readCookieFromFirestore() {
-    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${FIRESTORE_DOC}?key=${FIREBASE_API_KEY}`;
+async function readCookieFromFirestore(docPath = FIRESTORE_DOC) {
+    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
     const response = await httpRequest({
         hostname: 'firestore.googleapis.com',
         port: 443,
@@ -75,6 +79,19 @@ async function readCookieFromFirestore() {
     }
 }
 
+function parseBody(rawBody) {
+    if (!rawBody) return {};
+    if (typeof rawBody === 'object') return rawBody;
+    if (typeof rawBody === 'string') {
+        try {
+            return JSON.parse(rawBody);
+        } catch (e) {
+            return {};
+        }
+    }
+    return {};
+}
+
 module.exports = async function (req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -88,17 +105,23 @@ module.exports = async function (req, res) {
 
     try {
         if (req.method === 'GET') {
-            const saved = await readCookieFromFirestore();
+            const accountKey = sanitizeAccountKey((req.query && req.query.accountKey) || '');
+            const docPath = accountKey ? `netflix_account_cookies/${accountKey}` : FIRESTORE_DOC;
+            const saved = await readCookieFromFirestore(docPath);
             return res.status(200).json({ hasCookie: !!(saved && saved.netflixId) });
         }
 
         if (req.method === 'POST') {
-            const { netflixId, secureNetflixId } = req.body || {};
+            const body = parseBody(req.body);
+            const netflixId = body.netflixId ? String(body.netflixId).trim() : '';
+            const secureNetflixId = body.secureNetflixId ? String(body.secureNetflixId).trim() : '';
+            const accountKey = sanitizeAccountKey(body.accountKey || '');
             if (!netflixId) {
                 return res.status(400).json({ error: 'Missing NetflixId' });
             }
 
-            const ok = await writeCookieToFirestore(netflixId, secureNetflixId);
+            const docPath = accountKey ? `netflix_account_cookies/${accountKey}` : FIRESTORE_DOC;
+            const ok = await writeCookieToFirestore(netflixId, secureNetflixId, docPath);
             if (!ok) {
                 return res.status(500).json({ error: 'Failed to save cookie on server store' });
             }

@@ -23,8 +23,12 @@ function httpRequest(options, body) {
     });
 }
 
-async function readCookieFromFirestore() {
-    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${FIRESTORE_DOC}?key=${FIREBASE_API_KEY}`;
+function sanitizeAccountKey(value) {
+    return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
+}
+
+async function readCookieFromFirestore(docPath = FIRESTORE_DOC) {
+    const path = `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
     const response = await httpRequest({
         hostname: 'firestore.googleapis.com',
         port: 443,
@@ -48,6 +52,19 @@ async function readCookieFromFirestore() {
     }
 }
 
+function parseBody(rawBody) {
+    if (!rawBody) return {};
+    if (typeof rawBody === 'object') return rawBody;
+    if (typeof rawBody === 'string') {
+        try {
+            return JSON.parse(rawBody);
+        } catch (e) {
+            return {};
+        }
+    }
+    return {};
+}
+
 module.exports = async function (req, res) {
     // Enable CORS
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -68,13 +85,29 @@ module.exports = async function (req, res) {
     }
 
     try {
-        const saved = await readCookieFromFirestore();
-        if (!saved || !saved.netflixId) {
-            return res.status(400).json({ error: 'Du lieu khong co cookie NetflixId tren server. Admin phai luu cookie truoc.' });
+        const requestBody = parseBody(req.body);
+        const accountKey = sanitizeAccountKey(requestBody.accountKey);
+        let netflixId = requestBody.netflixId ? String(requestBody.netflixId).trim() : '';
+        let secureNetflixId = requestBody.secureNetflixId ? String(requestBody.secureNetflixId).trim() : '';
+
+        if (accountKey) {
+            const accountDocPath = `netflix_account_cookies/${accountKey}`;
+            const savedAccount = await readCookieFromFirestore(accountDocPath);
+            if (!savedAccount || !savedAccount.netflixId) {
+                return res.status(400).json({ error: 'Khong tim thay cookie cho tai khoan Netflix nay tren server.' });
+            }
+            netflixId = savedAccount.netflixId;
+            secureNetflixId = savedAccount.secureNetflixId || '';
         }
 
-        const netflixId = saved.netflixId;
-        const secureNetflixId = saved.secureNetflixId || '';
+        if (!netflixId) {
+            const saved = await readCookieFromFirestore();
+            if (!saved || !saved.netflixId) {
+                return res.status(400).json({ error: 'Du lieu khong co cookie NetflixId tren server. Admin phai luu cookie truoc.' });
+            }
+            netflixId = saved.netflixId;
+            secureNetflixId = saved.secureNetflixId || '';
+        }
 
         // Build cookie string for upstream Netflix request
         let cookieStr = `NetflixId=${netflixId};`;

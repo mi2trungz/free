@@ -1450,6 +1450,13 @@
                             class="w-full px-4 py-2 rounded-xl border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none font-mono text-sm"
                             placeholder="ABCD1234...">
                     </div>
+                    <div id="accountNetflixCookieSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cookie Netflix (theo tài khoản)</label>
+                        <textarea id="accountNetflixCookieInput" rows="4"
+                            class="w-full px-3 py-2 rounded-lg border-2 border-red-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-xs font-mono"
+                            placeholder="Dán cookie Netscape hoặc chuỗi có NetflixId/SecureNetflixId cho tài khoản này..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Chỉ dùng cho danh mục Netflix. Khi user bấm tài khoản này, hệ thống sẽ tạo link theo cookie này.</p>
+                    </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="accountShowOtpInput" class="w-4 h-4 text-indigo-600 rounded" checked>
                         <label for="accountShowOtpInput" class="text-xs text-gray-700">Hiển thị mã 2FA</label>
@@ -1690,6 +1697,14 @@
 
                         <div id="modalAdminControls" class="hidden mt-4 pt-4 border-t border-gray-100 flex gap-3">
                             <!-- Admin buttons injected here -->
+                        </div>
+
+                        <div id="modalNetflixActions" class="hidden mt-4 pt-4 border-t border-gray-100">
+                            <button id="modalNetflixWatchBtn" onclick="openNetflixForCurrentAccount()"
+                                class="w-full bg-black text-white px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-gray-900 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                                <span>XEM PHIM NETFLIX</span>
+                            </button>
+                            <p id="modalNetflixCookieState" class="text-[11px] text-gray-500 mt-2 text-center"></p>
                         </div>
 
                         <!-- Nút báo lỗi -->
@@ -4603,11 +4618,7 @@
             // MỚI THÊM: CHỈ HIỆN NÚT NETFLIX KHI MỞ THƯ MỤC CÓ TÊN NETFLIX
             const netflixBtnContainer = document.getElementById('netflixAutoLinkContainer');
             if (netflixBtnContainer) {
-                if (folder.name.toLowerCase().includes('netflix')) {
-                    netflixBtnContainer.classList.remove('hidden');
-                } else {
-                    netflixBtnContainer.classList.add('hidden');
-                }
+                netflixBtnContainer.classList.add('hidden');
             }
 
             let extraHtml = ``;
@@ -4789,6 +4800,92 @@
 
         }
 
+        function isNetflixFolder(folder) {
+            if (!folder) return false;
+            const id = (folder.id || '').toLowerCase();
+            const name = (folder.name || '').toLowerCase();
+            return id.includes('netflix') || name.includes('netflix');
+        }
+
+        function getNetflixCookieIdsForAccount(acc) {
+            if (!acc) return { netflixId: '', secureNetflixId: '' };
+            if (acc.netflixId) {
+                return {
+                    netflixId: String(acc.netflixId || '').trim(),
+                    secureNetflixId: String(acc.secureNetflixId || '').trim()
+                };
+            }
+            return extractNetflixIdsFromCookie(acc.netflixCookieRaw || '');
+        }
+
+        function hasNetflixCookieForAccount(acc) {
+            const ids = getNetflixCookieIdsForAccount(acc);
+            return !!ids.netflixId;
+        }
+
+        function isProbablyMobileDevice() {
+            const ua = navigator.userAgent || '';
+            return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+        }
+
+        function setModalNetflixButtonLoading(isLoading) {
+            const btn = document.getElementById('modalNetflixWatchBtn');
+            if (!btn) return;
+            if (isLoading) {
+                if (!btn.dataset.originalText) btn.dataset.originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-wait');
+                btn.innerHTML = '<span>Đang lấy link Netflix...</span>';
+            } else {
+                btn.classList.remove('opacity-70', 'cursor-wait');
+                if (btn.dataset.originalText) {
+                    btn.innerHTML = btn.dataset.originalText;
+                    delete btn.dataset.originalText;
+                }
+            }
+        }
+
+        async function openNetflixForCurrentAccount() {
+            if (currentFolderIndex === -1 || currentAccountIndex === -1) return;
+            const folder = DATA[currentFolderIndex];
+            const acc = folder && folder.accounts ? folder.accounts[currentAccountIndex] : null;
+            if (!folder || !acc || !isNetflixFolder(folder)) return;
+
+            const ids = getNetflixCookieIdsForAccount(acc);
+            if (!ids.netflixId) {
+                showAlert('Thiếu cookie Netflix', 'Tài khoản này chưa có NetflixId. Vui lòng vào Admin > Quản lý tài khoản để cập nhật cookie cho tài khoản này.', 'warning');
+                return;
+            }
+
+            setModalNetflixButtonLoading(true);
+            try {
+                const response = await fetch('/api/nftoken', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        netflixId: ids.netflixId,
+                        secureNetflixId: ids.secureNetflixId || ''
+                    })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.nftoken) {
+                    const msg = data.error || 'Không tạo được link Netflix cho tài khoản này';
+                    showAlert('Lỗi Netflix', msg, 'error');
+                    return;
+                }
+
+                let targetUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
+                if (isProbablyMobileDevice()) {
+                    targetUrl = ensureUnsupportedPath(targetUrl);
+                }
+                window.open(targetUrl, '_blank');
+            } catch (e) {
+                showAlert('Lỗi hệ thống', e.message || 'Không thể kết nối API Netflix', 'error');
+            } finally {
+                setModalNetflixButtonLoading(false);
+            }
+        }
+
         function selectAccount(accIndex) {
             if (currentFolderIndex === -1) return;
             const folder = DATA[currentFolderIndex];
@@ -4809,6 +4906,9 @@
 
             const otpSection = document.getElementById('modalOtpSection');
             const adminControls = document.getElementById('modalAdminControls');
+            const modalNetflixActions = document.getElementById('modalNetflixActions');
+            const modalNetflixWatchBtn = document.getElementById('modalNetflixWatchBtn');
+            const modalNetflixCookieState = document.getElementById('modalNetflixCookieState');
 
             // OTP Logic
             const shouldShowOtp = acc.showOtp !== false && acc.secret && acc.secret.trim() !== '';
@@ -4840,6 +4940,25 @@
                 adminControls.classList.add('hidden');
             }
 
+            // Netflix button per account
+            if (isNetflixFolder(folder)) {
+                const hasCookie = hasNetflixCookieForAccount(acc);
+                modalNetflixActions.classList.remove('hidden');
+                setModalNetflixButtonLoading(false);
+                if (hasCookie) {
+                    modalNetflixWatchBtn.disabled = false;
+                    modalNetflixWatchBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                    modalNetflixCookieState.textContent = 'Đã có cookie cho tài khoản này';
+                } else {
+                    modalNetflixWatchBtn.disabled = true;
+                    modalNetflixWatchBtn.classList.add('opacity-60', 'cursor-not-allowed');
+                    modalNetflixCookieState.textContent = 'Tài khoản này chưa có cookie Netflix';
+                }
+            } else {
+                modalNetflixActions.classList.add('hidden');
+                setModalNetflixButtonLoading(false);
+            }
+
             // Show Modal
             const modal = document.getElementById('accountDetailModal');
             modal.classList.remove('hidden');
@@ -4848,6 +4967,8 @@
 
         function closeAccountDetailModal() {
             const modal = document.getElementById('accountDetailModal');
+            const modalNetflixActions = document.getElementById('modalNetflixActions');
+            if (modalNetflixActions) modalNetflixActions.classList.add('hidden');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             currentAccountIndex = -1;
@@ -6013,6 +6134,13 @@
             }
         }
 
+        function toggleAccountNetflixCookieSection() {
+            const section = document.getElementById('accountNetflixCookieSection');
+            if (!section) return;
+            const folder = currentAdminFolderIndex >= 0 ? DATA[currentAdminFolderIndex] : null;
+            section.classList.toggle('hidden', !isNetflixFolder(folder));
+        }
+
         function loadAccountsForAdmin() {
             const select = document.getElementById('adminFolderSelect');
             const list = document.getElementById('adminAccountsList');
@@ -6031,6 +6159,8 @@
 
             currentAdminFolderIndex = selectedIndex;
             const folder = DATA[selectedIndex];
+            const netflixFolder = isNetflixFolder(folder);
+            toggleAccountNetflixCookieSection();
             if (!folder) {
                 list.innerHTML = '<p class="text-center text-red-500 py-4">Danh mục không tồn tại</p>';
                 return;
@@ -6097,6 +6227,7 @@
                     <div>Password: <span class="font-mono">${acc.password}</span></div>
                     <div>Secret: <span class="font-mono">${acc.secret || '(trống)'}</span></div>
                     <div>Hiển thị 2FA: ${acc.showOtp !== false ? 'Có' : 'Không'}</div>
+                    ${netflixFolder ? `<div>Cookie Netflix: <span class="font-semibold ${hasNetflixCookieForAccount(acc) ? 'text-green-600' : 'text-red-600'}">${hasNetflixCookieForAccount(acc) ? 'Đã có' : 'Chưa có'}</span></div>` : ''}
                     ${acc.adminNote ? `<div class="text-indigo-600 mt-2 italic border-l-2 border-indigo-300 pl-2">📝 ${acc.adminNote}</div>` : ''}
                 </div>
             `;
@@ -6138,9 +6269,12 @@
             document.getElementById('accountUsernameInput').value = '';
             document.getElementById('accountPasswordInput').value = '';
             document.getElementById('accountSecretInput').value = '';
+            document.getElementById('accountNetflixCookieInput').value = '';
+            document.getElementById('accountNetflixCookieInput').placeholder = 'Dán cookie Netscape hoặc chuỗi có NetflixId/SecureNetflixId cho tài khoản này...';
             document.getElementById('accountShowOtpInput').checked = true;
             document.getElementById('accountHiddenInput').checked = false;
             document.getElementById('accountNoteInput').value = '';
+            toggleAccountNetflixCookieSection();
             // Hiển thị phần note nếu là admin
             const accountNoteSection = document.getElementById('accountNoteSection');
             if (accountNoteSection) {
@@ -6160,10 +6294,15 @@
             document.getElementById('accountUsernameInput').value = acc.username || '';
             document.getElementById('accountPasswordInput').value = acc.password || '';
             document.getElementById('accountSecretInput').value = acc.secret || '';
+            document.getElementById('accountNetflixCookieInput').value = acc.netflixCookieRaw || (
+                acc.netflixId ? `NetflixId=${acc.netflixId};${acc.secureNetflixId ? ` SecureNetflixId=${acc.secureNetflixId};` : ''}` : ''
+            );
+            document.getElementById('accountNetflixCookieInput').placeholder = 'Dán cookie Netscape hoặc chuỗi có NetflixId/SecureNetflixId cho tài khoản này...';
             document.getElementById('accountShowOtpInput').checked = acc.showOtp !== false;
             document.getElementById('accountHiddenInput').checked = acc.hidden || false;
             // Load admin note
             document.getElementById('accountNoteInput').value = acc.adminNote || '';
+            toggleAccountNetflixCookieSection();
             // Hiển thị phần note nếu là admin
             const accountNoteSection = document.getElementById('accountNoteSection');
             if (accountNoteSection) {
@@ -6186,13 +6325,23 @@
             const username = document.getElementById('accountUsernameInput').value.trim();
             const password = document.getElementById('accountPasswordInput').value.trim();
             const secret = document.getElementById('accountSecretInput').value.trim();
+            const netflixCookieRaw = document.getElementById('accountNetflixCookieInput').value.trim();
             const showOtp = document.getElementById('accountShowOtpInput').checked;
             const hidden = document.getElementById('accountHiddenInput').checked;
             const adminNoteText = isAdmin() ? document.getElementById('accountNoteInput').value.trim() : '';
             const errorEl = document.getElementById('accountEditError');
+            const currentFolder = DATA[currentAdminFolderIndex];
+            const netflixFolder = isNetflixFolder(currentFolder);
 
             if (!name || !username || !password) {
                 errorEl.textContent = 'Vui lòng điền đầy đủ thông tin';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const cookieIds = netflixFolder ? extractNetflixIdsFromCookie(netflixCookieRaw) : { netflixId: '', secureNetflixId: '' };
+            if (netflixFolder && netflixCookieRaw && !cookieIds.netflixId) {
+                errorEl.textContent = 'Cookie Netflix không hợp lệ: không tìm thấy NetflixId';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -6204,7 +6353,10 @@
                 secret: secret,
                 showOtp: showOtp,
                 hidden: hidden,
-                adminNote: adminNoteText
+                adminNote: adminNoteText,
+                netflixCookieRaw: netflixFolder ? netflixCookieRaw : '',
+                netflixId: netflixFolder ? (cookieIds.netflixId || '') : '',
+                secureNetflixId: netflixFolder ? (cookieIds.secureNetflixId || '') : ''
             };
 
             if (editingAccountIndex === -1) {
@@ -6219,8 +6371,7 @@
                 // Edit existing account - lưu thời gian cập nhật
                 accountData.updatedAt = new Date().toISOString();
                 // Giữ lại các field khác nếu có
-                const existingAccount = DATA[currentAdminFolderIndex].accounts[editingAccountIndex];
-                if (existingAccount.createdAt) {
+                if (existingAccount && existingAccount.createdAt) {
                     accountData.createdAt = existingAccount.createdAt;
                 }
                 DATA[currentAdminFolderIndex].accounts[editingAccountIndex] = accountData;
