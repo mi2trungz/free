@@ -1757,9 +1757,36 @@
 
     <div id="netflixUsageNoticeModal" onclick="if(event.target === this) closeNetflixUsageNoticeModal()"
         class="hidden fixed inset-0 z-[108] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-indigo-100">
-            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-4 text-white text-center">
-                <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide">LƯU Ý TRƯỚC KHI SỬ DỤNG</h3>
+        <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full overflow-hidden border border-indigo-100 relative">
+            <div class="absolute -top-10 -left-10 w-36 h-36 rounded-full bg-blue-200/40 blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -right-8 w-40 h-40 rounded-full bg-purple-200/40 blur-2xl pointer-events-none"></div>
+            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 px-5 py-4 text-white text-center relative">
+                <h3 class="text-lg sm:text-xl font-black uppercase tracking-wide relative z-10">LƯU Ý TRƯỚC KHI SỬ DỤNG</h3>
+            </div>
+            <div class="px-5 pt-4 pb-1 relative z-10">
+                <div class="rounded-2xl bg-gradient-to-r from-indigo-50 via-blue-50 to-purple-50 border border-indigo-100 p-3 flex items-center justify-center gap-2 sm:gap-3">
+                    <div class="w-11 h-11 rounded-xl bg-white border border-indigo-200 text-indigo-600 flex items-center justify-center shadow-sm float">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L3 17m18 0h-6.75m-10.5 0v1.75A1.25 1.25 0 005 20h14a1.25 1.25 0 001.25-1.25V17M5.5 4h13A1.5 1.5 0 0120 5.5v8A1.5 1.5 0 0118.5 15h-13A1.5 1.5 0 014 13.5v-8A1.5 1.5 0 015.5 4z" />
+                        </svg>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-white border border-blue-200 text-blue-600 flex items-center justify-center shadow-sm float" style="animation-delay:.2s">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8.5 3.75h7A1.75 1.75 0 0117.25 5.5v13A1.75 1.75 0 0115.5 20.25h-7A1.75 1.75 0 016.75 18.5v-13A1.75 1.75 0 018.5 3.75z" />
+                        </svg>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-white border border-fuchsia-200 text-fuchsia-600 flex items-center justify-center shadow-sm float" style="animation-delay:.4s">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.75 7.5A1.75 1.75 0 015.5 5.75h13A1.75 1.75 0 0120.25 7.5v7A1.75 1.75 0 0118.5 16.25h-13A1.75 1.75 0 013.75 14.5v-7zM9.5 18.25h5" />
+                        </svg>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-200 text-amber-700 font-bold text-xs gentle-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M10.29 3.86l-7.5 13A1 1 0 003.66 18h15.68a1 1 0 00.87-1.5l-7.5-13a1 1 0 00-1.74 0z" />
+                        </svg>
+                        Xem miễn phí trên máy tính
+                    </span>
+                </div>
             </div>
             <div class="p-5 sm:p-6">
                 <ul class="space-y-2 text-sm sm:text-base text-slate-700 font-semibold">
@@ -4411,10 +4438,7 @@
                     `;
                 } else {
                     const shouldUseDesktopPopupCard = isDesktopView && folder.type === 'popup';
-                    const folderIdLower = (folder.id || '').toLowerCase();
-                    const folderNameLower = (folder.name || '').toLowerCase();
-                    const isNetflixCategoryCard = folderIdLower.includes('netflix') || folderNameLower.includes('netflix');
-                    const shouldUseDesktopFreeCard = folder.type !== 'popup' && (isDesktopView || isNetflixCategoryCard);
+                    const shouldUseDesktopFreeCard = folder.type !== 'popup' && isDesktopView;
 
                     if (shouldUseDesktopPopupCard) {
                         // Desktop-only square card for free gift/popup services
@@ -5151,9 +5175,24 @@
                 return;
             }
 
+            // Open a tab synchronously from user click so browser won't block later redirect.
+            const popupWindow = window.open('about:blank', '_blank');
+            if (popupWindow) {
+                try {
+                    popupWindow.document.title = 'Netflix';
+                    popupWindow.document.body.style.margin = '0';
+                    popupWindow.document.body.style.fontFamily = 'Arial, sans-serif';
+                    popupWindow.document.body.style.display = 'flex';
+                    popupWindow.document.body.style.alignItems = 'center';
+                    popupWindow.document.body.style.justifyContent = 'center';
+                    popupWindow.document.body.style.height = '100vh';
+                    popupWindow.document.body.innerHTML = '<div style="text-align:center;color:#374151;"><div style="font-size:18px;font-weight:700;margin-bottom:8px;">Đang chuẩn bị Netflix...</div><div style="font-size:14px;">Vui lòng chờ trong giây lát.</div></div>';
+                } catch (e) {
+                    // Ignore if browser restricts writing to about:blank.
+                }
+            }
+
             setModalNetflixButtonLoading(true);
-            const minLoadingDelayMs = 5000;
-            const requestStart = Date.now();
             try {
                 const response = await fetch('/api/nftoken', {
                     method: 'POST',
@@ -5170,14 +5209,17 @@
                     return;
                 }
 
-                const elapsedMs = Date.now() - requestStart;
-                if (elapsedMs < minLoadingDelayMs) {
-                    await new Promise(resolve => setTimeout(resolve, minLoadingDelayMs - elapsedMs));
-                }
-
                 let targetUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
-                window.open(targetUrl, '_blank');
+                if (popupWindow && !popupWindow.closed) {
+                    popupWindow.location.href = targetUrl;
+                } else {
+                    // Fallback when popup was blocked/closed: open in current tab.
+                    window.location.href = targetUrl;
+                }
             } catch (e) {
+                if (popupWindow && !popupWindow.closed) {
+                    try { popupWindow.close(); } catch (closeErr) { }
+                }
                 showAlert('Lỗi hệ thống', e.message || 'Không thể kết nối API Netflix', 'error');
             } finally {
                 setModalNetflixButtonLoading(false);
