@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 
 <head>
@@ -34,18 +34,17 @@
         body {
             font-family: 'Be Vietnam Pro', sans-serif;
             background:
-                radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.14), transparent 28%),
-                radial-gradient(circle at 90% 8%, rgba(20, 184, 166, 0.12), transparent 24%),
-                radial-gradient(circle at 85% 85%, rgba(56, 189, 248, 0.1), transparent 25%),
-                linear-gradient(180deg, #f8fffc 0%, #f6fbff 48%, #f8fafc 100%);
-            color: #0f172a;
+                radial-gradient(circle at top right, rgba(16, 185, 129, 0.18), transparent 28%),
+                radial-gradient(circle at bottom left, rgba(20, 184, 166, 0.14), transparent 24%),
+                #f6fbf8;
+            color: #1f2937;
         }
 
         .price-card {
-            background: rgba(255, 255, 255, 0.78);
-            backdrop-filter: blur(18px);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(16, 185, 129, 0.12);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
         }
     
         @keyframes bestSellerGlow {
@@ -71,9 +70,9 @@
         }
 
         .pricing-best-seller-card {
-            border-color: rgba(251, 146, 60, 0.48) !important;
-            box-shadow: 0 24px 48px rgba(251, 146, 60, 0.22) !important;
-            animation: bestSellerGlow 2.4s ease-in-out infinite;
+            border-color: rgba(251, 146, 60, 0.55) !important;
+            background: linear-gradient(140deg, rgba(255, 247, 237, 0.96) 0%, rgba(255, 255, 255, 1) 58%);
+            animation: bestSellerGlow 2.2s ease-in-out infinite;
         }
 
         .pricing-best-seller-badge {
@@ -113,7 +112,7 @@
             color: #ffffff;
             border-radius: 9999px;
             padding: 0.62rem 1.05rem;
-            background-image: linear-gradient(120deg, #f59e0b 0%, #f97316 46%, #ef4444 100%);
+            background-image: linear-gradient(120deg, #ef4444 0%, #f97316 40%, #f59e0b 52%, #f97316 64%, #ef4444 100%);
             background-size: 220% 100%;
             animation: promoPulse 1.9s ease-in-out infinite, promoShine 2.8s linear infinite;
             border: 1px solid rgba(255, 255, 255, 0.35);
@@ -126,211 +125,31 @@
                 padding: 0.58rem 0.7rem;
             }
         }
-
-        .cart-fab {
-            box-shadow: 0 14px 34px rgba(5, 150, 105, 0.34);
-        }
-
-        .cart-badge {
-            min-width: 1.35rem;
-            height: 1.35rem;
-        }
-
-        .cart-overlay {
-            transition: opacity 0.2s ease;
-        }
-
-        .cart-drawer {
-            transition: transform 0.26s ease;
-        }
-
-        @keyframes cartHintFloat {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        @keyframes cartArrowNudge {
-            0%, 100% { transform: translateX(0); opacity: 0.8; }
-            50% { transform: translateX(5px); opacity: 1; }
-        }
-
-        .cart-hint {
-            animation: cartHintFloat 1.8s ease-in-out infinite;
-        }
-
-        .cart-hint-arrow {
-            animation: cartArrowNudge 1.1s ease-in-out infinite;
-        }
-
-        @keyframes cartFabWiggle {
-            0%, 100% { transform: rotate(0deg); }
-            20% { transform: rotate(-2.5deg); }
-            40% { transform: rotate(2.5deg); }
-            60% { transform: rotate(-1.5deg); }
-            80% { transform: rotate(1.5deg); }
-        }
-
-        .cart-fab.has-items {
-            animation: cartFabWiggle 0.8s ease-in-out infinite;
-            transform-origin: center;
-        }
-
-        .store-card {
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.86) 0%, rgba(249, 255, 253, 0.84) 100%);
-            border: 1px solid rgba(148, 163, 184, 0.22);
-            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-            backdrop-filter: blur(12px);
-            transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-        }
-
-        .store-card:hover {
-            border-color: rgba(16, 185, 129, 0.4);
-            transform: translateY(-4px) scale(1.01);
-            box-shadow: 0 22px 36px rgba(15, 23, 42, 0.14);
-        }
-
-        .store-card-shell {
-            display: grid;
-            grid-template-columns: 56px minmax(0, 1fr);
-            gap: 0.75rem;
-            align-items: start;
-            min-height: 96px;
-            height: 100%;
-        }
-
-        .store-avatar {
-            background: linear-gradient(145deg, #e2e8f0, #f8fafc);
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            box-shadow: 0 6px 14px rgba(148, 163, 184, 0.28);
-        }
-
-        .store-buy-btn {
-            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
-            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.3);
-            transition: transform 200ms ease, box-shadow 200ms ease, filter 200ms ease;
-            display: none !important;
-        }
-
-        .store-buy-btn:hover {
-            transform: translateY(-1px);
-            filter: brightness(1.05);
-            box-shadow: 0 14px 26px rgba(16, 185, 129, 0.36);
-        }
-
-        .store-main-btn {
-            background: linear-gradient(135deg, #059669 0%, #14b8a6 100%);
-            transition: transform 180ms ease, box-shadow 180ms ease;
-        }
-
-        .store-main-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 12px 24px rgba(5, 150, 105, 0.3);
-        }
-
-        .detail-package-row {
-            background: linear-gradient(160deg, #ffffff 0%, #f8fffc 100%);
-            border: 1px solid rgba(148, 163, 184, 0.28);
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
-            transition: transform 180ms ease, box-shadow 180ms ease;
-        }
-
-        .detail-package-row:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 14px 24px rgba(15, 23, 42, 0.1);
-        }
-
-        .modal-card {
-            background:
-                radial-gradient(circle at top right, rgba(16, 185, 129, 0.1), transparent 38%),
-                linear-gradient(175deg, rgba(255, 255, 255, 0.98) 0%, rgba(243, 248, 255, 0.98) 100%);
-            border: 1px solid rgba(148, 163, 184, 0.22);
-        }
-
-        #pricingDetailModal .flex-1 {
-            scroll-behavior: smooth;
-        }
-
-        #pricingDetailSubtitle,
-        #pricingDetailMinPrice {
-            display: none !important;
-        }
-
-        .confirm-overlay {
-            background: rgba(2, 6, 23, 0.5);
-            backdrop-filter: blur(4px);
-        }
-
-        @keyframes softPulse {
-            0%,
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 rgba(16, 185, 129, 0);
-            }
-
-            50% {
-                transform: scale(1.02);
-                box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);
-            }
-        }
-
-        .order-code-attention {
-            animation: softPulse 1.8s ease-in-out infinite;
-        }
-
-        .copy-btn-attention {
-            animation: softPulse 2.1s ease-in-out infinite;
-        }
-
-        @keyframes codeShakeOnce {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-2px); }
-            40% { transform: translateX(2px); }
-            60% { transform: translateX(-2px); }
-            80% { transform: translateX(2px); }
-        }
-
-        .copied-shake {
-            animation: codeShakeOnce 280ms ease-in-out 1;
-        }
-
-        .copy-toast {
-            position: fixed;
-            left: 50%;
-            bottom: 24px;
-            transform: translate(-50%, 20px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 220ms ease, transform 220ms ease;
-        }
-
-        .copy-toast.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-        }
     </style>
 </head>
 
 <body class="min-h-screen">
-    <main class="mx-auto w-[min(96vw,1600px)] px-2.5 py-5 sm:px-4 md:px-6 md:py-8">
+    <main class="mx-auto max-w-5xl px-2.5 py-5 sm:px-4 md:px-6 md:py-8">
+        <div class="mb-5 flex flex-col items-center justify-center gap-2">
+            <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold uppercase text-white shadow-sm transition-all hover:bg-emerald-700">
+                NHẮN TIN QUA FANPAGE ĐỂ MUA NGAY
+            </a>
+            <p class="text-xs font-semibold text-emerald-700">
+                <span class="mr-1 text-sm leading-none">↑</span>Bấm vào nút để truy cập fanpage
+            </p>
+        </div>
+
         <section class="price-card overflow-hidden rounded-2xl px-3 py-5 sm:rounded-[1.75rem] sm:px-5 md:px-7 md:py-7">
-            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div class="max-w-3xl">
+            <div class="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div>
                     <p
-                        class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
-                        TRADA3K.STORE
+                        class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-emerald-700">
+                        Trada3k.Store
                     </p>
-                    <h1 class="mt-2 text-3xl font-black tracking-tight text-gray-900 md:text-4xl">
-                        Cửa hàng tài khoản kỹ thuật số
-                    </h1>
-                    <div class="mt-2 h-1.5 w-40 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"></div>
-                    <p class="mt-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Trang chính thức của TRADA3K.STORE</p>
+                    <h1 class="mt-4 text-3xl font-black tracking-tight text-gray-900 md:text-5xl">Bảng giá sản phẩm</h1>
                 </div>
-                <div class="pt-1 md:text-right">
-                    <a href="../index.html"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition-all hover:bg-emerald-50">
-                        ← Trở lại trang chủ
-                    </a>
-                </div>
+                <div id="lastUpdated" class="text-sm font-semibold text-emerald-700"></div>
             </div>
 
             <div id="loadingState" class="py-12 text-center">
@@ -354,76 +173,41 @@
 
             <div id="pricingCategoryFilters" class="mb-6 flex flex-wrap gap-2">
                 <button type="button" onclick="setPricingFilter('all')" data-category="all"
-                    class="pricing-filter-btn rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_22px_rgba(16,185,129,0.25)] transition-all">
+                    class="pricing-filter-btn rounded-full border border-emerald-200 bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all">
                     Tất cả
                 </button>
                 <button type="button" onclick="setPricingFilter('work')" data-category="work"
-                    class="pricing-filter-btn rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-300 hover:text-emerald-700">
+                    class="pricing-filter-btn rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-emerald-200 hover:text-emerald-700">
                     Công việc
                 </button>
                 <button type="button" onclick="setPricingFilter('entertainment')" data-category="entertainment"
-                    class="pricing-filter-btn rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-300 hover:text-emerald-700">
+                    class="pricing-filter-btn rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-emerald-200 hover:text-emerald-700">
                     Giải trí
                 </button>
             </div>
             <div class="mb-6 flex justify-center">
                 <div class="promo-offer uppercase">&#431;U &#272;&#195;I GI&#7842;M GI&#193; S&#7888; L&#431;&#7906;NG C&#211; H&#7840;N, MUA NGAY NH&#201;!</div>
             </div>
-            <div id="pricingGrid" class="hidden grid grid-cols-1 items-stretch gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+            <div id="pricingGrid" class="hidden grid grid-cols-1 items-start gap-4 md:gap-x-7 md:grid-cols-2"></div>
             <p class="mt-6 text-center text-sm font-semibold text-emerald-700">
                 Nếu sản phẩm bạn cần không có ở trên, hãy nhắn tin vào fanpage để được báo giá!
             </p>
         </section>
+        <div class="mt-6 flex flex-col items-center justify-center gap-2">
+            <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-center text-sm font-bold uppercase text-white shadow-sm transition-all hover:bg-emerald-700">
+                NHẮN TIN QUA FANPAGE ĐỂ MUA NGAY
+            </a>
+            <p class="text-xs font-semibold text-emerald-700">
+                <span class="mr-1 text-sm leading-none">↑</span>Bấm vào nút để truy cập fanpage
+            </p>
+        </div>
     </main>
 
-    <button id="cartFab" type="button" onclick="openCartDrawer()"
-        class="cart-fab fixed bottom-5 right-4 z-[120] inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-white transition-all hover:bg-emerald-700 sm:right-6">
-        <span>Giỏ hàng</span>
-        <span id="cartFabBadge"
-            class="cart-badge inline-flex items-center justify-center rounded-full bg-white px-1.5 text-xs font-black text-emerald-700">0</span>
-    </button>
-    <div id="cartHint"
-        class="cart-hint hidden fixed bottom-[4.9rem] right-4 z-[119] items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-700 shadow-[0_10px_24px_rgba(16,185,129,0.2)] sm:right-6">
-        <span class="cart-hint-arrow text-sm leading-none">↘</span>
-        <span>Nhấn vào giỏ hàng để chốt đơn</span>
-    </div>
-
-    <div id="cartOverlay" class="cart-overlay hidden fixed inset-0 z-[95] bg-black/40" onclick="closeCartDrawer()"></div>
-    <aside id="cartDrawer"
-        class="cart-drawer fixed inset-y-0 right-0 z-[96] flex w-full max-w-md translate-x-full flex-col bg-white shadow-2xl">
-        <div class="border-b border-emerald-100 px-5 py-4">
-            <div class="flex items-center justify-between">
-                <h2 class="text-lg font-black text-gray-900">Giỏ hàng tài khoản</h2>
-                <button type="button" onclick="closeCartDrawer()"
-                    class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <p class="mt-2 text-xs font-medium text-gray-500">Chọn gói rồi chốt đơn nhanh qua fanpage.</p>
-        </div>
-
-        <div id="cartItems" class="flex-1 space-y-3 overflow-y-auto px-4 py-4"></div>
-
-        <div class="border-t border-emerald-100 px-4 py-4">
-            <div class="mb-3 rounded-2xl bg-emerald-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Tạm tính</p>
-                <p id="cartSubtotal" class="mt-1 text-xl font-black text-emerald-700">0 đ</p>
-            </div>
-
-            <button type="button" onclick="openCheckoutConfirm()"
-                class="mt-1 inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black uppercase text-white transition-all hover:bg-emerald-700">
-                Chốt đơn
-            </button>
-            <p class="mt-2 text-center text-[11px] font-medium text-gray-500">Hệ thống sẽ tạo mã đơn để bạn gửi cho fanpage.</p>
-        </div>
-    </aside>
     <div id="pricingDetailModal"
         class="hidden fixed inset-0 z-[90] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4"
         onclick="if(event.target === this) closePricingDetailModal()">
-        <div class="modal-card relative flex max-h-[96vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] shadow-2xl">
+        <div class="w-full max-w-2xl max-h-[92vh] overflow-hidden rounded-[2rem] bg-white shadow-2xl flex flex-col relative">
             <button onclick="closePricingDetailModal()"
                 class="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -431,535 +215,44 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="border-b border-slate-200/80 px-5 py-3 sm:px-6">
+            <div class="border-b border-slate-200 px-6 py-7">
                 <div class="flex items-start gap-4 pr-12">
                     <div id="pricingDetailLogo"
-                        class="hidden h-14 w-14 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm"></div>
-                    <div class="min-w-0">
-                        <h2 id="pricingDetailTitle" class="text-[1.8rem] font-black tracking-tight text-slate-900 sm:text-[1.9rem]">Sản phẩm</h2>
+                        class="hidden h-16 w-16 shrink-0 overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm"></div>
+                    <div class="min-w-max">
+                        <h2 id="pricingDetailTitle" class="text-2xl font-black tracking-tight text-slate-900 sm:text-4xl">Sản phẩm</h2>
                         <p id="pricingDetailSubtitle" class="hidden mt-2 text-sm font-medium text-slate-500 sm:text-base"></p>
-                        <p id="pricingDetailMinPrice" class="mt-3 inline-flex rounded-xl bg-emerald-50 px-3 py-1 text-base font-black text-emerald-700 sm:text-xl"></p>
                     </div>
                 </div>
             </div>
-            <div class="flex-1 space-y-3 overflow-y-auto p-4 sm:p-5">
+            <div class="flex-1 overflow-y-auto p-6 sm:p-7">
                 <div id="pricingDetailDescriptionCard"
-                    class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2 text-white shadow-lg sm:px-4 sm:py-3">
+                    class="rounded-[1.75rem] bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white shadow-lg sm:p-6">
                     <p class="text-[13px] font-semibold text-blue-100 sm:text-sm">Mô tả dịch vụ</p>
                     <div id="pricingDetailDescription"
-                        class="mt-1.5 whitespace-pre-line text-[14px] font-medium leading-relaxed sm:text-[15px]"></div>
-                </div>
-                <div>
-                    <p class="mb-2 text-sm font-black text-emerald-700">Nhấn vào gói để tiến hành mua</p>
-                    <div id="pricingDetailPackages" class="space-y-2"></div>
+                        class="mt-3 whitespace-pre-line text-[15px] font-medium leading-relaxed sm:text-base"></div>
                 </div>
                 <p id="pricingDetailFallback"
                     class="hidden mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 whitespace-pre-line text-sm text-slate-500"></p>
                 <p id="pricingDetailNote" class="mt-6 text-center text-sm font-medium text-slate-500"></p>
             </div>
-            <div class="border-t border-slate-200/80 px-5 py-3 sm:px-6">
+            <div class="border-t border-slate-200 px-6 py-5">
                 <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
-                    class="store-main-btn inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-center text-white shadow-lg">
-                    <span class="text-sm font-extrabold uppercase tracking-wide sm:text-base">TRUY CẬP FANPAGE NẾU CẦN ĐƯỢC TƯ VẤN</span>
-                    <span class="text-2xl leading-none">-></span>
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-4 text-center text-white shadow-lg transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl">
+                    <span class="text-sm font-extrabold uppercase tracking-wide sm:text-base">TRUY CẬP FANPAGE ĐỂ MUA NGAY</span>
+                    <span class="text-2xl leading-none">→</span>
                 </a>
-                <div class="mt-2 hidden items-center justify-center gap-2 text-sm font-semibold text-slate-600">
-                    <span class="text-xl leading-none text-blue-600">^</span>
+                <div class="mt-3 flex items-center justify-center gap-2 text-sm font-semibold text-slate-600">
+                    <span class="text-xl leading-none text-blue-600">↑</span>
                     <span>Bấm vào đây để truy cập fanpage</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="addToCartConfirmModal" class="confirm-overlay hidden fixed inset-0 z-[130] items-center justify-center p-4"
-        onclick="if(event.target === this) closeAddToCartConfirm()">
-        <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-            <h3 class="text-lg font-black text-slate-900">Xác nhận thêm vào giỏ</h3>
-            <p id="addToCartConfirmText" class="mt-2 text-sm font-medium text-slate-600"></p>
-            <div class="mt-4 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeAddToCartConfirm()"
-                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                    Không
-                </button>
-                <button type="button" onclick="acceptAddToCartConfirm()"
-                    class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-black text-white hover:bg-emerald-700">
-                    Đồng ý
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="checkoutConfirmModal" class="confirm-overlay hidden fixed inset-0 z-[135] items-center justify-center p-4"
-        onclick="if(event.target === this) closeCheckoutConfirm()">
-        <div class="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
-            <h3 class="text-lg font-black text-slate-900">Xác nhận chốt đơn</h3>
-            <p class="mt-2 text-sm font-medium text-slate-600">Bạn có chắc chắn muốn chốt đơn không?</p>
-            <div class="mt-4 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeCheckoutConfirm()"
-                    class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50">
-                    Không
-                </button>
-                <button type="button" onclick="acceptCheckoutConfirm()"
-                    class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-black text-white hover:bg-emerald-700">
-                    Đồng ý
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="checkoutGuideModal" class="confirm-overlay hidden fixed inset-0 z-[136] items-center justify-center p-4"
-        onclick="if(event.target === this) closeCheckoutGuide()">
-        <div class="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-            <h3 class="text-xl font-black text-slate-900">Đơn hàng đã được tạo</h3>
-            <div class="mt-4 space-y-4 text-sm font-medium text-slate-700">
-                <p><span class="font-black text-emerald-700">Bước 1:</span> Sao chép <strong>MÃ ĐƠN</strong> phía dưới.</p>
-                <div class="inline-flex max-w-full flex-wrap items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-                    <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">Mã đơn</span>
-                    <button id="checkoutOrderCode" type="button" onclick="copyCheckoutOrderCode()"
-                        class="order-code-attention rounded-lg bg-white px-2 py-1 text-base font-black tracking-wide text-emerald-700 hover:bg-emerald-100 sm:text-lg">
-                        TD3K0000000
-                    </button>
-                    <div>
-                        <button type="button" onclick="copyCheckoutOrderCode()"
-                            class="copy-btn-attention rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-black uppercase text-white hover:bg-emerald-700">
-                            Sao chép
-                        </button>
-                    </div>
-                </div>
-                <p><span class="font-black text-emerald-700">Bước 2:</span> Nhắn tin vào fanpage với nội dung là <strong>MÃ ĐƠN</strong> phía trên.</p>
-                <button type="button" onclick="openFanpageInNewTab()"
-                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-black uppercase tracking-wide text-emerald-700 hover:bg-emerald-100">
-                    Truy cập fanpage TRÀ ĐÁ 3K
-                </button>
-                <p><span class="font-black text-emerald-700">Bước 3:</span> Tiến hành làm theo hướng dẫn để <strong>THANH TOÁN VÀ NHẬN HÀNG</strong>.</p>
-            </div>
-            <div class="mt-5 flex items-center justify-end gap-2">
-                <button type="button" onclick="closeCheckoutGuide()"
-                    class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-black text-white hover:bg-emerald-700">
-                    Đã hiểu
-                </button>
-            </div>
-        </div>
-    </div>
-    <div id="copyToast" class="copy-toast z-[150] rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-lg">
-        Sao chép thành công
-    </div>
-
     <script>
         let pricingProducts = [];
         let currentPricingFilter = 'all';
-        let pricingCartItems = [];
-        let pendingCartConfirm = null;
-        let latestCheckoutOrder = null;
-        let copyToastTimer = null;
-        const CART_STORAGE_KEY = 'trada_pricing_cart';
-        const CHECKOUT_PAGE_URL = 'https://www.facebook.com/trada3k.vn/';
-        const GOOGLE_SHEET_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwdp202IHmoHcQ04Vf_NuZmkeYriWCgxD7eD503E435JoNuCRBh_g5_r4844idcNYkl/exec'; // Dan URL Web App Google Apps Script vao day
-
-        function getPackageDisplayPrice(pkg = {}) {
-            return String(pkg.salePrice || pkg.price || pkg.originalPrice || 'LIEN HE').trim() || 'LIEN HE';
-        }
-
-        function parsePriceToVnd(priceText = '') {
-            const raw = String(priceText || '').toLowerCase().replace(/\s+/g, '');
-            if (!raw) return 0;
-
-            const numeric = raw.match(/[\d.,]+/);
-            if (!numeric) return 0;
-
-            const cleaned = numeric[0].replace(/\./g, '').replace(/,/g, '.');
-            const base = Number.parseFloat(cleaned);
-            if (!Number.isFinite(base)) return 0;
-
-            if (raw.includes('k')) return Math.round(base * 1000);
-            if (raw.includes('tr') || raw.includes('m')) return Math.round(base * 1000000);
-            return Math.round(base);
-        }
-
-        function formatVnd(value = 0) {
-            const amount = Number.isFinite(value) ? value : 0;
-            return `${amount.toLocaleString('vi-VN')} đ`;
-        }
-
-        function getCartItemSubtotal(item = {}) {
-            return (Number(item.qty) || 0) * (Number(item.priceValue) || 0);
-        }
-
-        function getCartSubtotal() {
-            return pricingCartItems.reduce((sum, item) => sum + getCartItemSubtotal(item), 0);
-        }
-
-        function saveCartState() {
-            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(pricingCartItems));
-        }
-
-        function loadCartState() {
-            try {
-                const raw = localStorage.getItem(CART_STORAGE_KEY);
-                const parsed = raw ? JSON.parse(raw) : [];
-                pricingCartItems = Array.isArray(parsed) ? parsed : [];
-            } catch (error) {
-                console.error('Không tải được giỏ hàng từ localStorage:', error);
-                pricingCartItems = [];
-            }
-        }
-
-        function getCartTotalQty() {
-            return pricingCartItems.reduce((sum, item) => sum + (Number(item.qty) || 0), 0);
-        }
-
-        function updateCartBadge() {
-            const badge = document.getElementById('cartFabBadge');
-            const hint = document.getElementById('cartHint');
-            const fab = document.getElementById('cartFab');
-            if (!badge) return;
-            const qty = getCartTotalQty();
-            badge.textContent = String(qty);
-            if (fab) {
-                if (qty > 0) {
-                    fab.classList.add('has-items');
-                } else {
-                    fab.classList.remove('has-items');
-                }
-            }
-            if (!hint) return;
-            if (qty > 0) {
-                hint.classList.remove('hidden');
-                hint.classList.add('flex');
-            } else {
-                hint.classList.add('hidden');
-                hint.classList.remove('flex');
-            }
-        }
-
-        function renderCartItems() {
-            const container = document.getElementById('cartItems');
-            const subtotal = document.getElementById('cartSubtotal');
-            if (!container || !subtotal) return;
-
-            container.innerHTML = '';
-            if (pricingCartItems.length === 0) {
-                container.innerHTML = `
-                    <div class="mt-5 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 px-4 py-6 text-center">
-                        <p class="text-sm font-semibold text-emerald-700">Giỏ hàng đang trống</p>
-                        <p class="mt-1 text-xs text-emerald-600">Bấm "Thêm giỏ" ở từng gói để bắt đầu.</p>
-                    </div>
-                `;
-            } else {
-                pricingCartItems.forEach(item => {
-                    const row = document.createElement('div');
-                    row.className = 'rounded-2xl border border-gray-100 bg-white p-3 shadow-sm';
-                    row.innerHTML = `
-                        <div class="flex items-start justify-between gap-2">
-                            <div>
-                                <p class="text-sm font-black text-gray-900">${escapeHtml(item.productTitle || 'Sản phẩm')}</p>
-                                <p class="text-xs font-semibold text-gray-500">${escapeHtml(item.packageName || 'Goi dich vu')}</p>
-                            </div>
-                            <button type="button" data-cart-remove="${escapeHtml(item.id)}"
-                                class="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600 hover:bg-red-100 hover:text-red-700">Xoá khỏi giỏ hàng</button>
-                        </div>
-                        <div class="mt-3 flex items-center justify-between">
-                            <p class="text-sm font-black text-emerald-700">${escapeHtml(item.priceText || 'LIEN HE')}</p>
-                            <div class="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
-                                <button type="button" data-cart-decrease="${escapeHtml(item.id)}"
-                                    class="h-7 w-7 rounded-md bg-white text-sm font-black text-gray-700 hover:bg-gray-100">-</button>
-                                <span class="inline-flex w-8 items-center justify-center text-sm font-black text-gray-900">${item.qty}</span>
-                                <button type="button" data-cart-increase="${escapeHtml(item.id)}"
-                                    class="h-7 w-7 rounded-md bg-white text-sm font-black text-gray-700 hover:bg-gray-100">+</button>
-                            </div>
-                        </div>
-                    `;
-                    const removeBtn = row.querySelector('[data-cart-remove]');
-                    const decreaseBtn = row.querySelector('[data-cart-decrease]');
-                    const increaseBtn = row.querySelector('[data-cart-increase]');
-                    removeBtn?.addEventListener('click', () => removeCartItem(item.id));
-                    decreaseBtn?.addEventListener('click', () => updateCartQty(item.id, -1));
-                    increaseBtn?.addEventListener('click', () => updateCartQty(item.id, 1));
-                    container.appendChild(row);
-                });
-            }
-
-            subtotal.textContent = formatVnd(getCartSubtotal());
-            updateCartBadge();
-            saveCartState();
-        }
-
-        function openCartDrawer() {
-            document.getElementById('cartOverlay')?.classList.remove('hidden');
-            document.getElementById('cartDrawer')?.classList.remove('translate-x-full');
-            const cartFab = document.getElementById('cartFab');
-            const hint = document.getElementById('cartHint');
-            if (cartFab) cartFab.style.display = 'none';
-            hint?.classList.add('hidden');
-            hint?.classList.remove('flex');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeCartDrawer() {
-            document.getElementById('cartOverlay')?.classList.add('hidden');
-            document.getElementById('cartDrawer')?.classList.add('translate-x-full');
-            const cartFab = document.getElementById('cartFab');
-            if (cartFab) cartFab.style.display = '';
-            document.body.style.overflow = '';
-            updateCartBadge();
-        }
-
-        function addPackageToCart(product, pkg) {
-            if (!product || !pkg) return;
-
-            const productId = String(product.id || product.title || '').trim() || 'item';
-            const packageName = String(pkg.name || 'Goi dich vu').trim();
-            const id = `${productId}__${packageName}`.toLowerCase();
-            const existing = pricingCartItems.find(item => item.id === id);
-
-            if (existing) {
-                existing.qty += 1;
-            } else {
-                const priceText = getPackageDisplayPrice(pkg);
-                pricingCartItems.push({
-                    id,
-                    productId,
-                    productTitle: product.title || 'Sản phẩm',
-                    packageName,
-                    qty: 1,
-                    priceText,
-                    priceValue: parsePriceToVnd(priceText)
-                });
-            }
-
-            renderCartItems();
-            openCartDrawer();
-        }
-
-        function updateCartQty(id, delta) {
-            const index = pricingCartItems.findIndex(item => item.id === id);
-            if (index < 0) return;
-
-            pricingCartItems[index].qty += delta;
-            if (pricingCartItems[index].qty <= 0) {
-                pricingCartItems.splice(index, 1);
-            }
-            renderCartItems();
-        }
-
-        function removeCartItem(id) {
-            pricingCartItems = pricingCartItems.filter(item => item.id !== id);
-            renderCartItems();
-        }
-
-        function openAddToCartConfirm(product, pkg) {
-            if (!product || !pkg) return;
-            pendingCartConfirm = { product, pkg };
-            const text = document.getElementById('addToCartConfirmText');
-            const modal = document.getElementById('addToCartConfirmModal');
-            if (text) {
-                const pkgName = String(pkg.name || 'Gói dịch vụ').trim();
-                text.textContent = `Bạn có chắc muốn thêm "${pkgName}" vào giỏ hàng?`;
-            }
-            modal?.classList.remove('hidden');
-            modal?.classList.add('flex');
-        }
-
-        function closeAddToCartConfirm() {
-            pendingCartConfirm = null;
-            const modal = document.getElementById('addToCartConfirmModal');
-            modal?.classList.add('hidden');
-            modal?.classList.remove('flex');
-        }
-
-        function acceptAddToCartConfirm() {
-            if (pendingCartConfirm?.product && pendingCartConfirm?.pkg) {
-                addPackageToCart(pendingCartConfirm.product, pendingCartConfirm.pkg);
-            }
-            closeAddToCartConfirm();
-        }
-
-        function openCheckoutConfirm() {
-            if (pricingCartItems.length === 0) {
-                alert('Giỏ hàng đang trống, vui lòng chọn gói trước khi chốt đơn.');
-                return;
-            }
-            const modal = document.getElementById('checkoutConfirmModal');
-            modal?.classList.remove('hidden');
-            modal?.classList.add('flex');
-        }
-
-        function closeCheckoutConfirm() {
-            const modal = document.getElementById('checkoutConfirmModal');
-            modal?.classList.add('hidden');
-            modal?.classList.remove('flex');
-        }
-
-        function generateOrderCode() {
-            const randomDigits = Math.floor(1000000 + Math.random() * 9000000);
-            return `TD3K${randomDigits}`;
-        }
-
-        function buildCheckoutOrder(orderCode) {
-            const itemsText = pricingCartItems.map((item, index) =>
-                `${index + 1}. ${item.productTitle} - ${item.packageName} x${item.qty} (${item.priceText})`
-            ).join('\n');
-
-            const orderText = [
-                `[DON HANG ${orderCode}]`,
-                '',
-                'Danh sách gói:',
-                itemsText,
-                '',
-                `Tam tinh: ${formatVnd(getCartSubtotal())}`
-            ].filter(Boolean).join('\n');
-
-            return { orderCode, orderText };
-        }
-
-        function buildCheckoutPayload(orderCode) {
-            const fullItems = pricingCartItems.map(item => ({
-                productId: item.productId || '',
-                productTitle: item.productTitle || '',
-                packageName: item.packageName || '',
-                qty: Number(item.qty) || 0,
-                priceValue: Number(item.priceValue) || 0,
-                priceText: item.priceText || ''
-            }));
-
-            const mergedSummary = fullItems
-                .map(item => `${item.qty} ${item.productTitle} ${item.packageName}`.trim())
-                .join(' + ')
-                .toLocaleUpperCase('vi-VN');
-
-            return {
-                source: 'banggia',
-                orderCode,
-                createdAt: new Date().toISOString(),
-                subtotal: getCartSubtotal(),
-                subtotalText: formatVnd(getCartSubtotal()),
-                totalQty: getCartTotalQty(),
-                orderSummary: mergedSummary,
-                items: [
-                    {
-                        productId: 'MERGED_ORDER',
-                        productTitle: mergedSummary,
-                        packageName: 'GOP DON',
-                        qty: getCartTotalQty(),
-                        priceValue: getCartSubtotal(),
-                        priceText: formatVnd(getCartSubtotal())
-                    }
-                ],
-                fullItems
-            };
-        }
-
-        async function sendOrderToGoogleSheet(payload) {
-            if (!GOOGLE_SHEET_WEBHOOK_URL) return false;
-            try {
-                const body = JSON.stringify(payload);
-
-                if (navigator.sendBeacon) {
-                    const blob = new Blob([body], { type: 'text/plain;charset=UTF-8' });
-                    const queued = navigator.sendBeacon(GOOGLE_SHEET_WEBHOOK_URL, blob);
-                    if (queued) return true;
-                }
-
-                await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8'
-                    },
-                    body
-                });
-                return true;
-            } catch (error) {
-                console.error('Không gửi được đơn lên Google Sheet:', error);
-                return false;
-            }
-        }
-
-        function acceptCheckoutConfirm() {
-            if (pricingCartItems.length === 0) {
-                closeCheckoutConfirm();
-                return;
-            }
-            closeCheckoutConfirm();
-            const orderCode = generateOrderCode();
-            latestCheckoutOrder = buildCheckoutOrder(orderCode);
-            sendOrderToGoogleSheet(buildCheckoutPayload(orderCode));
-            const orderCodeEl = document.getElementById('checkoutOrderCode');
-            if (orderCodeEl) orderCodeEl.textContent = latestCheckoutOrder.orderCode;
-            const modal = document.getElementById('checkoutGuideModal');
-            modal?.classList.remove('hidden');
-            modal?.classList.add('flex');
-        }
-
-        function closeCheckoutGuide() {
-            const modal = document.getElementById('checkoutGuideModal');
-            modal?.classList.add('hidden');
-            modal?.classList.remove('flex');
-        }
-
-        function openFanpageInNewTab() {
-            window.open(CHECKOUT_PAGE_URL, '_blank', 'noopener,noreferrer');
-        }
-
-        function showCopyToast(message = 'Sao chép thành công') {
-            const toast = document.getElementById('copyToast');
-            if (!toast) return;
-            toast.textContent = message;
-            toast.classList.add('show');
-            if (copyToastTimer) clearTimeout(copyToastTimer);
-            copyToastTimer = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 1400);
-        }
-
-        async function copyCheckoutOrderCode() {
-            if (!latestCheckoutOrder?.orderCode) return;
-            try {
-                await navigator.clipboard.writeText(latestCheckoutOrder.orderCode);
-                const orderCodeEl = document.getElementById('checkoutOrderCode');
-                if (orderCodeEl) {
-                    orderCodeEl.classList.remove('copied-shake');
-                    // force reflow to replay animation
-                    void orderCodeEl.offsetWidth;
-                    orderCodeEl.classList.add('copied-shake');
-                }
-                showCopyToast('Sao chép thành công');
-            } catch (error) {
-                console.error('Không copy được mã đơn:', error);
-                window.prompt('Không copy tự động được, vui lòng copy mã đơn bên dưới:', latestCheckoutOrder.orderCode);
-            }
-        }
-
-        async function copyCheckoutOrderDetail() {
-            if (!latestCheckoutOrder?.orderText) return;
-            try {
-                await navigator.clipboard.writeText(latestCheckoutOrder.orderText);
-                alert('Đã copy nội dung đơn hàng.');
-            } catch (error) {
-                console.error('Không copy được nội dung đơn hàng:', error);
-                window.prompt('Không copy tự động được, vui lòng copy nội dung đơn hàng bên dưới:', latestCheckoutOrder.orderText);
-            }
-        }
-
-        function checkoutCart() {
-            openCheckoutConfirm();
-        }
-
-        window.openCartDrawer = openCartDrawer;
-        window.closeCartDrawer = closeCartDrawer;
-        window.addPackageToCart = addPackageToCart;
-        window.updateCartQty = updateCartQty;
-        window.removeCartItem = removeCartItem;
-        window.checkoutCart = checkoutCart;
-        window.openCheckoutConfirm = openCheckoutConfirm;
-        window.closeCheckoutConfirm = closeCheckoutConfirm;
-        window.acceptCheckoutConfirm = acceptCheckoutConfirm;
-        window.closeCheckoutGuide = closeCheckoutGuide;
-        window.openFanpageInNewTab = openFanpageInNewTab;
-        window.copyCheckoutOrderCode = copyCheckoutOrderCode;
-        window.copyCheckoutOrderDetail = copyCheckoutOrderDetail;
-        window.closeAddToCartConfirm = closeAddToCartConfirm;
-        window.acceptAddToCartConfirm = acceptAddToCartConfirm;
 
         function escapeHtml(value = '') {
             return String(value).replace(/[&<>"']/g, ch => ({
@@ -1154,83 +447,42 @@
             if (!dateString) return '';
             const date = new Date(dateString);
             if (Number.isNaN(date.getTime())) return '';
-            return `Cáº­p nháº­t: ${date.toLocaleString('vi-VN')}`;
+            return `Cập nhật: ${date.toLocaleString('vi-VN')}`;
         }
 
-        function getProductPackages(product = {}) {
-            return Array.isArray(product.packages) ? product.packages : [];
-        }
+        function renderPackagePrice(pkg = {}) {
+            const originalPrice = (pkg.originalPrice || '').trim();
+            const salePrice = (pkg.salePrice || '').trim();
+            const legacyPrice = (pkg.price || '').trim();
 
-        function getProductMinPriceInfo(product = {}) {
-            const packages = getProductPackages(product);
-            if (packages.length === 0) return { label: 'Liên hệ', value: 0 };
-
-            let best = null;
-            packages.forEach(pkg => {
-                const label = getPackageDisplayPrice(pkg);
-                const value = parsePriceToVnd(label);
-
-                if (!best) {
-                    best = { label, value };
-                    return;
-                }
-
-                if (value > 0 && (best.value <= 0 || value < best.value)) {
-                    best = { label, value };
-                }
-            });
-
-            return best || { label: 'Liên hệ', value: 0 };
-        }
-
-        function getProductCheapestPackage(product = {}) {
-            const packages = getProductPackages(product);
-            if (packages.length === 0) return null;
-
-            let bestPkg = packages[0];
-            let bestValue = parsePriceToVnd(getPackageDisplayPrice(bestPkg));
-
-            packages.forEach(pkg => {
-                const value = parsePriceToVnd(getPackageDisplayPrice(pkg));
-                if (value > 0 && (bestValue <= 0 || value < bestValue)) {
-                    bestPkg = pkg;
-                    bestValue = value;
-                }
-            });
-
-            return bestPkg;
-        }
-
-        function getProductCoverUrl(product = {}) {
-            const candidates = [
-                product.coverUrl,
-                product.bannerUrl,
-                product.imageUrl,
-                product.thumbnailUrl,
-                product.logoUrl
-            ];
-
-            return candidates.find(url => String(url || '').trim()) || '';
-        }
-
-        function renderPackagePriceInline(pkg = {}) {
-            const originalPrice = String(pkg.originalPrice || '').trim();
-            const salePrice = String(pkg.salePrice || '').trim();
-            const defaultPrice = String(pkg.price || '').trim();
-            const finalPrice = salePrice || defaultPrice || originalPrice || 'Liên hệ';
-
-            if (salePrice && originalPrice) {
+            if (salePrice) {
                 return `
-                    <p class="text-[10px] font-black uppercase tracking-[0.1em] text-rose-500">Giảm còn</p>
-                    <p class="mt-0.5 text-sm font-bold text-slate-500 sm:text-base">
-                        <span class="line-through">${escapeHtml(originalPrice)}</span>
-                        <span class="mx-1 text-slate-400">-&gt;</span>
-                        <span class="text-[1.1rem] leading-none font-black text-rose-600 align-middle sm:text-[1.25rem]">${escapeHtml(salePrice)}</span>
-                    </p>
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black text-gray-800 whitespace-nowrap md:text-[1rem]">${originalPrice}</span>
+                    <span class="inline-flex shrink-0 w-[6.4rem] items-center justify-end gap-1 text-right text-sm font-black whitespace-nowrap md:w-[8.4rem] md:gap-1 md:text-[1rem]">
+                        <span class="text-emerald-600">GI&#7842;M C&#210;N</span>
+                        <span class="text-red-600">${salePrice}</span>
+                    </span>
                 `;
             }
 
-            return `<p class="text-[1.1rem] leading-none font-black text-emerald-700 sm:text-[1.25rem]">${escapeHtml(finalPrice)}</p>`;
+            if (legacyPrice) {
+                return `
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black whitespace-nowrap text-gray-800 md:text-[1rem]">${legacyPrice}</span>
+                    <span class="inline-block shrink-0 w-[6.4rem] md:w-[8.4rem]"></span>
+                `;
+            }
+
+            if (originalPrice) {
+                return `
+                    <span class="inline-block shrink-0 w-[3.4rem] pr-6 md:w-[3.2rem] md:pr-3 text-right text-sm font-black whitespace-nowrap text-gray-800 md:text-[1rem]">${originalPrice}</span>
+                    <span class="inline-block shrink-0 w-[6.4rem] md:w-[8.4rem]"></span>
+                `;
+            }
+
+            return `
+                <span class="inline-block shrink-0 w-[3.1rem]"></span>
+                <span class="inline-block shrink-0 w-[6.4rem] text-right text-sm font-black whitespace-nowrap text-gray-400 md:w-[8.4rem] md:text-[1.05rem]">LIEN HE</span>
+            `;
         }
 
 
@@ -1273,8 +525,8 @@
                 const category = btn.dataset.category;
                 const isActive = category === currentPricingFilter;
                 btn.className = isActive
-                    ? 'pricing-filter-btn rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-bold text-white shadow-[0_10px_22px_rgba(16,185,129,0.25)] transition-all'
-                    : 'pricing-filter-btn rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-300 hover:text-emerald-700';
+                    ? 'pricing-filter-btn rounded-full border border-emerald-200 bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition-all'
+                    : 'pricing-filter-btn rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-emerald-200 hover:text-emerald-700';
             });
         }
 
@@ -1324,61 +576,46 @@
             filteredProducts.forEach(product => {
                 const card = document.createElement('article');
                 const isBestSeller = !!product.bestSeller;
-                card.className = 'store-card cursor-pointer rounded-3xl p-4 sm:p-5 flex flex-col ' + (isBestSeller ? 'pricing-best-seller-card' : '');
+                card.className = 'w-full max-w-[38rem] cursor-pointer rounded-xl sm:rounded-[1.4rem] border border-emerald-200 bg-white ring-1 ring-emerald-100/80 p-2.5 sm:p-4 shadow-[0_10px_24px_rgba(16,185,129,0.08)] transition-all hover:-translate-y-1 hover:border-emerald-300 hover:shadow-[0_16px_34px_rgba(16,185,129,0.14)] md:p-5 ' + (isBestSeller ? 'pricing-best-seller-card' : '');
                 card.onclick = () => openPricingDetailModal(product);
-
                 const category = getPricingCategory(product);
                 const categoryBadgeClass = category === 'work'
                     ? 'bg-blue-100 text-blue-700'
                     : category === 'entertainment'
-                        ? 'bg-orange-100 text-orange-700'
+                        ? 'bg-pink-100 text-pink-700'
                         : 'bg-slate-100 text-slate-700';
-                const minPrice = getProductMinPriceInfo(product);
-                const cheapestPkg = getProductCheapestPackage(product);
-                const coverUrl = getProductCoverUrl(product);
-                const coverHtml = coverUrl
-                    ? `<img src="${coverUrl}" alt="${escapeHtml(product.title || 'Anh san pham')}" class="h-full w-full rounded-full object-cover">`
-                    : `<div class="flex h-full w-full items-center justify-center rounded-full text-[10px] font-black uppercase tracking-[0.18em] text-slate-300">Digital</div>`;
+                const logoHtml = product.logoUrl
+                    ? `<div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-100 bg-white shadow-sm">
+                            <img src="${product.logoUrl}" alt="${product.title || 'Logo sản phẩm'}" class="h-full w-full object-cover">
+                       </div>`
+                    : '';
+
+                const productSubtitle = String(product.subtitle || '').replace(/\s+/g, ' ').trim();
+
+                const packagesHtml = (product.packages || []).map(pkg => `
+                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5 rounded-lg md:rounded-[1rem] border border-gray-100 bg-gray-50 px-1 py-2 md:gap-2 md:px-3">
+                        <div class="min-w-max">
+                            <div class="text-sm font-black uppercase text-gray-900 whitespace-nowrap overflow-visible md:text-base">${renderPackageNameWithHighlight(pkg.name)}</div>
+                            ${pkg.note ? `<div class="mt-1 text-xs font-medium text-gray-500">${pkg.note}</div>` : ''}
+                        </div>
+                        <div class="flex min-w-[10.9rem] items-center justify-end gap-1.5 text-right md:min-w-[188px] md:gap-2">${renderPackagePrice(pkg)}</div>
+                    </div>
+                `).join('');
 
                 card.innerHTML = `
-                    <div class="store-card-shell flex-1">
-                        <div class="store-avatar h-14 w-14 shrink-0 overflow-hidden rounded-full">
-                            ${coverHtml}
+                    <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-center sm:gap-3">
+                        <div class="min-w-0 flex-1">
+                        <h2 class="text-xl font-black tracking-tight text-gray-900">${product.title || 'Sản phẩm'}</h2>
+                        ${productSubtitle ? `<p class="mt-2 text-sm font-medium text-gray-500 whitespace-normal">${productSubtitle}</p>` : ''}
                         </div>
-                        <div class="min-w-0 flex h-full flex-col">
-                            <div class="flex flex-wrap items-center gap-1.5">
-                                <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold ${categoryBadgeClass}">${getPricingCategoryLabel(category)}</span>
-                                ${isBestSeller ? '<span class="pricing-best-seller-badge rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-0.5 text-[10px] font-black text-white">BEST SELLER</span>' : ''}
-                            </div>
-                            <h2 class="mt-1.5 max-h-[2.8rem] overflow-hidden text-[1.16rem] leading-tight font-black text-slate-900">${escapeHtml(product.title || 'Sản phẩm')}</h2>
-                            <div class="mt-auto pt-2">
-                                <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-700">Giá từ</p>
-                                <div class="mt-0.5 flex items-end justify-between gap-2">
-                                    <p class="text-[2rem] leading-none font-black text-emerald-600">${escapeHtml(minPrice.label)}</p>
-                                </div>
-                            </div>
+                        <div class="flex items-center gap-2 self-start sm:self-auto">
+                            <span class="rounded-full px-2.5 py-1 text-[10px] font-bold ${categoryBadgeClass}">${getPricingCategoryLabel(category)}</span>
+                            ${isBestSeller ? '<span class="pricing-best-seller-badge rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2.5 py-1 text-[10px] font-black text-white">B&#193;N CH&#7840;Y</span>' : ''}
+                            ${logoHtml}
                         </div>
-                        <button type="button" data-quick-buy="1"
-                            class="store-buy-btn inline-flex h-10 w-10 items-center justify-center self-end rounded-full text-white"
-                            title="Thêm nhanh gói rẻ nhất">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3" d="M3 4h2l1.2 7.2a2 2 0 001.98 1.68h8.63a2 2 0 001.96-1.58L21 7H7" />
-                                <circle cx="9" cy="19" r="1.8"></circle>
-                                <circle cx="18" cy="19" r="1.8"></circle>
-                            </svg>
-                        </button>
                     </div>
-                    <button type="button" class="store-main-btn mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-xs font-black uppercase tracking-wide text-white">
-                        <span>Xem chi tiết</span>
-                    </button>
+                    <div class="space-y-2.5">${packagesHtml}</div>
                 `;
-
-                const quickBuyBtn = card.querySelector('[data-quick-buy]');
-                quickBuyBtn?.addEventListener('click', event => {
-                    event.stopPropagation();
-                    if (!cheapestPkg) return;
-                    addPackageToCart(product, cheapestPkg);
-                });
 
                 pricingGrid.appendChild(card);
             });
@@ -1390,9 +627,7 @@
             const modal = document.getElementById('pricingDetailModal');
             const title = document.getElementById('pricingDetailTitle');
             const subtitle = document.getElementById('pricingDetailSubtitle');
-            const minPrice = document.getElementById('pricingDetailMinPrice');
             const logo = document.getElementById('pricingDetailLogo');
-            const packages = document.getElementById('pricingDetailPackages');
             const description = document.getElementById('pricingDetailDescription');
             const descriptionCard = document.getElementById('pricingDetailDescriptionCard');
             const fallback = document.getElementById('pricingDetailFallback');
@@ -1400,11 +635,8 @@
 
             const detailDescription = normalizePricingDetailHtml(product.detailDescription || '');
             const detailNote = (product.detailNote || '').trim() || 'Hỗ trợ mua qua fanpage ngay sau khi gửi tin nhắn.';
-            const packageList = getProductPackages(product);
-            const minPriceInfo = getProductMinPriceInfo(product);
 
             title.textContent = product.title || 'Sản phẩm';
-            minPrice.textContent = `Giá thấp nhất: ${minPriceInfo.label}`;
 
             if ((product.subtitle || '').trim()) {
                 subtitle.textContent = product.subtitle.trim();
@@ -1415,56 +647,11 @@
             }
 
             if ((product.logoUrl || '').trim()) {
-                logo.innerHTML = `<img src="${product.logoUrl}" alt="${escapeHtml(product.title || 'Logo san pham')}" class="h-full w-full object-cover">`;
+                logo.innerHTML = `<img src="${product.logoUrl}" alt="${escapeHtml(product.title || 'Logo sản phẩm')}" class="h-full w-full object-cover">`;
                 logo.classList.remove('hidden');
             } else {
                 logo.innerHTML = '';
                 logo.classList.add('hidden');
-            }
-
-            if (packageList.length === 0) {
-                packages.innerHTML = `
-                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm font-semibold text-slate-500">
-                        Chưa có dữ liệu gói cho sản phẩm này.
-                    </div>
-                `;
-            } else {
-                packages.innerHTML = packageList.map((pkg, pkgIndex) => `
-                    <div class="detail-package-row rounded-lg p-1.5 sm:p-2 cursor-pointer" data-modal-package-row="${pkgIndex}">
-                        <div class="flex items-start justify-between gap-2 sm:gap-3">
-                            <div class="min-w-0">
-                                <p class="text-[1.05rem] font-black uppercase text-slate-900 sm:text-[1.1rem]">${renderPackageNameWithHighlight(pkg.name)}</p>
-                                ${pkg.note ? `<p class="mt-1 text-xs font-medium text-slate-500">${escapeHtml(pkg.note)}</p>` : ''}
-                            </div>
-                            <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
-                                <div class="min-w-[88px] text-right sm:min-w-[100px]">${renderPackagePriceInline(pkg)}</div>
-                                <button type="button" data-modal-add-to-cart="${pkgIndex}"
-                                    class="store-main-btn inline-flex items-center gap-1 rounded-md px-2 py-1 text-[9px] font-black uppercase tracking-wide text-white whitespace-nowrap sm:text-[10px]">
-                                    <span class="sm:hidden">MUA</span>
-                                    <span class="hidden sm:inline">Thêm vào giỏ</span>
-                                    <span class="text-xs leading-none">+</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-
-                packages.querySelectorAll('[data-modal-add-to-cart]').forEach(button => {
-                    button.addEventListener('click', event => {
-                        event.stopPropagation();
-                        const pkgIndex = Number(button.getAttribute('data-modal-add-to-cart'));
-                        const pkg = packageList[pkgIndex];
-                        openAddToCartConfirm(product, pkg);
-                    });
-                });
-
-                packages.querySelectorAll('[data-modal-package-row]').forEach(row => {
-                    row.addEventListener('click', () => {
-                        const pkgIndex = Number(row.getAttribute('data-modal-package-row'));
-                        const pkg = packageList[pkgIndex];
-                        openAddToCartConfirm(product, pkg);
-                    });
-                });
             }
 
             if (detailDescription) {
@@ -1500,8 +687,7 @@
                         const data = snap.data();
                         pricingProducts = Array.isArray(data.pricingProducts) ? data.pricingProducts : [];
                         localStorage.setItem('trada_pricing_products', JSON.stringify(pricingProducts));
-                        const lastUpdatedEl = document.getElementById('lastUpdated');
-                        if (lastUpdatedEl) lastUpdatedEl.textContent = formatUpdatedTime(data.updatedAt);
+                        document.getElementById('lastUpdated').textContent = formatUpdatedTime(data.updatedAt);
                         renderPricing(pricingProducts);
                         return;
                     }
@@ -1512,8 +698,7 @@
 
             const saved = localStorage.getItem('trada_pricing_products');
             pricingProducts = saved ? JSON.parse(saved) : [];
-            const lastUpdatedEl = document.getElementById('lastUpdated');
-            if (lastUpdatedEl) lastUpdatedEl.textContent = '';
+            document.getElementById('lastUpdated').textContent = '';
             renderPricing(pricingProducts);
         }
 
@@ -1527,8 +712,7 @@
                     const data = snap.data();
                     pricingProducts = Array.isArray(data.pricingProducts) ? data.pricingProducts : [];
                     localStorage.setItem('trada_pricing_products', JSON.stringify(pricingProducts));
-                    const lastUpdatedEl = document.getElementById('lastUpdated');
-                    if (lastUpdatedEl) lastUpdatedEl.textContent = formatUpdatedTime(data.updatedAt);
+                    document.getElementById('lastUpdated').textContent = formatUpdatedTime(data.updatedAt);
                     renderPricing(pricingProducts);
                 });
             } catch (error) {
@@ -1537,8 +721,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadCartState();
-            renderCartItems();
             loadPricingData();
             setTimeout(setupRealtimePricing, 600);
         });
@@ -1546,6 +728,19 @@
 </body>
 
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
