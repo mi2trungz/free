@@ -1484,7 +1484,7 @@
 
     <!-- MODAL THÔNG BÁO -->
     <div id="alertModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
             <button onclick="closeAlertModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
@@ -1620,7 +1620,7 @@
                     </div>
 
                     <div class="space-y-3">
-                        <div class="relative">
+                        <div id="modalAccountUsernameSection" class="relative">
                             <label
                                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Tài
                                 khoản</label>
@@ -1635,7 +1635,7 @@
                             </div>
                         </div>
 
-                        <div class="relative">
+                        <div id="modalAccountPasswordSection" class="relative">
                             <label
                                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Mật
                                 khẩu</label>
@@ -1648,7 +1648,7 @@
                                     class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors px-3 py-1.5 rounded-lg border border-indigo-200 whitespace-nowrap">Sao
                                     chép</button>
                             </div>
-                            <p class="text-[10px] text-gray-500 italic mt-1.5 ml-1">⚠️ Mật khẩu có thể thay đổi, vui
+                            <p id="modalPasswordHint" class="text-[10px] text-gray-500 italic mt-1.5 ml-1">⚠️ Mật khẩu có thể thay đổi, vui
                                 lòng
                                 kiểm tra kỹ.</p>
                         </div>
@@ -4758,26 +4758,36 @@
                     return;
                 }
 
-                const hiddenLabel = (acc.hidden && isAdmin()) ? '<span class="text-red-500 text-xs ml-2 font-bold">(Đang ẩn)</span>' : '';
+                const hiddenBadge = (acc.hidden && isAdmin())
+                    ? '<span class="inline-flex items-center rounded-full bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 text-[10px] font-bold tracking-wide">Đang ẩn</span>'
+                    : '';
 
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left px-5 py-4 rounded-xl card flex items-center gap-4 group focus:outline-none focus:ring-2 focus:ring-indigo-500 relative transition-transform hover:-translate-y-1`;
+                btn.className = `w-full text-left px-4 py-3.5 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/80 hover:from-white hover:to-indigo-50/50 shadow-sm hover:shadow-md flex items-center gap-3.5 group focus:outline-none focus:ring-2 focus:ring-indigo-500/60 transition-all duration-300 hover:-translate-y-0.5`;
                 btn.onclick = () => selectAccount(accIndex);
                 const timeAgo = acc.updatedAt ? formatTimeAgo(acc.updatedAt) : '';
-                const timeAgoHtml = timeAgo ? `<div class="text-[10px] text-indigo-600 font-medium mt-0.5">Lần cập nhật gần nhất: ${timeAgo}</div>` : '';
-                const adminNoteHtml = (isAdmin() && acc.adminNote) ? `<div class="text-[10px] text-indigo-600 italic mt-1">📝 ${acc.adminNote}</div>` : '';
+                const timeAgoHtml = timeAgo ? `<div class="text-[11px] text-indigo-600 font-semibold mt-1">Cập nhật: ${timeAgo}</div>` : '';
+                const adminNoteHtml = (isAdmin() && acc.adminNote) ? `<div class="text-[11px] text-slate-500 italic mt-1.5 truncate">📝 ${acc.adminNote}</div>` : '';
+                const accountSubText = (acc.username && acc.username.trim())
+                    ? acc.username
+                    : (isNetflixFolder(folder) ? 'Đăng nhập bằng cookie Netflix' : 'Không có username');
 
                 btn.innerHTML = `
-                    <div class="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 group-hover:border-indigo-300 transition-colors shadow-sm flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-white border border-slate-200 group-hover:border-indigo-300 group-hover:bg-indigo-50/40 transition-all shadow-sm flex items-center justify-center">
                         ${folder.icon}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="acc-name font-medium text-gray-700 group-hover:text-gray-900 truncate">${acc.name}${hiddenLabel}</div>
-                        <div class="acc-user text-xs text-gray-500 truncate font-mono">${acc.username}</div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <div class="acc-name font-extrabold text-[1.08rem] text-slate-700 group-hover:text-slate-900 truncate leading-tight">${acc.name}</div>
+                            ${hiddenBadge}
+                        </div>
+                        <div class="acc-user text-[13px] text-slate-500 truncate font-medium">${accountSubText}</div>
                         ${timeAgoHtml}
                         ${adminNoteHtml}
                     </div>
-                    <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
                 `;
                 listContainer.appendChild(btn);
                 console.log(`  ✅ Added account button for: ${acc.name}`);
@@ -4909,6 +4919,14 @@
             const modalNetflixActions = document.getElementById('modalNetflixActions');
             const modalNetflixWatchBtn = document.getElementById('modalNetflixWatchBtn');
             const modalNetflixCookieState = document.getElementById('modalNetflixCookieState');
+            const modalAccountUsernameSection = document.getElementById('modalAccountUsernameSection');
+            const modalAccountPasswordSection = document.getElementById('modalAccountPasswordSection');
+            const modalPasswordHint = document.getElementById('modalPasswordHint');
+
+            const netflixFolderActive = isNetflixFolder(folder);
+            if (modalAccountUsernameSection) modalAccountUsernameSection.classList.toggle('hidden', netflixFolderActive);
+            if (modalAccountPasswordSection) modalAccountPasswordSection.classList.toggle('hidden', netflixFolderActive);
+            if (modalPasswordHint) modalPasswordHint.classList.toggle('hidden', netflixFolderActive);
 
             // OTP Logic
             const shouldShowOtp = acc.showOtp !== false && acc.secret && acc.secret.trim() !== '';
@@ -4941,7 +4959,7 @@
             }
 
             // Netflix button per account
-            if (isNetflixFolder(folder)) {
+            if (netflixFolderActive) {
                 const hasCookie = hasNetflixCookieForAccount(acc);
                 modalNetflixActions.classList.remove('hidden');
                 setModalNetflixButtonLoading(false);
@@ -6138,7 +6156,21 @@
             const section = document.getElementById('accountNetflixCookieSection');
             if (!section) return;
             const folder = currentAdminFolderIndex >= 0 ? DATA[currentAdminFolderIndex] : null;
-            section.classList.toggle('hidden', !isNetflixFolder(folder));
+            const isNetflix = isNetflixFolder(folder);
+            section.classList.toggle('hidden', !isNetflix);
+
+            const usernameInput = document.getElementById('accountUsernameInput');
+            const passwordInput = document.getElementById('accountPasswordInput');
+            const secretInput = document.getElementById('accountSecretInput');
+            if (usernameInput) {
+                usernameInput.placeholder = isNetflix ? 'Không bắt buộc cho Netflix' : 'user@example.com';
+            }
+            if (passwordInput) {
+                passwordInput.placeholder = isNetflix ? 'Không bắt buộc cho Netflix' : 'Password123';
+            }
+            if (secretInput) {
+                secretInput.placeholder = isNetflix ? 'Không bắt buộc cho Netflix' : 'ABCD1234...';
+            }
         }
 
         function loadAccountsForAdmin() {
@@ -6333,15 +6365,25 @@
             const currentFolder = DATA[currentAdminFolderIndex];
             const netflixFolder = isNetflixFolder(currentFolder);
 
-            if (!name || !username || !password) {
-                errorEl.textContent = 'Vui lòng điền đầy đủ thông tin';
+            const cookieIds = netflixFolder ? extractNetflixIdsFromCookie(netflixCookieRaw) : { netflixId: '', secureNetflixId: '' };
+            if (!name) {
+                errorEl.textContent = 'Vui lòng nhập tên tài khoản';
                 errorEl.classList.remove('hidden');
                 return;
             }
-
-            const cookieIds = netflixFolder ? extractNetflixIdsFromCookie(netflixCookieRaw) : { netflixId: '', secureNetflixId: '' };
-            if (netflixFolder && netflixCookieRaw && !cookieIds.netflixId) {
-                errorEl.textContent = 'Cookie Netflix không hợp lệ: không tìm thấy NetflixId';
+            if (netflixFolder) {
+                if (!netflixCookieRaw) {
+                    errorEl.textContent = 'Danh mục Netflix chỉ cần cookie, vui lòng dán cookie Netflix';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (!cookieIds.netflixId) {
+                    errorEl.textContent = 'Cookie Netflix không hợp lệ: không tìm thấy NetflixId';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+            } else if (!username || !password) {
+                errorEl.textContent = 'Vui lòng điền đầy đủ thông tin';
                 errorEl.classList.remove('hidden');
                 return;
             }
