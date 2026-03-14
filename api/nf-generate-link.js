@@ -182,12 +182,16 @@ module.exports = async function (req, res) {
             const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
             if (assignedIdx >= 0) {
                 const assignedCookie = cookies[assignedIdx];
+                if (assignedCookie.errorTagged) {
+                    unassignCustomerCurrentCookie();
+                } else {
                 const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
                 if (lockedByOther) {
                     unassignCustomerCurrentCookie();
                 } else {
                     const assignedResult = await tryCookieAtIndex(assignedIdx, true);
                     if (assignedResult) return assignedResult;
+                }
                 }
             } else {
                 unassignCustomerCurrentCookie();
@@ -196,6 +200,7 @@ module.exports = async function (req, res) {
 
         for (let i = 0; i < cookies.length; i += 1) {
             const cookie = cookies[i];
+            if (cookie.errorTagged) continue;
             if (cookie.status !== 'active') continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
             if (cookie.id === assignedCookieId) continue;

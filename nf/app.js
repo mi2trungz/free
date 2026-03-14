@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const ADMIN_EMAIL = 'cungbocap306@gmail.com';
+const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58',
@@ -28,6 +29,7 @@ let runtimeBlocked = false;
 let rawEditorCookieId = '';
 let rawEditorInitialRaw = '';
 let rawEditorMode = 'edit';
+let mobileGeneratedLink = '';
 
 function el(id) {
     return document.getElementById(id);
@@ -207,6 +209,44 @@ function setDeviceSectionVisible(visible) {
     const section = el('deviceSection');
     if (!section) return;
     section.classList.toggle('hidden', !visible);
+    if (!visible) closeSupportModal();
+    if (!visible) closeMobileLinkModal();
+}
+
+function openSupportModal() {
+    if (!currentLookupEligible) return;
+    const section = el('deviceSection');
+    const modal = el('supportModal');
+    if (!section || !modal || section.classList.contains('hidden')) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeSupportModal() {
+    const modal = el('supportModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function openMobileLinkModal(url = '') {
+    const modal = el('mobileLinkModal');
+    const output = el('mobileLinkOutput');
+    if (!modal || !output) return;
+    mobileGeneratedLink = String(url || '').trim();
+    output.value = mobileGeneratedLink;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeMobileLinkModal() {
+    const modal = el('mobileLinkModal');
+    const output = el('mobileLinkOutput');
+    if (!modal || !output) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    output.value = '';
+    mobileGeneratedLink = '';
 }
 
 function resetLookupResult() {
@@ -269,7 +309,7 @@ async function lookupCustomerCode() {
     }
 }
 
-async function generateDeviceLink(device) {
+async function generateDeviceLinkLegacy(device) {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
         toast('Vui lòng kiểm tra mã trước.', 'warn');
@@ -323,6 +363,69 @@ async function generateDeviceLink(device) {
     }
 }
 
+async function generateDeviceLink(device) {
+    if (runtimeBlocked) return;
+    if (!currentLookupCode) {
+        toast('Vui lòng kiểm tra mã trước.', 'warn');
+        return;
+    }
+    if (!currentLookupEligible) {
+        toast('Mã khách hàng chưa đủ điều kiện.', 'warn');
+        return;
+    }
+
+    const clickedButton = document.querySelector(`.btn-device[data-device="${device}"]`);
+    setButtonBusy(clickedButton, true, 'Đang tạo link...');
+    setDeviceButtonsEnabled(false);
+    setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
+
+    const shouldAutoOpen = device !== 'mobile';
+    let popup = null;
+    if (shouldAutoOpen) {
+        popup = window.open('about:blank', '_blank');
+        if (popup) {
+            try {
+                popup.document.title = 'NF';
+                popup.document.body.style.margin = '0';
+                popup.document.body.style.fontFamily = 'Arial, sans-serif';
+                popup.document.body.style.background = '#0b0f1c';
+                popup.document.body.style.color = '#ffffff';
+                popup.document.body.style.display = 'flex';
+                popup.document.body.style.alignItems = 'center';
+                popup.document.body.style.justifyContent = 'center';
+                popup.document.body.innerHTML = '<div>Đang tạo link Netflix...</div>';
+            } catch (e) {
+                // ignore
+            }
+        }
+    }
+
+    try {
+        const data = await apiRequest('/api/nf-generate-link', 'POST', {
+            customerCode: currentLookupCode,
+            device
+        });
+        if (!data.url) throw new Error('Không tạo được link');
+
+        if (shouldAutoOpen) {
+            if (popup && !popup.closed) popup.location.href = data.url;
+            else window.open(data.url, '_blank');
+            setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
+        } else {
+            openMobileLinkModal(data.url);
+            setLookupState('Tạo link điện thoại thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
+        }
+    } catch (error) {
+        if (popup && !popup.closed) {
+            try { popup.close(); } catch (e) { /* ignore */ }
+        }
+        setLookupState(error.message || 'Không tạo được link.', 'error');
+    } finally {
+        setButtonBusy(clickedButton, false);
+        setDeviceButtonsEnabled(currentLookupEligible);
+    }
+}
+
 function getStatusPillClass(status = '') {
     if (status === 'dead') return 'pill pill-dead';
     if (status === 'disabled' || status === 'inactive') return 'pill pill-disabled';
@@ -354,6 +457,7 @@ function renderCustomersTable() {
             <td data-label="Hanh dong">
                 <div class="row-actions">
                     <button class="btn-tiny" data-customer-act="edit" data-code="${customer.code}">Sua</button>
+                    <button class="btn-tiny" data-customer-act="error" data-code="${customer.code}">ERROR</button>
                     <button class="btn-tiny" data-customer-act="toggle" data-code="${customer.code}">${customer.status === 'inactive' ? 'Kich hoat' : 'Khoa'}</button>
                     <button class="btn-tiny" data-customer-act="delete" data-code="${customer.code}">Xoa</button>
                 </div>
@@ -387,13 +491,17 @@ function renderCookiesTable() {
         const lastCheck = formatDateTime(cookie.lastCheckedAt || cookie.updatedAt);
         const errorLine = cookie.lastError ? `<div class="bad" style="margin-top:4px">${cookie.lastError}</div>` : '';
         const checked = selectedCookieIds.has(cookie.id) ? 'checked' : '';
+        const statusHtml = `
+            <span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span>
+            ${cookie.errorTagged ? '<span class="pill pill-error">ERROR</span>' : ''}
+        `;
         return `
             <tr>
                 <td data-label="Chon" class="check-cell">
                     <input class="row-check cookie-row-check" type="checkbox" data-cookie-select="${cookie.id}" ${checked}>
                 </td>
                 <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span></td>
-                <td data-label="Trang thai"><span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span></td>
+                <td data-label="Trang thai">${statusHtml}</td>
                 <td data-label="Gan khach" class="mono">${assignText}</td>
                 <td data-label="Check">${lastCheck}${errorLine}</td>
                 <td data-label="Hanh dong">
@@ -401,6 +509,7 @@ function renderCookiesTable() {
                         <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
                         <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
                         <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
+                        <button class="btn-tiny" data-cookie-act="${cookie.errorTagged ? 'error-off' : 'error-on'}" data-id="${cookie.id}">${cookie.errorTagged ? 'Go ERROR' : 'Gan ERROR'}</button>
                         <button class="btn-tiny" data-cookie-act="view-raw" data-id="${cookie.id}">Xem raw</button>
                         <button class="btn-tiny" data-cookie-act="edit-raw" data-id="${cookie.id}">Sua raw</button>
                         <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
@@ -640,6 +749,21 @@ async function handleCustomerTableAction(event) {
             return;
         }
 
+        if (action === 'error') {
+            const assignedCookieId = String(customer.assignedCookieId || '').trim();
+            if (!assignedCookieId) {
+                toast('Khach nay chua co cookie de gan ERROR.', 'warn');
+                return;
+            }
+            await apiRequest('/api/nf-cookies', 'PUT', {
+                cookieId: assignedCookieId,
+                errorTagged: true
+            });
+            toast('Da gan tag ERROR cho cookie cua khach.', 'ok');
+            await Promise.all([loadCustomers(), loadCookies()]);
+            return;
+        }
+
         if (action === 'delete') {
             const ok = window.confirm(`Xoa ma khach ${code}?`);
             if (!ok) return;
@@ -849,6 +973,14 @@ async function handleCookieTableAction(event) {
             await apiRequest('/api/nf-cookies', 'PUT', { cookieId, status: action });
             toast(`Da doi trang thai thanh ${action}.`, 'ok');
             await Promise.all([loadCookies(), loadCustomers()]);
+            return;
+        }
+
+        if (action === 'error-on' || action === 'error-off') {
+            const errorTagged = action === 'error-on';
+            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, errorTagged });
+            toast(errorTagged ? 'Da gan tag ERROR cho cookie.' : 'Da go tag ERROR cho cookie.', 'ok');
+            await Promise.all([loadCookies(), loadCustomers()]);
         }
     } catch (error) {
         toast(error.message || 'Cap nhat cookie that bai.', 'bad');
@@ -912,6 +1044,56 @@ function bindEvents() {
             generateDeviceLink(device);
         });
     });
+
+    const supportBtn = el('supportWarrantyBtn');
+    if (supportBtn) supportBtn.addEventListener('click', openSupportModal);
+
+    const supportModal = el('supportModal');
+    if (supportModal) {
+        supportModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeSupport === '1') closeSupportModal();
+        });
+    }
+
+    const supportModalCloseBtn = el('supportModalCloseBtn');
+    if (supportModalCloseBtn) supportModalCloseBtn.addEventListener('click', closeSupportModal);
+
+    const supportFanpageLink = el('supportFanpageLink');
+    if (supportFanpageLink) supportFanpageLink.setAttribute('href', SUPPORT_FANPAGE_URL);
+
+    const mobileLinkModal = el('mobileLinkModal');
+    if (mobileLinkModal) {
+        mobileLinkModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeMobileLink === '1') closeMobileLinkModal();
+        });
+    }
+
+    const mobileLinkCloseBtn = el('mobileLinkCloseBtn');
+    if (mobileLinkCloseBtn) mobileLinkCloseBtn.addEventListener('click', closeMobileLinkModal);
+
+    const copyMobileLinkBtn = el('copyMobileLinkBtn');
+    if (copyMobileLinkBtn) {
+        copyMobileLinkBtn.addEventListener('click', async () => {
+            const output = el('mobileLinkOutput');
+            const link = String((output && output.value) || mobileGeneratedLink || '').trim();
+            if (!link) {
+                toast('Chưa có link để sao chép.', 'warn');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(link);
+                toast('Đã sao chép link.', 'ok');
+            } catch (error) {
+                if (output) {
+                    output.focus();
+                    output.select();
+                }
+                toast('Không sao chép tự động được. Hãy copy thủ công.', 'warn');
+            }
+        });
+    }
 
     const adminFab = el('nfAdminFab');
     if (adminFab) adminFab.addEventListener('click', openAdminModal);
@@ -1040,6 +1222,16 @@ function bindEvents() {
 
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+        const phoneModal = el('mobileLinkModal');
+        if (phoneModal && !phoneModal.classList.contains('hidden')) {
+            closeMobileLinkModal();
+            return;
+        }
+        const helpModal = el('supportModal');
+        if (helpModal && !helpModal.classList.contains('hidden')) {
+            closeSupportModal();
+            return;
+        }
         const rawModal = el('cookieRawEditorModal');
         if (rawModal && !rawModal.classList.contains('hidden')) {
             closeCookieRawEditor();

@@ -23,6 +23,7 @@ function cookiePublicDto(cookie) {
     return {
         id: cookie.id,
         status: cookie.status,
+        errorTagged: !!cookie.errorTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
         cookieRaw: cookie.cookieRaw || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),
@@ -92,6 +93,7 @@ module.exports = async function (req, res) {
 
             const cookieRawInput = body.cookieRaw !== undefined ? String(body.cookieRaw || '').trim() : '';
             const hasCookieRawUpdate = cookieRawInput.length > 0;
+            const hasErrorTagUpdate = body.errorTagged !== undefined;
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
                 if (cookieIds.length !== 1) {
@@ -114,7 +116,8 @@ module.exports = async function (req, res) {
                 if (!targetIdSet.has(current.id)) return current;
 
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
-                const shouldUnassign = !!body.unassign || nextStatus !== 'active';
+                const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
+                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged;
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
@@ -124,6 +127,8 @@ module.exports = async function (req, res) {
                         secureNetflixId: parsedCookieIds.secureNetflixId || '',
                         cookieRaw: parsedCookieIds.cookieRaw,
                         status: 'active',
+                        errorTagged: nextErrorTagged,
+                        assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                         updatedAt: now,
                         lastCheckedAt: '',
                         lastSuccessAt: '',
@@ -135,6 +140,7 @@ module.exports = async function (req, res) {
                 return sanitizeCookie({
                     ...current,
                     status: nextStatus,
+                    errorTagged: nextErrorTagged,
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,
                     lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError

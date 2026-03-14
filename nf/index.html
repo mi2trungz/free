@@ -64,10 +64,56 @@
                             <span class="device-title">TV</span>
                         </button>
                     </div>
+                    <div class="support-row">
+                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CẦN HỖ TRỢ / BẢO HÀNH</button>
+                    </div>
                 </section>
             </div>
         </section>
     </main>
+
+    <section id="supportModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-support="1"></div>
+        <div class="modal-card support-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Hỗ trợ / Bảo hành</span>
+                    <h2>Cần hỗ trợ tài khoản Netflix?</h2>
+                </div>
+                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body">
+                <p>Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
+                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="mobileLinkModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-mobile-link="1"></div>
+        <div class="modal-card mobile-link-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Đăng nhập điện thoại</span>
+                    <h2>Tạo link đăng nhập thành công</h2>
+                </div>
+                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="mobile-link-body">
+                <label class="mobile-link-label" for="mobileLinkOutput">Link đăng nhập:</label>
+                <textarea id="mobileLinkOutput" class="text-input mobile-link-output" readonly></textarea>
+                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chép link</button>
+
+                <div class="mobile-link-guide">
+                    <h3>Hướng dẫn đăng nhập trên điện thoại</h3>
+                    <p>Bước 1: Sao chép đường link đăng nhập phía trên</p>
+                    <p>Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại và tiến hành truy cập</p>
+                    <p>Bước 3: Nó có hỏi gì hay hiện gì thì cứ bấm nút ĐỒNG Ý hoặc TIẾP TỤC</p>
+                    <p><strong>Lưu ý:</strong> Nếu nó đã mở app Netflix lên và vẫn không đăng nhập thành công, hãy xoá app Netflix đi và tải lại (Sau khi tải lại không được mở lên)</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <section id="nfAdminModal" class="modal hidden" aria-hidden="true">
         <div class="modal-backdrop" data-close-admin="1"></div>

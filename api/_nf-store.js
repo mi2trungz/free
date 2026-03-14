@@ -118,13 +118,15 @@ function sanitizeCustomer(item) {
 
 function sanitizeCookie(item) {
     const now = new Date().toISOString();
+    const errorTagged = item && (item.errorTagged === true || item.errorTagged === 'true' || item.errorTagged === 1 || item.errorTagged === '1');
     return {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
         secureNetflixId: String(item.secureNetflixId || '').trim(),
         cookieRaw: String(item.cookieRaw || '').trim(),
         status: sanitizeCookieStatus(item.status),
-        assignedCustomerCode: String(item.assignedCustomerCode || '').trim().toUpperCase(),
+        errorTagged,
+        assignedCustomerCode: errorTagged ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
         createdAt: item.createdAt || now,
         updatedAt: item.updatedAt || now,
         lastCheckedAt: item.lastCheckedAt || '',
@@ -160,6 +162,7 @@ function buildCookieMapValue(cookie) {
                 secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
                 cookieRaw: toStringValue(cookie.cookieRaw || ''),
                 status: toStringValue(cookie.status),
+                errorTagged: { booleanValue: !!cookie.errorTagged },
                 assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
                 createdAt: toTimestampValue(cookie.createdAt),
                 updatedAt: toTimestampValue(cookie.updatedAt),
@@ -194,6 +197,10 @@ function parseCookieMapValue(value) {
         secureNetflixId: fields.secureNetflixId && fields.secureNetflixId.stringValue,
         cookieRaw: fields.cookieRaw && fields.cookieRaw.stringValue,
         status: fields.status && fields.status.stringValue,
+        errorTagged: fields.errorTagged && (
+            fields.errorTagged.booleanValue === true ||
+            fields.errorTagged.booleanValue === 'true'
+        ),
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
         updatedAt: fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue),

@@ -253,6 +253,27 @@ body {
     gap: 0.55rem;
 }
 
+.support-row {
+    margin-top: 0.7rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-support {
+    min-height: 38px;
+    padding: 0.5rem 0.78rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    border-color: rgba(229, 9, 20, 0.4);
+    background: rgba(229, 9, 20, 0.1);
+}
+
+.btn-support:hover {
+    border-color: rgba(229, 9, 20, 0.6);
+    background: rgba(229, 9, 20, 0.2);
+}
+
 .btn-device {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
     border: 1px solid var(--line);
@@ -617,6 +638,12 @@ body {
     color: #fca5a5;
 }
 
+.pill-error {
+    background: rgba(245, 158, 11, 0.26);
+    color: #fcd34d;
+    margin-left: 0.32rem;
+}
+
 .ok {
     color: #6ee7b7;
 }
@@ -653,6 +680,78 @@ body {
 
 .toast.bad {
     background: #b91c1c;
+}
+
+.support-card {
+    width: min(560px, calc(100% - 1rem));
+}
+
+.support-body {
+    padding: 0.95rem 1rem 1rem 1rem;
+}
+
+.support-body p {
+    margin: 0;
+    color: #d6e0f8;
+    line-height: 1.5;
+}
+
+.support-link-btn {
+    margin-top: 0.75rem;
+    display: inline-flex;
+    text-decoration: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-link-card {
+    width: min(700px, calc(100% - 1rem));
+}
+
+.mobile-link-body {
+    padding: 0.95rem 1rem 1rem 1rem;
+}
+
+.mobile-link-label {
+    display: block;
+    font-size: 0.84rem;
+    color: #cfd8ef;
+    margin-bottom: 0.42rem;
+    font-weight: 600;
+}
+
+.mobile-link-output {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: #d8e6ff;
+}
+
+.mobile-link-copy-btn {
+    margin-top: 0.62rem;
+}
+
+.mobile-link-guide {
+    margin-top: 0.8rem;
+    padding: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.mobile-link-guide h3 {
+    margin: 0 0 0.45rem 0;
+    font-size: 0.9rem;
+}
+
+.mobile-link-guide p {
+    margin: 0.36rem 0;
+    color: #d6e0f8;
+    line-height: 1.5;
+    font-size: 0.86rem;
 }
 
 .raw-editor-modal {
@@ -694,6 +793,14 @@ body {
     .device-grid,
     .customer-grid {
         grid-template-columns: 1fr;
+    }
+
+    .support-row {
+        justify-content: stretch;
+    }
+
+    .btn-support {
+        width: 100%;
     }
 
     .modal-card {
