@@ -3,7 +3,7 @@ const {
     readCookies,
     persistCookies,
     sanitizeCookie,
-    splitImportLines,
+    splitImportCookieBlocks,
     extractNetflixIdsFromCookie,
     makeCustomerCode
 } = require('../_nf-store');
@@ -30,8 +30,8 @@ module.exports = async function (req, res) {
         const content = String(body.content || '').trim();
         if (!content) return res.status(400).json({ error: 'Missing import content' });
 
-        const lines = splitImportLines(content);
-        if (lines.length === 0) return res.status(400).json({ error: 'No cookie lines found' });
+        const blocks = splitImportCookieBlocks(content);
+        if (blocks.length === 0) return res.status(400).json({ error: 'No cookie found in import content' });
 
         const currentPool = await readCookies();
         const existingKeySet = new Set(
@@ -43,9 +43,9 @@ module.exports = async function (req, res) {
         let skipped = 0;
         let invalid = 0;
 
-        for (let i = 0; i < lines.length; i += 1) {
-            const line = lines[i];
-            const ids = extractNetflixIdsFromCookie(line);
+        for (let i = 0; i < blocks.length; i += 1) {
+            const block = blocks[i];
+            const ids = extractNetflixIdsFromCookie(block);
             if (!ids.netflixId) {
                 invalid += 1;
                 continue;
@@ -60,6 +60,7 @@ module.exports = async function (req, res) {
                 id: makeImportCookieId(),
                 netflixId: ids.netflixId,
                 secureNetflixId: ids.secureNetflixId || '',
+                cookieRaw: block,
                 status: 'active',
                 assignedCustomerCode: '',
                 createdAt: now,

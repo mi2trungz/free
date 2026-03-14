@@ -122,6 +122,7 @@ function sanitizeCookie(item) {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
         secureNetflixId: String(item.secureNetflixId || '').trim(),
+        cookieRaw: String(item.cookieRaw || '').trim(),
         status: sanitizeCookieStatus(item.status),
         assignedCustomerCode: String(item.assignedCustomerCode || '').trim().toUpperCase(),
         createdAt: item.createdAt || now,
@@ -157,6 +158,7 @@ function buildCookieMapValue(cookie) {
                 id: toStringValue(cookie.id),
                 netflixId: toStringValue(cookie.netflixId),
                 secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
+                cookieRaw: toStringValue(cookie.cookieRaw || ''),
                 status: toStringValue(cookie.status),
                 assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
                 createdAt: toTimestampValue(cookie.createdAt),
@@ -190,6 +192,7 @@ function parseCookieMapValue(value) {
         id: fields.id && fields.id.stringValue,
         netflixId: fields.netflixId && fields.netflixId.stringValue,
         secureNetflixId: fields.secureNetflixId && fields.secureNetflixId.stringValue,
+        cookieRaw: fields.cookieRaw && fields.cookieRaw.stringValue,
         status: fields.status && fields.status.stringValue,
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
@@ -210,7 +213,7 @@ function parseCustomersFromDoc(doc) {
 function parseCookiesFromDoc(doc) {
     const fields = (doc && doc.fields) || {};
     const values = (((fields.cookies || {}).arrayValue || {}).values) || [];
-    return values.map(parseCookieMapValue).filter((item) => !!item.netflixId);
+    return values.map(parseCookieMapValue).filter((item) => !!item.netflixId || !!item.cookieRaw);
 }
 
 function buildCookieSummary(cookies = []) {
@@ -246,7 +249,7 @@ async function persistCustomers(customers = []) {
 async function persistCookies(cookies = []) {
     const normalized = cookies
         .map(sanitizeCookie)
-        .filter((item) => !!item.netflixId);
+        .filter((item) => !!item.netflixId || !!item.cookieRaw);
     const summary = buildCookieSummary(normalized);
     return patchDoc(DOC_COOKIE_POOL, {
         cookies: toArrayValue(normalized.map(buildCookieMapValue)),
@@ -396,6 +399,79 @@ function splitImportLines(content = '') {
         .filter((line) => !!line);
 }
 
+function parseNetscapeLine(line = '') {
+    const parts = String(line || '').split('\t');
+    if (parts.length < 7) return null;
+    return {
+        name: String(parts[5] || '').trim(),
+        value: String(parts[6] || '').trim()
+    };
+}
+
+function splitImportCookieBlocks(content = '') {
+    const normalized = String(content || '').replace(/\r/g, '');
+    if (!normalized.trim()) return [];
+
+    const chunks = normalized
+        .split(/\n\s*\n+/)
+        .map((chunk) => chunk.trim())
+        .filter((chunk) => !!chunk);
+    if (chunks.length > 1) return chunks;
+
+    const lines = normalized
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => !!line);
+    if (lines.length === 0) return [];
+
+    const hasNetscapeRows = lines.some((line) => !!parseNetscapeLine(line));
+    if (!hasNetscapeRows) return lines;
+
+    const blocks = [];
+    let currentLines = [];
+    let seenNetflixId = false;
+    let seenSecureNetflixId = false;
+    let lastNetflixId = '';
+
+    function flushCurrent() {
+        if (currentLines.length === 0) return;
+        blocks.push(currentLines.join('\n'));
+        currentLines = [];
+        seenNetflixId = false;
+        seenSecureNetflixId = false;
+        lastNetflixId = '';
+    }
+
+    lines.forEach((line) => {
+        const parsed = parseNetscapeLine(line);
+        if (!parsed) {
+            flushCurrent();
+            blocks.push(line);
+            return;
+        }
+
+        const isNewBlockNetflixLine =
+            parsed.name === 'NetflixId' &&
+            seenNetflixId &&
+            seenSecureNetflixId &&
+            !!lastNetflixId &&
+            !!parsed.value &&
+            parsed.value !== lastNetflixId;
+
+        if (isNewBlockNetflixLine) flushCurrent();
+
+        currentLines.push(line);
+        if (parsed.name === 'NetflixId' && parsed.value) {
+            seenNetflixId = true;
+            lastNetflixId = parsed.value;
+        }
+        if (parsed.name === 'SecureNetflixId' && parsed.value) seenSecureNetflixId = true;
+    });
+
+    flushCurrent();
+    return blocks;
+}
+
 function isLikelyDeadCookie(errorText = '', statusCode = 0) {
     return isLikelyDeadCookieShared(errorText, statusCode);
 }
@@ -434,6 +510,7 @@ module.exports = {
     isCustomerWarrantyValid,
     extractNetflixIdsFromCookie,
     splitImportLines,
+    splitImportCookieBlocks,
     isLikelyDeadCookie,
     isTokenPermissionDenied,
     callNetflixCreateAutoLoginToken,

@@ -25,6 +25,9 @@ let selectedCookieIds = new Set();
 let activeTab = 'customers';
 let toastTimer = null;
 let runtimeBlocked = false;
+let rawEditorCookieId = '';
+let rawEditorInitialRaw = '';
+let rawEditorMode = 'edit';
 
 function el(id) {
     return document.getElementById(id);
@@ -398,7 +401,8 @@ function renderCookiesTable() {
                         <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
                         <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
                         <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
-                        <button class="btn-tiny" data-cookie-act="edit" data-id="${cookie.id}">Sua</button>
+                        <button class="btn-tiny" data-cookie-act="view-raw" data-id="${cookie.id}">Xem raw</button>
+                        <button class="btn-tiny" data-cookie-act="edit-raw" data-id="${cookie.id}">Sua raw</button>
                         <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
                         <button class="btn-tiny" data-cookie-act="delete" data-id="${cookie.id}">Xoa</button>
                     </div>
@@ -463,6 +467,82 @@ function closeAdminModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+}
+
+function updateRawEditorMeta() {
+    const meta = el('cookieRawEditorMeta');
+    const textarea = el('cookieRawEditorTextarea');
+    if (!meta || !textarea) return;
+    const raw = String(textarea.value || '');
+    const lines = raw ? raw.split('\n').length : 0;
+    meta.textContent = `${lines} dòng • ${raw.length} ký tự`;
+}
+
+function openCookieRawEditor(cookie, mode = 'edit') {
+    if (!cookie) return;
+    const modal = el('cookieRawEditorModal');
+    const title = el('cookieRawEditorTitle');
+    const textarea = el('cookieRawEditorTextarea');
+    const saveBtn = el('cookieRawEditorSaveBtn');
+    if (!modal || !title || !textarea || !saveBtn) return;
+
+    rawEditorCookieId = String(cookie.id || '').trim();
+    rawEditorInitialRaw = String(cookie.cookieRaw || '');
+    rawEditorMode = mode === 'view' ? 'view' : 'edit';
+
+    title.textContent = rawEditorMode === 'view' ? 'Xem full cookie raw' : 'Sửa full cookie raw';
+    textarea.value = rawEditorInitialRaw;
+    textarea.readOnly = rawEditorMode === 'view';
+    saveBtn.classList.toggle('hidden', rawEditorMode !== 'edit');
+
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    updateRawEditorMeta();
+    textarea.focus();
+    textarea.setSelectionRange(0, 0);
+}
+
+function closeCookieRawEditor() {
+    const modal = el('cookieRawEditorModal');
+    const textarea = el('cookieRawEditorTextarea');
+    if (!modal || !textarea) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    textarea.value = '';
+    rawEditorCookieId = '';
+    rawEditorInitialRaw = '';
+    rawEditorMode = 'edit';
+}
+
+async function saveCookieRawEditor() {
+    if (rawEditorMode !== 'edit') return;
+    const cookieId = String(rawEditorCookieId || '').trim();
+    const textarea = el('cookieRawEditorTextarea');
+    const saveBtn = el('cookieRawEditorSaveBtn');
+    if (!cookieId || !textarea) return;
+
+    const finalRaw = String(textarea.value || '').trim();
+    const previousRaw = String(rawEditorInitialRaw || '').trim();
+    if (!finalRaw) {
+        toast('Noi dung cookie raw trong.', 'warn');
+        return;
+    }
+    if (finalRaw === previousRaw) {
+        toast('Khong co thay doi cookie.', 'warn');
+        return;
+    }
+
+    setButtonBusy(saveBtn, true, 'Dang luu...');
+    try {
+        await apiRequest('/api/nf-cookies', 'PUT', { cookieId, cookieRaw: finalRaw });
+        toast('Da cap nhat full cookie raw.', 'ok');
+        closeCookieRawEditor();
+        await Promise.all([loadCookies(), loadCustomers()]);
+    } catch (error) {
+        toast(error.message || 'Cap nhat cookie that bai.', 'bad');
+    } finally {
+        setButtonBusy(saveBtn, false);
+    }
 }
 
 function renderAdminState(user) {
@@ -729,19 +809,23 @@ async function handleCookieTableAction(event) {
     const action = target.dataset.cookieAct;
     const cookieId = String(target.dataset.id || '').trim();
     if (!action || !cookieId) return;
+    const cookie = cookiesCache.find((item) => item.id === cookieId);
 
     try {
-        if (action === 'edit') {
-            const cookieRaw = window.prompt('Dan cookie moi (co NetflixId=...):', '');
-            if (cookieRaw === null) return;
-            const trimmed = String(cookieRaw || '').trim();
-            if (!trimmed) {
-                toast('Noi dung cookie trong.', 'warn');
+        if (action === 'view-raw') {
+            if (!cookie) return;
+            const raw = String(cookie.cookieRaw || '').trim();
+            if (!raw) {
+                toast('Cookie nay chua co noi dung raw.', 'warn');
                 return;
             }
-            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, cookieRaw: trimmed });
-            toast('Da cap nhat cookie.', 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            openCookieRawEditor(cookie, 'view');
+            return;
+        }
+
+        if (action === 'edit-raw') {
+            if (!cookie) return;
+            openCookieRawEditor(cookie, 'edit');
             return;
         }
 
@@ -843,6 +927,45 @@ function bindEvents() {
         });
     }
 
+    const rawEditorModal = el('cookieRawEditorModal');
+    if (rawEditorModal) {
+        rawEditorModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeRawEditor === '1') closeCookieRawEditor();
+        });
+    }
+
+    const rawEditorCloseBtn = el('cookieRawEditorCloseBtn');
+    if (rawEditorCloseBtn) rawEditorCloseBtn.addEventListener('click', closeCookieRawEditor);
+
+    const rawEditorSaveBtn = el('cookieRawEditorSaveBtn');
+    if (rawEditorSaveBtn) rawEditorSaveBtn.addEventListener('click', saveCookieRawEditor);
+
+    const rawEditorCopyBtn = el('cookieRawEditorCopyBtn');
+    if (rawEditorCopyBtn) {
+        rawEditorCopyBtn.addEventListener('click', async () => {
+            const textarea = el('cookieRawEditorTextarea');
+            if (!textarea) return;
+            try {
+                await navigator.clipboard.writeText(String(textarea.value || ''));
+                toast('Da copy cookie raw.', 'ok');
+            } catch (error) {
+                toast('Khong copy duoc. Hay copy thu cong.', 'warn');
+            }
+        });
+    }
+
+    const rawEditorTextarea = el('cookieRawEditorTextarea');
+    if (rawEditorTextarea) {
+        rawEditorTextarea.addEventListener('input', updateRawEditorMeta);
+        rawEditorTextarea.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's' && rawEditorMode === 'edit') {
+                event.preventDefault();
+                saveCookieRawEditor();
+            }
+        });
+    }
+
     const adminLoginBtn = el('adminLoginBtn');
     if (adminLoginBtn) adminLoginBtn.addEventListener('click', onAdminLogin);
 
@@ -916,7 +1039,13 @@ function bindEvents() {
     }
 
     window.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') closeAdminModal();
+        if (event.key !== 'Escape') return;
+        const rawModal = el('cookieRawEditorModal');
+        if (rawModal && !rawModal.classList.contains('hidden')) {
+            closeCookieRawEditor();
+            return;
+        }
+        closeAdminModal();
     });
 }
 

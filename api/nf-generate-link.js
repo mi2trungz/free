@@ -5,7 +5,8 @@ const {
     persistAll,
     findCustomerByCode,
     isCustomerWarrantyValid,
-    buildUrlByDevice
+    buildUrlByDevice,
+    extractNetflixIdsFromCookie
 } = require('./_nf-store');
 const { requestNetflixToken } = require('./_netflix-token-engine');
 
@@ -29,6 +30,27 @@ function markCookieDead(cookie, errorMessage = '') {
         lastError: String(errorMessage || 'Cookie DIE'),
         assignedCustomerCode: ''
     };
+}
+
+function resolveEffectiveCookieIds(cookie = {}) {
+    const storedNetflixId = String(cookie.netflixId || '').trim();
+    const storedSecureNetflixId = String(cookie.secureNetflixId || '').trim();
+    const parsed = extractNetflixIdsFromCookie(cookie.cookieRaw || '');
+    const parsedNetflixId = String(parsed.netflixId || '').trim();
+    const parsedSecureNetflixId = String(parsed.secureNetflixId || '').trim();
+
+    // Ưu tiên field đã lưu; chỉ fallback khi thiếu hoặc có dấu hiệu bất thường.
+    const hasInvalidStoredNetflixId = !!storedNetflixId && /\s/.test(storedNetflixId);
+    const hasInvalidStoredSecureNetflixId = !!storedSecureNetflixId && /\s/.test(storedSecureNetflixId);
+
+    const netflixId = hasInvalidStoredNetflixId
+        ? (parsedNetflixId || '')
+        : (storedNetflixId || parsedNetflixId || '');
+    const secureNetflixId = hasInvalidStoredSecureNetflixId
+        ? (parsedSecureNetflixId || '')
+        : (storedSecureNetflixId || parsedSecureNetflixId || '');
+
+    return { netflixId, secureNetflixId };
 }
 
 module.exports = async function (req, res) {
@@ -99,7 +121,17 @@ module.exports = async function (req, res) {
 
         async function tryCookieAtIndex(cookieIndex, reusedCookie) {
             const cookie = cookies[cookieIndex];
-            const tokenResult = await requestNetflixToken(cookie.netflixId, cookie.secureNetflixId || '');
+            const ids = resolveEffectiveCookieIds(cookie);
+            if (!ids.netflixId) {
+                cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], 'Cookie không có NetflixId hợp lệ.');
+                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                    unassignCustomerCurrentCookie();
+                }
+                mutated = true;
+                return null;
+            }
+
+            const tokenResult = await requestNetflixToken(ids.netflixId, ids.secureNetflixId || '');
 
             if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
                 return finalizeSuccess(cookieIndex, tokenResult.nftoken, reusedCookie);
@@ -178,7 +210,7 @@ module.exports = async function (req, res) {
 
         if (hasPermissionDeniedCookie) {
             return res.status(503).json({
-                error: 'Cookie vẫn còn sống nhưng bị Netflix chặn tạo link tự động. Vui lòng thay cookie khác.'
+                error: 'Cookie LIVE nhưng bị Netflix chặn tạo token tự động. Vui lòng thay cookie khác.'
             });
         }
 

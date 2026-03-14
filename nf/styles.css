@@ -655,6 +655,34 @@ body {
     background: #b91c1c;
 }
 
+.raw-editor-modal {
+    z-index: 70;
+}
+
+.raw-editor-card {
+    width: min(1200px, calc(100% - 1rem));
+}
+
+.raw-editor-body {
+    padding: 0.9rem 1rem 1rem 1rem;
+}
+
+.raw-editor-textarea {
+    width: 100%;
+    min-height: clamp(300px, 60vh, 640px);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    white-space: pre;
+}
+
+.raw-editor-actions {
+    margin-top: 0.7rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+}
+
 @media (max-width: 900px) {
     .lookup-row,
     .form-grid,

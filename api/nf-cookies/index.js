@@ -8,7 +8,8 @@ const {
     sanitizeCookieStatus,
     maskNetflixId,
     buildCookieSummary,
-    extractNetflixIdsFromCookie
+    extractNetflixIdsFromCookie,
+    splitImportCookieBlocks
 } = require('../_nf-store');
 
 function setCors(res) {
@@ -23,6 +24,7 @@ function cookiePublicDto(cookie) {
         id: cookie.id,
         status: cookie.status,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
+        cookieRaw: cookie.cookieRaw || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),
         createdAt: cookie.createdAt || '',
         updatedAt: cookie.updatedAt || '',
@@ -95,10 +97,16 @@ module.exports = async function (req, res) {
                 if (cookieIds.length !== 1) {
                     return res.status(400).json({ error: 'cookieRaw only supports single cookie update' });
                 }
-                parsedCookieIds = extractNetflixIdsFromCookie(cookieRawInput);
+                const parsedBlocks = splitImportCookieBlocks(cookieRawInput);
+                if (parsedBlocks.length !== 1) {
+                    return res.status(400).json({ error: 'cookieRaw must contain exactly 1 cookie block' });
+                }
+                const normalizedCookieRaw = String(parsedBlocks[0] || '').trim();
+                parsedCookieIds = extractNetflixIdsFromCookie(normalizedCookieRaw);
                 if (!parsedCookieIds || !parsedCookieIds.netflixId) {
                     return res.status(400).json({ error: 'cookieRaw missing NetflixId' });
                 }
+                parsedCookieIds.cookieRaw = normalizedCookieRaw;
             }
 
             let shouldUnassignAny = false;
@@ -114,6 +122,7 @@ module.exports = async function (req, res) {
                         ...current,
                         netflixId: parsedCookieIds.netflixId,
                         secureNetflixId: parsedCookieIds.secureNetflixId || '',
+                        cookieRaw: parsedCookieIds.cookieRaw,
                         status: 'active',
                         updatedAt: now,
                         lastCheckedAt: '',
