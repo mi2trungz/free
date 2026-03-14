@@ -89,17 +89,10 @@ body {
     padding: 1.1rem 1.1rem 1.2rem 1.1rem;
 }
 
-.hero-head h1 {
-    margin: 0.45rem 0 0.6rem 0;
-    font-size: clamp(1.4rem, 4vw, 2rem);
-    font-family: 'Sora', sans-serif;
-    letter-spacing: -0.02em;
-}
-
-.hero-head p {
+.hero-title {
     margin: 0;
-    color: var(--muted);
-    font-size: 0.95rem;
+    font-size: clamp(1.3rem, 3.2vw, 1.9rem);
+    letter-spacing: -0.01em;
 }
 
 .eyebrow {
@@ -116,56 +109,8 @@ body {
     background: rgba(229, 9, 20, 0.14);
 }
 
-.step-row {
-    margin-top: 1rem;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.55rem;
-}
-
-.step-chip {
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 0.58rem 0.72rem;
-    font-size: 0.84rem;
-    color: #c8d0e5;
-    background: rgba(255, 255, 255, 0.03);
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-}
-
-.step-chip span {
-    width: 22px;
-    height: 22px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.75rem;
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.step-chip.is-active {
-    border-color: rgba(229, 9, 20, 0.48);
-    color: #fff;
-    background: rgba(229, 9, 20, 0.15);
-}
-
-.step-chip.is-active span {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-}
-
 .lookup-wrap {
-    margin-top: 1rem;
-}
-
-.input-label {
-    display: block;
-    margin-bottom: 0.4rem;
-    font-size: 0.82rem;
-    color: #d4dcf3;
+    margin-top: 0.9rem;
 }
 
 .lookup-row {
@@ -272,33 +217,8 @@ body {
     animation: fadeInUp 200ms ease-out;
 }
 
-.customer-card header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem;
-}
-
-.customer-card h2 {
-    font-size: 1rem;
-    margin: 0;
-}
-
-.badge {
-    display: inline-flex;
-    border-radius: 999px;
-    padding: 0.22rem 0.52rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-
-.badge-ok {
-    background: rgba(16, 185, 129, 0.22);
-    color: #6ee7b7;
-}
-
 .customer-grid {
-    margin-top: 0.7rem;
+    margin-top: 0.1rem;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
@@ -319,8 +239,15 @@ body {
     font-family: 'JetBrains Mono', monospace;
 }
 
-.device-grid {
+.device-section-title {
     margin-top: 0.95rem;
+    margin-bottom: 0.55rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #dfe8ff;
+}
+
+.device-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.55rem;
@@ -334,6 +261,7 @@ body {
     text-align: left;
     gap: 0.16rem;
     min-height: 70px;
+    justify-items: start;
 }
 
 .btn-device:hover:not(:disabled) {
@@ -344,11 +272,6 @@ body {
 .device-title {
     font-size: 0.94rem;
     font-weight: 700;
-}
-
-.btn-device small {
-    color: #b2bfdc;
-    font-size: 0.75rem;
 }
 
 .admin-fab {
@@ -567,6 +490,53 @@ body {
     font-size: 0.85rem;
 }
 
+.cookie-tools {
+    margin-top: 0.62rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.cookie-tools .state-text {
+    margin-top: 0;
+}
+
+.bulk-bar {
+    margin-top: 0.62rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    padding: 0.56rem 0.62rem;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.bulk-count {
+    font-size: 0.82rem;
+    color: #c9d4f0;
+}
+
+.check-col {
+    width: 44px;
+    text-align: center !important;
+}
+
+.row-check {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.check-cell {
+    text-align: center;
+}
+
 .table-wrap {
     margin-top: 0.75rem;
     border: 1px solid var(--line);
@@ -694,7 +664,6 @@ body {
     }
 
     .device-grid,
-    .step-row,
     .customer-grid {
         grid-template-columns: 1fr;
     }
@@ -739,6 +708,20 @@ body {
         font-size: 0.74rem;
         text-transform: uppercase;
         letter-spacing: 0.03em;
+    }
+
+    .check-col {
+        width: auto;
+    }
+
+    .check-cell {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    .check-cell::before {
+        display: none;
     }
 }
 

@@ -32,6 +32,32 @@ function cookiePublicDto(cookie) {
     };
 }
 
+function parseCookieIds(body = {}) {
+    const ids = [];
+    const seen = new Set();
+
+    function pushId(value) {
+        const id = String(value || '').trim();
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        ids.push(id);
+    }
+
+    if (Array.isArray(body.cookieIds)) {
+        body.cookieIds.forEach(pushId);
+    }
+    if (body.cookieId !== undefined) {
+        pushId(body.cookieId);
+    }
+
+    return ids;
+}
+
+function findMissingCookieIds(cookies = [], cookieIds = []) {
+    const existing = new Set(cookies.map((item) => item.id));
+    return cookieIds.filter((id) => !existing.has(id));
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -50,35 +76,42 @@ module.exports = async function (req, res) {
         const body = parseBody(req.body);
 
         if (req.method === 'PUT') {
-            const cookieId = String(body.cookieId || '').trim();
-            if (!cookieId) return res.status(400).json({ error: 'Missing cookieId' });
+            const cookieIds = parseCookieIds(body);
+            if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
 
-            const idx = cookies.findIndex((item) => item.id === cookieId);
-            if (idx < 0) return res.status(404).json({ error: 'Cookie not found' });
+            const missingIds = findMissingCookieIds(cookies, cookieIds);
+            if (missingIds.length > 0) {
+                return res.status(404).json({ error: 'Cookie not found', missingIds });
+            }
 
-            const nextCookies = cookies.slice();
-            const current = nextCookies[idx];
-            const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
-            const shouldUnassign = !!body.unassign || nextStatus !== 'active';
+            const targetIdSet = new Set(cookieIds);
             const now = new Date().toISOString();
+            let shouldUnassignAny = false;
+            const nextCookies = cookies.map((current) => {
+                if (!targetIdSet.has(current.id)) return current;
 
-            nextCookies[idx] = sanitizeCookie({
-                ...current,
-                status: nextStatus,
-                assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
-                updatedAt: now,
-                lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError
+                const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
+                const shouldUnassign = !!body.unassign || nextStatus !== 'active';
+                if (shouldUnassign) shouldUnassignAny = true;
+
+                return sanitizeCookie({
+                    ...current,
+                    status: nextStatus,
+                    assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
+                    updatedAt: now,
+                    lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError
+                });
             });
 
-            if (!shouldUnassign) {
+            if (!shouldUnassignAny) {
                 const ok = await persistCookies(nextCookies);
                 if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
-                return res.status(200).json({ success: true });
+                return res.status(200).json({ success: true, affectedCount: cookieIds.length });
             }
 
             const customers = await readCustomers();
             const nextCustomers = customers.map((customer) => {
-                if (customer.assignedCookieId !== cookieId) return customer;
+                if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
                 return {
                     ...customer,
                     assignedCookieId: '',
@@ -88,21 +121,24 @@ module.exports = async function (req, res) {
 
             const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-put');
             if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
-            return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
         if (req.method === 'DELETE') {
-            const cookieId = String(body.cookieId || '').trim();
-            if (!cookieId) return res.status(400).json({ error: 'Missing cookieId' });
+            const cookieIds = parseCookieIds(body);
+            if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
 
-            const exists = cookies.some((item) => item.id === cookieId);
-            if (!exists) return res.status(404).json({ error: 'Cookie not found' });
+            const missingIds = findMissingCookieIds(cookies, cookieIds);
+            if (missingIds.length > 0) {
+                return res.status(404).json({ error: 'Cookie not found', missingIds });
+            }
 
             const now = new Date().toISOString();
-            const nextCookies = cookies.filter((item) => item.id !== cookieId);
+            const targetIdSet = new Set(cookieIds);
+            const nextCookies = cookies.filter((item) => !targetIdSet.has(item.id));
             const customers = await readCustomers();
             const nextCustomers = customers.map((customer) => {
-                if (customer.assignedCookieId !== cookieId) return customer;
+                if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
                 return {
                     ...customer,
                     assignedCookieId: '',
@@ -112,7 +148,7 @@ module.exports = async function (req, res) {
 
             const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-delete');
             if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
-            return res.status(200).json({ success: true });
+            return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });

@@ -21,6 +21,7 @@ let currentLookupEligible = false;
 let customersCache = [];
 let cookiesCache = [];
 let cookiesSummary = null;
+let selectedCookieIds = new Set();
 let activeTab = 'customers';
 let toastTimer = null;
 let runtimeBlocked = false;
@@ -74,6 +75,50 @@ function setLookupState(text, mode = 'idle') {
     setStateClass(state, mode);
 }
 
+function setCookieCheckState(text, mode = 'idle') {
+    const state = el('cookieCheckState');
+    if (!state) return;
+    state.textContent = text || '';
+    setStateClass(state, mode);
+}
+
+function syncCookieSelection() {
+    if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
+        selectedCookieIds = new Set();
+        return;
+    }
+    const validIds = new Set(cookiesCache.map((item) => item.id));
+    selectedCookieIds = new Set(Array.from(selectedCookieIds).filter((id) => validIds.has(id)));
+}
+
+function getSelectedCookieIds() {
+    if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) return [];
+    return cookiesCache
+        .map((cookie) => cookie.id)
+        .filter((id) => selectedCookieIds.has(id));
+}
+
+function updateCookieSelectionUi() {
+    const total = Array.isArray(cookiesCache) ? cookiesCache.length : 0;
+    const selectedCount = getSelectedCookieIds().length;
+    const bulkBar = el('cookieBulkBar');
+    const count = el('cookieSelectedCount');
+    const selectAll = el('cookiesSelectAll');
+    const toggleSelectAllBtn = el('toggleSelectAllCookiesBtn');
+
+    if (count) count.textContent = String(selectedCount);
+    if (bulkBar) bulkBar.classList.toggle('hidden', selectedCount === 0);
+    if (selectAll) {
+        selectAll.disabled = total === 0;
+        selectAll.checked = total > 0 && selectedCount === total;
+        selectAll.indeterminate = selectedCount > 0 && selectedCount < total;
+    }
+    if (toggleSelectAllBtn) {
+        toggleSelectAllBtn.disabled = total === 0;
+        toggleSelectAllBtn.textContent = total > 0 && selectedCount === total ? 'Bo chon tat ca' : 'Chon tat ca';
+    }
+}
+
 function setControlRuntimeDisabled(disabled) {
     runtimeBlocked = disabled;
     const lookupBtn = el('lookupBtn');
@@ -85,6 +130,7 @@ function setControlRuntimeDisabled(disabled) {
     if (adminLoginBtn) adminLoginBtn.disabled = disabled;
     if (disabled) {
         setDeviceButtonsEnabled(false);
+        setDeviceSectionVisible(false);
     }
 }
 
@@ -96,9 +142,9 @@ function applyRuntimeGuard() {
 
     if (isFileMode) {
         guard.classList.remove('hidden');
-        guardText.textContent = 'Ban dang mo bang file://. Hay chay qua server: http://localhost:3005/nf';
+        guardText.textContent = 'Bạn đang mở bằng file://. Hãy chạy qua server: http://localhost:3005/nf';
         setControlRuntimeDisabled(true);
-        setLookupState('Can mo dung qua server de su dung API.', 'warning');
+        setLookupState('Cần mở đúng qua server để sử dụng API.', 'warning');
         return;
     }
 
@@ -154,10 +200,17 @@ function setDeviceButtonsEnabled(enabled) {
     });
 }
 
+function setDeviceSectionVisible(visible) {
+    const section = el('deviceSection');
+    if (!section) return;
+    section.classList.toggle('hidden', !visible);
+}
+
 function resetLookupResult() {
     currentLookupCode = '';
     currentLookupEligible = false;
     setDeviceButtonsEnabled(false);
+    setDeviceSectionVisible(false);
     const infoCard = el('customerInfoCard');
     if (infoCard) infoCard.classList.add('hidden');
 }
@@ -177,12 +230,14 @@ function renderLookupResult(payload) {
     if (codeText) codeText.textContent = currentLookupCode || '-';
     if (nameText) nameText.textContent = payload.customer.name || '-';
     if (infoCard) infoCard.classList.remove('hidden');
+    setDeviceSectionVisible(currentLookupEligible);
     setDeviceButtonsEnabled(currentLookupEligible);
 
     if (currentLookupEligible) {
-        setLookupState('Ma hop le. Hay chon thiet bi de mo link.', 'success');
+        setLookupState('hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng netflix', 'success');
+        return;
     } else {
-        setLookupState(payload.message || 'Ma chua du dieu kien su dung.', 'warning');
+        setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
     }
 }
 
@@ -192,20 +247,20 @@ async function lookupCustomerCode() {
     const code = normalizeCode(input && input.value);
     if (!code) {
         resetLookupResult();
-        setLookupState('Vui long nhap ma khach hang.', 'warning');
+        setLookupState('Vui lòng nhập mã khách hàng.', 'warning');
         return;
     }
 
     const lookupBtn = el('lookupBtn');
-    setButtonBusy(lookupBtn, true, 'Dang kiem tra...');
-    setLookupState('Dang kiem tra ma khach hang...', 'loading');
+    setButtonBusy(lookupBtn, true, 'Đang kiểm tra...');
+    setLookupState('Đang kiểm tra mã khách hàng...', 'loading');
 
     try {
         const data = await apiRequest('/api/nf-customer-lookup', 'POST', { customerCode: code });
         renderLookupResult(data);
     } catch (error) {
         resetLookupResult();
-        setLookupState(error.message || 'Khong kiem tra duoc ma.', 'error');
+        setLookupState(error.message || 'Không kiểm tra được mã.', 'error');
     } finally {
         setButtonBusy(lookupBtn, false);
     }
@@ -214,18 +269,18 @@ async function lookupCustomerCode() {
 async function generateDeviceLink(device) {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
-        toast('Vui long kiem tra ma truoc.', 'warn');
+        toast('Vui lòng kiểm tra mã trước.', 'warn');
         return;
     }
     if (!currentLookupEligible) {
-        toast('Ma khach hang chua du dieu kien.', 'warn');
+        toast('Mã khách hàng chưa đủ điều kiện.', 'warn');
         return;
     }
 
     const clickedButton = document.querySelector(`.btn-device[data-device="${device}"]`);
-    setButtonBusy(clickedButton, true, 'Dang tao link...');
+    setButtonBusy(clickedButton, true, 'Đang tạo link...');
     setDeviceButtonsEnabled(false);
-    setLookupState('Dang kiem tra cookie LIVE va tao link...', 'loading');
+    setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
     const popup = window.open('about:blank', '_blank');
     if (popup) {
@@ -238,7 +293,7 @@ async function generateDeviceLink(device) {
             popup.document.body.style.display = 'flex';
             popup.document.body.style.alignItems = 'center';
             popup.document.body.style.justifyContent = 'center';
-            popup.document.body.innerHTML = '<div>Dang tao link Netflix...</div>';
+            popup.document.body.innerHTML = '<div>Đang tạo link Netflix...</div>';
         } catch (e) {
             // ignore
         }
@@ -249,16 +304,16 @@ async function generateDeviceLink(device) {
             customerCode: currentLookupCode,
             device
         });
-        if (!data.url) throw new Error('Khong tao duoc link');
+        if (!data.url) throw new Error('Không tạo được link');
 
         if (popup && !popup.closed) popup.location.href = data.url;
         else window.open(data.url, '_blank');
-        setLookupState('Da tao link thanh cong. Dang mo Netflix...', 'success');
+        setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
     } catch (error) {
         if (popup && !popup.closed) {
             try { popup.close(); } catch (e) { /* ignore */ }
         }
-        setLookupState(error.message || 'Khong tao duoc link.', 'error');
+        setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         setButtonBusy(clickedButton, false);
         setDeviceButtonsEnabled(currentLookupEligible);
@@ -317,8 +372,10 @@ function renderCookiesSummary() {
 function renderCookiesTable() {
     const tbody = el('cookiesTableBody');
     if (!tbody) return;
+    syncCookieSelection();
     if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
+        updateCookieSelectionUi();
         return;
     }
 
@@ -326,8 +383,12 @@ function renderCookiesTable() {
         const assignText = cookie.assignedCustomerCode || '-';
         const lastCheck = formatDateTime(cookie.lastCheckedAt || cookie.updatedAt);
         const errorLine = cookie.lastError ? `<div class="bad" style="margin-top:4px">${cookie.lastError}</div>` : '';
+        const checked = selectedCookieIds.has(cookie.id) ? 'checked' : '';
         return `
             <tr>
+                <td data-label="Chon" class="check-cell">
+                    <input class="row-check cookie-row-check" type="checkbox" data-cookie-select="${cookie.id}" ${checked}>
+                </td>
                 <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span></td>
                 <td data-label="Trang thai"><span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span></td>
                 <td data-label="Gan khach" class="mono">${assignText}</td>
@@ -344,6 +405,7 @@ function renderCookiesTable() {
             </tr>
         `;
     }).join('');
+    updateCookieSelectionUi();
 }
 
 async function loadCustomers() {
@@ -356,6 +418,7 @@ async function loadCookies() {
     const data = await apiRequest('/api/nf-cookies', 'GET');
     cookiesCache = Array.isArray(data.cookies) ? data.cookies : [];
     cookiesSummary = data;
+    syncCookieSelection();
     renderCookiesSummary();
     renderCookiesTable();
 }
@@ -412,10 +475,10 @@ function renderAdminState(user) {
     if (fab) {
         fab.classList.remove('hidden');
         fab.classList.toggle('is-admin', isAdmin);
-        fab.title = isAdmin ? 'Tai khoan admin da dang nhap' : 'Dang nhap tai khoan';
-        fab.setAttribute('aria-label', isAdmin ? 'Tai khoan admin da dang nhap' : 'Dang nhap tai khoan');
+        fab.title = isAdmin ? 'Tài khoản admin đã đăng nhập' : 'Đăng nhập tài khoản';
+        fab.setAttribute('aria-label', isAdmin ? 'Tài khoản admin đã đăng nhập' : 'Đăng nhập tài khoản');
     }
-    if (identity) identity.textContent = isAdmin ? `Dang nhap: ${user.email}` : 'Chua dang nhap admin';
+    if (identity) identity.textContent = isAdmin ? `Đăng nhập: ${user.email}` : 'Chưa đăng nhập admin';
     if (authBox) authBox.classList.toggle('hidden', isAdmin);
     if (workspace) workspace.classList.toggle('hidden', !isAdmin);
     if (authState) {
@@ -544,6 +607,121 @@ async function importCookies() {
     }
 }
 
+function summarizeCheckResult(data = {}) {
+    return `Check ${data.totalChecked || 0} | LIVE ${data.liveCount || 0} | DIE ${data.deadCount || 0} | SBD ${data.sbdCount || 0} | Loi ${data.errorCount || 0}`;
+}
+
+async function runCookieCheck(mode = 'selected', triggerButton = null) {
+    if (runtimeBlocked) return;
+    const payload = { mode };
+    if (mode === 'selected') {
+        const cookieIds = getSelectedCookieIds();
+        if (cookieIds.length === 0) {
+            toast('Hay chon cookie truoc khi check.', 'warn');
+            return;
+        }
+        payload.cookieIds = cookieIds;
+    }
+
+    setButtonBusy(triggerButton, true, 'Dang check...');
+    setCookieCheckState('Dang check cookie...', 'loading');
+
+    try {
+        const data = await apiRequest('/api/nf-cookies/check', 'POST', payload);
+        const summaryText = summarizeCheckResult(data);
+        setCookieCheckState(summaryText, 'success');
+        toast(summaryText, 'ok');
+        await Promise.all([loadCookies(), loadCustomers()]);
+    } catch (error) {
+        setCookieCheckState(error.message || 'Check cookie that bai.', 'error');
+        toast(error.message || 'Check cookie that bai.', 'bad');
+    } finally {
+        setButtonBusy(triggerButton, false);
+    }
+}
+
+async function applyBulkCookieAction(action, triggerButton = null) {
+    if (runtimeBlocked) return;
+    const cookieIds = getSelectedCookieIds();
+    if (cookieIds.length === 0) {
+        toast('Hay chon cookie de thao tac.', 'warn');
+        return;
+    }
+
+    if (action === 'check-selected') {
+        await runCookieCheck('selected', triggerButton);
+        return;
+    }
+
+    if (action === 'delete') {
+        const ok = window.confirm(`Xoa ${cookieIds.length} cookie da chon?`);
+        if (!ok) return;
+    }
+
+    setButtonBusy(triggerButton, true, 'Dang xu ly...');
+    try {
+        if (action === 'unassign') {
+            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, unassign: true });
+            toast(`Da bo gan ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
+        } else if (action === 'delete') {
+            const data = await apiRequest('/api/nf-cookies', 'DELETE', { cookieIds });
+            toast(`Da xoa ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
+        } else if (action === 'active' || action === 'disabled' || action === 'dead') {
+            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, status: action });
+            toast(`Da cap nhat ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
+        } else {
+            return;
+        }
+        await Promise.all([loadCookies(), loadCustomers()]);
+    } catch (error) {
+        toast(error.message || 'Thao tac hang loat that bai.', 'bad');
+    } finally {
+        setButtonBusy(triggerButton, false);
+    }
+}
+
+function handleCookieTableChange(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const cookieId = String(target.dataset.cookieSelect || '').trim();
+    if (!cookieId) return;
+
+    if (target.checked) selectedCookieIds.add(cookieId);
+    else selectedCookieIds.delete(cookieId);
+    updateCookieSelectionUi();
+}
+
+function handleSelectAllCookies(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    if (target.checked) {
+        selectedCookieIds = new Set((cookiesCache || []).map((item) => item.id));
+    } else {
+        selectedCookieIds = new Set();
+    }
+    renderCookiesTable();
+}
+
+function toggleSelectAllCookies() {
+    const total = Array.isArray(cookiesCache) ? cookiesCache.length : 0;
+    if (total === 0) return;
+    const selectedCount = getSelectedCookieIds().length;
+    if (selectedCount === total) {
+        selectedCookieIds = new Set();
+    } else {
+        selectedCookieIds = new Set((cookiesCache || []).map((item) => item.id));
+    }
+    renderCookiesTable();
+}
+
+function handleCookieBulkAction(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const action = String(target.dataset.cookieBulkAct || '').trim();
+    if (!action) return;
+    applyBulkCookieAction(action, target);
+}
+
 async function handleCookieTableAction(event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
@@ -602,13 +780,13 @@ async function onAdminLogin() {
             await signOut(auth);
             throw new Error('Tai khoan nay khong co quyen admin /nf.');
         }
-        toast('Dang nhap admin thanh cong.', 'ok');
+            toast('Đăng nhập admin thành công.', 'ok');
     } catch (error) {
         if (authState) {
-            authState.textContent = error.message || 'Dang nhap that bai.';
+            authState.textContent = error.message || 'Đăng nhập thất bại.';
             setStateClass(authState, 'error');
         }
-        toast(error.message || 'Dang nhap that bai.', 'bad');
+        toast(error.message || 'Đăng nhập thất bại.', 'bad');
     } finally {
         setButtonBusy(loginBtn, false);
     }
@@ -658,9 +836,9 @@ function bindEvents() {
         adminLogoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                toast('Da dang xuat.', 'ok');
+                toast('Đã đăng xuất.', 'ok');
             } catch (error) {
-                toast(error.message || 'Dang xuat that bai.', 'bad');
+                toast(error.message || 'Đăng xuất thất bại.', 'bad');
             }
         });
     }
@@ -680,7 +858,24 @@ function bindEvents() {
     if (customersBody) customersBody.addEventListener('click', handleCustomerTableAction);
 
     const cookiesBody = el('cookiesTableBody');
-    if (cookiesBody) cookiesBody.addEventListener('click', handleCookieTableAction);
+    if (cookiesBody) {
+        cookiesBody.addEventListener('click', handleCookieTableAction);
+        cookiesBody.addEventListener('change', handleCookieTableChange);
+    }
+
+    const cookiesSelectAll = el('cookiesSelectAll');
+    if (cookiesSelectAll) cookiesSelectAll.addEventListener('change', handleSelectAllCookies);
+
+    const cookieBulkBar = el('cookieBulkBar');
+    if (cookieBulkBar) cookieBulkBar.addEventListener('click', handleCookieBulkAction);
+
+    const checkAllCookiesBtn = el('checkAllCookiesBtn');
+    if (checkAllCookiesBtn) {
+        checkAllCookiesBtn.addEventListener('click', () => runCookieCheck('all', checkAllCookiesBtn));
+    }
+
+    const toggleSelectAllCookiesBtn = el('toggleSelectAllCookiesBtn');
+    if (toggleSelectAllCookiesBtn) toggleSelectAllCookiesBtn.addEventListener('click', toggleSelectAllCookies);
 
     const importBtn = el('importCookiesBtn');
     if (importBtn) importBtn.addEventListener('click', importCookies);
@@ -714,7 +909,9 @@ function bootstrap() {
     bindEvents();
     setTab(activeTab);
     resetLookupResult();
-    setLookupState('Chua co ma khach hang.', 'idle');
+    setLookupState('Vui lòng nhập mã khách hàng.', 'idle');
+    setCookieCheckState('Chua check cookie.', 'idle');
+    updateCookieSelectionUi();
     applyRuntimeGuard();
 
     onAuthStateChanged(auth, (user) => {

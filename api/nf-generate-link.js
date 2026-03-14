@@ -5,9 +5,9 @@ const {
     persistAll,
     findCustomerByCode,
     isCustomerWarrantyValid,
-    callNetflixCreateAutoLoginToken,
     buildUrlByDevice
 } = require('./_nf-store');
+const { requestNetflixToken } = require('./_netflix-token-engine');
 
 const ALLOWED_DEVICES = new Set(['desktop', 'mobile', 'tv']);
 
@@ -52,6 +52,7 @@ module.exports = async function (req, res) {
         const now = new Date().toISOString();
         const customerIndex = customers.findIndex((item) => item.code === customer.code);
         let mutated = false;
+        let hasPermissionDeniedCookie = false;
 
         function unassignCustomerCurrentCookie() {
             if (!customers[customerIndex].assignedCookieId) return;
@@ -98,19 +99,49 @@ module.exports = async function (req, res) {
 
         async function tryCookieAtIndex(cookieIndex, reusedCookie) {
             const cookie = cookies[cookieIndex];
-            const result = await callNetflixCreateAutoLoginToken(cookie.netflixId, cookie.secureNetflixId || '');
+            const tokenResult = await requestNetflixToken(cookie.netflixId, cookie.secureNetflixId || '');
 
-            if (result.ok && result.nftoken) {
-                return finalizeSuccess(cookieIndex, result.nftoken, reusedCookie);
+            if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
+                return finalizeSuccess(cookieIndex, tokenResult.nftoken, reusedCookie);
             }
 
-            const reason = result.error || 'Cookie DIE';
-            cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], reason);
-            if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                unassignCustomerCurrentCookie();
+            const reason = tokenResult.error || 'Cookie error';
+
+            if (tokenResult.outcome === 'sbd_blocked') {
+                hasPermissionDeniedCookie = true;
+                cookies[cookieIndex] = {
+                    ...cookies[cookieIndex],
+                    status: 'active',
+                    lastCheckedAt: now,
+                    lastErrorAt: now,
+                    lastError: reason,
+                    updatedAt: now
+                };
+                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                    unassignCustomerCurrentCookie();
+                }
+                mutated = true;
+                return null;
             }
+
+            if (tokenResult.outcome === 'dead') {
+                cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], reason);
+                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                    unassignCustomerCurrentCookie();
+                }
+                mutated = true;
+                return null;
+            }
+
+            cookies[cookieIndex] = {
+                ...cookies[cookieIndex],
+                status: 'active',
+                lastCheckedAt: now,
+                lastErrorAt: now,
+                lastError: reason,
+                updatedAt: now
+            };
             mutated = true;
-
             return null;
         }
 
@@ -144,6 +175,13 @@ module.exports = async function (req, res) {
         if (mutated) {
             await persistAll(customers, cookies, 'nf-generate-link-no-live');
         }
+
+        if (hasPermissionDeniedCookie) {
+            return res.status(503).json({
+                error: 'Cookie vẫn còn sống nhưng bị Netflix chặn tạo link tự động. Vui lòng thay cookie khác.'
+            });
+        }
+
         return res.status(503).json({ error: 'Không còn cookie LIVE khả dụng trong danh sách.' });
     } catch (e) {
         return res.status(500).json({ error: e.message || 'Internal server error' });

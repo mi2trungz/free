@@ -1,10 +1,14 @@
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
+const { requestNetflixToken } = require('./_netflix-token-engine');
 
 const FIREBASE_PROJECT_ID = 'trada3k-c402a';
 const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
 const POOL_DOC_PATH = 'settings/netflix_cookie_pool';
 const LEGACY_DOC_PATH = 'settings/netflix_server_cookie';
 const UI_STATUS_DOC_PATH = 'settings/netflix';
+const LOCAL_COOKIE_STORE = path.join(__dirname, '..', 'data', 'netflix-cookie.json');
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -30,6 +34,20 @@ function parseBody(rawBody) {
 
 function sanitizeAccountKey(value) {
     return String(value || '').trim().replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80);
+}
+
+function readLocalSavedCookie() {
+    try {
+        if (!fs.existsSync(LOCAL_COOKIE_STORE)) return null;
+        const raw = fs.readFileSync(LOCAL_COOKIE_STORE, 'utf-8');
+        const parsed = JSON.parse(raw || '{}');
+        const netflixId = parsed && parsed.netflixId ? String(parsed.netflixId).trim() : '';
+        const secureNetflixId = parsed && parsed.secureNetflixId ? String(parsed.secureNetflixId).trim() : '';
+        if (!netflixId) return null;
+        return { netflixId, secureNetflixId };
+    } catch (e) {
+        return null;
+    }
 }
 
 function firestorePath(docPath) {
@@ -211,69 +229,6 @@ async function readAccountCookieFromFirestore(accountKey) {
     return { netflixId, secureNetflixId };
 }
 
-function callNetflixCreateAutoLoginToken(netflixId, secureNetflixId) {
-    return new Promise((resolve) => {
-        let cookieStr = `NetflixId=${netflixId};`;
-        if (secureNetflixId) cookieStr += ` SecureNetflixId=${secureNetflixId};`;
-
-        const payload = JSON.stringify({
-            operationName: 'CreateAutoLoginToken',
-            variables: { scope: 'WEBVIEW_MOBILE_STREAMING' },
-            extensions: {
-                persistedQuery: {
-                    version: 102,
-                    id: '76e97129-f4b5-41a0-a73c-12e674896849'
-                }
-            }
-        });
-
-        const options = {
-            hostname: 'android13.prod.ftl.netflix.com',
-            port: 443,
-            path: '/graphql',
-            method: 'POST',
-            headers: {
-                'User-Agent': 'com.netflix.mediaclient/63884 (Linux; U; Android 13; ro; M2007J3SG; Build/TQ1A.230205.001.A2; Cronet/143.0.7445.0)',
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                Cookie: cookieStr,
-                'Content-Length': Buffer.byteLength(payload)
-            }
-        };
-
-        const netflixReq = https.request(options, (netflixRes) => {
-            let responseData = '';
-            netflixRes.on('data', (d) => { responseData += d; });
-            netflixRes.on('end', () => {
-                try {
-                    const jsonBase = JSON.parse(responseData || '{}');
-                    if (jsonBase.errors && jsonBase.errors.length > 0) {
-                        const errorMessage = String(jsonBase.errors[0] && jsonBase.errors[0].message ? jsonBase.errors[0].message : 'API Error from Netflix');
-                        return resolve({ ok: false, statusCode: 400, error: errorMessage });
-                    }
-                    const token = jsonBase.data && jsonBase.data.createAutoLoginToken ? jsonBase.data.createAutoLoginToken : '';
-                    if (token) {
-                        return resolve({ ok: true, nftoken: token });
-                    }
-                    return resolve({ ok: false, statusCode: 500, error: 'Token not found in Netflix response' });
-                } catch (e) {
-                    return resolve({ ok: false, statusCode: 500, error: 'Failed to parse Netflix response' });
-                }
-            });
-        });
-
-        netflixReq.on('error', (e) => resolve({ ok: false, statusCode: 500, error: e.message || 'Network error' }));
-        netflixReq.write(payload);
-        netflixReq.end();
-    });
-}
-
-function isLikelyDeadCookie(errorText = '', statusCode = 0) {
-    const msg = String(errorText || '').toLowerCase();
-    if (statusCode === 401 || statusCode === 403) return true;
-    return /cookie|expired|invalid|unauthor|forbidden|auth|login|sign in/i.test(msg);
-}
-
 module.exports = async function (req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -300,16 +255,22 @@ module.exports = async function (req, res) {
             if (!accountCookie || !accountCookie.netflixId) {
                 return res.status(400).json({ error: 'Khong tim thay cookie cho tai khoan Netflix nay tren server.' });
             }
-            const result = await callNetflixCreateAutoLoginToken(accountCookie.netflixId, accountCookie.secureNetflixId || '');
-            if (!result.ok || !result.nftoken) {
+            const result = await requestNetflixToken(accountCookie.netflixId, accountCookie.secureNetflixId || '');
+            if (result.outcome !== 'ok' || !result.nftoken) {
+                if (result.outcome === 'sbd_blocked') {
+                    return res.status(400).json({ error: 'Cookie LIVE nhung bi Netflix chan tao token tu dong.' });
+                }
                 return res.status(400).json({ error: result.error || 'Khong tao duoc link Netflix cho tai khoan nay.' });
             }
             return res.status(200).json({ nftoken: result.nftoken });
         }
 
         if (requestedNetflixId) {
-            const result = await callNetflixCreateAutoLoginToken(requestedNetflixId, requestedSecureNetflixId);
-            if (!result.ok || !result.nftoken) {
+            const result = await requestNetflixToken(requestedNetflixId, requestedSecureNetflixId);
+            if (result.outcome !== 'ok' || !result.nftoken) {
+                if (result.outcome === 'sbd_blocked') {
+                    return res.status(400).json({ error: 'Cookie LIVE nhung bi Netflix chan tao token tu dong.' });
+                }
                 return res.status(400).json({ error: result.error || 'Khong tao duoc link Netflix tu cookie cung cap.' });
             }
             return res.status(200).json({ nftoken: result.nftoken });
@@ -322,16 +283,28 @@ module.exports = async function (req, res) {
         }
 
         if (activeIndexes.length === 0) {
-            return res.status(503).json({ error: 'Khong con cookie LIVE trong pool Netflix.' });
+            const localCookie = readLocalSavedCookie();
+            if (!localCookie || !localCookie.netflixId) {
+                return res.status(503).json({ error: 'Khong con cookie LIVE trong pool Netflix.' });
+            }
+            const localResult = await requestNetflixToken(localCookie.netflixId, localCookie.secureNetflixId || '');
+            if (localResult.outcome === 'ok' && localResult.nftoken) {
+                return res.status(200).json({ nftoken: localResult.nftoken });
+            }
+            if (localResult.outcome === 'sbd_blocked') {
+                return res.status(503).json({ error: 'Cookie LIVE nhung bi Netflix chan tao token tu dong.' });
+            }
+            return res.status(503).json({ error: localResult.error || 'Khong tao duoc token tu cookie local.' });
         }
 
         let hasPoolMutation = false;
+        let hasPermissionDeniedCookie = false;
         for (let i = 0; i < activeIndexes.length; i += 1) {
             const idx = activeIndexes[i];
             const cookie = pool[idx];
-            const result = await callNetflixCreateAutoLoginToken(cookie.netflixId, cookie.secureNetflixId || '');
+            const result = await requestNetflixToken(cookie.netflixId, cookie.secureNetflixId || '');
 
-            if (result.ok && result.nftoken) {
+            if (result.outcome === 'ok' && result.nftoken) {
                 pool[idx] = sanitizeCookieItem({
                     ...pool[idx],
                     status: 'active',
@@ -346,7 +319,20 @@ module.exports = async function (req, res) {
             }
 
             const errorText = result.error || 'Cookie error';
-            if (isLikelyDeadCookie(errorText, result.statusCode || 0)) {
+            if (result.outcome === 'sbd_blocked') {
+                hasPermissionDeniedCookie = true;
+                pool[idx] = sanitizeCookieItem({
+                    ...pool[idx],
+                    status: 'active',
+                    lastError: errorText,
+                    lastErrorAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+                hasPoolMutation = true;
+                continue;
+            }
+
+            if (result.outcome === 'dead') {
                 pool[idx] = sanitizeCookieItem({
                     ...pool[idx],
                     status: 'dead',
@@ -367,6 +353,21 @@ module.exports = async function (req, res) {
         }
 
         if (hasPoolMutation) await persistPool(pool);
+        const localCookie = readLocalSavedCookie();
+        if (localCookie && localCookie.netflixId) {
+            const localResult = await requestNetflixToken(localCookie.netflixId, localCookie.secureNetflixId || '');
+            if (localResult.outcome === 'ok' && localResult.nftoken) {
+                return res.status(200).json({ nftoken: localResult.nftoken });
+            }
+            if (localResult.outcome === 'sbd_blocked') {
+                hasPermissionDeniedCookie = true;
+            }
+        }
+        if (hasPermissionDeniedCookie) {
+            return res.status(503).json({
+                error: 'Cookie LIVE nhung bi Netflix chan tao token tu dong. Vui long thay cookie khac.'
+            });
+        }
         return res.status(503).json({ error: 'Khong con cookie LIVE trong pool Netflix.' });
     } catch (e) {
         return res.status(500).json({ error: e.message || 'Internal server error' });

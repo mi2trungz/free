@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NF Khach Mua Hang</title>
-    <meta name="description" content="Khu vuc danh rieng cho khach da mua hang, tao link xem Netflix theo thiet bi.">
+    <title>NF Khách Mua Hàng</title>
+    <meta name="description" content="Khu vực dành riêng cho khách đã mua hàng, tạo link xem Netflix theo thiết bị.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Sora:wght@500;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/nf/styles.css">
 </head>
 <body>
@@ -17,71 +17,56 @@
 
     <main class="nf-shell">
         <div id="runtimeGuard" class="runtime-guard hidden" role="alert" style="display:none;">
-            <strong>Ban dang mo sai che do:</strong>
-            <span id="runtimeGuardText">Hay mo bang server: http://localhost:3005/nf</span>
+            <strong>Bạn đang mở sai chế độ:</strong>
+            <span id="runtimeGuardText">Hãy mở bằng server: http://localhost:3005/nf</span>
         </div>
 
         <section class="hero panel">
-            <div class="hero-head">
-                <div class="eyebrow">NF private access</div>
-                <h1>Nhap ma khach hang de lay link xem</h1>
-                <p>Luong tu dong: xac thuc ma -> kiem tra cookie LIVE -> mo link dung theo thiet bi.</p>
-            </div>
-
-            <div class="step-row" aria-label="Huong dan nhanh">
-                <div class="step-chip is-active"><span>1</span> Nhap ma</div>
-                <div class="step-chip"><span>2</span> Xac thuc</div>
-                <div class="step-chip"><span>3</span> Chon thiet bi</div>
-            </div>
+            <h1 class="hero-title">Nhập mã khách hàng</h1>
 
             <div class="lookup-wrap">
-                <label for="customerCodeInput" class="input-label">Ma khach hang</label>
                 <div class="lookup-row">
-                    <input id="customerCodeInput" class="text-input code-input" placeholder="Vi du: NFAB12CD" autocomplete="off">
-                    <button id="lookupBtn" class="btn btn-primary" type="button">Kiem tra ma</button>
+                    <input id="customerCodeInput" class="text-input code-input" placeholder="Ví dụ: NFAB12CD" autocomplete="off">
+                    <button id="lookupBtn" class="btn btn-primary" type="button">Kiểm tra mã</button>
                 </div>
-                <div id="lookupState" class="state-text state-idle">Chua co ma khach hang.</div>
+                <div id="lookupState" class="state-text state-idle">Vui lòng nhập mã khách hàng.</div>
             </div>
 
             <article id="customerInfoCard" class="customer-card hidden">
-                <header>
-                    <h2>Thong tin khach hang</h2>
-                    <span class="badge badge-ok">Da xac thuc</span>
-                </header>
                 <div class="customer-grid">
                     <div class="customer-field">
-                        <span>Ma khach</span>
+                        <span>Mã khách</span>
                         <strong id="customerCodeText" class="mono">-</strong>
                     </div>
                     <div class="customer-field">
-                        <span>Ten khach</span>
+                        <span>Tên khách</span>
                         <strong id="customerNameText">-</strong>
                     </div>
                 </div>
             </article>
 
-            <div class="device-grid">
+            <div id="deviceSection" class="hidden">
+                <div id="deviceSectionTitle" class="device-section-title">hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng netflix</div>
+                <div class="device-grid">
                 <button class="btn btn-device" data-device="desktop" type="button" disabled>
-                    <span class="device-title">May tinh</span>
-                    <small>Desktop / Laptop</small>
+                    <span class="device-title">Máy tính</span>
                 </button>
                 <button class="btn btn-device" data-device="mobile" type="button" disabled>
-                    <span class="device-title">Dien thoai</span>
-                    <small>iOS / Android</small>
+                    <span class="device-title">Điện thoại</span>
                 </button>
                 <button class="btn btn-device" data-device="tv" type="button" disabled>
                     <span class="device-title">TV</span>
-                    <small>Smart TV / Box</small>
                 </button>
+            </div>
             </div>
         </section>
     </main>
 
-    <button id="nfAdminFab" class="admin-fab" type="button" aria-label="Dang nhap tai khoan" title="Dang nhap tai khoan">
+    <button id="nfAdminFab" class="admin-fab" type="button" aria-label="Đăng nhập tài khoản" title="Đăng nhập tài khoản">
         <svg class="admin-fab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2.2c-4.36 0-7.9 2.49-7.9 5.56a1 1 0 0 0 1 1h13.8a1 1 0 0 0 1-1c0-3.07-3.54-5.56-7.9-5.56Z"/>
         </svg>
-        <span class="sr-only">Dang nhap tai khoan</span>
+        <span class="sr-only">Đăng nhập tài khoản</span>
     </button>
 
     <section id="nfAdminModal" class="modal hidden" aria-hidden="true">
@@ -90,47 +75,47 @@
             <header class="modal-head">
                 <div>
                     <div class="eyebrow">NF dashboard</div>
-                    <h2>Quan tri rieng /nf</h2>
+                    <h2>Quản trị riêng /nf</h2>
                 </div>
-                <button id="closeAdminBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="closeAdminBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
 
             <div id="adminAuthBox" class="auth-box">
-                <h3>Dang nhap admin</h3>
-                <p>Chi email admin duoc phep truy cap quan tri /nf.</p>
+                <h3>Đăng nhập admin</h3>
+                <p>Chỉ email admin được phép truy cập quản trị /nf.</p>
                 <div class="auth-grid">
                     <input id="adminEmailInput" class="text-input" type="email" placeholder="Email admin">
-                    <input id="adminPasswordInput" class="text-input" type="password" placeholder="Mat khau">
+                    <input id="adminPasswordInput" class="text-input" type="password" placeholder="Mật khẩu">
                 </div>
                 <div class="auth-actions">
-                    <button id="adminLoginBtn" class="btn btn-primary" type="button">Dang nhap</button>
-                    <div id="adminAuthState" class="state-text state-idle">Chua dang nhap.</div>
+                    <button id="adminLoginBtn" class="btn btn-primary" type="button">Đăng nhập</button>
+                    <div id="adminAuthState" class="state-text state-idle">Chưa đăng nhập.</div>
                 </div>
             </div>
 
             <div id="adminWorkspace" class="hidden">
                 <div class="admin-bar">
                     <div id="adminIdentity" class="admin-identity">-</div>
-                    <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Dang xuat</button>
+                    <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Đăng xuất</button>
                 </div>
 
                 <div class="tab-row" role="tablist">
-                    <button class="tab-btn active" data-tab="customers" type="button">Khach hang</button>
-                    <button class="tab-btn" data-tab="cookies" type="button">Cookie tong</button>
+                    <button class="tab-btn active" data-tab="customers" type="button">Khách hàng</button>
+                    <button class="tab-btn" data-tab="cookies" type="button">Cookie tổng</button>
                 </div>
 
                 <section id="tabCustomers" class="tab-section">
                     <div class="section-head">
-                        <h3>Tao hoac cap nhat ma khach hang</h3>
-                        <p>Moi ma gan voi ten khach + thoi gian bao hanh.</p>
+                        <h3>Tạo hoặc cập nhật mã khách hàng</h3>
+                        <p>Mỗi mã gắn với tên khách và thời gian bảo hành.</p>
                     </div>
                     <form id="customerForm" class="form-grid">
-                        <input id="customerNameInput" class="text-input" placeholder="Ten khach hang" required>
+                        <input id="customerNameInput" class="text-input" placeholder="Tên khách hàng" required>
                         <input id="customerWarrantyInput" class="text-input" type="datetime-local" required>
                         <input id="customerEditCodeInput" type="hidden">
                         <div class="form-actions">
-                            <button id="saveCustomerBtn" class="btn btn-primary" type="submit">Luu khach hang</button>
-                            <button id="cancelEditCustomerBtn" class="btn btn-ghost hidden" type="button">Huy sua</button>
+                            <button id="saveCustomerBtn" class="btn btn-primary" type="submit">Lưu khách hàng</button>
+                            <button id="cancelEditCustomerBtn" class="btn btn-ghost hidden" type="button">Hủy sửa</button>
                         </div>
                     </form>
 
@@ -138,12 +123,12 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Ma</th>
-                                    <th>Ten</th>
-                                    <th>Bao hanh</th>
-                                    <th>Cookie gan</th>
-                                    <th>Trang thai</th>
-                                    <th>Hanh dong</th>
+                                    <th>Mã</th>
+                                    <th>Tên</th>
+                                    <th>Bảo hành</th>
+                                    <th>Cookie gắn</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody id="customersTableBody"></tbody>
@@ -153,30 +138,51 @@
 
                 <section id="tabCookies" class="tab-section hidden">
                     <div class="section-head">
-                        <h3>Import cookie tong</h3>
-                        <p>Moi dong la mot cookie. He thong se bo dong khong hop le.</p>
+                        <h3>Import cookie tổng</h3>
+                        <p>Mỗi dòng là một cookie. Hệ thống sẽ bỏ dòng không hợp lệ.</p>
                     </div>
 
                     <div class="import-grid">
-                        <textarea id="cookieImportInput" class="text-input text-area" placeholder="Moi dong 1 cookie..."></textarea>
+                        <textarea id="cookieImportInput" class="text-input text-area" placeholder="Mỗi dòng 1 cookie..."></textarea>
                         <div class="import-actions">
                             <input id="cookieImportFileInput" type="file" accept=".txt,.log,.csv,.json">
                             <button id="importCookiesBtn" class="btn btn-primary" type="button">Import cookie</button>
-                            <div id="cookieImportState" class="state-text state-idle">Chua import.</div>
+                            <div id="cookieImportState" class="state-text state-idle">Chưa import.</div>
                         </div>
                     </div>
 
                     <div id="cookieSummary" class="summary-row"></div>
 
+                    <div class="cookie-tools">
+                        <button id="checkAllCookiesBtn" class="btn btn-ghost" type="button">Check LIVE/DIE (toan bo)</button>
+                        <button id="toggleSelectAllCookiesBtn" class="btn btn-ghost" type="button">Chon tat ca</button>
+                        <div id="cookieCheckState" class="state-text state-idle">Chua check cookie.</div>
+                    </div>
+
+                    <div id="cookieBulkBar" class="bulk-bar hidden">
+                        <div class="bulk-count">Da chon <strong id="cookieSelectedCount">0</strong> cookie</div>
+                        <div class="row-actions">
+                            <button class="btn-tiny" data-cookie-bulk-act="active" type="button">Active</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="disabled" type="button">Disabled</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="dead" type="button">Dead</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="unassign" type="button">Bo gan</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="delete" type="button">Xoa</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="check-selected" type="button">Check LIVE/DIE (da chon)</button>
+                        </div>
+                    </div>
+
                     <div class="table-wrap">
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th class="check-col">
+                                        <input id="cookiesSelectAll" class="row-check" type="checkbox" aria-label="Chon tat ca cookie">
+                                    </th>
                                     <th>Cookie</th>
-                                    <th>Trang thai</th>
-                                    <th>Gan khach</th>
-                                    <th>Check gan nhat</th>
-                                    <th>Hanh dong</th>
+                                    <th>Trạng thái</th>
+                                    <th>Gắn khách</th>
+                                    <th>Check gần nhất</th>
+                                    <th>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody id="cookiesTableBody"></tbody>
@@ -198,7 +204,7 @@
                 guard.classList.remove('hidden');
             }
             if (guardText) {
-                guardText.textContent = 'Ban dang mo bang file://. Hay mo bang http://localhost:3005/nf';
+                guardText.textContent = 'Bạn đang mở bằng file://. Hãy mở bằng http://localhost:3005/nf';
             }
             var cssLink = document.querySelector('link[href="/nf/styles.css"]');
             if (cssLink) cssLink.setAttribute('href', './styles.css');
