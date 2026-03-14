@@ -553,6 +553,36 @@ body {
     font-size: 0.85rem;
 }
 
+.cookie-filter-row {
+    margin-top: 0.62rem;
+    display: grid;
+    grid-template-columns: 1.4fr repeat(4, minmax(0, 0.9fr)) auto;
+    gap: 0.48rem;
+    align-items: center;
+}
+
+.cookie-filter-row .text-input {
+    min-height: 40px;
+    padding-top: 0.56rem;
+    padding-bottom: 0.56rem;
+    font-size: 0.82rem;
+}
+
+.assign-cell {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.assign-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+}
+
+.assign-name {
+    color: #9fb0d7;
+    font-size: 0.78rem;
+}
+
 .cookie-tools {
     margin-top: 0.62rem;
     display: flex;
@@ -782,6 +812,10 @@ body {
     margin-top: 0.62rem;
 }
 
+#tvCodeInput {
+    letter-spacing: 0.08em;
+}
+
 .mobile-link-guide {
     margin-top: 0.8rem;
     padding: 0.75rem;
@@ -840,6 +874,10 @@ body {
 
     .device-grid,
     .customer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cookie-filter-row {
         grid-template-columns: 1fr;
     }
 

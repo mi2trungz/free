@@ -4,6 +4,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 const ADMIN_EMAIL = 'cungbocap306@gmail.com';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const LOOKUP_REASON_EXPIRED = 'expired';
+const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58',
@@ -31,6 +32,14 @@ let rawEditorCookieId = '';
 let rawEditorInitialRaw = '';
 let rawEditorMode = 'edit';
 let mobileGeneratedLink = '';
+let tvFlowBusy = false;
+const cookieViewState = {
+    search: '',
+    status: 'all',
+    tag: 'all',
+    assign: 'all',
+    sort: 'check_desc'
+};
 
 function el(id) {
     return document.getElementById(id);
@@ -62,6 +71,89 @@ function toDatetimeLocalFromIso(iso = '') {
     const tzOffset = date.getTimezoneOffset() * 60000;
     const localDate = new Date(date.getTime() - tzOffset);
     return localDate.toISOString().slice(0, 16);
+}
+
+function toMillis(iso = '') {
+    if (!iso) return 0;
+    const val = new Date(iso).getTime();
+    return Number.isFinite(val) ? val : 0;
+}
+
+function getCustomerNameMap() {
+    const map = new Map();
+    if (!Array.isArray(customersCache)) return map;
+    customersCache.forEach((customer) => {
+        const code = normalizeCode(customer.code || '');
+        if (!code) return;
+        map.set(code, String(customer.name || '').trim());
+    });
+    return map;
+}
+
+function applyCookieFiltersAndSort(cookies = []) {
+    const customerNameMap = getCustomerNameMap();
+    const searchNeedle = String(cookieViewState.search || '').trim().toLowerCase();
+    const statusFilter = String(cookieViewState.status || 'all').toLowerCase();
+    const tagFilter = String(cookieViewState.tag || 'all').toLowerCase();
+    const assignFilter = String(cookieViewState.assign || 'all').toLowerCase();
+    const sortMode = String(cookieViewState.sort || 'check_desc').toLowerCase();
+
+    const filtered = (Array.isArray(cookies) ? cookies : []).filter((cookie) => {
+        const assignedCode = normalizeCode(cookie.assignedCustomerCode || '');
+        const assignedName = String(customerNameMap.get(assignedCode) || '').trim();
+
+        if (statusFilter !== 'all' && String(cookie.status || 'active') !== statusFilter) return false;
+        if (tagFilter === 'error' && !cookie.errorTagged) return false;
+        if (tagFilter === 'sbd' && !cookie.sbdTagged) return false;
+        if (tagFilter === 'none' && (cookie.errorTagged || cookie.sbdTagged)) return false;
+        if (assignFilter === 'assigned' && !assignedCode) return false;
+        if (assignFilter === 'unassigned' && assignedCode) return false;
+
+        if (!searchNeedle) return true;
+        const haystack = [
+            String(cookie.id || ''),
+            String(cookie.netflixIdMasked || ''),
+            assignedCode,
+            assignedName,
+            String(cookie.lastError || '')
+        ].join(' ').toLowerCase();
+        return haystack.includes(searchNeedle);
+    });
+
+    const sorted = filtered.slice();
+    sorted.sort((a, b) => {
+        if (sortMode === 'id_asc') return String(a.id || '').localeCompare(String(b.id || ''));
+        if (sortMode === 'id_desc') return String(b.id || '').localeCompare(String(a.id || ''));
+        if (sortMode === 'updated_desc') return toMillis(b.updatedAt || '') - toMillis(a.updatedAt || '');
+        const aCheck = toMillis(a.lastCheckedAt || a.updatedAt || '');
+        const bCheck = toMillis(b.lastCheckedAt || b.updatedAt || '');
+        if (sortMode === 'check_asc') return aCheck - bCheck;
+        return bCheck - aCheck;
+    });
+    return sorted;
+}
+
+function getVisibleCookieIds() {
+    return applyCookieFiltersAndSort(cookiesCache).map((item) => item.id);
+}
+
+function resetCookieFilters() {
+    cookieViewState.search = '';
+    cookieViewState.status = 'all';
+    cookieViewState.tag = 'all';
+    cookieViewState.assign = 'all';
+    cookieViewState.sort = 'check_desc';
+
+    const searchInput = el('cookieSearchInput');
+    const statusInput = el('cookieStatusFilter');
+    const tagInput = el('cookieTagFilter');
+    const assignInput = el('cookieAssignFilter');
+    const sortInput = el('cookieSortSelect');
+    if (searchInput) searchInput.value = '';
+    if (statusInput) statusInput.value = 'all';
+    if (tagInput) tagInput.value = 'all';
+    if (assignInput) assignInput.value = 'all';
+    if (sortInput) sortInput.value = 'check_desc';
 }
 
 function setStateClass(target, mode = 'idle') {
@@ -105,15 +197,18 @@ function getSelectedCookieIds() {
 }
 
 function updateCookieSelectionUi() {
-    const total = Array.isArray(cookiesCache) ? cookiesCache.length : 0;
-    const selectedCount = getSelectedCookieIds().length;
+    const visibleIds = getVisibleCookieIds();
+    const visibleIdSet = new Set(visibleIds);
+    const total = visibleIds.length;
+    const selectedCount = getSelectedCookieIds().filter((id) => visibleIdSet.has(id)).length;
+    const selectedGlobalCount = getSelectedCookieIds().length;
     const bulkBar = el('cookieBulkBar');
     const count = el('cookieSelectedCount');
     const selectAll = el('cookiesSelectAll');
     const toggleSelectAllBtn = el('toggleSelectAllCookiesBtn');
 
-    if (count) count.textContent = String(selectedCount);
-    if (bulkBar) bulkBar.classList.toggle('hidden', selectedCount === 0);
+    if (count) count.textContent = String(selectedGlobalCount);
+    if (bulkBar) bulkBar.classList.toggle('hidden', selectedGlobalCount === 0);
     if (selectAll) {
         selectAll.disabled = total === 0;
         selectAll.checked = total > 0 && selectedCount === total;
@@ -121,7 +216,7 @@ function updateCookieSelectionUi() {
     }
     if (toggleSelectAllBtn) {
         toggleSelectAllBtn.disabled = total === 0;
-        toggleSelectAllBtn.textContent = total > 0 && selectedCount === total ? 'Bo chon tat ca' : 'Chon tat ca';
+        toggleSelectAllBtn.textContent = total > 0 && selectedCount === total ? 'Bo chon het bo loc' : 'Chon het bo loc';
     }
 }
 
@@ -213,6 +308,7 @@ function setDeviceSectionVisible(visible) {
     section.classList.toggle('hidden', !visible);
     if (!visible) closeSupportModal();
     if (!visible) closeMobileLinkModal();
+    if (!visible) closeTvCodeModal();
 }
 
 function setExpiredSectionVisible(visible) {
@@ -279,6 +375,117 @@ function closeMobileLinkModal() {
     modal.setAttribute('aria-hidden', 'true');
     output.value = '';
     mobileGeneratedLink = '';
+}
+
+function setTvCodeState(text, mode = 'idle') {
+    const state = el('tvCodeState');
+    if (!state) return;
+    state.textContent = text || '';
+    setStateClass(state, mode);
+}
+
+function openTvCodeModal() {
+    if (!currentLookupCode || !currentLookupEligible) return;
+    const section = el('deviceSection');
+    const modal = el('tvCodeModal');
+    const input = el('tvCodeInput');
+    if (!section || !modal || !input || section.classList.contains('hidden')) return;
+    tvFlowBusy = false;
+    input.value = '';
+    setTvCodeState('Nhập đúng 8 số rồi bấm xác nhận.', 'idle');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    input.focus();
+}
+
+function closeTvCodeModal() {
+    if (tvFlowBusy) return;
+    const modal = el('tvCodeModal');
+    const input = el('tvCodeInput');
+    if (!modal || !input) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    input.value = '';
+}
+
+function detectClientLoginDevice() {
+    const ua = String((navigator && navigator.userAgent) || '').toLowerCase();
+    const mobile = /android|iphone|ipad|ipod|mobile|windows phone/i.test(ua);
+    return mobile ? 'mobile' : 'desktop';
+}
+
+function openLoginUrlBestEffort(url, device) {
+    const targetUrl = String(url || '').trim();
+    if (!targetUrl) return false;
+    const popup = window.open('about:blank', '_blank');
+    if (popup && !popup.closed) {
+        popup.location.href = targetUrl;
+        return true;
+    }
+    if (device !== 'mobile') window.open(targetUrl, '_blank');
+    return false;
+}
+
+async function submitTvCodeFlow() {
+    if (runtimeBlocked || tvFlowBusy) return;
+    if (!currentLookupCode || !currentLookupEligible) {
+        setTvCodeState('Mã khách chưa đủ điều kiện sử dụng.', 'warning');
+        return;
+    }
+
+    const input = el('tvCodeInput');
+    const submitBtn = el('tvCodeSubmitBtn');
+    const raw = String((input && input.value) || '');
+    const tvCode = raw.replace(/\D/g, '').slice(0, 8);
+    if (!/^\d{8}$/.test(tvCode)) {
+        setTvCodeState('Mã TV phải gồm đúng 8 số.', 'warning');
+        return;
+    }
+
+    if (input) input.value = tvCode;
+    const loginDevice = detectClientLoginDevice();
+    tvFlowBusy = true;
+    setButtonBusy(submitBtn, true, 'Đang xử lý...');
+    setTvCodeState('Đang tạo link đăng nhập và submit mã TV...', 'loading');
+
+    try {
+        const linkData = await apiRequest('/api/nf-generate-link', 'POST', {
+            customerCode: currentLookupCode,
+            device: loginDevice
+        });
+        if (!linkData || !linkData.url) throw new Error('Không tạo được link đăng nhập.');
+
+        const opened = openLoginUrlBestEffort(linkData.url, loginDevice);
+        setLookupState('Đã tạo link đăng nhập. Đang xử lý mã TV...', 'loading');
+
+        const tvResult = await apiRequest('/api/nf-tv-activate', 'POST', {
+            customerCode: currentLookupCode,
+            tvCode,
+            cookieId: linkData.cookieId || ''
+        });
+
+        if (tvResult.outcome === 'submitted') {
+            const suffix = opened ? '' : ` Nếu chưa thấy trang đăng nhập tự mở, hãy mở link thủ công: ${linkData.url}`;
+            setTvCodeState(`${tvResult.message || 'Đã submit mã TV thành công.'}${suffix}`, 'success');
+            setLookupState('Đã submit mã TV thành công.', 'success');
+            return;
+        }
+
+        if (tvResult.outcome === 'manual_required') {
+            setTvCodeState(`${tvResult.message || 'Cần thao tác thủ công.'} Vui lòng mở ${TV8_MANUAL_URL} để nhập mã.`, 'warning');
+            setLookupState(`Cần thao tác thủ công trên ${TV8_MANUAL_URL}.`, 'warning');
+            return;
+        }
+
+        setTvCodeState(tvResult.message || 'Xử lý mã TV thất bại.', 'error');
+        setLookupState(tvResult.message || 'Xử lý mã TV thất bại.', 'error');
+    } catch (error) {
+        setTvCodeState(`${error.message || 'Xử lý mã TV thất bại.'} Bạn có thể nhập thủ công tại ${TV8_MANUAL_URL}.`, 'error');
+        setLookupState(error.message || 'Xử lý mã TV thất bại.', 'error');
+    } finally {
+        tvFlowBusy = false;
+        setButtonBusy(submitBtn, false);
+    }
 }
 
 function resetLookupResult() {
@@ -538,11 +745,18 @@ function renderCustomersTable() {
 function renderCookiesSummary() {
     const summary = el('cookieSummary');
     if (!summary) return;
-    if (!cookiesSummary) {
+    if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
         summary.textContent = '';
         return;
     }
-    summary.textContent = `Tong: ${cookiesSummary.total || 0} | Active: ${cookiesSummary.activeCount || 0} | Disabled: ${cookiesSummary.disabledCount || 0} | Dead: ${cookiesSummary.deadCount || 0} | Dang gan: ${cookiesSummary.assignedCount || 0}`;
+    const total = cookiesCache.length;
+    const activeCount = cookiesCache.filter((c) => c.status === 'active').length;
+    const disabledCount = cookiesCache.filter((c) => c.status === 'disabled').length;
+    const deadCount = cookiesCache.filter((c) => c.status === 'dead').length;
+    const sbdCount = cookiesCache.filter((c) => !!c.sbdTagged).length;
+    const assignedCount = cookiesCache.filter((c) => !!String(c.assignedCustomerCode || '').trim()).length;
+    const unassignedCount = Math.max(0, activeCount - sbdCount - assignedCount);
+    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
 }
 
 function renderCookiesTable() {
@@ -554,9 +768,20 @@ function renderCookiesTable() {
         updateCookieSelectionUi();
         return;
     }
+    const customerNameMap = getCustomerNameMap();
+    const visibleCookies = applyCookieFiltersAndSort(cookiesCache);
+    if (visibleCookies.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Khong co cookie nao phu hop bo loc hien tai.</td></tr>';
+        updateCookieSelectionUi();
+        return;
+    }
 
-    tbody.innerHTML = cookiesCache.map((cookie) => {
-        const assignText = cookie.assignedCustomerCode || '-';
+    tbody.innerHTML = visibleCookies.map((cookie) => {
+        const assignedCode = normalizeCode(cookie.assignedCustomerCode || '');
+        const assignedName = assignedCode ? (customerNameMap.get(assignedCode) || 'Khong ro ten') : '';
+        const assignHtml = assignedCode
+            ? `<div class="assign-cell"><span class="assign-code">${assignedCode}</span><span class="assign-name">${assignedName}</span></div>`
+            : '-';
         const lastCheck = formatDateTime(cookie.lastCheckedAt || cookie.updatedAt);
         const errorLine = cookie.lastError ? `<div class="bad" style="margin-top:4px">${cookie.lastError}</div>` : '';
         const checked = selectedCookieIds.has(cookie.id) ? 'checked' : '';
@@ -572,7 +797,7 @@ function renderCookiesTable() {
                 </td>
                 <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span></td>
                 <td data-label="Trang thai">${statusHtml}</td>
-                <td data-label="Gan khach" class="mono">${assignText}</td>
+                <td data-label="Gan khach">${assignHtml}</td>
                 <td data-label="Check">${lastCheck}${errorLine}</td>
                 <td data-label="Hanh dong">
                     <div class="row-actions">
@@ -597,6 +822,7 @@ async function loadCustomers() {
     const data = await apiRequest('/api/nf-customers', 'GET');
     customersCache = Array.isArray(data.customers) ? data.customers : [];
     renderCustomersTable();
+    renderCookiesTable();
 }
 
 async function loadCookies() {
@@ -887,6 +1113,21 @@ function summarizeCheckResult(data = {}) {
     return `Check ${data.totalChecked || 0} | LIVE ${data.liveCount || 0} | DIE ${data.deadCount || 0} | SBD ${data.sbdCount || 0} | Loi ${data.errorCount || 0}`;
 }
 
+function applyCookieViewControls() {
+    const searchInput = el('cookieSearchInput');
+    const statusInput = el('cookieStatusFilter');
+    const tagInput = el('cookieTagFilter');
+    const assignInput = el('cookieAssignFilter');
+    const sortInput = el('cookieSortSelect');
+
+    cookieViewState.search = String((searchInput && searchInput.value) || '').trim();
+    cookieViewState.status = String((statusInput && statusInput.value) || 'all');
+    cookieViewState.tag = String((tagInput && tagInput.value) || 'all');
+    cookieViewState.assign = String((assignInput && assignInput.value) || 'all');
+    cookieViewState.sort = String((sortInput && sortInput.value) || 'check_desc');
+    renderCookiesTable();
+}
+
 async function runCookieCheck(mode = 'selected', triggerButton = null) {
     if (runtimeBlocked) return;
     const payload = { mode };
@@ -976,22 +1217,24 @@ function handleCookieTableChange(event) {
 function handleSelectAllCookies(event) {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
+    const visibleIds = getVisibleCookieIds();
     if (target.checked) {
-        selectedCookieIds = new Set((cookiesCache || []).map((item) => item.id));
+        visibleIds.forEach((id) => selectedCookieIds.add(id));
     } else {
-        selectedCookieIds = new Set();
+        visibleIds.forEach((id) => selectedCookieIds.delete(id));
     }
     renderCookiesTable();
 }
 
 function toggleSelectAllCookies() {
-    const total = Array.isArray(cookiesCache) ? cookiesCache.length : 0;
+    const visibleIds = getVisibleCookieIds();
+    const total = visibleIds.length;
     if (total === 0) return;
-    const selectedCount = getSelectedCookieIds().length;
+    const selectedCount = visibleIds.filter((id) => selectedCookieIds.has(id)).length;
     if (selectedCount === total) {
-        selectedCookieIds = new Set();
+        visibleIds.forEach((id) => selectedCookieIds.delete(id));
     } else {
-        selectedCookieIds = new Set((cookiesCache || []).map((item) => item.id));
+        visibleIds.forEach((id) => selectedCookieIds.add(id));
     }
     renderCookiesTable();
 }
@@ -1126,6 +1369,10 @@ function bindEvents() {
     deviceButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
             const device = String(btn.dataset.device || 'desktop');
+            if (device === 'tv') {
+                openTvCodeModal();
+                return;
+            }
             generateDeviceLink(device);
         });
     });
@@ -1196,6 +1443,37 @@ function bindEvents() {
             }
         });
     }
+
+    const tvCodeInput = el('tvCodeInput');
+    if (tvCodeInput) {
+        tvCodeInput.addEventListener('input', () => {
+            const digits = String(tvCodeInput.value || '').replace(/\D/g, '').slice(0, 8);
+            if (digits !== tvCodeInput.value) tvCodeInput.value = digits;
+        });
+        tvCodeInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                submitTvCodeFlow();
+            }
+        });
+    }
+
+    const tvCodeSubmitBtn = el('tvCodeSubmitBtn');
+    if (tvCodeSubmitBtn) tvCodeSubmitBtn.addEventListener('click', submitTvCodeFlow);
+
+    const tvCodeCloseBtn = el('tvCodeCloseBtn');
+    if (tvCodeCloseBtn) tvCodeCloseBtn.addEventListener('click', closeTvCodeModal);
+
+    const tvCodeModal = el('tvCodeModal');
+    if (tvCodeModal) {
+        tvCodeModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeTvCode === '1') closeTvCodeModal();
+        });
+    }
+
+    const tvManualLink = el('tvManualLink');
+    if (tvManualLink) tvManualLink.setAttribute('href', TV8_MANUAL_URL);
 
     const adminFab = el('nfAdminFab');
     if (adminFab) adminFab.addEventListener('click', openAdminModal);
@@ -1299,6 +1577,29 @@ function bindEvents() {
     const toggleSelectAllCookiesBtn = el('toggleSelectAllCookiesBtn');
     if (toggleSelectAllCookiesBtn) toggleSelectAllCookiesBtn.addEventListener('click', toggleSelectAllCookies);
 
+    const cookieSearchInput = el('cookieSearchInput');
+    if (cookieSearchInput) cookieSearchInput.addEventListener('input', applyCookieViewControls);
+
+    const cookieStatusFilter = el('cookieStatusFilter');
+    if (cookieStatusFilter) cookieStatusFilter.addEventListener('change', applyCookieViewControls);
+
+    const cookieTagFilter = el('cookieTagFilter');
+    if (cookieTagFilter) cookieTagFilter.addEventListener('change', applyCookieViewControls);
+
+    const cookieAssignFilter = el('cookieAssignFilter');
+    if (cookieAssignFilter) cookieAssignFilter.addEventListener('change', applyCookieViewControls);
+
+    const cookieSortSelect = el('cookieSortSelect');
+    if (cookieSortSelect) cookieSortSelect.addEventListener('change', applyCookieViewControls);
+
+    const cookieFilterResetBtn = el('cookieFilterResetBtn');
+    if (cookieFilterResetBtn) {
+        cookieFilterResetBtn.addEventListener('click', () => {
+            resetCookieFilters();
+            renderCookiesTable();
+        });
+    }
+
     const importBtn = el('importCookiesBtn');
     if (importBtn) importBtn.addEventListener('click', importCookies);
 
@@ -1324,6 +1625,11 @@ function bindEvents() {
 
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+        const tvModal = el('tvCodeModal');
+        if (tvModal && !tvModal.classList.contains('hidden')) {
+            closeTvCodeModal();
+            return;
+        }
         const phoneModal = el('mobileLinkModal');
         if (phoneModal && !phoneModal.classList.contains('hidden')) {
             closeMobileLinkModal();
@@ -1350,6 +1656,7 @@ function bindEvents() {
 
 function bootstrap() {
     bindEvents();
+    resetCookieFilters();
     setTab(activeTab);
     resetLookupResult();
     setLookupState('Vui lòng nhập mã khách hàng.', 'idle');

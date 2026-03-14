@@ -146,6 +146,31 @@
         </div>
     </section>
 
+    <section id="tvCodeModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-tv-code="1"></div>
+        <div class="modal-card mobile-link-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">TV Activation</span>
+                    <h2>Nhập mã TV (8 số)</h2>
+                </div>
+                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="mobile-link-body">
+                <label class="mobile-link-label" for="tvCodeInput">Mã TV:</label>
+                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Ví dụ: 12345678" autocomplete="off">
+                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xác nhận</button>
+                <div id="tvCodeState" class="state-text state-idle">Nhập đúng 8 số rồi bấm xác nhận.</div>
+
+                <div class="mobile-link-guide">
+                    <h3>Fallback thủ công</h3>
+                    <p>Nếu hệ thống không auto submit được, vui lòng tự nhập mã tại:</p>
+                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mở netflix.com/tv8</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="nfAdminModal" class="modal hidden" aria-hidden="true">
         <div class="modal-backdrop" data-close-admin="1"></div>
         <div class="modal-card">
@@ -228,6 +253,34 @@
                     </div>
 
                     <div id="cookieSummary" class="summary-row"></div>
+                    <div class="cookie-filter-row">
+                        <input id="cookieSearchInput" class="text-input" type="text" placeholder="Tim theo ma cookie / ma khach / ten khach">
+                        <select id="cookieStatusFilter" class="text-input">
+                            <option value="all">Tat ca trang thai</option>
+                            <option value="active">Active</option>
+                            <option value="disabled">Disabled</option>
+                            <option value="dead">Dead</option>
+                        </select>
+                        <select id="cookieTagFilter" class="text-input">
+                            <option value="all">Tat ca tag</option>
+                            <option value="error">Co ERROR</option>
+                            <option value="sbd">Co SBD</option>
+                            <option value="none">Khong tag</option>
+                        </select>
+                        <select id="cookieAssignFilter" class="text-input">
+                            <option value="all">Tat ca gan</option>
+                            <option value="assigned">Dang gan</option>
+                            <option value="unassigned">Chua gan</option>
+                        </select>
+                        <select id="cookieSortSelect" class="text-input">
+                            <option value="check_desc">Check moi nhat</option>
+                            <option value="check_asc">Check cu nhat</option>
+                            <option value="updated_desc">Cap nhat moi nhat</option>
+                            <option value="id_asc">ID A-Z</option>
+                            <option value="id_desc">ID Z-A</option>
+                        </select>
+                        <button id="cookieFilterResetBtn" class="btn btn-ghost" type="button">Xoa loc</button>
+                    </div>
 
                     <div class="cookie-tools">
                         <button id="checkAllCookiesBtn" class="btn btn-ghost" type="button">Check LIVE/DIE (toàn bộ)</button>

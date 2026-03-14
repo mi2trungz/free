@@ -7,6 +7,7 @@ const nfCookiesImportHandler = require('./api/nf-cookies/import');
 const nfCookiesCheckHandler = require('./api/nf-cookies/check');
 const nfCustomerLookupHandler = require('./api/nf-customer-lookup');
 const nfGenerateLinkHandler = require('./api/nf-generate-link');
+const nfTvActivateHandler = require('./api/nf-tv-activate');
 const nftokenHandler = require('./api/nftoken');
 
 const PORT = 3005;
@@ -138,6 +139,9 @@ const server = http.createServer((req, res) => {
     }
     if (requestPath === '/api/nf-generate-link') {
         return invokeServerlessApi(nfGenerateLinkHandler, req, res);
+    }
+    if (requestPath === '/api/nf-tv-activate') {
+        return invokeServerlessApi(nfTvActivateHandler, req, res);
     }
     if (requestPath === '/api/nftoken') {
         return invokeServerlessApi(nftokenHandler, req, res);
