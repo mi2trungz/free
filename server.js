@@ -2,6 +2,11 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const nfCustomersHandler = require('./api/nf-customers');
+const nfCookiesHandler = require('./api/nf-cookies');
+const nfCookiesImportHandler = require('./api/nf-cookies/import');
+const nfCustomerLookupHandler = require('./api/nf-customer-lookup');
+const nfGenerateLinkHandler = require('./api/nf-generate-link');
 
 const PORT = 3005;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -57,11 +62,79 @@ function writeStoredNetflixCookie(netflixId, secureNetflixId) {
     }
 }
 
+function invokeServerlessApi(handler, req, res) {
+    let body = '';
+    req.on('data', (chunk) => {
+        body += chunk.toString();
+    });
+    req.on('end', async () => {
+        const reqLike = {
+            method: req.method,
+            headers: req.headers,
+            body
+        };
+
+        const resLike = {
+            _statusCode: 200,
+            _ended: false,
+            setHeader(name, value) {
+                res.setHeader(name, value);
+            },
+            status(code) {
+                this._statusCode = code;
+                return this;
+            },
+            json(payload) {
+                if (this._ended) return;
+                this._ended = true;
+                res.writeHead(this._statusCode, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(payload));
+            },
+            end(payload = '') {
+                if (this._ended) return;
+                this._ended = true;
+                res.writeHead(this._statusCode);
+                res.end(payload);
+            }
+        };
+
+        try {
+            await handler(reqLike, resLike);
+            if (!resLike._ended) {
+                resLike.end();
+            }
+        } catch (e) {
+            if (!resLike._ended) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message || 'Internal server error' }));
+            }
+        }
+    });
+}
+
 const server = http.createServer((req, res) => {
     // Enable CORS for local development just in case
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    const requestPath = String(req.url || '/').split('?')[0];
+
+    if (requestPath === '/api/nf-cookies/import') {
+        return invokeServerlessApi(nfCookiesImportHandler, req, res);
+    }
+    if (requestPath === '/api/nf-cookies') {
+        return invokeServerlessApi(nfCookiesHandler, req, res);
+    }
+    if (requestPath === '/api/nf-customers') {
+        return invokeServerlessApi(nfCustomersHandler, req, res);
+    }
+    if (requestPath === '/api/nf-customer-lookup') {
+        return invokeServerlessApi(nfCustomerLookupHandler, req, res);
+    }
+    if (requestPath === '/api/nf-generate-link') {
+        return invokeServerlessApi(nfGenerateLinkHandler, req, res);
+    }
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
@@ -206,7 +279,16 @@ const server = http.createServer((req, res) => {
     }
 
     // Serve Static Files
-    let filePath = path.join(__dirname, req.url === '/' ? 'index.html' : req.url);
+    const rawUrl = requestPath;
+    let relativePath = rawUrl.replace(/^\/+/, '');
+    if (!relativePath) relativePath = 'index.html';
+    if (relativePath === 'nf') relativePath = path.join('nf', 'index.html');
+    if (relativePath === 'banggia') relativePath = path.join('banggia', 'index.html');
+
+    let filePath = path.join(__dirname, relativePath);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+        filePath = path.join(filePath, 'index.html');
+    }
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = MIME_TYPES[extname] || 'application/octet-stream';
 

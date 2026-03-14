@@ -1,0 +1,151 @@
+const {
+    parseBody,
+    readCustomers,
+    readCookies,
+    persistAll,
+    findCustomerByCode,
+    isCustomerWarrantyValid,
+    callNetflixCreateAutoLoginToken,
+    buildUrlByDevice
+} = require('./_nf-store');
+
+const ALLOWED_DEVICES = new Set(['desktop', 'mobile', 'tv']);
+
+function setCors(res) {
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function markCookieDead(cookie, errorMessage = '') {
+    const now = new Date().toISOString();
+    return {
+        ...cookie,
+        status: 'dead',
+        lastCheckedAt: now,
+        lastErrorAt: now,
+        updatedAt: now,
+        lastError: String(errorMessage || 'Cookie DIE'),
+        assignedCustomerCode: ''
+    };
+}
+
+module.exports = async function (req, res) {
+    setCors(res);
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+    try {
+        const body = parseBody(req.body);
+        const customerCode = String(body.customerCode || '').trim().toUpperCase();
+        const device = String(body.device || 'desktop').trim().toLowerCase();
+        if (!customerCode) return res.status(400).json({ error: 'Missing customerCode' });
+        if (!ALLOWED_DEVICES.has(device)) return res.status(400).json({ error: 'Invalid device' });
+
+        const [customers, cookies] = await Promise.all([readCustomers(), readCookies()]);
+        const customer = findCustomerByCode(customers, customerCode);
+        if (!customer) return res.status(404).json({ error: 'Mã khách hàng không tồn tại.' });
+        if (customer.status === 'inactive') return res.status(403).json({ error: 'Mã khách hàng đang tạm khóa.' });
+        if (!isCustomerWarrantyValid(customer)) return res.status(403).json({ error: 'Mã khách hàng đã hết thời gian bảo hành.' });
+
+        const now = new Date().toISOString();
+        const customerIndex = customers.findIndex((item) => item.code === customer.code);
+        let mutated = false;
+
+        function unassignCustomerCurrentCookie() {
+            if (!customers[customerIndex].assignedCookieId) return;
+            customers[customerIndex] = {
+                ...customers[customerIndex],
+                assignedCookieId: '',
+                updatedAt: now
+            };
+            mutated = true;
+        }
+
+        async function finalizeSuccess(cookieIndex, nftoken, reusedCookie) {
+            const currentCookie = cookies[cookieIndex];
+            cookies[cookieIndex] = {
+                ...currentCookie,
+                status: 'active',
+                assignedCustomerCode: customers[customerIndex].code,
+                lastCheckedAt: now,
+                lastSuccessAt: now,
+                lastErrorAt: '',
+                lastError: '',
+                updatedAt: now
+            };
+            customers[customerIndex] = {
+                ...customers[customerIndex],
+                assignedCookieId: currentCookie.id,
+                lastLinkedAt: now,
+                updatedAt: now
+            };
+            mutated = true;
+            await persistAll(customers, cookies, 'nf-generate-link-success');
+            return res.status(200).json({
+                success: true,
+                customer: {
+                    code: customers[customerIndex].code,
+                    name: customers[customerIndex].name
+                },
+                cookieId: currentCookie.id,
+                reusedCookie: !!reusedCookie,
+                device,
+                url: buildUrlByDevice(nftoken, device)
+            });
+        }
+
+        async function tryCookieAtIndex(cookieIndex, reusedCookie) {
+            const cookie = cookies[cookieIndex];
+            const result = await callNetflixCreateAutoLoginToken(cookie.netflixId, cookie.secureNetflixId || '');
+
+            if (result.ok && result.nftoken) {
+                return finalizeSuccess(cookieIndex, result.nftoken, reusedCookie);
+            }
+
+            const reason = result.error || 'Cookie DIE';
+            cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], reason);
+            if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                unassignCustomerCurrentCookie();
+            }
+            mutated = true;
+
+            return null;
+        }
+
+        const assignedCookieId = customers[customerIndex].assignedCookieId || '';
+        if (assignedCookieId) {
+            const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
+            if (assignedIdx >= 0) {
+                const assignedCookie = cookies[assignedIdx];
+                const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
+                if (lockedByOther) {
+                    unassignCustomerCurrentCookie();
+                } else {
+                    const assignedResult = await tryCookieAtIndex(assignedIdx, true);
+                    if (assignedResult) return assignedResult;
+                }
+            } else {
+                unassignCustomerCurrentCookie();
+            }
+        }
+
+        for (let i = 0; i < cookies.length; i += 1) {
+            const cookie = cookies[i];
+            if (cookie.status !== 'active') continue;
+            if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
+            if (cookie.id === assignedCookieId) continue;
+
+            const attemptResult = await tryCookieAtIndex(i, false);
+            if (attemptResult) return attemptResult;
+        }
+
+        if (mutated) {
+            await persistAll(customers, cookies, 'nf-generate-link-no-live');
+        }
+        return res.status(503).json({ error: 'Không còn cookie LIVE khả dụng trong danh sách.' });
+    } catch (e) {
+        return res.status(500).json({ error: e.message || 'Internal server error' });
+    }
+};
