@@ -3,6 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from
 
 const ADMIN_EMAIL = 'cungbocap306@gmail.com';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
+const LOOKUP_REASON_EXPIRED = 'expired';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58',
@@ -136,6 +137,7 @@ function setControlRuntimeDisabled(disabled) {
     if (disabled) {
         setDeviceButtonsEnabled(false);
         setDeviceSectionVisible(false);
+        setExpiredSectionVisible(false);
     }
 }
 
@@ -213,6 +215,21 @@ function setDeviceSectionVisible(visible) {
     if (!visible) closeMobileLinkModal();
 }
 
+function setExpiredSectionVisible(visible) {
+    const section = el('expiredSection');
+    if (!section) return;
+    section.classList.toggle('hidden', !visible);
+    if (!visible) closeRenewModal();
+}
+
+function isExpiredLookupPayload(payload) {
+    if (!payload || payload.eligible) return false;
+    const reason = String(payload.reason || '').trim().toLowerCase();
+    if (reason === LOOKUP_REASON_EXPIRED) return true;
+    const message = String(payload.message || '').toLowerCase();
+    return message.includes('hết hạn') || message.includes('het han');
+}
+
 function openSupportModal() {
     if (!currentLookupEligible) return;
     const section = el('deviceSection');
@@ -224,6 +241,21 @@ function openSupportModal() {
 
 function closeSupportModal() {
     const modal = el('supportModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function openRenewModal() {
+    const section = el('expiredSection');
+    const modal = el('renewModal');
+    if (!section || !modal || section.classList.contains('hidden')) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeRenewModal() {
+    const modal = el('renewModal');
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
@@ -254,6 +286,7 @@ function resetLookupResult() {
     currentLookupEligible = false;
     setDeviceButtonsEnabled(false);
     setDeviceSectionVisible(false);
+    setExpiredSectionVisible(false);
     const infoCard = el('customerInfoCard');
     if (infoCard) infoCard.classList.add('hidden');
 }
@@ -273,8 +306,10 @@ function renderLookupResult(payload) {
     if (codeText) codeText.textContent = currentLookupCode || '-';
     if (nameText) nameText.textContent = payload.customer.name || '-';
     if (infoCard) infoCard.classList.remove('hidden');
-    setDeviceSectionVisible(currentLookupEligible);
-    setDeviceButtonsEnabled(currentLookupEligible);
+    const expired = isExpiredLookupPayload(payload);
+    setExpiredSectionVisible(expired);
+    setDeviceSectionVisible(currentLookupEligible && !expired);
+    setDeviceButtonsEnabled(currentLookupEligible && !expired);
 
     if (currentLookupEligible) {
         setLookupState('hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng netflix', 'success');
@@ -282,6 +317,40 @@ function renderLookupResult(payload) {
     } else {
         setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
     }
+}
+
+function renderLookupResultV2(payload) {
+    const infoCard = el('customerInfoCard');
+    const codeText = el('customerCodeText');
+    const nameText = el('customerNameText');
+    if (!payload || !payload.customer) {
+        resetLookupResult();
+        return;
+    }
+
+    currentLookupCode = normalizeCode(payload.customer.code || '');
+    currentLookupEligible = !!payload.eligible;
+
+    if (codeText) codeText.textContent = currentLookupCode || '-';
+    if (nameText) nameText.textContent = payload.customer.name || '-';
+    if (infoCard) infoCard.classList.remove('hidden');
+
+    const expired = isExpiredLookupPayload(payload);
+    setExpiredSectionVisible(expired);
+    setDeviceSectionVisible(currentLookupEligible && !expired);
+    setDeviceButtonsEnabled(currentLookupEligible && !expired);
+
+    if (currentLookupEligible) {
+        setLookupState('hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng netflix', 'success');
+        return;
+    }
+
+    if (expired) {
+        setLookupState('GÓI NETFLIX CỦA BẠN ĐÃ HẾT HẠN.', 'warning');
+        return;
+    }
+
+    setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
 }
 
 async function lookupCustomerCode() {
@@ -300,7 +369,7 @@ async function lookupCustomerCode() {
 
     try {
         const data = await apiRequest('/api/nf-customer-lookup', 'POST', { customerCode: code });
-        renderLookupResult(data);
+        renderLookupResultV2(data);
     } catch (error) {
         resetLookupResult();
         setLookupState(error.message || 'Không kiểm tra được mã.', 'error');
@@ -494,6 +563,7 @@ function renderCookiesTable() {
         const statusHtml = `
             <span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span>
             ${cookie.errorTagged ? '<span class="pill pill-error">ERROR</span>' : ''}
+            ${cookie.sbdTagged ? '<span class="pill pill-sbd">SBD</span>' : ''}
         `;
         return `
             <tr>
@@ -510,6 +580,7 @@ function renderCookiesTable() {
                         <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
                         <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
                         <button class="btn-tiny" data-cookie-act="${cookie.errorTagged ? 'error-off' : 'error-on'}" data-id="${cookie.id}">${cookie.errorTagged ? 'Go ERROR' : 'Gan ERROR'}</button>
+                        <button class="btn-tiny" data-cookie-act="${cookie.sbdTagged ? 'sbd-off' : 'sbd-on'}" data-id="${cookie.id}">${cookie.sbdTagged ? 'Go SBD' : 'Gan SBD'}</button>
                         <button class="btn-tiny" data-cookie-act="view-raw" data-id="${cookie.id}">Xem raw</button>
                         <button class="btn-tiny" data-cookie-act="edit-raw" data-id="${cookie.id}">Sua raw</button>
                         <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
@@ -874,6 +945,12 @@ async function applyBulkCookieAction(action, triggerButton = null) {
         } else if (action === 'active' || action === 'disabled' || action === 'dead') {
             const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, status: action });
             toast(`Da cap nhat ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
+        } else if (action === 'sbd-on' || action === 'sbd-off') {
+            const sbdTagged = action === 'sbd-on';
+            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, sbdTagged });
+            toast(sbdTagged
+                ? `Da gan tag SBD cho ${data.affectedCount || cookieIds.length} cookie.`
+                : `Da go tag SBD cho ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
         } else {
             return;
         }
@@ -981,6 +1058,14 @@ async function handleCookieTableAction(event) {
             await apiRequest('/api/nf-cookies', 'PUT', { cookieId, errorTagged });
             toast(errorTagged ? 'Da gan tag ERROR cho cookie.' : 'Da go tag ERROR cho cookie.', 'ok');
             await Promise.all([loadCookies(), loadCustomers()]);
+            return;
+        }
+
+        if (action === 'sbd-on' || action === 'sbd-off') {
+            const sbdTagged = action === 'sbd-on';
+            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, sbdTagged });
+            toast(sbdTagged ? 'Da gan tag SBD cho cookie.' : 'Da go tag SBD cho cookie.', 'ok');
+            await Promise.all([loadCookies(), loadCustomers()]);
         }
     } catch (error) {
         toast(error.message || 'Cap nhat cookie that bai.', 'bad');
@@ -1061,6 +1146,23 @@ function bindEvents() {
 
     const supportFanpageLink = el('supportFanpageLink');
     if (supportFanpageLink) supportFanpageLink.setAttribute('href', SUPPORT_FANPAGE_URL);
+
+    const renewNetflixBtn = el('renewNetflixBtn');
+    if (renewNetflixBtn) renewNetflixBtn.addEventListener('click', openRenewModal);
+
+    const renewModal = el('renewModal');
+    if (renewModal) {
+        renewModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeRenew === '1') closeRenewModal();
+        });
+    }
+
+    const renewModalCloseBtn = el('renewModalCloseBtn');
+    if (renewModalCloseBtn) renewModalCloseBtn.addEventListener('click', closeRenewModal);
+
+    const renewFanpageLink = el('renewFanpageLink');
+    if (renewFanpageLink) renewFanpageLink.setAttribute('href', SUPPORT_FANPAGE_URL);
 
     const mobileLinkModal = el('mobileLinkModal');
     if (mobileLinkModal) {
@@ -1230,6 +1332,11 @@ function bindEvents() {
         const helpModal = el('supportModal');
         if (helpModal && !helpModal.classList.contains('hidden')) {
             closeSupportModal();
+            return;
+        }
+        const renewModal = el('renewModal');
+        if (renewModal && !renewModal.classList.contains('hidden')) {
+            closeRenewModal();
             return;
         }
         const rawModal = el('cookieRawEditorModal');

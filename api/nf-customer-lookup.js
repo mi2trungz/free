@@ -34,6 +34,7 @@ module.exports = async function (req, res) {
                     name: customer.name
                 },
                 eligible: false,
+                reason: 'inactive',
                 message: 'Mã khách hàng đang tạm khóa.'
             });
         }
@@ -45,6 +46,7 @@ module.exports = async function (req, res) {
                     name: customer.name
                 },
                 eligible: false,
+                reason: 'expired',
                 message: 'Mã khách hàng đã hết thời gian bảo hành.'
             });
         }
@@ -54,7 +56,8 @@ module.exports = async function (req, res) {
                 code: customer.code,
                 name: customer.name
             },
-            eligible: true
+            eligible: true,
+            reason: null
         });
     } catch (e) {
         return res.status(500).json({ error: e.message || 'Internal server error' });

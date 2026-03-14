@@ -239,12 +239,43 @@ body {
     font-family: 'JetBrains Mono', monospace;
 }
 
+.expired-section {
+    margin-top: 0.95rem;
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(70, 42, 8, 0.32), rgba(58, 27, 9, 0.22));
+    padding: 0.95rem;
+    animation: fadeInUp 200ms ease-out;
+}
+
+.expired-title {
+    margin: 0;
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+    color: #fde68a;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.btn-renew-netflix {
+    width: 100%;
+    margin-top: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
 .device-section-title {
     margin-top: 0.95rem;
-    margin-bottom: 0.55rem;
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: #dfe8ff;
+    margin-bottom: 0.66rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    color: #f1f6ff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
 }
 
 .device-grid {
@@ -256,10 +287,11 @@ body {
 .support-row {
     margin-top: 0.7rem;
     display: flex;
-    justify-content: flex-end;
+    width: 100%;
 }
 
 .btn-support {
+    width: 100%;
     min-height: 38px;
     padding: 0.5rem 0.78rem;
     font-size: 0.8rem;
@@ -267,6 +299,7 @@ body {
     letter-spacing: 0.03em;
     border-color: rgba(229, 9, 20, 0.4);
     background: rgba(229, 9, 20, 0.1);
+    justify-content: center;
 }
 
 .btn-support:hover {
@@ -277,12 +310,12 @@ body {
 .btn-device {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
     border: 1px solid var(--line);
-    display: grid;
-    align-content: center;
+    display: flex;
+    align-items: center;
     text-align: left;
-    gap: 0.16rem;
+    gap: 0.62rem;
     min-height: 70px;
-    justify-items: start;
+    justify-content: flex-start;
 }
 
 .btn-device:hover:not(:disabled) {
@@ -293,6 +326,15 @@ body {
 .device-title {
     font-size: 0.94rem;
     font-weight: 700;
+}
+
+.device-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    color: #9fb5e8;
+    fill: currentColor;
+    opacity: 0.95;
 }
 
 .admin-fab {
@@ -641,6 +683,12 @@ body {
 .pill-error {
     background: rgba(245, 158, 11, 0.26);
     color: #fcd34d;
+    margin-left: 0.32rem;
+}
+
+.pill-sbd {
+    background: rgba(59, 130, 246, 0.24);
+    color: #93c5fd;
     margin-left: 0.32rem;
 }
 

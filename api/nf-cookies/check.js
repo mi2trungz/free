@@ -145,7 +145,19 @@ module.exports = async function (req, res) {
             }
 
             if (isTokenPermissionDenied(reason)) {
+                const now = new Date().toISOString();
+                cookies[index] = {
+                    ...cookie,
+                    sbdTagged: true,
+                    assignedCustomerCode: '',
+                    lastCheckedAt: now,
+                    lastErrorAt: now,
+                    lastError: reason || 'Access denied by SBD',
+                    updatedAt: now
+                };
+                unassignCustomersForCookie(customers, cookie, now);
                 sbdCount += 1;
+                mutated = true;
                 results.push({
                     cookieId: cookie.id,
                     outcome: 'sbd',

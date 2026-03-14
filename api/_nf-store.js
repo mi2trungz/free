@@ -119,6 +119,7 @@ function sanitizeCustomer(item) {
 function sanitizeCookie(item) {
     const now = new Date().toISOString();
     const errorTagged = item && (item.errorTagged === true || item.errorTagged === 'true' || item.errorTagged === 1 || item.errorTagged === '1');
+    const sbdTagged = item && (item.sbdTagged === true || item.sbdTagged === 'true' || item.sbdTagged === 1 || item.sbdTagged === '1');
     return {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
@@ -126,7 +127,8 @@ function sanitizeCookie(item) {
         cookieRaw: String(item.cookieRaw || '').trim(),
         status: sanitizeCookieStatus(item.status),
         errorTagged,
-        assignedCustomerCode: errorTagged ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
+        sbdTagged,
+        assignedCustomerCode: (errorTagged || sbdTagged) ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
         createdAt: item.createdAt || now,
         updatedAt: item.updatedAt || now,
         lastCheckedAt: item.lastCheckedAt || '',
@@ -163,6 +165,7 @@ function buildCookieMapValue(cookie) {
                 cookieRaw: toStringValue(cookie.cookieRaw || ''),
                 status: toStringValue(cookie.status),
                 errorTagged: { booleanValue: !!cookie.errorTagged },
+                sbdTagged: { booleanValue: !!cookie.sbdTagged },
                 assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
                 createdAt: toTimestampValue(cookie.createdAt),
                 updatedAt: toTimestampValue(cookie.updatedAt),
@@ -200,6 +203,10 @@ function parseCookieMapValue(value) {
         errorTagged: fields.errorTagged && (
             fields.errorTagged.booleanValue === true ||
             fields.errorTagged.booleanValue === 'true'
+        ),
+        sbdTagged: fields.sbdTagged && (
+            fields.sbdTagged.booleanValue === true ||
+            fields.sbdTagged.booleanValue === 'true'
         ),
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),

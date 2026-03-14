@@ -51,16 +51,30 @@
                     </div>
                 </div>
 
+                <section id="expiredSection" class="expired-section hidden">
+                    <h3 class="expired-title">GÓI NETFLIX CỦA BẠN ĐÃ HẾT HẠN</h3>
+                    <button id="renewNetflixBtn" class="btn btn-primary btn-renew-netflix" type="button">GIA HẠN NETFLIX</button>
+                </section>
+
                 <section id="deviceSection" class="hidden">
                     <h3 class="device-section-title">hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng netflix</h3>
                     <div class="device-grid">
                         <button class="btn btn-device" type="button" data-device="desktop" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 0 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"></path>
+                            </svg>
                             <span class="device-title">Máy tính</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="mobile" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h8V5H8zm4 15a1.2 1.2 0 1 0 0 .01V20z"></path>
+                            </svg>
                             <span class="device-title">Điện thoại</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="tv" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-5l1.2 2H18a1 1 0 1 1 0 2H6a1 1 0 0 1 0-2h1.8L9 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v9h16V7H4z"></path>
+                            </svg>
                             <span class="device-title">TV</span>
                         </button>
                     </div>
@@ -85,6 +99,23 @@
             <div class="support-body">
                 <p>Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
                 <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="renewModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-renew="1"></div>
+        <div class="modal-card support-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Gia hạn Netflix</span>
+                    <h2>Gói Netflix đã hết hạn</h2>
+                </div>
+                <button id="renewModalCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body">
+                <p>Nhắn tin ngay qua fanpage để mua hoặc gia hạn tài khoản Netflix.</p>
+                <a id="renewFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">TRUY CẬP FANPAGE</a>
             </div>
         </div>
     </section>
@@ -210,6 +241,8 @@
                             <button class="btn-tiny" data-cookie-bulk-act="active" type="button">Active</button>
                             <button class="btn-tiny" data-cookie-bulk-act="disabled" type="button">Disabled</button>
                             <button class="btn-tiny" data-cookie-bulk-act="dead" type="button">Dead</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="sbd-on" type="button">Gắn SBD</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="sbd-off" type="button">Gỡ SBD</button>
                             <button class="btn-tiny" data-cookie-bulk-act="unassign" type="button">Bỏ gán</button>
                             <button class="btn-tiny" data-cookie-bulk-act="delete" type="button">Xóa</button>
                             <button class="btn-tiny" data-cookie-bulk-act="check-selected" type="button">Check LIVE/DIE (đã chọn)</button>

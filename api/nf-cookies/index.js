@@ -24,6 +24,7 @@ function cookiePublicDto(cookie) {
         id: cookie.id,
         status: cookie.status,
         errorTagged: !!cookie.errorTagged,
+        sbdTagged: !!cookie.sbdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
         cookieRaw: cookie.cookieRaw || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),
@@ -94,6 +95,7 @@ module.exports = async function (req, res) {
             const cookieRawInput = body.cookieRaw !== undefined ? String(body.cookieRaw || '').trim() : '';
             const hasCookieRawUpdate = cookieRawInput.length > 0;
             const hasErrorTagUpdate = body.errorTagged !== undefined;
+            const hasSbdTagUpdate = body.sbdTagged !== undefined;
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
                 if (cookieIds.length !== 1) {
@@ -117,7 +119,8 @@ module.exports = async function (req, res) {
 
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
-                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged;
+                const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
+                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged || nextSbdTagged;
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
@@ -128,6 +131,7 @@ module.exports = async function (req, res) {
                         cookieRaw: parsedCookieIds.cookieRaw,
                         status: 'active',
                         errorTagged: nextErrorTagged,
+                        sbdTagged: nextSbdTagged,
                         assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                         updatedAt: now,
                         lastCheckedAt: '',
@@ -141,6 +145,7 @@ module.exports = async function (req, res) {
                     ...current,
                     status: nextStatus,
                     errorTagged: nextErrorTagged,
+                    sbdTagged: nextSbdTagged,
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,
                     lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError

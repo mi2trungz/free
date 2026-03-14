@@ -144,6 +144,8 @@ module.exports = async function (req, res) {
                 cookies[cookieIndex] = {
                     ...cookies[cookieIndex],
                     status: 'active',
+                    sbdTagged: true,
+                    assignedCustomerCode: '',
                     lastCheckedAt: now,
                     lastErrorAt: now,
                     lastError: reason,
@@ -182,7 +184,7 @@ module.exports = async function (req, res) {
             const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
             if (assignedIdx >= 0) {
                 const assignedCookie = cookies[assignedIdx];
-                if (assignedCookie.errorTagged) {
+                if (assignedCookie.errorTagged || assignedCookie.sbdTagged) {
                     unassignCustomerCurrentCookie();
                 } else {
                 const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
@@ -201,6 +203,7 @@ module.exports = async function (req, res) {
         for (let i = 0; i < cookies.length; i += 1) {
             const cookie = cookies[i];
             if (cookie.errorTagged) continue;
+            if (cookie.sbdTagged) continue;
             if (cookie.status !== 'active') continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
             if (cookie.id === assignedCookieId) continue;
