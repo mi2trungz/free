@@ -7,7 +7,8 @@ const {
     sanitizeCookie,
     sanitizeCookieStatus,
     maskNetflixId,
-    buildCookieSummary
+    buildCookieSummary,
+    extractNetflixIdsFromCookie
 } = require('../_nf-store');
 
 function setCors(res) {
@@ -86,6 +87,20 @@ module.exports = async function (req, res) {
 
             const targetIdSet = new Set(cookieIds);
             const now = new Date().toISOString();
+
+            const cookieRawInput = body.cookieRaw !== undefined ? String(body.cookieRaw || '').trim() : '';
+            const hasCookieRawUpdate = cookieRawInput.length > 0;
+            let parsedCookieIds = null;
+            if (hasCookieRawUpdate) {
+                if (cookieIds.length !== 1) {
+                    return res.status(400).json({ error: 'cookieRaw only supports single cookie update' });
+                }
+                parsedCookieIds = extractNetflixIdsFromCookie(cookieRawInput);
+                if (!parsedCookieIds || !parsedCookieIds.netflixId) {
+                    return res.status(400).json({ error: 'cookieRaw missing NetflixId' });
+                }
+            }
+
             let shouldUnassignAny = false;
             const nextCookies = cookies.map((current) => {
                 if (!targetIdSet.has(current.id)) return current;
@@ -93,6 +108,20 @@ module.exports = async function (req, res) {
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const shouldUnassign = !!body.unassign || nextStatus !== 'active';
                 if (shouldUnassign) shouldUnassignAny = true;
+
+                if (hasCookieRawUpdate) {
+                    return sanitizeCookie({
+                        ...current,
+                        netflixId: parsedCookieIds.netflixId,
+                        secureNetflixId: parsedCookieIds.secureNetflixId || '',
+                        status: 'active',
+                        updatedAt: now,
+                        lastCheckedAt: '',
+                        lastSuccessAt: '',
+                        lastErrorAt: '',
+                        lastError: ''
+                    });
+                }
 
                 return sanitizeCookie({
                     ...current,

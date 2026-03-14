@@ -398,6 +398,7 @@ function renderCookiesTable() {
                         <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
                         <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
                         <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
+                        <button class="btn-tiny" data-cookie-act="edit" data-id="${cookie.id}">Sua</button>
                         <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
                         <button class="btn-tiny" data-cookie-act="delete" data-id="${cookie.id}">Xoa</button>
                     </div>
@@ -730,6 +731,20 @@ async function handleCookieTableAction(event) {
     if (!action || !cookieId) return;
 
     try {
+        if (action === 'edit') {
+            const cookieRaw = window.prompt('Dan cookie moi (co NetflixId=...):', '');
+            if (cookieRaw === null) return;
+            const trimmed = String(cookieRaw || '').trim();
+            if (!trimmed) {
+                toast('Noi dung cookie trong.', 'warn');
+                return;
+            }
+            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, cookieRaw: trimmed });
+            toast('Da cap nhat cookie.', 'ok');
+            await Promise.all([loadCookies(), loadCustomers()]);
+            return;
+        }
+
         if (action === 'delete') {
             const ok = window.confirm('Xoa cookie nay khoi danh sach?');
             if (!ok) return;
