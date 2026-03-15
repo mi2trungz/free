@@ -1,4 +1,5 @@
-﻿const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
+﻿import { firebaseApiRequest } from './firebase-client.js';
+const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const LOOKUP_REASON_EXPIRED = 'expired';
 const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
 const TV_REDIRECT_DELAY_MS = 4000;
@@ -266,6 +267,14 @@ function toast(message, kind = '') {
 }
 
 async function apiRequest(url, method = 'GET', body = null) {
+    try {
+        const localData = await firebaseApiRequest(url, method, body);
+        if (localData !== null) return localData;
+    } catch (localError) {
+        const message = String((localError && localError.message) || '').trim();
+        throw new Error(message || 'Yeu cau that bai');
+    }
+
     const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -1999,4 +2008,5 @@ function bootstrap() {
 }
 
 bootstrap();
+
 

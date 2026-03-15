@@ -211,7 +211,6 @@ const server = http.createServer((req, res) => {
         '/api/nf-cookies/check',
         '/api/nf-cookies',
         '/api/nf-customers',
-        '/api/nf-cookie-to-link',
         '/api/nftoken',
         '/api/netflix-cookie'
     ]);
@@ -301,11 +300,6 @@ const server = http.createServer((req, res) => {
             return res.end('Forbidden', 'utf-8');
         }
     }
-    if (rawUrl === '/nf/nf-cookie-to-link.html' && !isAdmin) {
-        res.writeHead(403, { 'Content-Type': 'text/plain' });
-        return res.end('Forbidden', 'utf-8');
-    }
-
     let relativePath = rawUrl.replace(/^\/+/, '');
     if (!relativePath) relativePath = 'index.html';
     if (relativePath === 'nf') relativePath = path.join('nf', 'index.html');
