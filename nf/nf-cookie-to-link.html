@@ -170,6 +170,15 @@
             color: #ffb4b4;
         }
 
+        .info-chip.good {
+            border-color: rgba(34, 197, 94, 0.75);
+            background: rgba(34, 197, 94, 0.14);
+        }
+
+        .info-chip.good span {
+            color: #b7ffd5;
+        }
+
         .info-grid {
             display: grid;
             grid-template-columns: auto 1fr;
@@ -304,10 +313,15 @@
             const importStateText = document.getElementById('importStateText');
             const accountInfoBox = document.getElementById('accountInfoBox');
             const accountInfoContent = document.getElementById('accountInfoContent');
+            const importButtonDefaultText = importCookieBtn.textContent;
 
             function isTruthy(value) {
                 const text = String(value || '').trim().toLowerCase();
                 return text === 'yes' || text === 'true' || text === '1';
+            }
+
+            function isNo(value) {
+                return String(value || '').trim().toLowerCase() === 'no';
             }
 
             function escapeHtml(raw) {
@@ -328,20 +342,22 @@
                 if (accountInfo) {
                     accountInfoBox.classList.add('active');
 
+                    const statusText = accountInfo.ok ? 'Hoat dong' : 'Khong hoat dong';
+                    const statusClass = accountInfo.ok ? 'good' : 'bad';
                     const paymentHoldText = String(accountInfo.on_payment_hold || 'No');
-                    const paymentHoldBad = isTruthy(paymentHoldText);
+                    const paymentHoldClass = isNo(paymentHoldText) ? 'good' : 'bad';
 
                     const topFields = [
-                        { label: 'Trang thai', value: accountInfo.ok ? 'Hoat dong' : 'Loi' },
+                        { label: 'Trang thai', value: statusText, tone: statusClass },
                         { label: 'Goi cuoc', value: `${accountInfo.plan || 'Khong ro'} ${accountInfo.premium ? '(Premium)' : ''}`.trim() },
+                        { label: 'Payment Hold', value: paymentHoldText, tone: paymentHoldClass },
                         { label: 'Quoc gia', value: accountInfo.country || 'N/A' },
                         { label: 'Man hinh', value: `${accountInfo.max_streams || '?'} man` },
-                        { label: 'Chat luong video', value: accountInfo.video_quality || 'N/A' },
-                        { label: 'Payment Hold', value: paymentHoldText, bad: paymentHoldBad }
+                        { label: 'Chat luong video', value: accountInfo.video_quality || 'N/A' }
                     ];
 
                     const chipHtml = topFields.map((item) => `
-                        <div class="info-chip ${item.bad ? 'bad' : ''}">
+                        <div class="info-chip ${item.tone ? item.tone : ''}">
                             <strong>${escapeHtml(item.label)}</strong>
                             <span>${escapeHtml(item.value)}</span>
                         </div>
@@ -421,6 +437,7 @@
             });
 
             importCookieBtn.addEventListener('click', async () => {
+                importCookieBtn.textContent = importButtonDefaultText;
                 const content = cookieInput.value.trim();
                 if (!content) {
                     showImportState('Chua co cookie de import.');
@@ -438,8 +455,10 @@
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Import that bai');
 
+                    importCookieBtn.textContent = '✓ Imported';
                     showImportState(`Import xong. Added: ${Number(data.addedCount || 0)} | Skipped: ${Number(data.skippedCount || 0)} | Invalid: ${Number(data.invalidCount || 0)}`);
                 } catch (error) {
+                    importCookieBtn.textContent = importButtonDefaultText;
                     showImportState(error.message || 'Import that bai.');
                 } finally {
                     importCookieBtn.disabled = false;
