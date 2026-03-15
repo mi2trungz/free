@@ -260,11 +260,36 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Mã</th>
-                                    <th>Tên</th>
-                                    <th>Bảo hành</th>
-                                    <th>Cookie</th>
-                                    <th>Trạng thái</th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Mã</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="customers:code" title="Lọc/sort cột Mã">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Tên</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="customers:name" title="Lọc/sort cột Tên">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Bảo hành</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="customers:warranty" title="Lọc/sort cột Bảo hành">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Cookie</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="customers:cookie" title="Lọc/sort cột Cookie">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Trạng thái</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="customers:status" title="Lọc/sort cột Trạng thái">⌕</button>
+                                        </div>
+                                    </th>
                                     <th>Hành động</th>
                                 </tr>
                             </thead>
@@ -275,51 +300,28 @@
 
                 <section id="tabCookies" class="tab-section hidden">
                     <div class="section-head">
-                        <h3>Import cookie tổng</h3>
-                        <p>Mỗi block cookie đầy đủ sẽ là 1 record trong pool.</p>
+                        <h3>Cookie tổng</h3>
+                        <p>Nhấn nút import để mở form nhập cookie tổng.</p>
                     </div>
-                    <div class="import-grid">
-                        <textarea id="cookieImportInput" class="text-input text-area" placeholder="Dán cookie vào đây..."></textarea>
-                        <div class="import-actions">
-                            <input id="cookieImportFileInput" type="file" accept=".txt,.log">
-                            <button id="importCookiesBtn" class="btn btn-primary" type="button">Import cookie</button>
-                            <div id="cookieImportState" class="state-text state-idle"></div>
+
+                    <button id="toggleCookieImportBtn" class="btn btn-ghost import-toggle-btn" type="button">Import cookie tổng</button>
+                    <div id="cookieImportCollapse" class="import-collapse hidden">
+                        <div class="import-grid">
+                            <textarea id="cookieImportInput" class="text-input text-area" placeholder="Dán cookie vào đây..."></textarea>
+                            <div class="import-actions">
+                                <input id="cookieImportFileInput" type="file" accept=".txt,.log">
+                                <button id="importCookiesBtn" class="btn btn-primary" type="button">Import cookie</button>
+                                <div id="cookieImportState" class="state-text state-idle"></div>
+                            </div>
                         </div>
                     </div>
 
                     <div id="cookieSummary" class="summary-row"></div>
-                    <div class="cookie-filter-row">
-                        <input id="cookieSearchInput" class="text-input" type="text" placeholder="Tìm theo mã cookie / mã khách / tên khách">
-                        <select id="cookieStatusFilter" class="text-input">
-                            <option value="all">Tất cả trạng thái</option>
-                            <option value="active">Active</option>
-                            <option value="disabled">Disabled</option>
-                            <option value="dead">Dead</option>
-                        </select>
-                        <select id="cookieTagFilter" class="text-input">
-                            <option value="all">Tất cả tag</option>
-                            <option value="error">Có ERROR</option>
-                            <option value="sbd">Có SBD</option>
-                            <option value="none">Không tag</option>
-                        </select>
-                        <select id="cookieAssignFilter" class="text-input">
-                            <option value="all">Tất cả gán</option>
-                            <option value="assigned">Đang gán</option>
-                            <option value="unassigned">Chưa gán</option>
-                        </select>
-                        <select id="cookieSortSelect" class="text-input">
-                            <option value="check_desc">Check mới nhất</option>
-                            <option value="check_asc">Check cũ nhất</option>
-                            <option value="updated_desc">Cập nhật mới nhất</option>
-                            <option value="id_asc">ID A-Z</option>
-                            <option value="id_desc">ID Z-A</option>
-                        </select>
-                        <button id="cookieFilterResetBtn" class="btn btn-ghost" type="button">Xóa lọc</button>
-                    </div>
 
                     <div class="cookie-tools">
                         <button id="checkAllCookiesBtn" class="btn btn-ghost" type="button">Check LIVE/DIE (toàn bộ)</button>
                         <button id="toggleSelectAllCookiesBtn" class="btn btn-ghost" type="button">Chọn tất cả</button>
+                        <button id="cookieHeaderFilterResetBtn" class="btn btn-ghost" type="button">Xóa lọc/sort</button>
                         <div id="cookieCheckState" class="state-text state-idle">Chưa check cookie.</div>
                     </div>
 
@@ -329,8 +331,8 @@
                             <button class="btn-tiny" data-cookie-bulk-act="active" type="button">Active</button>
                             <button class="btn-tiny" data-cookie-bulk-act="disabled" type="button">Disabled</button>
                             <button class="btn-tiny" data-cookie-bulk-act="dead" type="button">Dead</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="sbd-on" type="button">Gắn SBD</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="sbd-off" type="button">Gỡ SBD</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="tag-add" type="button">GẮN</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="tag-remove" type="button">GỠ</button>
                             <button class="btn-tiny" data-cookie-bulk-act="unassign" type="button">Bỏ gán</button>
                             <button class="btn-tiny" data-cookie-bulk-act="delete" type="button">Xóa</button>
                             <button class="btn-tiny" data-cookie-bulk-act="check-selected" type="button">Check LIVE/DIE (đã chọn)</button>
@@ -342,11 +344,36 @@
                             <thead>
                                 <tr>
                                     <th class="check-col"><input id="cookiesSelectAll" class="row-check" type="checkbox"></th>
-                                    <th>Cookie</th>
-                                    <th>Trạng thái</th>
-                                    <th>Gán khách</th>
-                                    <th>Check gần nhất</th>
-                                    <th>Note</th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Cookie</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:cookie" title="Lọc/sort cột Cookie">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Trạng thái</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:status" title="Lọc/sort cột Trạng thái">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Gán khách</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:assigned" title="Lọc/sort cột Gán khách">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Check gần nhất</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:check" title="Lọc/sort cột Check">⌕</button>
+                                        </div>
+                                    </th>
+                                    <th>
+                                        <div class="th-wrap">
+                                            <span>Note</span>
+                                            <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:note" title="Lọc/sort cột Note">⌕</button>
+                                        </div>
+                                    </th>
                                     <th>Hành động</th>
                                 </tr>
                             </thead>
@@ -379,6 +406,35 @@
             </div>
         </div>
     </section>
+
+    <section id="tagPickerModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-tag-picker="1"></div>
+        <div class="modal-card support-card tag-picker-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Cookie Tag</span>
+                    <h2 id="tagPickerTitle">Chọn tag</h2>
+                </div>
+                <button id="tagPickerCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body">
+                <div id="tagPickerHint" class="state-text state-idle"></div>
+                <div id="tagPickerOptions" class="tag-picker-options"></div>
+            </div>
+        </div>
+    </section>
+
+    <div id="tableHeaderFilterPopup" class="header-filter-popup hidden" aria-hidden="true">
+        <div class="header-filter-title" id="tableHeaderFilterTitle">Lọc cột</div>
+        <input id="tableHeaderFilterSearch" class="text-input" type="text" placeholder="Tìm trong cột...">
+        <select id="tableHeaderFilterValue" class="text-input"></select>
+        <div class="header-filter-actions">
+            <button id="tableHeaderSortAscBtn" class="btn-tiny" type="button">Sort A-Z</button>
+            <button id="tableHeaderSortDescBtn" class="btn-tiny" type="button">Sort Z-A</button>
+            <button id="tableHeaderFilterApplyBtn" class="btn-tiny" type="button">Áp dụng</button>
+            <button id="tableHeaderFilterClearBtn" class="btn-tiny" type="button">Xóa cột</button>
+        </div>
+    </div>
 
     <div id="toast" class="toast hidden"></div>
 

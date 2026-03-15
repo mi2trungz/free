@@ -50,6 +50,7 @@ function canUseCookie(cookie = {}, customerCode = '') {
     if (!cookie) return false;
     if (cookie.status !== 'active') return false;
     if (cookie.errorTagged || cookie.sbdTagged) return false;
+    if (cookie.unknownTagged || cookie.holdTagged) return false;
     const assigned = normalizeCode(cookie.assignedCustomerCode || '');
     if (assigned && assigned !== customerCode) return false;
     const ids = resolveEffectiveCookieIds(cookie);

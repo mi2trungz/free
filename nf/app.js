@@ -35,13 +35,38 @@ let rawEditorMode = 'edit';
 let mobileGeneratedLink = '';
 let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
-const cookieViewState = {
-    search: '',
-    status: 'all',
-    tag: 'all',
-    assign: 'all',
-    sort: 'check_desc'
+let headerFilterPopupContext = null;
+let tagPickerContext = null;
+
+const tableViewState = {
+    cookies: {
+        filters: {
+            cookie: { search: '', value: '' },
+            status: { search: '', value: '' },
+            assigned: { search: '', value: '' },
+            check: { search: '', value: '' },
+            note: { search: '', value: '' }
+        },
+        sort: { column: 'check', direction: 'desc' }
+    },
+    customers: {
+        filters: {
+            code: { search: '', value: '' },
+            name: { search: '', value: '' },
+            warranty: { search: '', value: '' },
+            cookie: { search: '', value: '' },
+            status: { search: '', value: '' }
+        },
+        sort: { column: 'code', direction: 'asc' }
+    }
 };
+
+const COOKIE_TAG_DEFS = [
+    { key: 'errorTagged', label: 'ERROR', onAction: 'error-on', offAction: 'error-off' },
+    { key: 'sbdTagged', label: 'SBD', onAction: 'sbd-on', offAction: 'sbd-off' },
+    { key: 'unknownTagged', label: 'UNKNOW', onAction: 'unknown-on', offAction: 'unknown-off' },
+    { key: 'holdTagged', label: 'HOLD', onAction: 'hold-on', offAction: 'hold-off' }
+];
 
 function el(id) {
     return document.getElementById(id);
@@ -101,46 +126,93 @@ function getCustomerNameMap() {
     return map;
 }
 
+function normalizeFilterText(value = '') {
+    return String(value || '').trim().toLowerCase();
+}
+
+function getCookieColumnDisplay(cookie = {}, column = '', customerNameMap = new Map()) {
+    const assignedCode = normalizeCode(cookie.assignedCustomerCode || '');
+    const assignedName = String(customerNameMap.get(assignedCode) || '').trim();
+    if (column === 'cookie') return `${cookie.netflixIdMasked || ''} ${cookie.id || ''}`.trim();
+    if (column === 'status') {
+        const tags = [];
+        if (cookie.errorTagged) tags.push('ERROR');
+        if (cookie.sbdTagged) tags.push('SBD');
+        if (cookie.unknownTagged) tags.push('UNKNOW');
+        if (cookie.holdTagged) tags.push('HOLD');
+        return `${cookie.status || 'active'} ${tags.join(' ')}`.trim();
+    }
+    if (column === 'assigned') return `${assignedCode} ${assignedName}`.trim();
+    if (column === 'check') return `${formatDateTime(cookie.lastCheckedAt || cookie.updatedAt)} ${cookie.lastError || ''}`.trim();
+    if (column === 'note') return String(cookie.note || '').trim();
+    return '';
+}
+
+function getCustomerColumnDisplay(customer = {}, column = '') {
+    if (column === 'code') return String(customer.code || '').trim();
+    if (column === 'name') return String(customer.name || '').trim();
+    if (column === 'warranty') {
+        const remain = Number(customer.remainingDays || 0);
+        const suffix = customer.warrantyValid ? `Con ${remain} ngay` : 'Het han';
+        return `${formatDateTime(customer.warrantyExpiresAt)} ${suffix}`.trim();
+    }
+    if (column === 'cookie') return String(customer.assignedCookieId || '').trim();
+    if (column === 'status') return String(customer.status || 'active').trim();
+    return '';
+}
+
+function recordMatchesColumnFilter(displayValue = '', filter = {}) {
+    const val = normalizeFilterText(displayValue);
+    const searchNeedle = normalizeFilterText(filter.search || '');
+    const valueNeedle = normalizeFilterText(filter.value || '');
+    if (searchNeedle && !val.includes(searchNeedle)) return false;
+    if (valueNeedle && val !== valueNeedle) return false;
+    return true;
+}
+
 function applyCookieFiltersAndSort(cookies = []) {
     const customerNameMap = getCustomerNameMap();
-    const searchNeedle = String(cookieViewState.search || '').trim().toLowerCase();
-    const statusFilter = String(cookieViewState.status || 'all').toLowerCase();
-    const tagFilter = String(cookieViewState.tag || 'all').toLowerCase();
-    const assignFilter = String(cookieViewState.assign || 'all').toLowerCase();
-    const sortMode = String(cookieViewState.sort || 'check_desc').toLowerCase();
+    const filters = tableViewState.cookies.filters || {};
+    const sort = tableViewState.cookies.sort || { column: 'check', direction: 'desc' };
 
     const filtered = (Array.isArray(cookies) ? cookies : []).filter((cookie) => {
-        const assignedCode = normalizeCode(cookie.assignedCustomerCode || '');
-        const assignedName = String(customerNameMap.get(assignedCode) || '').trim();
-
-        if (statusFilter !== 'all' && String(cookie.status || 'active') !== statusFilter) return false;
-        if (tagFilter === 'error' && !cookie.errorTagged) return false;
-        if (tagFilter === 'sbd' && !cookie.sbdTagged) return false;
-        if (tagFilter === 'none' && (cookie.errorTagged || cookie.sbdTagged)) return false;
-        if (assignFilter === 'assigned' && !assignedCode) return false;
-        if (assignFilter === 'unassigned' && assignedCode) return false;
-
-        if (!searchNeedle) return true;
-        const haystack = [
-            String(cookie.id || ''),
-            String(cookie.netflixIdMasked || ''),
-            assignedCode,
-            assignedName,
-            String(cookie.lastError || ''),
-            String(cookie.note || '')
-        ].join(' ').toLowerCase();
-        return haystack.includes(searchNeedle);
+        const columns = ['cookie', 'status', 'assigned', 'check', 'note'];
+        return columns.every((column) => {
+            const filter = filters[column] || {};
+            const display = getCookieColumnDisplay(cookie, column, customerNameMap);
+            return recordMatchesColumnFilter(display, filter);
+        });
     });
 
     const sorted = filtered.slice();
     sorted.sort((a, b) => {
-        if (sortMode === 'id_asc') return String(a.id || '').localeCompare(String(b.id || ''));
-        if (sortMode === 'id_desc') return String(b.id || '').localeCompare(String(a.id || ''));
-        if (sortMode === 'updated_desc') return toMillis(b.updatedAt || '') - toMillis(a.updatedAt || '');
-        const aCheck = toMillis(a.lastCheckedAt || a.updatedAt || '');
-        const bCheck = toMillis(b.lastCheckedAt || b.updatedAt || '');
-        if (sortMode === 'check_asc') return aCheck - bCheck;
-        return bCheck - aCheck;
+        const dir = sort.direction === 'asc' ? 1 : -1;
+        if (sort.column === 'check') {
+            const aCheck = toMillis(a.lastCheckedAt || a.updatedAt || '');
+            const bCheck = toMillis(b.lastCheckedAt || b.updatedAt || '');
+            return (aCheck - bCheck) * dir;
+        }
+        const aVal = normalizeFilterText(getCookieColumnDisplay(a, sort.column, customerNameMap));
+        const bVal = normalizeFilterText(getCookieColumnDisplay(b, sort.column, customerNameMap));
+        return aVal.localeCompare(bVal) * dir;
+    });
+    return sorted;
+}
+
+function applyCustomerFiltersAndSort(customers = []) {
+    const filters = tableViewState.customers.filters || {};
+    const sort = tableViewState.customers.sort || { column: 'code', direction: 'asc' };
+    const filtered = (Array.isArray(customers) ? customers : []).filter((customer) => {
+        const columns = ['code', 'name', 'warranty', 'cookie', 'status'];
+        return columns.every((column) => recordMatchesColumnFilter(getCustomerColumnDisplay(customer, column), filters[column] || {}));
+    });
+
+    const sorted = filtered.slice();
+    sorted.sort((a, b) => {
+        const dir = sort.direction === 'asc' ? 1 : -1;
+        const aVal = normalizeFilterText(getCustomerColumnDisplay(a, sort.column));
+        const bVal = normalizeFilterText(getCustomerColumnDisplay(b, sort.column));
+        return aVal.localeCompare(bVal) * dir;
     });
     return sorted;
 }
@@ -150,22 +222,17 @@ function getVisibleCookieIds() {
 }
 
 function resetCookieFilters() {
-    cookieViewState.search = '';
-    cookieViewState.status = 'all';
-    cookieViewState.tag = 'all';
-    cookieViewState.assign = 'all';
-    cookieViewState.sort = 'check_desc';
+    Object.keys(tableViewState.cookies.filters || {}).forEach((column) => {
+        tableViewState.cookies.filters[column] = { search: '', value: '' };
+    });
+    tableViewState.cookies.sort = { column: 'check', direction: 'desc' };
+}
 
-    const searchInput = el('cookieSearchInput');
-    const statusInput = el('cookieStatusFilter');
-    const tagInput = el('cookieTagFilter');
-    const assignInput = el('cookieAssignFilter');
-    const sortInput = el('cookieSortSelect');
-    if (searchInput) searchInput.value = '';
-    if (statusInput) statusInput.value = 'all';
-    if (tagInput) tagInput.value = 'all';
-    if (assignInput) assignInput.value = 'all';
-    if (sortInput) sortInput.value = 'check_desc';
+function resetCustomerFilters() {
+    Object.keys(tableViewState.customers.filters || {}).forEach((column) => {
+        tableViewState.customers.filters[column] = { search: '', value: '' };
+    });
+    tableViewState.customers.sort = { column: 'code', direction: 'asc' };
 }
 
 function setStateClass(target, mode = 'idle') {
@@ -718,7 +785,13 @@ function renderCustomersTable() {
         return;
     }
 
-    tbody.innerHTML = customersCache.map((customer) => `
+    const visibleCustomers = applyCustomerFiltersAndSort(customersCache);
+    if (visibleCustomers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Khong co khach hang nao phu hop bo loc hien tai.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = visibleCustomers.map((customer) => `
         <tr>
             <td data-label="Ma">
                 <button class="copy-code-btn mono" type="button" data-copy-code="${customer.code || ''}" title="Bam de copy ma khach">${customer.code || '-'}</button>
@@ -737,6 +810,7 @@ function renderCustomersTable() {
             </td>
         </tr>
     `).join('');
+    renderHeaderFilterIndicators();
 }
 
 function renderCookiesSummary() {
@@ -751,9 +825,11 @@ function renderCookiesSummary() {
     const disabledCount = cookiesCache.filter((c) => c.status === 'disabled').length;
     const deadCount = cookiesCache.filter((c) => c.status === 'dead').length;
     const sbdCount = cookiesCache.filter((c) => !!c.sbdTagged).length;
+    const unknownCount = cookiesCache.filter((c) => !!c.unknownTagged).length;
+    const holdCount = cookiesCache.filter((c) => !!c.holdTagged).length;
     const assignedCount = cookiesCache.filter((c) => !!String(c.assignedCustomerCode || '').trim()).length;
-    const unassignedCount = Math.max(0, activeCount - sbdCount - assignedCount);
-    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
+    const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - assignedCount);
+    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
 }
 
 function renderCookiesTable() {
@@ -798,6 +874,8 @@ function renderCookiesTable() {
             <span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span>
             ${cookie.errorTagged ? '<span class="pill pill-error">ERROR</span>' : ''}
             ${cookie.sbdTagged ? '<span class="pill pill-sbd">SBD</span>' : ''}
+            ${cookie.unknownTagged ? '<span class="pill pill-unknown">UNKNOW</span>' : ''}
+            ${cookie.holdTagged ? '<span class="pill pill-hold">HOLD</span>' : ''}
         `;
         return `
             <tr>
@@ -814,8 +892,8 @@ function renderCookiesTable() {
                         <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
                         <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
                         <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
-                        <button class="btn-tiny" data-cookie-act="${cookie.errorTagged ? 'error-off' : 'error-on'}" data-id="${cookie.id}">${cookie.errorTagged ? 'Go ERROR' : 'Gan ERROR'}</button>
-                        <button class="btn-tiny" data-cookie-act="${cookie.sbdTagged ? 'sbd-off' : 'sbd-on'}" data-id="${cookie.id}">${cookie.sbdTagged ? 'Go SBD' : 'Gan SBD'}</button>
+                        <button class="btn-tiny" data-cookie-act="tag-add" data-id="${cookie.id}">GẮN</button>
+                        <button class="btn-tiny" data-cookie-act="tag-remove" data-id="${cookie.id}">GỠ</button>
                         <button class="btn-tiny" data-cookie-act="view-raw" data-id="${cookie.id}">Xem raw</button>
                         <button class="btn-tiny" data-cookie-act="edit-raw" data-id="${cookie.id}">Sua raw</button>
                         <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
@@ -826,6 +904,159 @@ function renderCookiesTable() {
         `;
     }).join('');
     updateCookieSelectionUi();
+    renderHeaderFilterIndicators();
+}
+
+function hasColumnFilterActive(table = '', column = '') {
+    const filter = tableViewState[table] && tableViewState[table].filters ? tableViewState[table].filters[column] : null;
+    if (!filter) return false;
+    return !!normalizeFilterText(filter.search) || !!normalizeFilterText(filter.value);
+}
+
+function renderHeaderFilterIndicators() {
+    const buttons = Array.from(document.querySelectorAll('[data-table-filter-btn]'));
+    buttons.forEach((btn) => {
+        const descriptor = String(btn.dataset.tableFilterBtn || '');
+        const [table, column] = descriptor.split(':');
+        const isFilterActive = hasColumnFilterActive(table, column);
+        const sortState = tableViewState[table] && tableViewState[table].sort ? tableViewState[table].sort : null;
+        const isSortActive = !!sortState && sortState.column === column;
+        btn.classList.toggle('active', isFilterActive || isSortActive);
+        btn.classList.toggle('sort-asc', isSortActive && sortState.direction === 'asc');
+        btn.classList.toggle('sort-desc', isSortActive && sortState.direction === 'desc');
+    });
+}
+
+function getColumnUniqueValues(table = '', column = '') {
+    const values = new Set();
+    if (table === 'cookies') {
+        const customerNameMap = getCustomerNameMap();
+        (Array.isArray(cookiesCache) ? cookiesCache : []).forEach((item) => {
+            const val = normalizeFilterText(getCookieColumnDisplay(item, column, customerNameMap));
+            if (val) values.add(val);
+        });
+    } else if (table === 'customers') {
+        (Array.isArray(customersCache) ? customersCache : []).forEach((item) => {
+            const val = normalizeFilterText(getCustomerColumnDisplay(item, column));
+            if (val) values.add(val);
+        });
+    }
+    return Array.from(values).sort((a, b) => a.localeCompare(b)).slice(0, 200);
+}
+
+function closeHeaderFilterPopup() {
+    const popup = el('tableHeaderFilterPopup');
+    if (!popup) return;
+    popup.classList.add('hidden');
+    popup.setAttribute('aria-hidden', 'true');
+    headerFilterPopupContext = null;
+}
+
+function openHeaderFilterPopup(triggerBtn, table = '', column = '') {
+    const popup = el('tableHeaderFilterPopup');
+    const title = el('tableHeaderFilterTitle');
+    const searchInput = el('tableHeaderFilterSearch');
+    const valueSelect = el('tableHeaderFilterValue');
+    if (!popup || !title || !searchInput || !valueSelect || !(triggerBtn instanceof HTMLElement)) return;
+
+    headerFilterPopupContext = { table, column, triggerBtn };
+    const state = tableViewState[table] || {};
+    const filter = (state.filters && state.filters[column]) || { search: '', value: '' };
+    title.textContent = `Lọc cột: ${column}`;
+    searchInput.value = filter.search || '';
+
+    const uniqueValues = getColumnUniqueValues(table, column);
+    valueSelect.innerHTML = ['<option value="">Tat ca gia tri</option>', ...uniqueValues.map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`)].join('');
+    valueSelect.value = filter.value || '';
+
+    const rect = triggerBtn.getBoundingClientRect();
+    popup.style.top = `${window.scrollY + rect.bottom + 8}px`;
+    popup.style.left = `${Math.max(8, window.scrollX + rect.left - 240)}px`;
+    popup.classList.remove('hidden');
+    popup.setAttribute('aria-hidden', 'false');
+}
+
+function applyHeaderFilterPopup() {
+    if (!headerFilterPopupContext) return;
+    const { table, column } = headerFilterPopupContext;
+    const searchInput = el('tableHeaderFilterSearch');
+    const valueSelect = el('tableHeaderFilterValue');
+    tableViewState[table].filters[column] = {
+        search: String((searchInput && searchInput.value) || '').trim(),
+        value: String((valueSelect && valueSelect.value) || '').trim().toLowerCase()
+    };
+    if (table === 'cookies') renderCookiesTable();
+    else renderCustomersTable();
+    closeHeaderFilterPopup();
+}
+
+function setHeaderSort(direction = 'asc') {
+    if (!headerFilterPopupContext) return;
+    const { table, column } = headerFilterPopupContext;
+    tableViewState[table].sort = { column, direction: direction === 'desc' ? 'desc' : 'asc' };
+    if (table === 'cookies') renderCookiesTable();
+    else renderCustomersTable();
+}
+
+function clearHeaderFilterColumn() {
+    if (!headerFilterPopupContext) return;
+    const { table, column } = headerFilterPopupContext;
+    tableViewState[table].filters[column] = { search: '', value: '' };
+    if (table === 'cookies') renderCookiesTable();
+    else renderCustomersTable();
+    closeHeaderFilterPopup();
+}
+
+function getTagOptionsForCookies(cookies = [], mode = 'add') {
+    if (!Array.isArray(cookies) || cookies.length === 0) return [];
+    if (mode === 'add') {
+        return COOKIE_TAG_DEFS.filter((tagDef) => cookies.some((cookie) => !cookie[tagDef.key]));
+    }
+    return COOKIE_TAG_DEFS.filter((tagDef) => cookies.some((cookie) => !!cookie[tagDef.key]));
+}
+
+function closeTagPickerModal() {
+    const modal = el('tagPickerModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    tagPickerContext = null;
+}
+
+function openTagPickerModal(cookieIds = [], mode = 'add') {
+    const ids = (Array.isArray(cookieIds) ? cookieIds : []).map((id) => String(id || '').trim()).filter(Boolean);
+    if (ids.length === 0) {
+        toast('Khong co cookie de thao tac tag.', 'warn');
+        return;
+    }
+    const cookies = cookiesCache.filter((item) => ids.includes(String(item.id || '').trim()));
+    const options = getTagOptionsForCookies(cookies, mode);
+    if (options.length === 0) {
+        toast(mode === 'add' ? 'Khong con tag nao de gan.' : 'Khong co tag nao de go.', 'warn');
+        return;
+    }
+
+    const modal = el('tagPickerModal');
+    const title = el('tagPickerTitle');
+    const hint = el('tagPickerHint');
+    const optionsWrap = el('tagPickerOptions');
+    if (!modal || !title || !hint || !optionsWrap) return;
+
+    tagPickerContext = { ids, mode };
+    title.textContent = mode === 'add' ? 'GẮN TAG COOKIE' : 'GỠ TAG COOKIE';
+    hint.textContent = `Da chon ${ids.length} cookie.`;
+    optionsWrap.innerHTML = options
+        .map((tagDef) => `<button class="btn btn-ghost tag-picker-btn" type="button" data-tag-picker-key="${tagDef.key}">${mode === 'add' ? 'Gan' : 'Go'} ${tagDef.label}</button>`)
+        .join('');
+
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function mapTagAction(tagKey = '', mode = 'add') {
+    const match = COOKIE_TAG_DEFS.find((item) => item.key === tagKey);
+    if (!match) return '';
+    return mode === 'add' ? match.onAction : match.offAction;
 }
 
 async function loadCustomers() {
@@ -1182,17 +1413,6 @@ function summarizeCheckResult(data = {}) {
 }
 
 function applyCookieViewControls() {
-    const searchInput = el('cookieSearchInput');
-    const statusInput = el('cookieStatusFilter');
-    const tagInput = el('cookieTagFilter');
-    const assignInput = el('cookieAssignFilter');
-    const sortInput = el('cookieSortSelect');
-
-    cookieViewState.search = String((searchInput && searchInput.value) || '').trim();
-    cookieViewState.status = String((statusInput && statusInput.value) || 'all');
-    cookieViewState.tag = String((tagInput && tagInput.value) || 'all');
-    cookieViewState.assign = String((assignInput && assignInput.value) || 'all');
-    cookieViewState.sort = String((sortInput && sortInput.value) || 'check_desc');
     renderCookiesTable();
 }
 
@@ -1224,7 +1444,9 @@ function shouldRefreshCustomersForCookieAction(action = '') {
         || action === 'disabled'
         || action === 'dead'
         || action === 'error-on'
-        || action === 'sbd-on';
+        || action === 'sbd-on'
+        || action === 'unknown-on'
+        || action === 'hold-on';
 }
 
 function getCookieActionSuccessMessage(action = '', count = 1) {
@@ -1238,6 +1460,10 @@ function getCookieActionSuccessMessage(action = '', count = 1) {
     if (action === 'sbd-off') return amount > 1 ? `Da go tag SBD cho ${amount} cookie.` : 'Da go tag SBD cho cookie.';
     if (action === 'error-on') return amount > 1 ? `Da gan tag ERROR cho ${amount} cookie.` : 'Da gan tag ERROR cho cookie.';
     if (action === 'error-off') return amount > 1 ? `Da go tag ERROR cho ${amount} cookie.` : 'Da go tag ERROR cho cookie.';
+    if (action === 'unknown-on') return amount > 1 ? `Da gan tag UNKNOW cho ${amount} cookie.` : 'Da gan tag UNKNOW cho cookie.';
+    if (action === 'unknown-off') return amount > 1 ? `Da go tag UNKNOW cho ${amount} cookie.` : 'Da go tag UNKNOW cho cookie.';
+    if (action === 'hold-on') return amount > 1 ? `Da gan tag HOLD cho ${amount} cookie.` : 'Da gan tag HOLD cho cookie.';
+    if (action === 'hold-off') return amount > 1 ? `Da go tag HOLD cho ${amount} cookie.` : 'Da go tag HOLD cho cookie.';
     if (action === 'save-note') return 'Da cap nhat note cookie.';
     return 'Da cap nhat cookie.';
 }
@@ -1293,6 +1519,24 @@ function applyOptimisticCookieAction(action = '', cookieIds = [], options = {}) 
                 updatedAt: now
             };
         }
+        if (action === 'unknown-on' || action === 'unknown-off') {
+            const unknownTagged = action === 'unknown-on';
+            return {
+                ...cookie,
+                unknownTagged,
+                assignedCustomerCode: unknownTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
+        if (action === 'hold-on' || action === 'hold-off') {
+            const holdTagged = action === 'hold-on';
+            return {
+                ...cookie,
+                holdTagged,
+                assignedCustomerCode: holdTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
         return cookie;
     });
 
@@ -1311,6 +1555,8 @@ function buildCookieActionRequest(action = '', cookieIds = [], options = {}) {
     if (action === 'active' || action === 'disabled' || action === 'dead') return { method: 'PUT', body: { ...base, status: action } };
     if (action === 'error-on' || action === 'error-off') return { method: 'PUT', body: { ...base, errorTagged: action === 'error-on' } };
     if (action === 'sbd-on' || action === 'sbd-off') return { method: 'PUT', body: { ...base, sbdTagged: action === 'sbd-on' } };
+    if (action === 'unknown-on' || action === 'unknown-off') return { method: 'PUT', body: { ...base, unknownTagged: action === 'unknown-on' } };
+    if (action === 'hold-on' || action === 'hold-off') return { method: 'PUT', body: { ...base, holdTagged: action === 'hold-on' } };
     if (action === 'save-note') return { method: 'PUT', body: { cookieId: firstId, note: String(options.noteValue || '').trim() } };
     return null;
 }
@@ -1385,6 +1631,14 @@ async function applyBulkCookieAction(action, triggerButton = null) {
 
     if (action === 'check-selected') {
         await runCookieCheck('selected', triggerButton);
+        return;
+    }
+    if (action === 'tag-add') {
+        openTagPickerModal(cookieIds, 'add');
+        return;
+    }
+    if (action === 'tag-remove') {
+        openTagPickerModal(cookieIds, 'remove');
         return;
     }
 
@@ -1523,6 +1777,16 @@ async function handleCookieTableAction(event) {
 
         if (action === 'active' || action === 'disabled' || action === 'dead') {
             await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
+            return;
+        }
+
+        if (action === 'tag-add') {
+            openTagPickerModal([cookieId], 'add');
+            return;
+        }
+
+        if (action === 'tag-remove') {
+            openTagPickerModal([cookieId], 'remove');
             return;
         }
 
@@ -1884,28 +2148,93 @@ function bindEvents() {
     const toggleSelectAllCookiesBtn = el('toggleSelectAllCookiesBtn');
     if (toggleSelectAllCookiesBtn) toggleSelectAllCookiesBtn.addEventListener('click', toggleSelectAllCookies);
 
-    const cookieSearchInput = el('cookieSearchInput');
-    if (cookieSearchInput) cookieSearchInput.addEventListener('input', applyCookieViewControls);
-
-    const cookieStatusFilter = el('cookieStatusFilter');
-    if (cookieStatusFilter) cookieStatusFilter.addEventListener('change', applyCookieViewControls);
-
-    const cookieTagFilter = el('cookieTagFilter');
-    if (cookieTagFilter) cookieTagFilter.addEventListener('change', applyCookieViewControls);
-
-    const cookieAssignFilter = el('cookieAssignFilter');
-    if (cookieAssignFilter) cookieAssignFilter.addEventListener('change', applyCookieViewControls);
-
-    const cookieSortSelect = el('cookieSortSelect');
-    if (cookieSortSelect) cookieSortSelect.addEventListener('change', applyCookieViewControls);
-
-    const cookieFilterResetBtn = el('cookieFilterResetBtn');
-    if (cookieFilterResetBtn) {
-        cookieFilterResetBtn.addEventListener('click', () => {
+    const cookieHeaderFilterResetBtn = el('cookieHeaderFilterResetBtn');
+    if (cookieHeaderFilterResetBtn) {
+        cookieHeaderFilterResetBtn.addEventListener('click', () => {
             resetCookieFilters();
+            resetCustomerFilters();
+            renderCustomersTable();
             renderCookiesTable();
         });
     }
+
+    const toggleCookieImportBtn = el('toggleCookieImportBtn');
+    if (toggleCookieImportBtn) {
+        toggleCookieImportBtn.addEventListener('click', () => {
+            const collapse = el('cookieImportCollapse');
+            if (!collapse) return;
+            const willOpen = collapse.classList.contains('hidden');
+            collapse.classList.toggle('hidden', !willOpen);
+            toggleCookieImportBtn.textContent = willOpen ? 'Đóng import cookie tổng' : 'Import cookie tổng';
+        });
+    }
+
+    const headerFilterButtons = Array.from(document.querySelectorAll('[data-table-filter-btn]'));
+    headerFilterButtons.forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const descriptor = String(btn.dataset.tableFilterBtn || '');
+            const [table, column] = descriptor.split(':');
+            if (!table || !column) return;
+            openHeaderFilterPopup(btn, table, column);
+        });
+    });
+
+    const tableHeaderFilterApplyBtn = el('tableHeaderFilterApplyBtn');
+    if (tableHeaderFilterApplyBtn) tableHeaderFilterApplyBtn.addEventListener('click', applyHeaderFilterPopup);
+
+    const tableHeaderFilterSearch = el('tableHeaderFilterSearch');
+    if (tableHeaderFilterSearch) {
+        tableHeaderFilterSearch.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            applyHeaderFilterPopup();
+        });
+    }
+
+    const tableHeaderFilterClearBtn = el('tableHeaderFilterClearBtn');
+    if (tableHeaderFilterClearBtn) tableHeaderFilterClearBtn.addEventListener('click', clearHeaderFilterColumn);
+
+    const tableHeaderSortAscBtn = el('tableHeaderSortAscBtn');
+    if (tableHeaderSortAscBtn) tableHeaderSortAscBtn.addEventListener('click', () => setHeaderSort('asc'));
+
+    const tableHeaderSortDescBtn = el('tableHeaderSortDescBtn');
+    if (tableHeaderSortDescBtn) tableHeaderSortDescBtn.addEventListener('click', () => setHeaderSort('desc'));
+
+    const tableHeaderFilterPopup = el('tableHeaderFilterPopup');
+    if (tableHeaderFilterPopup) {
+        tableHeaderFilterPopup.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+    }
+
+    const tagPickerModal = el('tagPickerModal');
+    if (tagPickerModal) {
+        tagPickerModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            if (target.dataset.closeTagPicker === '1') {
+                closeTagPickerModal();
+                return;
+            }
+            const tagKey = String(target.dataset.tagPickerKey || '').trim();
+            if (!tagKey || !tagPickerContext) return;
+            const action = mapTagAction(tagKey, tagPickerContext.mode);
+            if (!action) return;
+            const button = target instanceof HTMLButtonElement ? target : null;
+            applyCookieAction(action, tagPickerContext.ids, button, { busyLabel: 'Dang xu ly...' })
+                .then((ok) => {
+                    if (ok) closeTagPickerModal();
+                });
+        });
+    }
+
+    const tagPickerCloseBtn = el('tagPickerCloseBtn');
+    if (tagPickerCloseBtn) tagPickerCloseBtn.addEventListener('click', closeTagPickerModal);
+
+    document.addEventListener('click', () => {
+        closeHeaderFilterPopup();
+    });
 
     const importBtn = el('importCookiesBtn');
     if (importBtn) importBtn.addEventListener('click', importCookies);
@@ -1932,6 +2261,15 @@ function bindEvents() {
 
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+        if (headerFilterPopupContext) {
+            closeHeaderFilterPopup();
+            return;
+        }
+        const tagModal = el('tagPickerModal');
+        if (tagModal && !tagModal.classList.contains('hidden')) {
+            closeTagPickerModal();
+            return;
+        }
         const guideModal = el('tvGuideModal');
         if (guideModal && !guideModal.classList.contains('hidden')) {
             closeTvGuideModal();
@@ -1969,6 +2307,7 @@ function bindEvents() {
 function bootstrap() {
     bindEvents();
     resetCookieFilters();
+    resetCustomerFilters();
     setTab(activeTab);
     resetLookupResult();
     setLookupState('Vui lòng nhập mã khách hàng.', 'idle');

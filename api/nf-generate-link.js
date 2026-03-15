@@ -53,6 +53,27 @@ function resolveEffectiveCookieIds(cookie = {}) {
     return { netflixId, secureNetflixId };
 }
 
+function isUnknownPlan(planValue = '') {
+    const text = String(planValue || '').trim().toLowerCase();
+    if (!text) return true;
+    return /unknow|unknown|n\/a/.test(text);
+}
+
+function isPaymentHoldYes(value = '') {
+    const text = String(value || '').trim().toLowerCase();
+    return text === 'yes' || text === 'true' || text === '1';
+}
+
+function evaluateCookieAccountTags(accountInfo = null) {
+    const safe = accountInfo || {};
+    const unknownTagged = isUnknownPlan(safe.plan);
+    const holdTagged = isPaymentHoldYes(safe.on_payment_hold);
+    return {
+        unknownTagged,
+        holdTagged
+    };
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -92,6 +113,8 @@ module.exports = async function (req, res) {
                 ...currentCookie,
                 status: 'active',
                 assignedCustomerCode: customers[customerIndex].code,
+                unknownTagged: false,
+                holdTagged: false,
                 lastCheckedAt: now,
                 lastSuccessAt: now,
                 lastErrorAt: '',
@@ -134,6 +157,48 @@ module.exports = async function (req, res) {
             const tokenResult = await requestNetflixToken(ids.netflixId, ids.secureNetflixId || '');
 
             if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
+                if (!tokenResult.accountInfo) {
+                    cookies[cookieIndex] = {
+                        ...cookies[cookieIndex],
+                        status: 'active',
+                        assignedCustomerCode: '',
+                        unknownTagged: false,
+                        holdTagged: false,
+                        lastCheckedAt: now,
+                        lastErrorAt: now,
+                        lastError: 'Cookie LIVE nhung khong lay duoc account info.',
+                        updatedAt: now
+                    };
+                    if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                        unassignCustomerCurrentCookie();
+                    }
+                    mutated = true;
+                    return null;
+                }
+
+                const tags = evaluateCookieAccountTags(tokenResult.accountInfo);
+                if (tags.unknownTagged || tags.holdTagged) {
+                    const tagMessage = [];
+                    if (tags.unknownTagged) tagMessage.push('UNKNOW');
+                    if (tags.holdTagged) tagMessage.push('HOLD');
+                    cookies[cookieIndex] = {
+                        ...cookies[cookieIndex],
+                        status: 'active',
+                        assignedCustomerCode: '',
+                        unknownTagged: tags.unknownTagged,
+                        holdTagged: tags.holdTagged,
+                        lastCheckedAt: now,
+                        lastErrorAt: now,
+                        lastError: `Cookie LIVE nhung bi tag ${tagMessage.join('+')}.`,
+                        updatedAt: now
+                    };
+                    if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
+                        unassignCustomerCurrentCookie();
+                    }
+                    mutated = true;
+                    return null;
+                }
+
                 return finalizeSuccess(cookieIndex, tokenResult.nftoken, reusedCookie);
             }
 
@@ -145,6 +210,8 @@ module.exports = async function (req, res) {
                     ...cookies[cookieIndex],
                     status: 'active',
                     sbdTagged: true,
+                    unknownTagged: false,
+                    holdTagged: false,
                     assignedCustomerCode: '',
                     lastCheckedAt: now,
                     lastErrorAt: now,
@@ -160,6 +227,8 @@ module.exports = async function (req, res) {
 
             if (tokenResult.outcome === 'dead') {
                 cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], reason);
+                cookies[cookieIndex].unknownTagged = false;
+                cookies[cookieIndex].holdTagged = false;
                 if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
                     unassignCustomerCurrentCookie();
                 }
@@ -170,6 +239,8 @@ module.exports = async function (req, res) {
             cookies[cookieIndex] = {
                 ...cookies[cookieIndex],
                 status: 'active',
+                unknownTagged: false,
+                holdTagged: false,
                 lastCheckedAt: now,
                 lastErrorAt: now,
                 lastError: reason,
@@ -184,7 +255,7 @@ module.exports = async function (req, res) {
             const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
             if (assignedIdx >= 0) {
                 const assignedCookie = cookies[assignedIdx];
-                if (assignedCookie.errorTagged || assignedCookie.sbdTagged) {
+                if (assignedCookie.errorTagged || assignedCookie.sbdTagged || assignedCookie.unknownTagged || assignedCookie.holdTagged) {
                     unassignCustomerCurrentCookie();
                 } else {
                 const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
@@ -204,6 +275,8 @@ module.exports = async function (req, res) {
             const cookie = cookies[i];
             if (cookie.errorTagged) continue;
             if (cookie.sbdTagged) continue;
+            if (cookie.unknownTagged) continue;
+            if (cookie.holdTagged) continue;
             if (cookie.status !== 'active') continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
             if (cookie.id === assignedCookieId) continue;

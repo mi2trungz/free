@@ -174,6 +174,9 @@ function sanitizeCookie(item) {
     const now = new Date().toISOString();
     const errorTagged = item && (item.errorTagged === true || item.errorTagged === 'true' || item.errorTagged === 1 || item.errorTagged === '1');
     const sbdTagged = item && (item.sbdTagged === true || item.sbdTagged === 'true' || item.sbdTagged === 1 || item.sbdTagged === '1');
+    const unknownTagged = item && (item.unknownTagged === true || item.unknownTagged === 'true' || item.unknownTagged === 1 || item.unknownTagged === '1');
+    const holdTagged = item && (item.holdTagged === true || item.holdTagged === 'true' || item.holdTagged === 1 || item.holdTagged === '1');
+    const hasBlockingTag = errorTagged || sbdTagged || unknownTagged || holdTagged;
     return {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
@@ -183,7 +186,9 @@ function sanitizeCookie(item) {
         status: sanitizeCookieStatus(item.status),
         errorTagged,
         sbdTagged,
-        assignedCustomerCode: (errorTagged || sbdTagged) ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
+        unknownTagged,
+        holdTagged,
+        assignedCustomerCode: hasBlockingTag ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
         createdAt: item.createdAt || now,
         updatedAt: item.updatedAt || now,
         lastCheckedAt: item.lastCheckedAt || '',
@@ -216,6 +221,8 @@ function buildCookieDocFields(cookie) {
         status: toStringValue(cookie.status),
         errorTagged: { booleanValue: !!cookie.errorTagged },
         sbdTagged: { booleanValue: !!cookie.sbdTagged },
+        unknownTagged: { booleanValue: !!cookie.unknownTagged },
+        holdTagged: { booleanValue: !!cookie.holdTagged },
         assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
         createdAt: toTimestampValue(cookie.createdAt),
         updatedAt: toTimestampValue(cookie.updatedAt),
@@ -253,6 +260,12 @@ function parseCookieFields(fields = {}) {
         sbdTagged: fields.sbdTagged && (
             fields.sbdTagged.booleanValue === true || fields.sbdTagged.booleanValue === 'true'
         ),
+        unknownTagged: fields.unknownTagged && (
+            fields.unknownTagged.booleanValue === true || fields.unknownTagged.booleanValue === 'true'
+        ),
+        holdTagged: fields.holdTagged && (
+            fields.holdTagged.booleanValue === true || fields.holdTagged.booleanValue === 'true'
+        ),
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
         updatedAt: fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue),
@@ -280,7 +293,12 @@ function toCustomerSnapshot(customer = {}) {
 function toCookieSnapshot(cookie = {}) {
     return [
         cookie.id || '', cookie.netflixId || '', cookie.secureNetflixId || '', cookie.cookieRaw || '', cookie.note || '',
-        cookie.status || '', cookie.errorTagged ? '1' : '0', cookie.sbdTagged ? '1' : '0', cookie.assignedCustomerCode || '',
+        cookie.status || '',
+        cookie.errorTagged ? '1' : '0',
+        cookie.sbdTagged ? '1' : '0',
+        cookie.unknownTagged ? '1' : '0',
+        cookie.holdTagged ? '1' : '0',
+        cookie.assignedCustomerCode || '',
         cookie.createdAt || '', cookie.updatedAt || '', cookie.lastCheckedAt || '', cookie.lastSuccessAt || '',
         cookie.lastErrorAt || '', cookie.lastError || ''
     ].join('|');
@@ -437,7 +455,9 @@ function buildCookieSummary(cookies = []) {
     const disabledCount = cookies.filter((c) => c.status === 'disabled').length;
     const deadCount = cookies.filter((c) => c.status === 'dead').length;
     const assignedCount = cookies.filter((c) => !!c.assignedCustomerCode).length;
-    return { total, activeCount, disabledCount, deadCount, assignedCount };
+    const unknownCount = cookies.filter((c) => !!c.unknownTagged).length;
+    const holdCount = cookies.filter((c) => !!c.holdTagged).length;
+    return { total, activeCount, disabledCount, deadCount, assignedCount, unknownCount, holdCount };
 }
 
 async function readCustomers() {

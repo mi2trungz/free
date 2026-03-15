@@ -64,6 +64,20 @@ body {
     z-index: 2;
 }
 
+@media (min-width: 1024px) {
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.2rem 0;
+    }
+
+    .nf-shell {
+        margin: 0 auto;
+    }
+}
+
 .runtime-guard {
     margin-bottom: 0.9rem;
     border: 1px solid rgba(245, 158, 11, 0.38);
@@ -561,6 +575,14 @@ body {
     gap: 0.62rem;
 }
 
+.import-toggle-btn {
+    margin-top: 0.6rem;
+}
+
+.import-collapse {
+    margin-top: 0.62rem;
+}
+
 .import-actions {
     display: grid;
     align-content: start;
@@ -702,6 +724,43 @@ body {
     background: rgba(255, 255, 255, 0.03);
 }
 
+.th-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+}
+
+.th-filter-btn {
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #b5c4e8;
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+    line-height: 1;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.th-filter-btn.active {
+    border-color: rgba(229, 9, 20, 0.6);
+    color: #fff;
+    background: rgba(229, 9, 20, 0.22);
+}
+
+.th-filter-btn.sort-asc {
+    border-color: rgba(52, 211, 153, 0.65);
+    background: rgba(16, 185, 129, 0.22);
+}
+
+.th-filter-btn.sort-desc {
+    border-color: rgba(239, 68, 68, 0.65);
+    background: rgba(239, 68, 68, 0.18);
+}
+
 .data-table td {
     font-size: 0.84rem;
     color: #e7eeff;
@@ -727,6 +786,51 @@ body {
 .btn-tiny:hover {
     border-color: rgba(229, 9, 20, 0.5);
     background: rgba(229, 9, 20, 0.16);
+}
+
+.header-filter-popup {
+    position: absolute;
+    z-index: 90;
+    width: min(320px, calc(100vw - 16px));
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(12, 16, 27, 0.98);
+    box-shadow: 0 22px 42px rgba(0, 0, 0, 0.45);
+    padding: 0.66rem;
+}
+
+.header-filter-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    color: #d6e3ff;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.header-filter-popup .text-input {
+    margin-bottom: 0.44rem;
+}
+
+.header-filter-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.36rem;
+}
+
+.tag-picker-card {
+    width: min(540px, calc(100% - 1rem));
+}
+
+.tag-picker-options {
+    margin-top: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.tag-picker-btn {
+    min-height: 38px;
 }
 
 .cookie-link-btn {
@@ -783,6 +887,18 @@ body {
 .pill-sbd {
     background: rgba(59, 130, 246, 0.24);
     color: #93c5fd;
+    margin-left: 0.32rem;
+}
+
+.pill-unknown {
+    background: rgba(168, 85, 247, 0.24);
+    color: #d8b4fe;
+    margin-left: 0.32rem;
+}
+
+.pill-hold {
+    background: rgba(251, 146, 60, 0.24);
+    color: #fdba74;
     margin-left: 0.32rem;
 }
 
@@ -1042,39 +1158,35 @@ body {
     }
 
     .data-table {
-        min-width: 0;
-        border-collapse: separate;
-        border-spacing: 0 0.45rem;
-        padding: 0.45rem;
+        min-width: 760px;
+        border-collapse: collapse;
+        border-spacing: 0;
+        padding: 0;
     }
 
     .data-table thead {
-        display: none;
+        display: table-header-group;
     }
 
     .data-table tbody tr {
-        display: grid;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        padding: 0.55rem;
-        background: rgba(255, 255, 255, 0.03);
+        display: table-row;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        background: transparent;
     }
 
     .data-table td {
-        display: grid;
-        grid-template-columns: 108px 1fr;
-        gap: 0.5rem;
-        padding: 0.28rem 0;
-        border-bottom: 0;
-        align-items: start;
+        display: table-cell;
+        grid-template-columns: none;
+        gap: 0;
+        padding: 0.62rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        align-items: initial;
     }
 
     .data-table td::before {
-        content: attr(data-label);
-        color: #9fb0d7;
-        font-size: 0.74rem;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
+        display: none;
     }
 
     .check-col {
@@ -1082,9 +1194,9 @@ body {
     }
 
     .check-cell {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
+        display: table-cell;
+        justify-content: initial;
+        align-items: initial;
     }
 
     .check-cell::before {

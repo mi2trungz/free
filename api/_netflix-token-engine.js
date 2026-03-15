@@ -25,21 +25,55 @@ function callNfCheckerApi(netflixId) {
             }
         }, (res) => {
             let data = '';
-            res.on('data', chunk => data += chunk);
+            res.on('data', (chunk) => { data += chunk; });
             res.on('end', () => {
                 try {
-                    const parsed = JSON.parse(data);
+                    const parsed = JSON.parse(data || '{}');
                     if (parsed.status === 'success' && parsed.token_result && parsed.token_result.status === 'Success') {
-                        resolve({
+                        return resolve({
                             ok: true,
                             nftoken: parsed.token_result.token,
-                            accountInfo: parsed.account_info
+                            accountInfo: parsed.account_info || null
                         });
-                    } else {
-                        resolve({ ok: false, error: parsed.message || 'nfchecker failed' });
                     }
+                    return resolve({ ok: false, error: parsed.message || 'nfchecker failed' });
                 } catch (e) {
-                    resolve({ ok: false, error: 'nfchecker parse error' });
+                    return resolve({ ok: false, error: 'nfchecker parse error' });
+                }
+            });
+        });
+
+        req.on('error', (e) => resolve({ ok: false, error: e.message }));
+        req.write(payload);
+        req.end();
+    });
+}
+
+function callNfCheckerAccountInfo(netflixId) {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            content: `NetflixId=${netflixId}`,
+            mode: 'fullinfo'
+        });
+
+        const req = https.request('https://nfchecker.firet.io/api/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data || '{}');
+                    if (parsed && parsed.account_info) {
+                        return resolve({ ok: true, accountInfo: parsed.account_info });
+                    }
+                    return resolve({ ok: false, error: parsed.message || 'Missing account info' });
+                } catch (e) {
+                    return resolve({ ok: false, error: 'nfchecker parse error' });
                 }
             });
         });
@@ -134,7 +168,14 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
     const raw = await callNetflixCreateAutoLoginToken(netflixId, secureNetflixId || '');
     const result = classifyNetflixTokenResult(raw);
 
-    // Nếu bị SBD hoặc cookie có vẻ bị chặn nhưng vẫn còn netflixId, ta thử fallback sang nfchecker.firet.io
+    if (result.outcome === 'ok' && result.nftoken) {
+        const infoResult = await callNfCheckerAccountInfo(netflixId);
+        return {
+            ...result,
+            accountInfo: infoResult.ok ? (infoResult.accountInfo || null) : null
+        };
+    }
+
     if (result.outcome === 'sbd_blocked' || (result.outcome === 'dead' && !secureNetflixId)) {
         const fallback = await callNfCheckerApi(netflixId);
         if (fallback.ok && fallback.nftoken) {
@@ -144,7 +185,7 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
                 statusCode: 200,
                 error: '',
                 source: 'nfchecker_fallback',
-                accountInfo: fallback.accountInfo
+                accountInfo: fallback.accountInfo || null
             };
         }
     }

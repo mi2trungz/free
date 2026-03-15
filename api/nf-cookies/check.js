@@ -30,6 +30,17 @@ function normalizeCode(value = '') {
     return String(value || '').trim().toUpperCase();
 }
 
+function isUnknownPlan(planValue = '') {
+    const text = String(planValue || '').trim().toLowerCase();
+    if (!text) return true;
+    return /unknow|unknown|n\/a/.test(text);
+}
+
+function isPaymentHoldYes(value = '') {
+    const text = String(value || '').trim().toLowerCase();
+    return text === 'yes' || text === 'true' || text === '1';
+}
+
 function unassignCustomersForCookie(customers = [], cookie, nowIso, changedCustomerCodes = null) {
     let changed = false;
     const cookieId = String(cookie && cookie.id ? cookie.id : '').trim();
@@ -124,16 +135,36 @@ module.exports = async function (req, res) {
 
             if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
                 const now = new Date().toISOString();
+                const account = tokenResult.accountInfo || null;
+                const unknownTagged = !!(account && isUnknownPlan(account.plan));
+                const holdTagged = !!(account && isPaymentHoldYes(account.on_payment_hold));
+                const hasPolicyTag = unknownTagged || holdTagged;
                 cookies[index] = {
                     ...cookie,
                     status: 'active',
                     sbdTagged: false,
+                    unknownTagged,
+                    holdTagged,
+                    assignedCustomerCode: hasPolicyTag ? '' : cookie.assignedCustomerCode,
                     lastCheckedAt: now,
-                    lastSuccessAt: now,
-                    lastErrorAt: '',
-                    lastError: '',
+                    lastSuccessAt: hasPolicyTag ? (cookie.lastSuccessAt || '') : now,
+                    lastErrorAt: hasPolicyTag ? now : '',
+                    lastError: hasPolicyTag
+                        ? `Cookie LIVE nhung bi tag ${unknownTagged && holdTagged ? 'UNKNOW+HOLD' : (unknownTagged ? 'UNKNOW' : 'HOLD')}.`
+                        : '',
                     updatedAt: now
                 };
+                if (hasPolicyTag) {
+                    unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
+                    errorCount += 1;
+                    results.push({
+                        cookieId: cookie.id,
+                        outcome: unknownTagged && holdTagged ? 'unknown_hold' : (unknownTagged ? 'unknown' : 'hold'),
+                        message: cookies[index].lastError
+                    });
+                    mutated = true;
+                    continue;
+                }
                 liveCount += 1;
                 mutated = true;
                 results.push({
@@ -149,6 +180,8 @@ module.exports = async function (req, res) {
                 cookies[index] = {
                     ...cookie,
                     sbdTagged: true,
+                    unknownTagged: false,
+                    holdTagged: false,
                     assignedCustomerCode: '',
                     lastCheckedAt: now,
                     lastErrorAt: now,
@@ -171,6 +204,8 @@ module.exports = async function (req, res) {
                 cookies[index] = {
                     ...cookie,
                     status: 'dead',
+                    unknownTagged: false,
+                    holdTagged: false,
                     assignedCustomerCode: '',
                     lastCheckedAt: now,
                     lastErrorAt: now,

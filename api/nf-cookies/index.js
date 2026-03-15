@@ -24,6 +24,8 @@ function cookiePublicDto(cookie) {
         status: cookie.status,
         errorTagged: !!cookie.errorTagged,
         sbdTagged: !!cookie.sbdTagged,
+        unknownTagged: !!cookie.unknownTagged,
+        holdTagged: !!cookie.holdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
         cookieRaw: cookie.cookieRaw || '',
         note: cookie.note || '',
@@ -96,6 +98,8 @@ module.exports = async function (req, res) {
             const hasCookieRawUpdate = cookieRawInput.length > 0;
             const hasErrorTagUpdate = body.errorTagged !== undefined;
             const hasSbdTagUpdate = body.sbdTagged !== undefined;
+            const hasUnknownTagUpdate = body.unknownTagged !== undefined;
+            const hasHoldTagUpdate = body.holdTagged !== undefined;
             const hasNoteUpdate = body.note !== undefined;
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
@@ -122,8 +126,10 @@ module.exports = async function (req, res) {
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
                 const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
+                const nextUnknownTagged = hasUnknownTagUpdate ? !!body.unknownTagged : !!current.unknownTagged;
+                const nextHoldTagged = hasHoldTagUpdate ? !!body.holdTagged : !!current.holdTagged;
                 const nextNote = hasNoteUpdate ? String(body.note ?? '').trim() : String(current.note || '');
-                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged || nextSbdTagged;
+                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged || nextSbdTagged || nextUnknownTagged || nextHoldTagged;
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
@@ -136,6 +142,8 @@ module.exports = async function (req, res) {
                         status: 'active',
                         errorTagged: nextErrorTagged,
                         sbdTagged: nextSbdTagged,
+                        unknownTagged: nextUnknownTagged,
+                        holdTagged: nextHoldTagged,
                         assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                         updatedAt: now,
                         lastCheckedAt: '',
@@ -151,6 +159,8 @@ module.exports = async function (req, res) {
                     status: nextStatus,
                     errorTagged: nextErrorTagged,
                     sbdTagged: nextSbdTagged,
+                    unknownTagged: nextUnknownTagged,
+                    holdTagged: nextHoldTagged,
                     note: nextNote,
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,
