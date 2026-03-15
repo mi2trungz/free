@@ -139,9 +139,31 @@
                     <h3>Hướng dẫn đăng nhập trên điện thoại</h3>
                     <p>Bước 1: Sao chép đường link đăng nhập phía trên</p>
                     <p>Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại và tiến hành truy cập</p>
+                    <p>Bước 3: Nhấn vào logo Netflix ở trên cùng bên trái</p>
                     <p>Bước 3: Nó có hỏi gì hay hiện gì thì cứ bấm nút ĐỒNG Ý hoặc TIẾP TỤC</p>
-                    <p><strong>Lưu ý:</strong> Nếu nó đã mở app Netflix lên và vẫn không đăng nhập thành công, hãy xoá app Netflix đi và tải lại (Sau khi tải lại không được mở lên)</p>
+                    <p class="mobile-link-note"><strong>Lưu ý:</strong> Nếu nó đã mở app Netflix lên và vẫn không đăng nhập thành công, hãy xoá app Netflix đi và tải lại (Sau khi tải lại không được mở lên)</p>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tvGuideModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-tv-guide="1"></div>
+        <div class="modal-card support-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Hướng dẫn TV</span>
+                    <h2>Hướng dẫn cách đăng nhập lên Tivi</h2>
+                </div>
+                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body">
+                <div class="tv-guide-list">
+                    <p><strong>Bước 1:</strong> Mở tivi rồi bấm nút đăng nhập bằng mã code</p>
+                    <p><strong>Bước 2:</strong> Ghi nhớ mã code đó</p>
+                    <p><strong>Bước 3:</strong> Bấm vào nút bên dưới và nhập mã code đó vào</p>
+                </div>
+                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHẬP MÃ TIVI</button>
             </div>
         </div>
     </section>
@@ -151,7 +173,7 @@
         <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">TV Activation</span>
+                    <span class="eyebrow">Nhập mã Tivi</span>
                     <h2>Nhập mã TV (8 số)</h2>
                 </div>
                 <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
@@ -160,11 +182,12 @@
                 <label class="mobile-link-label" for="tvCodeInput">Mã TV:</label>
                 <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Ví dụ: 12345678" autocomplete="off">
                 <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xác nhận</button>
-                <div id="tvCodeState" class="state-text state-idle">Nhập đúng 8 số rồi bấm xác nhận.</div>
+                <div id="tvCodeState" class="state-text state-idle">Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.</div>
 
                 <div class="mobile-link-guide">
-                    <h3>Fallback thủ công</h3>
-                    <p>Nếu hệ thống không auto submit được, vui lòng tự nhập mã tại:</p>
+                    <h3>Mở thủ công khi cần</h3>
+                    <p>Nếu trình duyệt chặn popup, hãy mở lần lượt 2 link sau:</p>
+                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Mở link đăng nhập</a>
                     <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mở netflix.com/tv8</a>
                 </div>
             </div>

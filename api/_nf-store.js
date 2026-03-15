@@ -496,7 +496,7 @@ function callNetflixCreateAutoLoginToken(netflixId, secureNetflixId) {
 
 function buildUrlByDevice(nftoken, device) {
     const token = encodeURIComponent(String(nftoken || '').trim());
-    if (device === 'mobile') return `https://netflix.com/unsupported?nftoken=${token}`;
+    if (device === 'mobile') return `https://netflix.com/YourAccount?nftoken=${token}`;
     if (device === 'tv') return `https://netflix.com/unsupported?lock=true&nftoken=${token}`;
     return `https://netflix.com/?nftoken=${token}`;
 }

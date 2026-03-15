@@ -5,6 +5,7 @@ const ADMIN_EMAIL = 'cungbocap306@gmail.com';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const LOOKUP_REASON_EXPIRED = 'expired';
 const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
+const TV_REDIRECT_DELAY_MS = 4000;
 
 const firebaseConfig = {
     apiKey: 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58',
@@ -32,6 +33,7 @@ let rawEditorCookieId = '';
 let rawEditorInitialRaw = '';
 let rawEditorMode = 'edit';
 let mobileGeneratedLink = '';
+let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
 const cookieViewState = {
     search: '',
@@ -307,6 +309,7 @@ function setDeviceSectionVisible(visible) {
     if (!section) return;
     section.classList.toggle('hidden', !visible);
     if (!visible) closeSupportModal();
+    if (!visible) closeTvGuideModal();
     if (!visible) closeMobileLinkModal();
     if (!visible) closeTvCodeModal();
 }
@@ -357,6 +360,22 @@ function closeRenewModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
+function openTvGuideModal() {
+    if (!currentLookupCode || !currentLookupEligible) return;
+    const section = el('deviceSection');
+    const modal = el('tvGuideModal');
+    if (!section || !modal || section.classList.contains('hidden')) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeTvGuideModal() {
+    const modal = el('tvGuideModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
 function openMobileLinkModal(url = '') {
     const modal = el('mobileLinkModal');
     const output = el('mobileLinkOutput');
@@ -391,8 +410,14 @@ function openTvCodeModal() {
     const input = el('tvCodeInput');
     if (!section || !modal || !input || section.classList.contains('hidden')) return;
     tvFlowBusy = false;
+    tvGeneratedLoginLink = '';
     input.value = '';
-    setTvCodeState('Nhập đúng 8 số rồi bấm xác nhận.', 'idle');
+    setTvCodeState('Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.', 'idle');
+    const manualLoginLink = el('tvManualLoginLink');
+    if (manualLoginLink) {
+        manualLoginLink.setAttribute('href', '#');
+        manualLoginLink.setAttribute('aria-disabled', 'true');
+    }
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
     input.focus();
@@ -406,24 +431,6 @@ function closeTvCodeModal() {
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
     input.value = '';
-}
-
-function detectClientLoginDevice() {
-    const ua = String((navigator && navigator.userAgent) || '').toLowerCase();
-    const mobile = /android|iphone|ipad|ipod|mobile|windows phone/i.test(ua);
-    return mobile ? 'mobile' : 'desktop';
-}
-
-function openLoginUrlBestEffort(url, device) {
-    const targetUrl = String(url || '').trim();
-    if (!targetUrl) return false;
-    const popup = window.open('about:blank', '_blank');
-    if (popup && !popup.closed) {
-        popup.location.href = targetUrl;
-        return true;
-    }
-    if (device !== 'mobile') window.open(targetUrl, '_blank');
-    return false;
 }
 
 async function submitTvCodeFlow() {
@@ -443,45 +450,41 @@ async function submitTvCodeFlow() {
     }
 
     if (input) input.value = tvCode;
-    const loginDevice = detectClientLoginDevice();
     tvFlowBusy = true;
     setButtonBusy(submitBtn, true, 'Đang xử lý...');
-    setTvCodeState('Đang tạo link đăng nhập và submit mã TV...', 'loading');
+    setTvCodeState('Đang tạo link đăng nhập...', 'loading');
 
     try {
         const linkData = await apiRequest('/api/nf-generate-link', 'POST', {
             customerCode: currentLookupCode,
-            device: loginDevice
+            device: 'mobile'
         });
         if (!linkData || !linkData.url) throw new Error('Không tạo được link đăng nhập.');
 
-        const opened = openLoginUrlBestEffort(linkData.url, loginDevice);
-        setLookupState('Đã tạo link đăng nhập. Đang xử lý mã TV...', 'loading');
+        tvGeneratedLoginLink = String(linkData.url || '').trim();
+        const manualLoginLink = el('tvManualLoginLink');
+        if (manualLoginLink) {
+            manualLoginLink.setAttribute('href', tvGeneratedLoginLink || '#');
+            manualLoginLink.removeAttribute('aria-disabled');
+        }
 
-        const tvResult = await apiRequest('/api/nf-tv-activate', 'POST', {
-            customerCode: currentLookupCode,
-            tvCode,
-            cookieId: linkData.cookieId || ''
-        });
-
-        if (tvResult.outcome === 'submitted') {
-            const suffix = opened ? '' : ` Nếu chưa thấy trang đăng nhập tự mở, hãy mở link thủ công: ${linkData.url}`;
-            setTvCodeState(`${tvResult.message || 'Đã submit mã TV thành công.'}${suffix}`, 'success');
-            setLookupState('Đã submit mã TV thành công.', 'success');
+        const popup = window.open('about:blank', '_blank');
+        if (!popup || popup.closed) {
+            setTvCodeState('Trình duyệt đang chặn popup. Hãy bấm "Mở link đăng nhập" rồi tiếp tục bấm "Mở netflix.com/tv8".', 'warning');
+            setLookupState('Trình duyệt chặn popup. Vui lòng mở thủ công 2 link trong popup TV.', 'warning');
             return;
         }
 
-        if (tvResult.outcome === 'manual_required') {
-            setTvCodeState(`${tvResult.message || 'Cần thao tác thủ công.'} Vui lòng mở ${TV8_MANUAL_URL} để nhập mã.`, 'warning');
-            setLookupState(`Cần thao tác thủ công trên ${TV8_MANUAL_URL}.`, 'warning');
-            return;
-        }
+        popup.location.href = tvGeneratedLoginLink;
+        setTvCodeState(`Đã mở link đăng nhập. Sau ${Math.round(TV_REDIRECT_DELAY_MS / 1000)} giây sẽ tự chuyển sang netflix.com/tv8 để bạn nhập mã TV.`, 'success');
+        setLookupState('Đã mở link đăng nhập TV. Sắp chuyển sang netflix.com/tv8...', 'success');
 
-        setTvCodeState(tvResult.message || 'Xử lý mã TV thất bại.', 'error');
-        setLookupState(tvResult.message || 'Xử lý mã TV thất bại.', 'error');
+        window.setTimeout(() => {
+            if (popup && !popup.closed) popup.location.href = TV8_MANUAL_URL;
+        }, TV_REDIRECT_DELAY_MS);
     } catch (error) {
-        setTvCodeState(`${error.message || 'Xử lý mã TV thất bại.'} Bạn có thể nhập thủ công tại ${TV8_MANUAL_URL}.`, 'error');
-        setLookupState(error.message || 'Xử lý mã TV thất bại.', 'error');
+        setTvCodeState(`${error.message || 'Xử lý mã TV thất bại.'} Bạn có thể mở thủ công link đăng nhập rồi vào ${TV8_MANUAL_URL}.`, 'error');
+        setLookupState(error.message || 'Không tạo được link TV.', 'error');
     } finally {
         tvFlowBusy = false;
         setButtonBusy(submitBtn, false);
@@ -655,26 +658,7 @@ async function generateDeviceLink(device) {
     setDeviceButtonsEnabled(false);
     setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
-    const shouldAutoOpen = device !== 'mobile';
-    let popup = null;
-    if (shouldAutoOpen) {
-        popup = window.open('about:blank', '_blank');
-        if (popup) {
-            try {
-                popup.document.title = 'NF';
-                popup.document.body.style.margin = '0';
-                popup.document.body.style.fontFamily = 'Arial, sans-serif';
-                popup.document.body.style.background = '#0b0f1c';
-                popup.document.body.style.color = '#ffffff';
-                popup.document.body.style.display = 'flex';
-                popup.document.body.style.alignItems = 'center';
-                popup.document.body.style.justifyContent = 'center';
-                popup.document.body.innerHTML = '<div>Đang tạo link Netflix...</div>';
-            } catch (e) {
-                // ignore
-            }
-        }
-    }
+    const shouldAutoOpen = device === 'desktop';
 
     try {
         const data = await apiRequest('/api/nf-generate-link', 'POST', {
@@ -684,17 +668,18 @@ async function generateDeviceLink(device) {
         if (!data.url) throw new Error('Không tạo được link');
 
         if (shouldAutoOpen) {
-            if (popup && !popup.closed) popup.location.href = data.url;
-            else window.open(data.url, '_blank');
-            setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
+            const opened = window.open(data.url, '_blank');
+            if (!opened || opened.closed) {
+                setLookupState('Đã tạo link thành công nhưng popup bị chặn. Hãy cho phép popup rồi thử lại.', 'warning');
+                toast('Popup bị chặn. Hãy bật popup cho trang này.', 'warn');
+            } else {
+                setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
+            }
         } else {
             openMobileLinkModal(data.url);
             setLookupState('Tạo link điện thoại thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
         }
     } catch (error) {
-        if (popup && !popup.closed) {
-            try { popup.close(); } catch (e) { /* ignore */ }
-        }
         setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         setButtonBusy(clickedButton, false);
@@ -1370,7 +1355,7 @@ function bindEvents() {
         btn.addEventListener('click', () => {
             const device = String(btn.dataset.device || 'desktop');
             if (device === 'tv') {
-                openTvCodeModal();
+                openTvGuideModal();
                 return;
             }
             generateDeviceLink(device);
@@ -1474,6 +1459,31 @@ function bindEvents() {
 
     const tvManualLink = el('tvManualLink');
     if (tvManualLink) tvManualLink.setAttribute('href', TV8_MANUAL_URL);
+
+    const tvManualLoginLink = el('tvManualLoginLink');
+    if (tvManualLoginLink) {
+        tvManualLoginLink.setAttribute('href', '#');
+        tvManualLoginLink.setAttribute('aria-disabled', 'true');
+    }
+
+    const tvGuideModal = el('tvGuideModal');
+    if (tvGuideModal) {
+        tvGuideModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeTvGuide === '1') closeTvGuideModal();
+        });
+    }
+
+    const tvGuideCloseBtn = el('tvGuideCloseBtn');
+    if (tvGuideCloseBtn) tvGuideCloseBtn.addEventListener('click', closeTvGuideModal);
+
+    const tvGuideStartBtn = el('tvGuideStartBtn');
+    if (tvGuideStartBtn) {
+        tvGuideStartBtn.addEventListener('click', () => {
+            closeTvGuideModal();
+            openTvCodeModal();
+        });
+    }
 
     const adminFab = el('nfAdminFab');
     if (adminFab) adminFab.addEventListener('click', openAdminModal);
@@ -1625,6 +1635,11 @@ function bindEvents() {
 
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+        const guideModal = el('tvGuideModal');
+        if (guideModal && !guideModal.classList.contains('hidden')) {
+            closeTvGuideModal();
+            return;
+        }
         const tvModal = el('tvCodeModal');
         if (tvModal && !tvModal.classList.contains('hidden')) {
             closeTvCodeModal();

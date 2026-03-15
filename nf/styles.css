@@ -774,12 +774,28 @@ body {
     line-height: 1.5;
 }
 
+.tv-guide-list {
+    display: grid;
+    gap: 0.45rem;
+    margin-bottom: 0.8rem;
+}
+
+.tv-guide-list p {
+    margin: 0;
+    color: #d6e0f8;
+    line-height: 1.55;
+}
+
 .support-link-btn {
     margin-top: 0.75rem;
     display: inline-flex;
     text-decoration: none;
     align-items: center;
     justify-content: center;
+}
+
+.btn-tv-guide-start {
+    width: 100%;
 }
 
 .mobile-link-card {
@@ -834,6 +850,16 @@ body {
     color: #d6e0f8;
     line-height: 1.5;
     font-size: 0.86rem;
+}
+
+.mobile-link-guide .mobile-link-note {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.mobile-link-guide a[aria-disabled="true"] {
+    pointer-events: none;
+    opacity: 0.55;
 }
 
 .raw-editor-modal {
