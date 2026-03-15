@@ -5,6 +5,7 @@ const {
     persistAll,
     findCustomerByCode,
     isCustomerWarrantyValid,
+    isCookieOverCapacityActive,
     buildUrlByDevice,
     extractNetflixIdsFromCookie
 } = require('./_nf-store');
@@ -115,6 +116,9 @@ module.exports = async function (req, res) {
                 assignedCustomerCode: customers[customerIndex].code,
                 unknownTagged: false,
                 holdTagged: false,
+                overCapacityTagged: false,
+                overCapacityUntil: '',
+                lastOverCapacityAt: '',
                 lastCheckedAt: now,
                 lastSuccessAt: now,
                 lastErrorAt: '',
@@ -255,7 +259,12 @@ module.exports = async function (req, res) {
             const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
             if (assignedIdx >= 0) {
                 const assignedCookie = cookies[assignedIdx];
-                if (assignedCookie.errorTagged || assignedCookie.sbdTagged || assignedCookie.status === 'dead') {
+                if (
+                    assignedCookie.errorTagged
+                    || assignedCookie.sbdTagged
+                    || assignedCookie.status === 'dead'
+                    || isCookieOverCapacityActive(assignedCookie)
+                ) {
                     unassignCustomerCurrentCookie();
                 } else {
                     const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
@@ -280,6 +289,7 @@ module.exports = async function (req, res) {
             if (cookie.errorTagged) continue;
             if (cookie.sbdTagged) continue;
             if (cookie.status !== 'active') continue;
+            if (isCookieOverCapacityActive(cookie)) continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
             if (cookie.id === assignedCookieId) continue;
 

@@ -141,6 +141,7 @@ function getCookieColumnDisplay(cookie = {}, column = '', customerNameMap = new 
         if (cookie.sbdTagged) tags.push('SBD');
         if (cookie.unknownTagged) tags.push('UNKNOW');
         if (cookie.holdTagged) tags.push('HOLD');
+        if (cookie.overCapacityTagged) tags.push('OVERCAP');
         return `${cookie.status || 'active'} ${tags.join(' ')}`.trim();
     }
     if (column === 'assigned') return `${assignedCode} ${assignedName}`.trim();
@@ -430,6 +431,7 @@ function openSupportModal() {
     const section = el('deviceSection');
     const modal = el('supportModal');
     if (!section || !modal || section.classList.contains('hidden')) return;
+    setSupportOverloadState('Bam nut de he thong tu kiem tra cookie hien tai.', 'idle');
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -439,6 +441,60 @@ function closeSupportModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+}
+
+function setSupportOverloadState(text, mode = 'idle') {
+    const state = el('supportOverloadState');
+    if (!state) return;
+    state.textContent = text || '';
+    setStateClass(state, mode);
+}
+
+async function runSupportOverloadCheck() {
+    if (runtimeBlocked) return;
+    if (!currentLookupCode || !currentLookupEligible) {
+        setSupportOverloadState('Ma khach hang chua du dieu kien de check.', 'warning');
+        return;
+    }
+
+    const btn = el('supportOverloadBtn');
+    setButtonBusy(btn, true, 'Dang kiem tra...');
+    showLookupLoadingOverlay('Dang kiem tra qua tai nguoi dung...');
+    setSupportOverloadState('Dang kiem tra cookie LIVE va trang thai qua tai...', 'loading');
+
+    try {
+        const data = await apiRequest('/api/nf-support-overload-check', 'POST', { customerCode: currentLookupCode });
+        const outcome = String(data && data.outcome ? data.outcome : '').trim();
+        if (outcome === 'not_assigned') {
+            setSupportOverloadState('Khach dang khong duoc gan cookie.', 'warning');
+            setLookupState('Khach dang khong duoc gan cookie.', 'warning');
+            return;
+        }
+        if (outcome === 'not_live') {
+            setSupportOverloadState(data.message || 'Cookie hien tai khong LIVE.', 'error');
+            setLookupState('Cookie hien tai khong LIVE.', 'error');
+            return;
+        }
+        if (outcome === 'overloaded_unassigned') {
+            const untilText = formatDateTime(data.overCapacityUntil || '');
+            setSupportOverloadState(`Da qua tai. Da bo gan va khoa tam den ${untilText || '-'}.`, 'warning');
+            setLookupState('Da phat hien qua tai. He thong da bo gan cookie va se tu dong ne tam trong 30 phut.', 'warning');
+            return;
+        }
+        if (outcome === 'live_ok') {
+            setSupportOverloadState('Cookie LIVE va khong co dau hieu qua tai.', 'success');
+            setLookupState('Cookie LIVE va khong co dau hieu qua tai.', 'success');
+            return;
+        }
+        setSupportOverloadState(data.message || 'Khong ket luan duoc tinh trang qua tai.', 'warning');
+        setLookupState(data.message || 'Khong ket luan duoc tinh trang qua tai.', 'warning');
+    } catch (error) {
+        setSupportOverloadState(error.message || 'Khong the check qua tai luc nay.', 'error');
+        setLookupState(error.message || 'Khong the check qua tai luc nay.', 'error');
+    } finally {
+        hideLookupLoadingOverlay();
+        setButtonBusy(btn, false);
+    }
 }
 
 function openRenewModal() {
@@ -850,9 +906,10 @@ function renderCookiesSummary() {
     const sbdCount = cookiesCache.filter((c) => !!c.sbdTagged).length;
     const unknownCount = cookiesCache.filter((c) => !!c.unknownTagged).length;
     const holdCount = cookiesCache.filter((c) => !!c.holdTagged).length;
+    const overcapCount = cookiesCache.filter((c) => !!c.overCapacityTagged).length;
     const assignedCount = cookiesCache.filter((c) => !!String(c.assignedCustomerCode || '').trim()).length;
-    const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - assignedCount);
-    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
+    const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - overcapCount - assignedCount);
+    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | OVERCAP: ${overcapCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
 }
 
 function renderCookiesTable() {
@@ -899,6 +956,7 @@ function renderCookiesTable() {
             ${cookie.sbdTagged ? '<span class="pill pill-sbd">SBD</span>' : ''}
             ${cookie.unknownTagged ? '<span class="pill pill-unknown">UNKNOW</span>' : ''}
             ${cookie.holdTagged ? '<span class="pill pill-hold">HOLD</span>' : ''}
+            ${cookie.overCapacityTagged ? '<span class="pill pill-overcap">OVERCAP</span>' : ''}
         `;
         return `
             <tr>
@@ -1917,6 +1975,9 @@ function bindEvents() {
 
     const supportFanpageLink = el('supportFanpageLink');
     if (supportFanpageLink) supportFanpageLink.setAttribute('href', SUPPORT_FANPAGE_URL);
+
+    const supportOverloadBtn = el('supportOverloadBtn');
+    if (supportOverloadBtn) supportOverloadBtn.addEventListener('click', runSupportOverloadCheck);
 
     const renewNetflixBtn = el('renewNetflixBtn');
     if (renewNetflixBtn) renewNetflixBtn.addEventListener('click', openRenewModal);

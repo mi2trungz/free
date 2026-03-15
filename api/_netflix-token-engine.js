@@ -10,6 +10,45 @@ function isLikelyDeadCookie(errorText = '', statusCode = 0) {
     return /cookie|expired|invalid|unauthor|forbidden|auth|login|sign in|session/i.test(msg);
 }
 
+function pickPlaybackFeatureResponse(accountInfo = null) {
+    const features = accountInfo && accountInfo.pacsFeatures && Array.isArray(accountInfo.pacsFeatures.featureResponses)
+        ? accountInfo.pacsFeatures.featureResponses
+        : [];
+    return features.find((item) => String(item && item.featureName ? item.featureName : '').toUpperCase() === 'CAN_PLAYBACK') || null;
+}
+
+function detectPlaybackOverCapacity(accountInfo = null) {
+    if (!accountInfo || typeof accountInfo !== 'object') {
+        return { overloaded: false, signal: 'missing_account_info' };
+    }
+
+    const playbackFeature = pickPlaybackFeatureResponse(accountInfo);
+    if (playbackFeature) {
+        const classification = String(playbackFeature.responseClassification || '').trim().toUpperCase();
+        const pacsCode = String(playbackFeature.pacsDetail && playbackFeature.pacsDetail.pacsDetailCode
+            ? playbackFeature.pacsDetail.pacsDetailCode
+            : '').trim().toLowerCase();
+        const pacsExperience = String(playbackFeature.pacsDetail && playbackFeature.pacsDetail.pacsExperience
+            ? playbackFeature.pacsDetail.pacsExperience
+            : '').trim().toLowerCase();
+        const playbackBlocked = classification && classification !== 'ALLOWED';
+        const strongCodeSignal = /(too[_\s-]?many|concurr|simultan|stream|capacity|limit|device)/i.test(pacsCode);
+        const strongExpSignal = /(too[_\s-]?many|concurr|simultan|stream|capacity|limit|device)/i.test(pacsExperience);
+        if (playbackBlocked && (strongCodeSignal || strongExpSignal)) {
+            return { overloaded: true, signal: 'pacs_playback_blocked' };
+        }
+    }
+
+    const flattened = JSON.stringify(accountInfo).toLowerCase();
+    if (
+        /too many (devices|users|streams)|maximum number of streams|simultaneous streams|concurrent streams|account is in use|over capacity|capacity exceeded/i.test(flattened)
+    ) {
+        return { overloaded: true, signal: 'account_info_message' };
+    }
+
+    return { overloaded: false, signal: 'no_overload_signal' };
+}
+
 function callNfCheckerApi(netflixId) {
     return new Promise((resolve) => {
         const payload = JSON.stringify({
@@ -196,6 +235,7 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
 module.exports = {
     isTokenPermissionDenied,
     isLikelyDeadCookie,
+    detectPlaybackOverCapacity,
     callNetflixCreateAutoLoginToken,
     classifyNetflixTokenResult,
     requestNetflixToken

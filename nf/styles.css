@@ -970,6 +970,12 @@ body {
     margin-left: 0.32rem;
 }
 
+.pill-overcap {
+    background: rgba(244, 114, 182, 0.24);
+    color: #f9a8d4;
+    margin-left: 0.32rem;
+}
+
 .ok {
     color: #6ee7b7;
 }
@@ -1040,6 +1046,15 @@ body {
     text-decoration: none;
     align-items: center;
     justify-content: center;
+}
+
+.support-overload-btn {
+    width: 100%;
+    margin-top: 0.85rem;
+}
+
+.support-overload-state {
+    margin-top: 0.52rem;
 }
 
 .btn-tv-guide-start {

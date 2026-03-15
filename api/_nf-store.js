@@ -176,7 +176,15 @@ function sanitizeCookie(item) {
     const sbdTagged = item && (item.sbdTagged === true || item.sbdTagged === 'true' || item.sbdTagged === 1 || item.sbdTagged === '1');
     const unknownTagged = item && (item.unknownTagged === true || item.unknownTagged === 'true' || item.unknownTagged === 1 || item.unknownTagged === '1');
     const holdTagged = item && (item.holdTagged === true || item.holdTagged === 'true' || item.holdTagged === 1 || item.holdTagged === '1');
-    const hasBlockingTag = errorTagged || sbdTagged || unknownTagged || holdTagged;
+    const overCapacityTaggedRaw = item && (
+        item.overCapacityTagged === true
+        || item.overCapacityTagged === 'true'
+        || item.overCapacityTagged === 1
+        || item.overCapacityTagged === '1'
+    );
+    const overCapacityUntil = String(item && item.overCapacityUntil ? item.overCapacityUntil : '').trim();
+    const overCapacityTagged = overCapacityTaggedRaw && toMillis(overCapacityUntil) > Date.now();
+    const hasBlockingTag = errorTagged || sbdTagged || unknownTagged || holdTagged || overCapacityTagged;
     return {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
@@ -188,6 +196,9 @@ function sanitizeCookie(item) {
         sbdTagged,
         unknownTagged,
         holdTagged,
+        overCapacityTagged,
+        overCapacityUntil,
+        lastOverCapacityAt: String(item && item.lastOverCapacityAt ? item.lastOverCapacityAt : '').trim(),
         assignedCustomerCode: hasBlockingTag ? '' : String(item.assignedCustomerCode || '').trim().toUpperCase(),
         createdAt: item.createdAt || now,
         updatedAt: item.updatedAt || now,
@@ -223,6 +234,9 @@ function buildCookieDocFields(cookie) {
         sbdTagged: { booleanValue: !!cookie.sbdTagged },
         unknownTagged: { booleanValue: !!cookie.unknownTagged },
         holdTagged: { booleanValue: !!cookie.holdTagged },
+        overCapacityTagged: { booleanValue: !!cookie.overCapacityTagged },
+        overCapacityUntil: toStringValue(cookie.overCapacityUntil || ''),
+        lastOverCapacityAt: toStringValue(cookie.lastOverCapacityAt || ''),
         assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
         createdAt: toTimestampValue(cookie.createdAt),
         updatedAt: toTimestampValue(cookie.updatedAt),
@@ -266,6 +280,11 @@ function parseCookieFields(fields = {}) {
         holdTagged: fields.holdTagged && (
             fields.holdTagged.booleanValue === true || fields.holdTagged.booleanValue === 'true'
         ),
+        overCapacityTagged: fields.overCapacityTagged && (
+            fields.overCapacityTagged.booleanValue === true || fields.overCapacityTagged.booleanValue === 'true'
+        ),
+        overCapacityUntil: fields.overCapacityUntil && fields.overCapacityUntil.stringValue,
+        lastOverCapacityAt: fields.lastOverCapacityAt && fields.lastOverCapacityAt.stringValue,
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
         updatedAt: fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue),
@@ -298,6 +317,9 @@ function toCookieSnapshot(cookie = {}) {
         cookie.sbdTagged ? '1' : '0',
         cookie.unknownTagged ? '1' : '0',
         cookie.holdTagged ? '1' : '0',
+        cookie.overCapacityTagged ? '1' : '0',
+        cookie.overCapacityUntil || '',
+        cookie.lastOverCapacityAt || '',
         cookie.assignedCustomerCode || '',
         cookie.createdAt || '', cookie.updatedAt || '', cookie.lastCheckedAt || '', cookie.lastSuccessAt || '',
         cookie.lastErrorAt || '', cookie.lastError || ''
@@ -457,7 +479,8 @@ function buildCookieSummary(cookies = []) {
     const assignedCount = cookies.filter((c) => !!c.assignedCustomerCode).length;
     const unknownCount = cookies.filter((c) => !!c.unknownTagged).length;
     const holdCount = cookies.filter((c) => !!c.holdTagged).length;
-    return { total, activeCount, disabledCount, deadCount, assignedCount, unknownCount, holdCount };
+    const overCapacityCount = cookies.filter((c) => isCookieOverCapacityActive(c)).length;
+    return { total, activeCount, disabledCount, deadCount, assignedCount, unknownCount, holdCount, overCapacityCount };
 }
 
 async function readCustomers() {
@@ -661,6 +684,12 @@ function toMillis(value) {
     return Number.isFinite(time) ? time : 0;
 }
 
+function isCookieOverCapacityActive(cookie = {}, nowMs = Date.now()) {
+    if (!cookie || !cookie.overCapacityTagged) return false;
+    const untilMs = toMillis(cookie.overCapacityUntil || '');
+    return untilMs > nowMs;
+}
+
 function isCustomerWarrantyValid(customer) {
     const expiresAt = toMillis(customer && customer.warrantyExpiresAt);
     if (!expiresAt) return false;
@@ -855,6 +884,7 @@ module.exports = {
     buildCookieSummary,
     buildWarrantyInfo,
     isCustomerWarrantyValid,
+    isCookieOverCapacityActive,
     extractNetflixIdsFromCookie,
     splitImportLines,
     splitImportCookieBlocks,

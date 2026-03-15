@@ -89,6 +89,13 @@
             margin-top: 8px;
         }
 
+        .action-row-single {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .result-box {
             margin-top: 12px;
             padding: 12px;
@@ -106,6 +113,11 @@
         .result-box.info {
             background: rgba(59, 130, 246, 0.1);
             border-color: rgba(59, 130, 246, 0.35);
+        }
+
+        .result-box.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.35);
         }
 
         .result-box.active {
@@ -317,6 +329,9 @@
                             </button>
                             <button type="button" id="importCookieBtn" class="btn btn-ghost">Import cookie vao Cookie tong</button>
                         </div>
+                        <div class="action-row-single">
+                            <button type="button" id="checkOverloadBtn" class="btn btn-ghost">CHECK QUA TAI</button>
+                        </div>
                     </form>
 
                     <div id="resultBox" class="result-box">
@@ -331,6 +346,11 @@
                     <div id="importStateBox" class="result-box" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.35);">
                         <span class="result-label">Trang thai import:</span>
                         <p id="importStateText" style="margin: 0; font-size: 0.9rem; color: var(--text-base);"></p>
+                    </div>
+
+                    <div id="overloadCheckBox" class="result-box info">
+                        <span class="result-label">Ket qua check qua tai:</span>
+                        <p id="overloadCheckText" style="margin: 0; font-size: 0.92rem; color: var(--text-base);"></p>
                     </div>
 
                     <div class="batch-box">
@@ -377,6 +397,7 @@
             const deviceSelect = document.getElementById('deviceSelect');
             const generateBtn = document.getElementById('generateBtn');
             const importCookieBtn = document.getElementById('importCookieBtn');
+            const checkOverloadBtn = document.getElementById('checkOverloadBtn');
             const resultBox = document.getElementById('resultBox');
             const resultLink = document.getElementById('resultLink');
             const copyResultBtn = document.getElementById('copyResultBtn');
@@ -387,6 +408,8 @@
             const importStateText = document.getElementById('importStateText');
             const accountInfoBox = document.getElementById('accountInfoBox');
             const accountInfoContent = document.getElementById('accountInfoContent');
+            const overloadCheckBox = document.getElementById('overloadCheckBox');
+            const overloadCheckText = document.getElementById('overloadCheckText');
             const batchExcelInput = document.getElementById('batchExcelInput');
             const startBatchBtn = document.getElementById('startBatchBtn');
             const stopBatchBtn = document.getElementById('stopBatchBtn');
@@ -475,6 +498,29 @@
             function showImportState(msg) {
                 importStateBox.classList.add('active');
                 importStateText.textContent = msg;
+            }
+
+            function showOverloadState(payload = {}) {
+                overloadCheckBox.classList.remove('error', 'warning', 'info');
+                const outcome = String(payload.overloadOutcome || '').trim().toLowerCase();
+                const signal = String(payload.overloadSignal || '').trim();
+                let msg = String(payload.overloadMessage || '').trim();
+
+                if (outcome === 'overloaded') {
+                    overloadCheckBox.classList.add('warning', 'active');
+                    if (!msg) msg = 'Cookie LIVE nhung co dau hieu qua tai nguoi dung.';
+                } else if (outcome === 'live_ok') {
+                    overloadCheckBox.classList.add('active');
+                    if (!msg) msg = 'Cookie LIVE va khong co dau hieu qua tai.';
+                } else if (outcome === 'not_live') {
+                    overloadCheckBox.classList.add('error', 'active');
+                    if (!msg) msg = 'Cookie khong LIVE, khong the ket luan qua tai.';
+                } else {
+                    overloadCheckBox.classList.add('info', 'active');
+                    if (!msg) msg = 'Khong du du lieu de ket luan qua tai.';
+                }
+
+                overloadCheckText.textContent = signal ? `${msg} (signal: ${signal})` : msg;
             }
 
             function sleep(ms) {
@@ -610,6 +656,7 @@
                 errorBox.classList.remove('active');
                 accountInfoBox.classList.remove('active');
                 importStateBox.classList.remove('active');
+                overloadCheckBox.classList.remove('active');
             }
 
             form.addEventListener('submit', async (e) => {
@@ -674,6 +721,39 @@
                     showImportState(error.message || 'Import that bai.');
                 } finally {
                     importCookieBtn.disabled = false;
+                }
+            });
+
+            checkOverloadBtn.addEventListener('click', async () => {
+                importCookieBtn.textContent = importButtonDefaultText;
+                const cookieStr = cookieInput.value.trim();
+                if (!cookieStr) {
+                    showError('Vui long nhap cookie de check qua tai.');
+                    return;
+                }
+
+                checkOverloadBtn.disabled = true;
+                overloadCheckBox.classList.remove('active');
+                try {
+                    const res = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr, device: 'desktop' })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    showOverloadState(data || {});
+                    if (res.ok && data && data.accountInfo) {
+                        showResult((data && data.url) || '', data.accountInfo);
+                        resultBox.classList.remove('active');
+                    }
+                } catch (error) {
+                    showOverloadState({
+                        overloadOutcome: 'unknown',
+                        overloadSignal: 'network_error',
+                        overloadMessage: error.message || 'Khong the check qua tai luc nay.'
+                    });
+                } finally {
+                    checkOverloadBtn.disabled = false;
                 }
             });
 
