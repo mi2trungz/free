@@ -132,15 +132,19 @@
             </header>
             <div class="mobile-link-body">
                 <label class="mobile-link-label" for="mobileLinkOutput">Link đăng nhập:</label>
-                <textarea id="mobileLinkOutput" class="text-input mobile-link-output" readonly></textarea>
+                <input id="mobileLinkOutput" class="text-input mobile-link-output mono" type="text" readonly>
                 <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chép link</button>
 
                 <div class="mobile-link-guide">
                     <h3>Hướng dẫn đăng nhập trên điện thoại</h3>
+                    <p><strong>Bước 0 (Quan trọng):</strong> Đóng HOÀN TOÀN App Netflix trong đa nhiệm</p>
                     <p>Bước 1: Sao chép đường link đăng nhập phía trên</p>
                     <p>Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại và tiến hành truy cập</p>
-                    <p>Bước 3: Nhấn vào logo Netflix ở trên cùng bên trái</p>
-                    <p>Bước 3: Nó có hỏi gì hay hiện gì thì cứ bấm nút ĐỒNG Ý hoặc TIẾP TỤC</p>
+                    <div class="mobile-link-guide-row">
+                        <p class="mobile-link-guide-step">Bước 3: Tiếp tục truy cập trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
+                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chép link</button>
+                    </div>
+                    <p>Bước 4: Nó có hỏi gì hay hiện gì thì cứ bấm nút ĐỒNG Ý hoặc TIẾP TỤC</p>
                     <p class="mobile-link-note"><strong>Lưu ý:</strong> Nếu nó đã mở app Netflix lên và vẫn không đăng nhập thành công, hãy xoá app Netflix đi và tải lại (Sau khi tải lại không được mở lên)</p>
                 </div>
             </div>

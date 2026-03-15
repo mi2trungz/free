@@ -834,8 +834,7 @@ body {
 
 .mobile-link-output {
     width: 100%;
-    min-height: 96px;
-    resize: vertical;
+    min-height: 44px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.82rem;
     line-height: 1.45;
@@ -844,6 +843,7 @@ body {
 
 .mobile-link-copy-btn {
     margin-top: 0.62rem;
+    width: 100%;
 }
 
 #tvCodeInput {
@@ -861,13 +861,42 @@ body {
 .mobile-link-guide h3 {
     margin: 0 0 0.45rem 0;
     font-size: 0.9rem;
+    color: #fff;
 }
 
 .mobile-link-guide p {
     margin: 0.36rem 0;
-    color: #d6e0f8;
+    color: #fff;
     line-height: 1.5;
     font-size: 0.86rem;
+}
+
+.mobile-link-guide-row {
+    margin: 0.36rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.mobile-link-guide-step {
+    margin: 0;
+    flex: 1;
+    min-width: 210px;
+}
+
+.mobile-guide-link-text {
+    color: #67e8f9;
+    font-weight: 700;
+}
+
+.mobile-guide-copy-btn {
+    min-height: 36px;
+    padding: 0.52rem 0.72rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-top: 0;
 }
 
 .mobile-link-guide .mobile-link-note {
@@ -930,6 +959,10 @@ body {
     }
 
     .btn-support {
+        width: 100%;
+    }
+
+    .mobile-guide-copy-btn {
         width: 100%;
     }
 

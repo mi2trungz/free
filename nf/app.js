@@ -1459,6 +1459,19 @@ function bindEvents() {
         });
     }
 
+    const copyUnsupportedLinkBtn = el('copyUnsupportedLinkBtn');
+    if (copyUnsupportedLinkBtn) {
+        copyUnsupportedLinkBtn.addEventListener('click', async () => {
+            const unsupportedLink = 'https://www.netflix.com/unsupported';
+            try {
+                await navigator.clipboard.writeText(unsupportedLink);
+                toast('Đã sao chép link netflix.com/unsupported.', 'ok');
+            } catch (error) {
+                toast('Không sao chép tự động được. Hãy copy thủ công link netflix.com/unsupported.', 'warn');
+            }
+        });
+    }
+
     const tvCodeInput = el('tvCodeInput');
     if (tvCodeInput) {
         tvCodeInput.addEventListener('input', () => {
