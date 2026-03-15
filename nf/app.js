@@ -51,6 +51,15 @@ function normalizeCode(value = '') {
     return String(value || '').trim().toUpperCase();
 }
 
+function escapeHtml(value = '') {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function formatDateTime(iso = '') {
     if (!iso) return '-';
     const date = new Date(iso);
@@ -117,7 +126,8 @@ function applyCookieFiltersAndSort(cookies = []) {
             String(cookie.netflixIdMasked || ''),
             assignedCode,
             assignedName,
-            String(cookie.lastError || '')
+            String(cookie.lastError || ''),
+            String(cookie.note || '')
         ].join(' ').toLowerCase();
         return haystack.includes(searchNeedle);
     });
@@ -751,14 +761,14 @@ function renderCookiesTable() {
     if (!tbody) return;
     syncCookieSelection();
     if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
         updateCookieSelectionUi();
         return;
     }
     const customerNameMap = getCustomerNameMap();
     const visibleCookies = applyCookieFiltersAndSort(cookiesCache);
     if (visibleCookies.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Khong co cookie nao phu hop bo loc hien tai.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" data-label="Trang thai">Khong co cookie nao phu hop bo loc hien tai.</td></tr>';
         updateCookieSelectionUi();
         return;
     }
@@ -772,6 +782,14 @@ function renderCookiesTable() {
         const lastCheck = formatDateTime(cookie.lastCheckedAt || cookie.updatedAt);
         const errorLine = cookie.lastError ? `<div class="bad" style="margin-top:4px">${cookie.lastError}</div>` : '';
         const checked = selectedCookieIds.has(cookie.id) ? 'checked' : '';
+        const noteValue = String(cookie.note || '');
+        const escapedNote = escapeHtml(noteValue);
+        const noteHtml = `
+            <div class="cookie-note-wrap">
+                <input class="text-input cookie-note-input" type="text" data-cookie-note-input="${cookie.id}" value="${escapedNote}" placeholder="Nhap note...">
+                <button class="btn-tiny cookie-note-save" data-cookie-act="save-note" data-id="${cookie.id}" type="button">Luu</button>
+            </div>
+        `;
         const statusHtml = `
             <span class="${getStatusPillClass(cookie.status)}">${cookie.status || 'active'}</span>
             ${cookie.errorTagged ? '<span class="pill pill-error">ERROR</span>' : ''}
@@ -786,6 +804,7 @@ function renderCookiesTable() {
                 <td data-label="Trang thai">${statusHtml}</td>
                 <td data-label="Gan khach">${assignHtml}</td>
                 <td data-label="Check">${lastCheck}${errorLine}</td>
+                <td data-label="Note">${noteHtml}</td>
                 <td data-label="Hanh dong">
                     <div class="row-actions">
                         <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
@@ -935,12 +954,19 @@ async function saveCookieRawEditor() {
         await apiRequest('/api/nf-cookies', 'PUT', { cookieId, cookieRaw: finalRaw });
         toast('Da cap nhat full cookie raw.', 'ok');
         closeCookieRawEditor();
-        await Promise.all([loadCookies(), loadCustomers()]);
+        refreshAdminDataInBackground({ cookies: true, customers: true });
     } catch (error) {
         toast(error.message || 'Cap nhat cookie that bai.', 'bad');
     } finally {
         setButtonBusy(saveBtn, false);
     }
+}
+
+async function saveCookieNote(cookieId, noteValue, triggerButton = null) {
+    const id = String(cookieId || '').trim();
+    if (!id) return;
+    const normalizedNote = String(noteValue || '').trim();
+    await applyCookieAction('save-note', [id], triggerButton, { noteValue: normalizedNote, busyLabel: 'Dang luu...' });
 }
 
 function renderAdminState(user) {
@@ -1067,12 +1093,7 @@ async function handleCustomerTableAction(event) {
                 toast('Khach nay chua co cookie de gan ERROR.', 'warn');
                 return;
             }
-            await apiRequest('/api/nf-cookies', 'PUT', {
-                cookieId: assignedCookieId,
-                errorTagged: true
-            });
-            toast('Da gan tag ERROR cho cookie cua khach.', 'ok');
-            await Promise.all([loadCustomers(), loadCookies()]);
+            await applyCookieAction('error-on', [assignedCookieId], null, { busyLabel: 'Dang xu ly...' });
             return;
         }
 
@@ -1143,6 +1164,156 @@ function applyCookieViewControls() {
     renderCookiesTable();
 }
 
+function cloneCookiesCache() {
+    return Array.isArray(cookiesCache) ? cookiesCache.map((item) => ({ ...item })) : [];
+}
+
+function restoreCookiesCache(snapshot = []) {
+    cookiesCache = Array.isArray(snapshot) ? snapshot : [];
+    syncCookieSelection();
+    renderCookiesSummary();
+    renderCookiesTable();
+}
+
+function refreshAdminDataInBackground(options = {}) {
+    const { cookies = true, customers = false } = options;
+    const jobs = [];
+    if (cookies) jobs.push(loadCookies());
+    if (customers) jobs.push(loadCustomers());
+    if (jobs.length === 0) return;
+    Promise.all(jobs).catch((error) => {
+        toast(error.message || 'Khong dong bo du lieu nen duoc.', 'warn');
+    });
+}
+
+function shouldRefreshCustomersForCookieAction(action = '') {
+    return action === 'delete'
+        || action === 'unassign'
+        || action === 'disabled'
+        || action === 'dead'
+        || action === 'error-on'
+        || action === 'sbd-on';
+}
+
+function getCookieActionSuccessMessage(action = '', count = 1) {
+    const amount = Number(count || 0);
+    if (action === 'delete') return amount > 1 ? `Da xoa ${amount} cookie.` : 'Da xoa cookie.';
+    if (action === 'unassign') return amount > 1 ? `Da bo gan ${amount} cookie.` : 'Da bo gan cookie.';
+    if (action === 'active' || action === 'disabled' || action === 'dead') {
+        return amount > 1 ? `Da cap nhat ${amount} cookie.` : `Da doi trang thai thanh ${action}.`;
+    }
+    if (action === 'sbd-on') return amount > 1 ? `Da gan tag SBD cho ${amount} cookie.` : 'Da gan tag SBD cho cookie.';
+    if (action === 'sbd-off') return amount > 1 ? `Da go tag SBD cho ${amount} cookie.` : 'Da go tag SBD cho cookie.';
+    if (action === 'error-on') return amount > 1 ? `Da gan tag ERROR cho ${amount} cookie.` : 'Da gan tag ERROR cho cookie.';
+    if (action === 'error-off') return amount > 1 ? `Da go tag ERROR cho ${amount} cookie.` : 'Da go tag ERROR cho cookie.';
+    if (action === 'save-note') return 'Da cap nhat note cookie.';
+    return 'Da cap nhat cookie.';
+}
+
+function applyOptimisticCookieAction(action = '', cookieIds = [], options = {}) {
+    const idSet = new Set((Array.isArray(cookieIds) ? cookieIds : []).map((id) => String(id || '').trim()).filter(Boolean));
+    if (idSet.size === 0) return;
+    const now = new Date().toISOString();
+    const noteValue = String(options.noteValue || '').trim();
+
+    if (action === 'delete') {
+        cookiesCache = cookiesCache.filter((cookie) => !idSet.has(String(cookie.id || '').trim()));
+        selectedCookieIds = new Set(Array.from(selectedCookieIds).filter((id) => !idSet.has(String(id || '').trim())));
+        syncCookieSelection();
+        renderCookiesSummary();
+        renderCookiesTable();
+        return;
+    }
+
+    cookiesCache = cookiesCache.map((cookie) => {
+        const id = String(cookie.id || '').trim();
+        if (!idSet.has(id)) return cookie;
+
+        if (action === 'save-note') {
+            return { ...cookie, note: noteValue, updatedAt: now };
+        }
+        if (action === 'unassign') {
+            return { ...cookie, assignedCustomerCode: '', updatedAt: now };
+        }
+        if (action === 'active' || action === 'disabled' || action === 'dead') {
+            return {
+                ...cookie,
+                status: action,
+                assignedCustomerCode: action === 'active' ? cookie.assignedCustomerCode : '',
+                updatedAt: now
+            };
+        }
+        if (action === 'error-on' || action === 'error-off') {
+            const errorTagged = action === 'error-on';
+            return {
+                ...cookie,
+                errorTagged,
+                assignedCustomerCode: errorTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
+        if (action === 'sbd-on' || action === 'sbd-off') {
+            const sbdTagged = action === 'sbd-on';
+            return {
+                ...cookie,
+                sbdTagged,
+                assignedCustomerCode: sbdTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
+        return cookie;
+    });
+
+    syncCookieSelection();
+    renderCookiesSummary();
+    renderCookiesTable();
+}
+
+function buildCookieActionRequest(action = '', cookieIds = [], options = {}) {
+    const isSingle = cookieIds.length === 1;
+    const firstId = String(cookieIds[0] || '').trim();
+    const base = isSingle ? { cookieId: firstId } : { cookieIds };
+
+    if (action === 'delete') return { method: 'DELETE', body: base };
+    if (action === 'unassign') return { method: 'PUT', body: { ...base, unassign: true } };
+    if (action === 'active' || action === 'disabled' || action === 'dead') return { method: 'PUT', body: { ...base, status: action } };
+    if (action === 'error-on' || action === 'error-off') return { method: 'PUT', body: { ...base, errorTagged: action === 'error-on' } };
+    if (action === 'sbd-on' || action === 'sbd-off') return { method: 'PUT', body: { ...base, sbdTagged: action === 'sbd-on' } };
+    if (action === 'save-note') return { method: 'PUT', body: { cookieId: firstId, note: String(options.noteValue || '').trim() } };
+    return null;
+}
+
+async function applyCookieAction(action = '', cookieIds = [], triggerButton = null, options = {}) {
+    const ids = (Array.isArray(cookieIds) ? cookieIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean);
+    if (ids.length === 0) return false;
+
+    const requestConfig = buildCookieActionRequest(action, ids, options);
+    if (!requestConfig) return false;
+
+    const cookieSnapshot = cloneCookiesCache();
+    const shouldRefreshCustomers = shouldRefreshCustomersForCookieAction(action);
+    const busyLabel = String(options.busyLabel || 'Dang xu ly...');
+
+    setButtonBusy(triggerButton, true, busyLabel);
+    applyOptimisticCookieAction(action, ids, options);
+
+    try {
+        const data = await apiRequest('/api/nf-cookies', requestConfig.method, requestConfig.body);
+        const affectedCount = Number(data && data.affectedCount ? data.affectedCount : ids.length);
+        toast(getCookieActionSuccessMessage(action, affectedCount), 'ok');
+        refreshAdminDataInBackground({ cookies: true, customers: shouldRefreshCustomers });
+        return true;
+    } catch (error) {
+        restoreCookiesCache(cookieSnapshot);
+        toast(error.message || 'Cap nhat cookie that bai.', 'bad');
+        return false;
+    } finally {
+        setButtonBusy(triggerButton, false);
+    }
+}
+
 async function runCookieCheck(mode = 'selected', triggerButton = null) {
     if (runtimeBlocked) return;
     const payload = { mode };
@@ -1163,7 +1334,7 @@ async function runCookieCheck(mode = 'selected', triggerButton = null) {
         const summaryText = summarizeCheckResult(data);
         setCookieCheckState(summaryText, 'success');
         toast(summaryText, 'ok');
-        await Promise.all([loadCookies(), loadCustomers()]);
+        refreshAdminDataInBackground({ cookies: true, customers: true });
     } catch (error) {
         setCookieCheckState(error.message || 'Check cookie that bai.', 'error');
         toast(error.message || 'Check cookie that bai.', 'bad');
@@ -1189,33 +1360,7 @@ async function applyBulkCookieAction(action, triggerButton = null) {
         const ok = window.confirm(`Xoa ${cookieIds.length} cookie da chon?`);
         if (!ok) return;
     }
-
-    setButtonBusy(triggerButton, true, 'Dang xu ly...');
-    try {
-        if (action === 'unassign') {
-            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, unassign: true });
-            toast(`Da bo gan ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
-        } else if (action === 'delete') {
-            const data = await apiRequest('/api/nf-cookies', 'DELETE', { cookieIds });
-            toast(`Da xoa ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
-        } else if (action === 'active' || action === 'disabled' || action === 'dead') {
-            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, status: action });
-            toast(`Da cap nhat ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
-        } else if (action === 'sbd-on' || action === 'sbd-off') {
-            const sbdTagged = action === 'sbd-on';
-            const data = await apiRequest('/api/nf-cookies', 'PUT', { cookieIds, sbdTagged });
-            toast(sbdTagged
-                ? `Da gan tag SBD cho ${data.affectedCount || cookieIds.length} cookie.`
-                : `Da go tag SBD cho ${data.affectedCount || cookieIds.length} cookie.`, 'ok');
-        } else {
-            return;
-        }
-        await Promise.all([loadCookies(), loadCustomers()]);
-    } catch (error) {
-        toast(error.message || 'Thao tac hang loat that bai.', 'bad');
-    } finally {
-        setButtonBusy(triggerButton, false);
-    }
+    await applyCookieAction(action, cookieIds, triggerButton, { busyLabel: 'Dang xu ly...' });
 }
 
 function handleCookieTableChange(event) {
@@ -1271,6 +1416,14 @@ async function handleCookieTableAction(event) {
     const cookie = cookiesCache.find((item) => item.id === cookieId);
 
     try {
+        if (action === 'save-note') {
+            const row = target.closest('tr');
+            const input = row ? row.querySelector(`[data-cookie-note-input="${cookieId}"]`) : null;
+            if (!(input instanceof HTMLInputElement)) return;
+            await saveCookieNote(cookieId, input.value, target);
+            return;
+        }
+
         if (action === 'view-raw') {
             if (!cookie) return;
             const raw = String(cookie.cookieRaw || '').trim();
@@ -1291,43 +1444,44 @@ async function handleCookieTableAction(event) {
         if (action === 'delete') {
             const ok = window.confirm('Xoa cookie nay khoi danh sach?');
             if (!ok) return;
-            await apiRequest('/api/nf-cookies', 'DELETE', { cookieId });
-            toast('Da xoa cookie.', 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            await applyCookieAction('delete', [cookieId], target, { busyLabel: 'Dang xu ly...' });
             return;
         }
 
         if (action === 'unassign') {
-            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, unassign: true });
-            toast('Da bo gan cookie.', 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            await applyCookieAction('unassign', [cookieId], target, { busyLabel: 'Dang xu ly...' });
             return;
         }
 
         if (action === 'active' || action === 'disabled' || action === 'dead') {
-            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, status: action });
-            toast(`Da doi trang thai thanh ${action}.`, 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
             return;
         }
 
         if (action === 'error-on' || action === 'error-off') {
-            const errorTagged = action === 'error-on';
-            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, errorTagged });
-            toast(errorTagged ? 'Da gan tag ERROR cho cookie.' : 'Da go tag ERROR cho cookie.', 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
             return;
         }
 
         if (action === 'sbd-on' || action === 'sbd-off') {
-            const sbdTagged = action === 'sbd-on';
-            await apiRequest('/api/nf-cookies', 'PUT', { cookieId, sbdTagged });
-            toast(sbdTagged ? 'Da gan tag SBD cho cookie.' : 'Da go tag SBD cho cookie.', 'ok');
-            await Promise.all([loadCookies(), loadCustomers()]);
+            await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
         }
     } catch (error) {
         toast(error.message || 'Cap nhat cookie that bai.', 'bad');
     }
+}
+
+function handleCookieTableKeydown(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
+    const cookieId = String(target.dataset.cookieNoteInput || '').trim();
+    if (!cookieId) return;
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+
+    const row = target.closest('tr');
+    const saveBtn = row ? row.querySelector(`[data-cookie-act="save-note"][data-id="${cookieId}"]`) : null;
+    if (saveBtn instanceof HTMLElement) saveBtn.click();
 }
 
 async function onAdminLogin() {
@@ -1596,6 +1750,17 @@ function bindEvents() {
         });
     }
 
+    const adminOpenTestBtn = el('adminOpenTestBtn');
+    if (adminOpenTestBtn) {
+        adminOpenTestBtn.addEventListener('click', () => {
+            const testUrl = '/nf/nf-cookie-to-link.html';
+            const opened = window.open(testUrl, '_blank', 'noopener');
+            if (!opened || opened.closed) {
+                window.location.href = testUrl;
+            }
+        });
+    }
+
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
     tabButtons.forEach((btn) => {
         btn.addEventListener('click', () => setTab(btn.dataset.tab));
@@ -1622,6 +1787,7 @@ function bindEvents() {
     if (cookiesBody) {
         cookiesBody.addEventListener('click', handleCookieTableAction);
         cookiesBody.addEventListener('change', handleCookieTableChange);
+        cookiesBody.addEventListener('keydown', handleCookieTableKeydown);
     }
 
     const cookiesSelectAll = el('cookiesSelectAll');

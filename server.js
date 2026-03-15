@@ -7,6 +7,7 @@ const nfCookiesImportHandler = require('./api/nf-cookies/import');
 const nfCookiesCheckHandler = require('./api/nf-cookies/check');
 const nfCustomerLookupHandler = require('./api/nf-customer-lookup');
 const nfGenerateLinkHandler = require('./api/nf-generate-link');
+const nfCookieToLinkHandler = require('./api/nf-cookie-to-link');
 const nfTvActivateHandler = require('./api/nf-tv-activate');
 const nftokenHandler = require('./api/nftoken');
 
@@ -139,6 +140,9 @@ const server = http.createServer((req, res) => {
     }
     if (requestPath === '/api/nf-generate-link') {
         return invokeServerlessApi(nfGenerateLinkHandler, req, res);
+    }
+    if (requestPath === '/api/nf-cookie-to-link') {
+        return invokeServerlessApi(nfCookieToLinkHandler, req, res);
     }
     if (requestPath === '/api/nf-tv-activate') {
         return invokeServerlessApi(nfTvActivateHandler, req, res);

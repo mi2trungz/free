@@ -472,6 +472,13 @@ body {
     margin-bottom: 0.84rem;
 }
 
+.admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
 .admin-identity {
     font-size: 0.85rem;
     color: #c6d2ef;
@@ -581,6 +588,23 @@ body {
 .assign-name {
     color: #9fb0d7;
     font-size: 0.78rem;
+}
+
+.cookie-note-wrap {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) auto;
+    gap: 0.36rem;
+    align-items: center;
+}
+
+.cookie-note-input {
+    min-height: 32px;
+    padding: 0.38rem 0.54rem;
+    font-size: 0.8rem;
+}
+
+.cookie-note-save {
+    white-space: nowrap;
 }
 
 .cookie-tools {
@@ -963,6 +987,23 @@ body {
     }
 
     .mobile-guide-copy-btn {
+        width: 100%;
+    }
+
+    .admin-bar {
+        flex-wrap: wrap;
+    }
+
+    .admin-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .cookie-note-wrap {
+        grid-template-columns: 1fr;
+    }
+
+    .cookie-note-save {
         width: 100%;
     }
 

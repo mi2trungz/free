@@ -2,10 +2,9 @@ const {
     parseBody,
     readCookies,
     readCustomers,
-    persistAll,
-    isLikelyDeadCookie,
-    callNetflixCreateAutoLoginToken
+    persistAll
 } = require('../_nf-store');
+const { requestNetflixToken } = require('../_netflix-token-engine');
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -25,10 +24,6 @@ function parseCookieIds(body = {}) {
         ids.push(id);
     });
     return ids;
-}
-
-function isTokenPermissionDenied(errorMessage = '') {
-    return /detailedaccessdeniedexception|access denied by sbd|permission_denied/i.test(String(errorMessage || ''));
 }
 
 function normalizeCode(value = '') {
@@ -120,14 +115,15 @@ module.exports = async function (req, res) {
             const cookie = cookies[index];
             if (!cookie) continue;
 
-            const result = await callNetflixCreateAutoLoginToken(cookie.netflixId, cookie.secureNetflixId || '');
-            const reason = String(result.error || '').trim();
+            const tokenResult = await requestNetflixToken(cookie.netflixId, cookie.secureNetflixId || '');
+            const reason = String(tokenResult.error || '').trim();
 
-            if (result.ok && result.nftoken) {
+            if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
                 const now = new Date().toISOString();
                 cookies[index] = {
                     ...cookie,
                     status: 'active',
+                    sbdTagged: false,
                     lastCheckedAt: now,
                     lastSuccessAt: now,
                     lastErrorAt: '',
@@ -144,7 +140,7 @@ module.exports = async function (req, res) {
                 continue;
             }
 
-            if (isTokenPermissionDenied(reason)) {
+            if (tokenResult.outcome === 'sbd_blocked') {
                 const now = new Date().toISOString();
                 cookies[index] = {
                     ...cookie,
@@ -166,7 +162,7 @@ module.exports = async function (req, res) {
                 continue;
             }
 
-            if (isLikelyDeadCookie(reason, result.statusCode || 0)) {
+            if (tokenResult.outcome === 'dead') {
                 const now = new Date().toISOString();
                 cookies[index] = {
                     ...cookie,

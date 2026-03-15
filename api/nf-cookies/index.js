@@ -27,6 +27,7 @@ function cookiePublicDto(cookie) {
         sbdTagged: !!cookie.sbdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
         cookieRaw: cookie.cookieRaw || '',
+        note: cookie.note || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),
         createdAt: cookie.createdAt || '',
         updatedAt: cookie.updatedAt || '',
@@ -96,6 +97,7 @@ module.exports = async function (req, res) {
             const hasCookieRawUpdate = cookieRawInput.length > 0;
             const hasErrorTagUpdate = body.errorTagged !== undefined;
             const hasSbdTagUpdate = body.sbdTagged !== undefined;
+            const hasNoteUpdate = body.note !== undefined;
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
                 if (cookieIds.length !== 1) {
@@ -120,6 +122,7 @@ module.exports = async function (req, res) {
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
                 const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
+                const nextNote = hasNoteUpdate ? String(body.note ?? '').trim() : String(current.note || '');
                 const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged || nextSbdTagged;
                 if (shouldUnassign) shouldUnassignAny = true;
 
@@ -129,6 +132,7 @@ module.exports = async function (req, res) {
                         netflixId: parsedCookieIds.netflixId,
                         secureNetflixId: parsedCookieIds.secureNetflixId || '',
                         cookieRaw: parsedCookieIds.cookieRaw,
+                        note: nextNote,
                         status: 'active',
                         errorTagged: nextErrorTagged,
                         sbdTagged: nextSbdTagged,
@@ -146,6 +150,7 @@ module.exports = async function (req, res) {
                     status: nextStatus,
                     errorTagged: nextErrorTagged,
                     sbdTagged: nextSbdTagged,
+                    note: nextNote,
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,
                     lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError

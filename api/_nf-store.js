@@ -125,6 +125,7 @@ function sanitizeCookie(item) {
         netflixId: String(item.netflixId || '').trim(),
         secureNetflixId: String(item.secureNetflixId || '').trim(),
         cookieRaw: String(item.cookieRaw || '').trim(),
+        note: String(item.note || '').trim(),
         status: sanitizeCookieStatus(item.status),
         errorTagged,
         sbdTagged,
@@ -163,6 +164,7 @@ function buildCookieMapValue(cookie) {
                 netflixId: toStringValue(cookie.netflixId),
                 secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
                 cookieRaw: toStringValue(cookie.cookieRaw || ''),
+                note: toStringValue(cookie.note || ''),
                 status: toStringValue(cookie.status),
                 errorTagged: { booleanValue: !!cookie.errorTagged },
                 sbdTagged: { booleanValue: !!cookie.sbdTagged },
@@ -199,6 +201,7 @@ function parseCookieMapValue(value) {
         netflixId: fields.netflixId && fields.netflixId.stringValue,
         secureNetflixId: fields.secureNetflixId && fields.secureNetflixId.stringValue,
         cookieRaw: fields.cookieRaw && fields.cookieRaw.stringValue,
+        note: fields.note && fields.note.stringValue,
         status: fields.status && fields.status.stringValue,
         errorTagged: fields.errorTagged && (
             fields.errorTagged.booleanValue === true ||

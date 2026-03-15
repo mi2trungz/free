@@ -10,6 +10,46 @@ function isLikelyDeadCookie(errorText = '', statusCode = 0) {
     return /cookie|expired|invalid|unauthor|forbidden|auth|login|sign in|session/i.test(msg);
 }
 
+function callNfCheckerApi(netflixId) {
+    return new Promise((resolve) => {
+        const payload = JSON.stringify({
+            content: `NetflixId=${netflixId}`,
+            mode: 'fullinfo'
+        });
+
+        const req = https.request('https://nfchecker.firet.io/api/check', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(payload)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', chunk => data += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    if (parsed.status === 'success' && parsed.token_result && parsed.token_result.status === 'Success') {
+                        resolve({
+                            ok: true,
+                            nftoken: parsed.token_result.token,
+                            accountInfo: parsed.account_info
+                        });
+                    } else {
+                        resolve({ ok: false, error: parsed.message || 'nfchecker failed' });
+                    }
+                } catch (e) {
+                    resolve({ ok: false, error: 'nfchecker parse error' });
+                }
+            });
+        });
+
+        req.on('error', (e) => resolve({ ok: false, error: e.message }));
+        req.write(payload);
+        req.end();
+    });
+}
+
 function callNetflixCreateAutoLoginToken(netflixId, secureNetflixId) {
     return new Promise((resolve) => {
         let cookieStr = `NetflixId=${netflixId};`;
@@ -92,7 +132,24 @@ function classifyNetflixTokenResult(result = {}) {
 
 async function requestNetflixToken(netflixId, secureNetflixId) {
     const raw = await callNetflixCreateAutoLoginToken(netflixId, secureNetflixId || '');
-    return classifyNetflixTokenResult(raw);
+    const result = classifyNetflixTokenResult(raw);
+
+    // Nếu bị SBD hoặc cookie có vẻ bị chặn nhưng vẫn còn netflixId, ta thử fallback sang nfchecker.firet.io
+    if (result.outcome === 'sbd_blocked' || (result.outcome === 'dead' && !secureNetflixId)) {
+        const fallback = await callNfCheckerApi(netflixId);
+        if (fallback.ok && fallback.nftoken) {
+            return {
+                outcome: 'ok',
+                nftoken: fallback.nftoken,
+                statusCode: 200,
+                error: '',
+                source: 'nfchecker_fallback',
+                accountInfo: fallback.accountInfo
+            };
+        }
+    }
+
+    return result;
 }
 
 module.exports = {
