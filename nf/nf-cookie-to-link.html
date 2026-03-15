@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="vi">
 
 <head>
@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="/nf/styles.css">
     <style>
         .tool-container {
-            max-width: 600px;
+            max-width: 1100px;
             margin: 40px auto;
             padding: 24px;
             background: var(--surface);
@@ -33,21 +33,33 @@
         .tool-desc {
             color: var(--text-muted);
             font-size: 0.95rem;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             text-align: center;
             line-height: 1.5;
+        }
+
+        .tool-layout {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .left-panel,
+        .right-panel {
+            min-width: 0;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
         }
 
         .cookie-textarea {
             width: 100%;
-            min-height: 120px;
+            min-height: 140px;
             resize: vertical;
             padding: 12px;
             font-family: 'JetBrains Mono', monospace;
@@ -69,8 +81,29 @@
             border-color: var(--primary);
         }
 
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .import-state {
+            margin-top: 8px;
+            min-height: 20px;
+            font-size: 0.86rem;
+            color: var(--text-muted);
+        }
+
+        .import-state.ok {
+            color: #34d399;
+        }
+
+        .import-state.bad {
+            color: #f87171;
+        }
+
         .result-box {
-            margin-top: 24px;
+            margin-top: 16px;
             padding: 16px;
             background: rgba(34, 197, 94, 0.1);
             border: 1px solid rgba(34, 197, 94, 0.3);
@@ -131,6 +164,91 @@
             display: inline-block;
         }
 
+        .account-box {
+            display: block;
+            margin-top: 0;
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+            min-height: 520px;
+        }
+
+        .account-placeholder {
+            padding: 14px;
+            border: 1px dashed rgba(148, 163, 184, 0.35);
+            border-radius: 10px;
+            color: #bfdbfe;
+            background: rgba(30, 41, 59, 0.4);
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        .account-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .account-row {
+            display: grid;
+            grid-template-columns: 160px minmax(0, 1fr);
+            gap: 10px 12px;
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(148, 163, 184, 0.18);
+        }
+
+        .account-row:last-child {
+            border-bottom: 0;
+        }
+
+        .account-row strong {
+            color: #c9d8ff;
+            font-weight: 700;
+        }
+
+        .account-row span {
+            color: #e8efff;
+            font-weight: 500;
+            overflow-wrap: anywhere;
+        }
+
+        .account-row.priority {
+            padding: 7px 10px;
+            border: 1px solid rgba(59, 130, 246, 0.42);
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(30, 64, 175, 0.14));
+            box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.1);
+        }
+
+        .account-row.priority strong {
+            color: #dbeafe;
+        }
+
+        .account-row.priority span {
+            color: #eff6ff;
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            .tool-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .account-box {
+                min-height: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .action-row {
+                grid-template-columns: 1fr;
+            }
+
+            .account-row {
+                grid-template-columns: 1fr;
+                gap: 2px;
+            }
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -150,41 +268,51 @@
             <p class="tool-desc">Dán chuỗi cookie (hoặc chỉ phần <code>NetflixId=...</code>) vào ô bên dưới để tạo link
                 đăng nhập tự động ứng với thiết bị bạn chọn.</p>
 
-            <form id="linkGeneratorForm">
-                <div class="input-group">
-                    <textarea id="cookieInput" class="text-input cookie-textarea"
-                        placeholder="Dán cookie Netflix vào đây...&#10;Ví dụ: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;"
-                        required></textarea>
+            <div class="tool-layout">
+                <section class="left-panel">
+                    <form id="linkGeneratorForm">
+                        <div class="input-group">
+                            <textarea id="cookieInput" class="text-input cookie-textarea"
+                                placeholder="Dán cookie Netflix vào đây...&#10;Ví dụ: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;"
+                                required></textarea>
 
-                    <select id="deviceSelect" class="device-select">
-                        <option value="desktop">Máy tính (Desktop / Web)</option>
-                        <option value="mobile">Điện thoại (Mobile App)</option>
-                        <option value="tv">Tivi (Smart TV)</option>
-                    </select>
-                </div>
+                            <select id="deviceSelect" class="device-select">
+                                <option value="desktop">Máy tính (Desktop / Web)</option>
+                                <option value="mobile">Điện thoại (Mobile App)</option>
+                                <option value="tv">Tivi (Smart TV)</option>
+                            </select>
+                        </div>
 
-                <button type="submit" id="generateBtn" class="btn btn-primary" style="width: 100%">
-                    <span class="loading-spinner"></span>
-                    Tạo Link Đăng Nhập
-                </button>
-            </form>
+                        <div class="action-row">
+                            <button type="submit" id="generateBtn" class="btn btn-primary">
+                                <span class="loading-spinner"></span>
+                                Tạo Link Đăng Nhập
+                            </button>
+                            <button type="button" id="importBtn" class="btn btn-ghost">Import Cookie</button>
+                        </div>
+                        <p id="importState" class="import-state"></p>
+                    </form>
 
-            <div id="resultBox" class="result-box">
-                <span id="resultLabel" class="result-label">Link Đăng Nhập Của Bạn:</span>
-                <input type="text" id="resultLink" class="result-link" readonly>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" id="copyResultBtn" class="btn btn-primary copy-btn" style="flex: 1;">Sao Chép
-                        Link</button>
-                    <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost"
-                        style="flex: 1; text-align: center;">Mở Thử</a>
-                </div>
-            </div>
+                    <div id="resultBox" class="result-box">
+                        <span id="resultLabel" class="result-label">Link Đăng Nhập Của Bạn:</span>
+                        <input type="text" id="resultLink" class="result-link" readonly>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="copyResultBtn" class="btn btn-primary copy-btn" style="flex: 1;">Sao Chép
+                                Link</button>
+                            <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost"
+                                style="flex: 1; text-align: center;">Mở Thử</a>
+                        </div>
+                    </div>
+                </section>
 
-            <div id="accountInfoBox" class="result-box"
-                style="margin-top: 16px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
-                <span class="result-label" style="color: var(--info);">Thông Tin Tài Khoản:</span>
-                <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);">
-                </div>
+                <section class="right-panel">
+                    <div id="accountInfoBox" class="result-box active account-box">
+                        <span class="result-label" style="color: var(--info);">Thông Tin Tài Khoản:</span>
+                        <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);">
+                            <div class="account-placeholder">Chưa có dữ liệu, hãy tạo link để xem thông tin tài khoản.</div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div id="errorBox" class="result-box error">
@@ -200,14 +328,61 @@
             const cookieInput = document.getElementById('cookieInput');
             const deviceSelect = document.getElementById('deviceSelect');
             const generateBtn = document.getElementById('generateBtn');
+            const importBtn = document.getElementById('importBtn');
+            const importState = document.getElementById('importState');
             const resultBox = document.getElementById('resultBox');
             const resultLink = document.getElementById('resultLink');
             const copyResultBtn = document.getElementById('copyResultBtn');
             const openResultBtn = document.getElementById('openResultBtn');
             const errorBox = document.getElementById('errorBox');
             const errorText = document.getElementById('errorText');
-            const accountInfoBox = document.getElementById('accountInfoBox');
             const accountInfoContent = document.getElementById('accountInfoContent');
+
+            function setImportState(text = '', mode = '') {
+                importState.textContent = text;
+                importState.className = `import-state ${mode}`.trim();
+            }
+
+            function renderAccountPlaceholder() {
+                accountInfoContent.innerHTML = '<div class="account-placeholder">Chưa có dữ liệu, hãy tạo link để xem thông tin tài khoản.</div>';
+            }
+
+            function renderAccountInfo(accountInfo) {
+                const statusText = accountInfo.ok ? '✅ Hoạt động' : '❌ Lỗi';
+                const planText = `${accountInfo.plan || 'Không rõ'} ${accountInfo.premium ? '(Premium)' : ''}`.trim();
+                const phoneText = `${accountInfo.phone || 'N/A'} (Verified: ${accountInfo.phone_verified || 'No'})`;
+                const emailText = `${(accountInfo.email || 'N/A').replace(/\\x40/g, '@')} (Verified: ${accountInfo.email_verified || 'No'})`;
+                const priorityRows = [
+                    { label: 'Trạng thái:', value: statusText, priority: true },
+                    { label: 'Gói cước:', value: planText, priority: true },
+                    { label: 'Quốc gia:', value: accountInfo.country || 'N/A', priority: true },
+                    { label: 'Màn hình:', value: `${accountInfo.max_streams || '?'} màn`, priority: true },
+                    { label: 'Chất lượng video:', value: accountInfo.video_quality || 'N/A', priority: true },
+                    { label: 'Payment Hold:', value: accountInfo.on_payment_hold || 'No', priority: true }
+                ];
+                const normalRows = [
+                    { label: 'Giá gói:', value: accountInfo.plan_price || 'N/A' },
+                    { label: 'Ngày lập:', value: accountInfo.member_since || 'N/A' },
+                    { label: 'Thanh toán:', value: accountInfo.payment_method || 'N/A' },
+                    { label: 'Phone:', value: phoneText },
+                    { label: 'Email:', value: emailText },
+                    { label: 'Thành viên phụ:', value: accountInfo.extra_member || 'No' },
+                    { label: 'Profiles:', value: accountInfo.profiles || '?' },
+                    { label: 'Gia hạn tới:', value: accountInfo.next_billing || 'N/A' }
+                ];
+                const rows = [...priorityRows, ...normalRows];
+
+                accountInfoContent.innerHTML = `
+                    <div class="account-grid">
+                        ${rows.map((row) => `
+                            <div class="account-row${row.priority ? ' priority' : ''}">
+                                <strong>${row.label}</strong>
+                                <span>${row.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
 
             function showResult(url, accountInfo) {
                 resultBox.classList.add('active');
@@ -216,46 +391,27 @@
                 openResultBtn.href = url;
 
                 if (accountInfo) {
-                    accountInfoBox.classList.add('active');
-                    accountInfoContent.innerHTML = `
-                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;">
-                            <strong>Trạng thái:</strong> <span>${accountInfo.ok ? '✅ Hoạt động' : '❌ Lỗi'}</span>
-                            <strong>Gói cước:</strong> <span>${accountInfo.plan || 'Không rõ'} ${accountInfo.premium ? '(Premium)' : ''}</span>
-                            <strong>Quốc gia:</strong> <span>${accountInfo.country || 'N/A'}</span>
-                            <strong>Màn hình:</strong> <span>${accountInfo.max_streams || '?'} màn</span>
-                            <strong>Giá gói:</strong> <span>${accountInfo.plan_price || 'N/A'}</span>
-                            <strong>Ngày lập:</strong> <span>${accountInfo.member_since || 'N/A'}</span>
-                            <strong>Thanh toán:</strong> <span>${accountInfo.payment_method || 'N/A'}</span>
-                            <strong>Phone:</strong> <span>${accountInfo.phone || 'N/A'} (Verified: ${accountInfo.phone_verified || 'No'})</span>
-                            <strong>Email:</strong> <span>${(accountInfo.email || 'N/A').replace(/\\x40/g, '@')} (Verified: ${accountInfo.email_verified || 'No'})</span>
-                            <strong>Chất lượng video:</strong> <span>${accountInfo.video_quality || 'N/A'}</span>
-                            <strong>Payment Hold:</strong> <span>${accountInfo.on_payment_hold || 'No'}</span>
-                            <strong>Thành viên phụ:</strong> <span>${accountInfo.extra_member || 'No'}</span>
-                            <strong>Profiles:</strong> <span>${accountInfo.profiles || '?'}</span>
-                            <strong>Gia hạn tới:</strong> <span>${accountInfo.next_billing || 'N/A'}</span>
-                        </div>
-                    `;
+                    renderAccountInfo(accountInfo);
                 } else {
-                    accountInfoBox.classList.remove('active');
+                    renderAccountPlaceholder();
                 }
             }
 
             function showError(msg) {
                 errorBox.classList.add('active');
                 resultBox.classList.remove('active');
-                accountInfoBox.classList.remove('active');
                 errorText.textContent = msg;
             }
 
             function hideAlerts() {
                 resultBox.classList.remove('active');
                 errorBox.classList.remove('active');
-                accountInfoBox.classList.remove('active');
             }
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 hideAlerts();
+                setImportState('');
 
                 const cookieStr = cookieInput.value.trim();
                 const device = deviceSelect.value;
@@ -285,11 +441,45 @@
                     } else {
                         showError('Không thể tạo link (Lỗi không xác định).');
                     }
-
                 } catch (error) {
                     showError(error.message);
                 } finally {
                     generateBtn.disabled = false;
+                }
+            });
+
+            importBtn.addEventListener('click', async () => {
+                const content = cookieInput.value.trim();
+                setImportState('');
+                errorBox.classList.remove('active');
+
+                if (!content) {
+                    setImportState('Vui lòng dán cookie trước khi import.', 'bad');
+                    return;
+                }
+
+                importBtn.disabled = true;
+                const originalText = importBtn.textContent;
+                importBtn.textContent = 'Đang import...';
+
+                try {
+                    const res = await fetch('/api/nf-cookies/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Import thất bại.');
+
+                    const added = Number(data.addedCount || 0);
+                    const skipped = Number(data.skippedCount || 0);
+                    const invalid = Number(data.invalidCount || 0);
+                    setImportState(`Import xong: thêm ${added}, trùng ${skipped}, lỗi ${invalid}.`, 'ok');
+                } catch (error) {
+                    setImportState(error.message || 'Import thất bại.', 'bad');
+                } finally {
+                    importBtn.disabled = false;
+                    importBtn.textContent = originalText;
                 }
             });
 
@@ -305,6 +495,8 @@
                     alert('Lỗi sao chép, vui lòng copy thủ công.');
                 }
             });
+
+            renderAccountPlaceholder();
         });
     </script>
 </body>

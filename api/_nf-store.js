@@ -5,12 +5,13 @@ const {
     isTokenPermissionDenied
 } = require('./_netflix-token-engine');
 
-const FIREBASE_PROJECT_ID = 'trada3k-c402a';
-const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
+const FIREBASE_PROJECT_ID = String(process.env.FIREBASE_PROJECT_ID || '').trim();
+const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || '').trim();
 
 const DOC_CUSTOMERS = 'settings/nf_customers';
 const DOC_COOKIE_POOL = 'settings/nf_cookie_pool';
 const DOC_META = 'settings/nf_meta';
+const COL_COOKIE_ITEMS = 'nf_cookie_items';
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -34,8 +35,18 @@ function parseBody(rawBody) {
     return {};
 }
 
-function firestorePath(docPath) {
-    return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
+function firestorePath(resourcePath, query = {}) {
+    if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) {
+        throw new Error('Server missing FIREBASE_PROJECT_ID or FIREBASE_API_KEY');
+    }
+    const params = new URLSearchParams();
+    params.set('key', FIREBASE_API_KEY);
+    Object.keys(query || {}).forEach((k) => {
+        const value = query[k];
+        if (value === undefined || value === null || value === '') return;
+        params.set(k, String(value));
+    });
+    return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${resourcePath}?${params.toString()}`;
 }
 
 async function readDoc(docPath) {
@@ -62,6 +73,44 @@ async function patchDoc(docPath, fields) {
         }
     }, payload);
     return response.statusCode >= 200 && response.statusCode < 300;
+}
+
+async function deleteDoc(docPath) {
+    const response = await httpRequest({
+        hostname: 'firestore.googleapis.com',
+        port: 443,
+        path: firestorePath(docPath),
+        method: 'DELETE'
+    });
+    return response.statusCode >= 200 && response.statusCode < 300;
+}
+
+async function listCollectionDocuments(collectionPath, pageSize = 500) {
+    const docs = [];
+    let pageToken = '';
+    while (true) {
+        const response = await httpRequest({
+            hostname: 'firestore.googleapis.com',
+            port: 443,
+            path: firestorePath(collectionPath, { pageSize, pageToken }),
+            method: 'GET'
+        });
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+            break;
+        }
+        let payload = {};
+        try {
+            payload = JSON.parse(response.body || '{}');
+        } catch (e) {
+            payload = {};
+        }
+        const batch = Array.isArray(payload.documents) ? payload.documents : [];
+        docs.push(...batch);
+        const next = String(payload.nextPageToken || '').trim();
+        if (!next) break;
+        pageToken = next;
+    }
+    return docs;
 }
 
 function toStringValue(v) {
@@ -221,6 +270,60 @@ function parseCookieMapValue(value) {
     });
 }
 
+function buildCookieDocFields(cookie) {
+    return {
+        id: toStringValue(cookie.id),
+        netflixId: toStringValue(cookie.netflixId),
+        secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
+        cookieRaw: toStringValue(cookie.cookieRaw || ''),
+        note: toStringValue(cookie.note || ''),
+        status: toStringValue(cookie.status),
+        errorTagged: { booleanValue: !!cookie.errorTagged },
+        sbdTagged: { booleanValue: !!cookie.sbdTagged },
+        assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
+        createdAt: toTimestampValue(cookie.createdAt),
+        updatedAt: toTimestampValue(cookie.updatedAt),
+        lastCheckedAt: toStringValue(cookie.lastCheckedAt || ''),
+        lastSuccessAt: toStringValue(cookie.lastSuccessAt || ''),
+        lastErrorAt: toStringValue(cookie.lastErrorAt || ''),
+        lastError: toStringValue(cookie.lastError || '')
+    };
+}
+
+function parseCookieFields(fields = {}) {
+    return sanitizeCookie({
+        id: fields.id && fields.id.stringValue,
+        netflixId: fields.netflixId && fields.netflixId.stringValue,
+        secureNetflixId: fields.secureNetflixId && fields.secureNetflixId.stringValue,
+        cookieRaw: fields.cookieRaw && fields.cookieRaw.stringValue,
+        note: fields.note && fields.note.stringValue,
+        status: fields.status && fields.status.stringValue,
+        errorTagged: fields.errorTagged && (
+            fields.errorTagged.booleanValue === true ||
+            fields.errorTagged.booleanValue === 'true'
+        ),
+        sbdTagged: fields.sbdTagged && (
+            fields.sbdTagged.booleanValue === true ||
+            fields.sbdTagged.booleanValue === 'true'
+        ),
+        assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
+        createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
+        updatedAt: fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue),
+        lastCheckedAt: fields.lastCheckedAt && fields.lastCheckedAt.stringValue,
+        lastSuccessAt: fields.lastSuccessAt && fields.lastSuccessAt.stringValue,
+        lastErrorAt: fields.lastErrorAt && fields.lastErrorAt.stringValue,
+        lastError: fields.lastError && fields.lastError.stringValue
+    });
+}
+
+function parseCookieFromFirestoreDoc(doc = {}) {
+    return parseCookieFields((doc && doc.fields) || {});
+}
+
+function makeCookieDocPath(cookieId = '') {
+    return `${COL_COOKIE_ITEMS}/${encodeURIComponent(String(cookieId || '').trim())}`;
+}
+
 function parseCustomersFromDoc(doc) {
     const fields = (doc && doc.fields) || {};
     const values = (((fields.customers || {}).arrayValue || {}).values) || [];
@@ -247,9 +350,52 @@ async function readCustomers() {
     return parseCustomersFromDoc(doc);
 }
 
-async function readCookies() {
+async function readCookiesFromLegacyDoc() {
     const doc = await readDoc(DOC_COOKIE_POOL);
     return parseCookiesFromDoc(doc);
+}
+
+async function readCookieById(cookieId = '') {
+    const id = String(cookieId || '').trim();
+    if (!id) return null;
+    const doc = await readDoc(makeCookieDocPath(id));
+    if (!doc || !doc.fields) return null;
+    return parseCookieFromFirestoreDoc(doc);
+}
+
+async function readCookiesByIds(cookieIds = []) {
+    const ids = Array.isArray(cookieIds)
+        ? cookieIds.map((id) => String(id || '').trim()).filter(Boolean)
+        : [];
+    if (ids.length === 0) return [];
+    const jobs = ids.map((id) => readCookieById(id));
+    const result = await Promise.all(jobs);
+    return result.filter((item) => !!item);
+}
+
+async function listAllCookies() {
+    const docs = await listCollectionDocuments(COL_COOKIE_ITEMS);
+    return docs
+        .map(parseCookieFromFirestoreDoc)
+        .filter((item) => !!item.netflixId || !!item.cookieRaw);
+}
+
+async function readCookies() {
+    const cookies = await listAllCookies();
+    if (cookies.length > 0) return cookies;
+    return readCookiesFromLegacyDoc();
+}
+
+async function ensureCookieItemsBootstrapped() {
+    const current = await listAllCookies();
+    if (current.length > 0) return { bootstrapped: false, total: current.length };
+
+    const legacy = await readCookiesFromLegacyDoc();
+    if (legacy.length === 0) return { bootstrapped: false, total: 0 };
+
+    const ok = await upsertCookiesBulk(legacy);
+    if (!ok) return { bootstrapped: false, total: 0 };
+    return { bootstrapped: true, total: legacy.length };
 }
 
 async function persistCustomers(customers = []) {
@@ -267,14 +413,43 @@ async function persistCookies(cookies = []) {
     const normalized = cookies
         .map(sanitizeCookie)
         .filter((item) => !!item.netflixId || !!item.cookieRaw);
-    const summary = buildCookieSummary(normalized);
-    return patchDoc(DOC_COOKIE_POOL, {
-        cookies: toArrayValue(normalized.map(buildCookieMapValue)),
-        updatedAt: toTimestampValue(new Date().toISOString()),
-        totalCount: toIntegerValue(summary.total),
-        activeCount: toIntegerValue(summary.activeCount),
-        assignedCount: toIntegerValue(summary.assignedCount)
-    });
+    const existing = await listAllCookies();
+    const existingIds = new Set(existing.map((item) => item.id));
+    const targetIds = new Set(normalized.map((item) => item.id));
+    const deleteIds = Array.from(existingIds).filter((id) => !targetIds.has(id));
+    const [okUpsert, okDelete] = await Promise.all([
+        upsertCookiesBulk(normalized),
+        deleteCookiesByIds(deleteIds)
+    ]);
+    return okUpsert && okDelete;
+}
+
+async function upsertCookie(cookie = {}) {
+    const normalized = sanitizeCookie(cookie);
+    if (!normalized.id || (!normalized.netflixId && !normalized.cookieRaw)) return false;
+    return patchDoc(makeCookieDocPath(normalized.id), buildCookieDocFields(normalized));
+}
+
+async function upsertCookiesBulk(cookies = []) {
+    const list = Array.isArray(cookies) ? cookies : [];
+    if (list.length === 0) return true;
+    const jobs = list
+        .map((item) => sanitizeCookie(item))
+        .filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw))
+        .map((item) => upsertCookie(item));
+    if (jobs.length === 0) return true;
+    const result = await Promise.all(jobs);
+    return result.every(Boolean);
+}
+
+async function deleteCookiesByIds(cookieIds = []) {
+    const ids = Array.isArray(cookieIds)
+        ? cookieIds.map((id) => String(id || '').trim()).filter(Boolean)
+        : [];
+    if (ids.length === 0) return true;
+    const jobs = ids.map((id) => deleteDoc(makeCookieDocPath(id)));
+    const result = await Promise.all(jobs);
+    return result.every(Boolean);
 }
 
 async function persistMeta(payload = {}) {
@@ -508,11 +683,20 @@ module.exports = {
     DOC_CUSTOMERS,
     DOC_COOKIE_POOL,
     DOC_META,
+    COL_COOKIE_ITEMS,
     parseBody,
     readCustomers,
+    readCookiesFromLegacyDoc,
     readCookies,
+    ensureCookieItemsBootstrapped,
+    readCookieById,
+    readCookiesByIds,
+    listAllCookies,
     persistCustomers,
     persistCookies,
+    upsertCookie,
+    upsertCookiesBulk,
+    deleteCookiesByIds,
     persistAll,
     sanitizeCustomer,
     sanitizeCookie,

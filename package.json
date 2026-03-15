@@ -4,7 +4,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "migrate:nf-cookies-v2": "node scripts/migrate-nf-cookies-v2.js"
   },
   "dependencies": {
     "playwright-core": "^1.52.0"
