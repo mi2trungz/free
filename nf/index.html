@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NF KhÃ¡ch Mua HÃ ng</title>
+    <title>NF Khách Mua Hàng</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -14,62 +14,62 @@
     <div class="bg-layer bg-vignette"></div>
     <div class="bg-layer bg-neon"></div>
 
-    <button id="nfAdminFab" class="admin-fab hidden" type="button" aria-label="ÄÄƒng nháº­p tÃ i khoáº£n">
+    <button id="nfAdminFab" class="admin-fab hidden" type="button" aria-label="Đăng nhập tài khoản">
         <svg class="admin-fab-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.42 0-8 2-8 4.5V21h16v-2.5c0-2.5-3.58-4.5-8-4.5z"></path>
         </svg>
-        <span class="sr-only">ÄÄƒng nháº­p tÃ i khoáº£n</span>
+        <span class="sr-only">Đăng nhập tài khoản</span>
     </button>
 
     <main class="nf-shell">
         <div id="runtimeGuard" class="runtime-guard hidden">
-            <strong>Cáº£nh bÃ¡o:</strong>
+            <strong>Cảnh báo:</strong>
             <span id="runtimeGuardText"></span>
         </div>
 
         <section class="panel hero">
-            <h1 class="hero-title">Nháº­p mÃ£ khÃ¡ch hÃ ng</h1>
+            <h1 class="hero-title">Nhập mã khách hàng</h1>
 
             <div class="lookup-wrap">
                 <div class="lookup-row">
-                    <input id="customerCodeInput" class="text-input code-input" type="text" placeholder="VÃ­ dá»¥: NFAB12CD" autocomplete="off">
-                    <button id="lookupBtn" class="btn btn-primary" type="button">Kiá»ƒm tra mÃ£</button>
+                    <input id="customerCodeInput" class="text-input code-input" type="text" placeholder="Ví dụ: NFAB12CD" autocomplete="off">
+                    <button id="lookupBtn" class="btn btn-primary" type="button">Kiểm tra mã</button>
                 </div>
 
-                <div id="lookupState" class="state-text state-idle">Vui lÃ²ng nháº­p mÃ£ khÃ¡ch hÃ ng.</div>
+                <div id="lookupState" class="state-text state-idle">Vui lòng nhập mã khách hàng.</div>
 
                 <div id="customerInfoCard" class="customer-card hidden">
                     <div class="customer-grid">
                         <div class="customer-field">
-                            <span>MÃ£ khÃ¡ch</span>
+                            <span>Mã khách</span>
                             <strong id="customerCodeText" class="mono">-</strong>
                         </div>
                         <div class="customer-field">
-                            <span>TÃªn khÃ¡ch</span>
+                            <span>Tên khách</span>
                             <strong id="customerNameText">-</strong>
                         </div>
                     </div>
                 </div>
 
                 <section id="expiredSection" class="expired-section hidden">
-                    <h3 class="expired-title">GÃ“I NETFLIX Cá»¦A Báº N ÄÃƒ Háº¾T Háº N</h3>
-                    <button id="renewNetflixBtn" class="btn btn-primary btn-renew-netflix" type="button">GIA Háº N NETFLIX</button>
+                    <h3 class="expired-title">GÓI NETFLIX CỦA BẠN ĐÃ HẾT HẠN</h3>
+                    <button id="renewNetflixBtn" class="btn btn-primary btn-renew-netflix" type="button">GIA HẠN NETFLIX</button>
                 </section>
 
                 <section id="deviceSection" class="hidden">
-                    <h3 class="device-section-title">hÃ£y chá»n thiáº¿t bá»‹ báº¡n Ä‘ang dÃ¹ng Ä‘á»ƒ tiáº¿n hÃ nh sá»­ dá»¥ng netflix</h3>
+                    <h3 class="device-section-title">Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix</h3>
                     <div class="device-grid">
                         <button class="btn btn-device" type="button" data-device="desktop" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 0 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"></path>
                             </svg>
-                            <span class="device-title">MÃ¡y tÃ­nh</span>
+                            <span class="device-title">Máy tính</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="mobile" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h8V5H8zm4 15a1.2 1.2 0 1 0 0 .01V20z"></path>
                             </svg>
-                            <span class="device-title">Äiá»‡n thoáº¡i</span>
+                            <span class="device-title">Điện thoại</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="tv" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -79,7 +79,7 @@
                         </button>
                     </div>
                     <div class="support-row">
-                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">Cáº¦N Há»– TRá»¢ / Báº¢O HÃ€NH</button>
+                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CẦN HỖ TRỢ / BẢO HÀNH</button>
                     </div>
                 </section>
             </div>
@@ -91,14 +91,14 @@
         <div class="modal-card support-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Há»— trá»£ / Báº£o hÃ nh</span>
-                    <h2>Cáº§n há»— trá»£ tÃ i khoáº£n Netflix?</h2>
+                    <span class="eyebrow">Hỗ trợ / Bảo hành</span>
+                    <h2>Cần hỗ trợ tài khoản Netflix?</h2>
                 </div>
-                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
-                <p>Vui lÃ²ng nháº¯n tin qua fanpage Ä‘á»ƒ Ä‘Æ°á»£c há»— trá»£ báº£o hÃ nh nhanh nháº¥t.</p>
-                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cáº­p fanpage</a>
+                <p>Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
+                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage</a>
             </div>
         </div>
     </section>
@@ -108,14 +108,14 @@
         <div class="modal-card support-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Gia háº¡n Netflix</span>
-                    <h2>GÃ³i Netflix Ä‘Ã£ háº¿t háº¡n</h2>
+                    <span class="eyebrow">Gia hạn Netflix</span>
+                    <h2>Gói Netflix đã hết hạn</h2>
                 </div>
-                <button id="renewModalCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="renewModalCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
-                <p>Nháº¯n tin ngay qua fanpage Ä‘á»ƒ mua hoáº·c gia háº¡n tÃ i khoáº£n Netflix.</p>
-                <a id="renewFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">TRUY Cáº¬P FANPAGE</a>
+                <p>Nhắn tin ngay qua fanpage để mua hoặc gia hạn tài khoản Netflix.</p>
+                <a id="renewFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">TRUY CẬP FANPAGE</a>
             </div>
         </div>
     </section>
@@ -125,27 +125,27 @@
         <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">ÄÄƒng nháº­p Ä‘iá»‡n thoáº¡i</span>
-                    <h2>Táº¡o link Ä‘Äƒng nháº­p thÃ nh cÃ´ng</h2>
+                    <span class="eyebrow">Đăng nhập điện thoại</span>
+                    <h2>Tạo link đăng nhập thành công</h2>
                 </div>
-                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="mobile-link-body">
-                <label class="mobile-link-label" for="mobileLinkOutput">Link Ä‘Äƒng nháº­p:</label>
+                <label class="mobile-link-label" for="mobileLinkOutput">Link đăng nhập:</label>
                 <input id="mobileLinkOutput" class="text-input mobile-link-output mono" type="text" readonly>
-                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chÃ©p link</button>
+                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chép link</button>
 
                 <div class="mobile-link-guide">
-                    <h3>HÆ°á»›ng dáº«n Ä‘Äƒng nháº­p trÃªn Ä‘iá»‡n thoáº¡i</h3>
-                    <p><strong>BÆ°á»›c 0 (Quan trá»ng):</strong> ÄÃ³ng HOÃ€N TOÃ€N App Netflix trong Ä‘a nhiá»‡m</p>
-                    <p>BÆ°á»›c 1: Sao chÃ©p Ä‘Æ°á»ng link Ä‘Äƒng nháº­p phÃ­a trÃªn</p>
-                    <p>BÆ°á»›c 2: DÃ¡n vÃ o trÃ¬nh duyá»‡t mÃ  báº¡n Ä‘áº·t lÃ m máº·c Ä‘á»‹nh trÃªn Ä‘iá»‡n thoáº¡i vÃ  tiáº¿n hÃ nh truy cáº­p</p>
+                    <h3>Hướng dẫn đăng nhập trên điện thoại</h3>
+                    <p><strong>Bước 0 (Quan trọng):</strong> Đóng HOÀN TOÀN App Netflix trong đa nhiệm</p>
+                    <p>Bước 1: Sao chép đường link đăng nhập phía trên</p>
+                    <p>Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại và tiến hành truy cập</p>
                     <div class="mobile-link-guide-row">
-                        <p class="mobile-link-guide-step">BÆ°á»›c 3: Tiáº¿p tá»¥c truy cáº­p trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
-                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chÃ©p link</button>
+                        <p class="mobile-link-guide-step">Bước 3: Tiếp tục truy cập trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
+                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chép link</button>
                     </div>
-                    <p>BÆ°á»›c 4: NÃ³ cÃ³ há»i gÃ¬ hay hiá»‡n gÃ¬ thÃ¬ cá»© báº¥m nÃºt Äá»’NG Ã hoáº·c TIáº¾P Tá»¤C</p>
-                    <p class="mobile-link-note"><strong>LÆ°u Ã½:</strong> Náº¿u nÃ³ Ä‘Ã£ má»Ÿ app Netflix lÃªn vÃ  váº«n khÃ´ng Ä‘Äƒng nháº­p thÃ nh cÃ´ng, hÃ£y xoÃ¡ app Netflix Ä‘i vÃ  táº£i láº¡i (Sau khi táº£i láº¡i khÃ´ng Ä‘Æ°á»£c má»Ÿ lÃªn)</p>
+                    <p>Bước 4: Nó có hỏi gì hay hiện gì thì cứ bấm nút ĐỒNG Ý hoặc TIẾP TỤC</p>
+                    <p class="mobile-link-note"><strong>Lưu ý:</strong> Nếu nó đã mở app Netflix lên và vẫn không đăng nhập thành công, hãy xóa app Netflix đi và tải lại (Sau khi tải lại không được mở lên)</p>
                 </div>
             </div>
         </div>
@@ -156,18 +156,18 @@
         <div class="modal-card support-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">HÆ°á»›ng dáº«n TV</span>
-                    <h2>HÆ°á»›ng dáº«n cÃ¡ch Ä‘Äƒng nháº­p lÃªn Tivi</h2>
+                    <span class="eyebrow">Hướng dẫn TV</span>
+                    <h2>Hướng dẫn cách đăng nhập lên Tivi</h2>
                 </div>
-                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
                 <div class="tv-guide-list">
-                    <p><strong>BÆ°á»›c 1:</strong> Má»Ÿ tivi rá»“i báº¥m nÃºt Ä‘Äƒng nháº­p báº±ng mÃ£ code</p>
-                    <p><strong>BÆ°á»›c 2:</strong> Ghi nhá»› mÃ£ code Ä‘Ã³</p>
-                    <p><strong>BÆ°á»›c 3:</strong> Báº¥m vÃ o nÃºt bÃªn dÆ°á»›i vÃ  nháº­p mÃ£ code Ä‘Ã³ vÃ o</p>
+                    <p><strong>Bước 1:</strong> Mở tivi rồi bấm nút đăng nhập bằng mã code</p>
+                    <p><strong>Bước 2:</strong> Ghi nhớ mã code đó</p>
+                    <p><strong>Bước 3:</strong> Bấm vào nút bên dưới và nhập mã code đó vào</p>
                 </div>
-                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHáº¬P MÃƒ TIVI</button>
+                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHẬP MÃ TIVI</button>
             </div>
         </div>
     </section>
@@ -177,22 +177,22 @@
         <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Nháº­p mÃ£ Tivi</span>
-                    <h2>Nháº­p mÃ£ TV (8 sá»‘)</h2>
+                    <span class="eyebrow">Nhập mã Tivi</span>
+                    <h2>Nhập mã TV (8 số)</h2>
                 </div>
-                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="mobile-link-body">
-                <label class="mobile-link-label" for="tvCodeInput">MÃ£ TV:</label>
-                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="VÃ­ dá»¥: 12345678" autocomplete="off">
-                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">XÃ¡c nháº­n</button>
-                <div id="tvCodeState" class="state-text state-idle">Nháº­p Ä‘Ãºng 8 sá»‘ rá»“i báº¥m xÃ¡c nháº­n. Há»‡ thá»‘ng sáº½ má»Ÿ link Ä‘Äƒng nháº­p trÆ°á»›c, sau Ä‘Ã³ tá»± chuyá»ƒn sang netflix.com/tv8.</div>
+                <label class="mobile-link-label" for="tvCodeInput">Mã TV:</label>
+                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Ví dụ: 12345678" autocomplete="off">
+                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xác nhận</button>
+                <div id="tvCodeState" class="state-text state-idle">Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.</div>
 
                 <div class="mobile-link-guide">
-                    <h3>Má»Ÿ thá»§ cÃ´ng khi cáº§n</h3>
-                    <p>Náº¿u trÃ¬nh duyá»‡t cháº·n popup, hÃ£y má»Ÿ láº§n lÆ°á»£t 2 link sau:</p>
-                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Má»Ÿ link Ä‘Äƒng nháº­p</a>
-                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Má»Ÿ netflix.com/tv8</a>
+                    <h3>Mở thủ công khi cần</h3>
+                    <p>Nếu trình duyệt chặn popup, hãy mở lần lượt 2 link sau:</p>
+                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Mở link đăng nhập</a>
+                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mở netflix.com/tv8</a>
                 </div>
             </div>
         </div>
@@ -204,50 +204,54 @@
             <header class="modal-head">
                 <div>
                     <span class="eyebrow">NF Dashboard</span>
-                    <h2>Quáº£n trá»‹ riÃªng /nf</h2>
+                    <h2>Quản trị riêng /nf</h2>
                 </div>
-                <button id="closeAdminBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="closeAdminBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
 
             <div id="adminAuthBox" class="auth-box">
-                <h3>ÄÄƒng nháº­p admin</h3>
-                <p>Chá»‰ email admin Ä‘Æ°á»£c quyá»n quáº£n trá»‹ khu vá»±c nÃ y.</p>
+                <h3>Đăng nhập admin</h3>
+                <p>Chỉ email admin được quyền quản trị khu vực này.</p>
                 <div class="auth-grid">
                     <input id="adminEmailInput" class="text-input" type="email" placeholder="Email admin">
-                    <input id="adminPasswordInput" class="text-input" type="password" placeholder="Máº­t kháº©u">
+                    <input id="adminPasswordInput" class="text-input" type="password" placeholder="Mật khẩu">
                 </div>
                 <div class="auth-actions">
-                    <button id="adminLoginBtn" class="btn btn-primary" type="button">ÄÄƒng nháº­p</button>
-                    <div id="adminAuthState" class="state-text state-idle">ChÆ°a Ä‘Äƒng nháº­p.</div>
+                    <button id="adminLoginBtn" class="btn btn-primary" type="button">Đăng nhập</button>
+                    <div id="adminAuthState" class="state-text state-idle">Chưa đăng nhập.</div>
                 </div>
             </div>
 
             <div id="adminWorkspace" class="hidden">
                 <div class="admin-bar">
-                    <div id="adminIdentity" class="admin-identity">ChÆ°a Ä‘Äƒng nháº­p admin</div>
+                    <div id="adminIdentity" class="admin-identity">Chưa đăng nhập admin</div>
                     <div class="admin-actions">
-                        <button id="adminOpenTestBtn" class="btn btn-ghost" type="button">Truy cap test</button>
+                        <button id="adminOpenTestBtn" class="btn btn-ghost" type="button">Truy cập test</button>
                         <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Đăng xuất</button>
                     </div>
                 </div>
 
                 <div class="tab-row">
-                    <button class="tab-btn active" data-tab="customers" type="button">KhÃ¡ch hÃ ng</button>
-                    <button class="tab-btn" data-tab="cookies" type="button">Cookie tá»•ng</button>
+                    <button class="tab-btn active" data-tab="customers" type="button">Khách hàng</button>
+                    <button class="tab-btn" data-tab="cookies" type="button">Cookie tổng</button>
                 </div>
 
                 <section id="tabCustomers" class="tab-section">
                     <div class="section-head">
-                        <h3>Táº¡o hoáº·c cáº­p nháº­t mÃ£ khÃ¡ch hÃ ng</h3>
+                        <h3>Tạo hoặc cập nhật mã khách hàng</h3>
                     </div>
                     <form id="customerForm">
                         <div class="form-grid">
-                            <input id="customerCodeEditInput" class="text-input hidden" type="text" placeholder="MÃ£ khÃ¡ch hÃ ng (vÃ­ dá»¥: NFABC123)" autocomplete="off">
-                            <input id="customerNameInput" class="text-input" type="text" placeholder="TÃªn khÃ¡ch hÃ ng" required>
+                            <input id="customerCodeEditInput" class="text-input hidden" type="text" placeholder="Mã khách hàng (ví dụ: NFABC123)" autocomplete="off">
+                            <input id="customerNameInput" class="text-input" type="text" placeholder="Tên khách hàng" required>
                             <input id="customerWarrantyInput" class="text-input" type="datetime-local" required>
+                            <div class="warranty-days-wrap">
+                                <input id="customerWarrantyDaysInput" class="text-input" type="number" min="1" step="1" placeholder="Số ngày còn lại">
+                                <button id="applyWarrantyDaysBtn" class="btn btn-ghost" type="button">Tính ngày</button>
+                            </div>
                             <div class="form-actions">
-                                <button id="saveCustomerBtn" class="btn btn-primary" type="submit">LÆ°u khÃ¡ch hÃ ng</button>
-                                <button id="cancelEditCustomerBtn" class="btn btn-ghost hidden" type="button">Há»§y sá»­a</button>
+                                <button id="saveCustomerBtn" class="btn btn-primary" type="submit">Lưu khách hàng</button>
+                                <button id="cancelEditCustomerBtn" class="btn btn-ghost hidden" type="button">Hủy sửa</button>
                             </div>
                         </div>
                         <input id="customerEditCodeInput" type="hidden">
@@ -256,12 +260,12 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>MÃ£</th>
-                                    <th>TÃªn</th>
-                                    <th>Báº£o hÃ nh</th>
+                                    <th>Mã</th>
+                                    <th>Tên</th>
+                                    <th>Bảo hành</th>
                                     <th>Cookie</th>
-                                    <th>Tráº¡ng thÃ¡i</th>
-                                    <th>HÃ nh Ä‘á»™ng</th>
+                                    <th>Trạng thái</th>
+                                    <th>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody id="customersTableBody"></tbody>
@@ -271,11 +275,11 @@
 
                 <section id="tabCookies" class="tab-section hidden">
                     <div class="section-head">
-                        <h3>Import cookie tá»•ng</h3>
-                        <p>Má»—i block cookie Ä‘áº§y Ä‘á»§ sáº½ lÃ  1 record trong pool.</p>
+                        <h3>Import cookie tổng</h3>
+                        <p>Mỗi block cookie đầy đủ sẽ là 1 record trong pool.</p>
                     </div>
                     <div class="import-grid">
-                        <textarea id="cookieImportInput" class="text-input text-area" placeholder="DÃ¡n cookie vÃ o Ä‘Ã¢y..."></textarea>
+                        <textarea id="cookieImportInput" class="text-input text-area" placeholder="Dán cookie vào đây..."></textarea>
                         <div class="import-actions">
                             <input id="cookieImportFileInput" type="file" accept=".txt,.log">
                             <button id="importCookiesBtn" class="btn btn-primary" type="button">Import cookie</button>
@@ -285,51 +289,51 @@
 
                     <div id="cookieSummary" class="summary-row"></div>
                     <div class="cookie-filter-row">
-                        <input id="cookieSearchInput" class="text-input" type="text" placeholder="Tim theo ma cookie / ma khach / ten khach">
+                        <input id="cookieSearchInput" class="text-input" type="text" placeholder="Tìm theo mã cookie / mã khách / tên khách">
                         <select id="cookieStatusFilter" class="text-input">
-                            <option value="all">Tat ca trang thai</option>
+                            <option value="all">Tất cả trạng thái</option>
                             <option value="active">Active</option>
                             <option value="disabled">Disabled</option>
                             <option value="dead">Dead</option>
                         </select>
                         <select id="cookieTagFilter" class="text-input">
-                            <option value="all">Tat ca tag</option>
-                            <option value="error">Co ERROR</option>
-                            <option value="sbd">Co SBD</option>
-                            <option value="none">Khong tag</option>
+                            <option value="all">Tất cả tag</option>
+                            <option value="error">Có ERROR</option>
+                            <option value="sbd">Có SBD</option>
+                            <option value="none">Không tag</option>
                         </select>
                         <select id="cookieAssignFilter" class="text-input">
-                            <option value="all">Tat ca gan</option>
-                            <option value="assigned">Dang gan</option>
-                            <option value="unassigned">Chua gan</option>
+                            <option value="all">Tất cả gán</option>
+                            <option value="assigned">Đang gán</option>
+                            <option value="unassigned">Chưa gán</option>
                         </select>
                         <select id="cookieSortSelect" class="text-input">
-                            <option value="check_desc">Check moi nhat</option>
-                            <option value="check_asc">Check cu nhat</option>
-                            <option value="updated_desc">Cap nhat moi nhat</option>
+                            <option value="check_desc">Check mới nhất</option>
+                            <option value="check_asc">Check cũ nhất</option>
+                            <option value="updated_desc">Cập nhật mới nhất</option>
                             <option value="id_asc">ID A-Z</option>
                             <option value="id_desc">ID Z-A</option>
                         </select>
-                        <button id="cookieFilterResetBtn" class="btn btn-ghost" type="button">Xoa loc</button>
+                        <button id="cookieFilterResetBtn" class="btn btn-ghost" type="button">Xóa lọc</button>
                     </div>
 
                     <div class="cookie-tools">
-                        <button id="checkAllCookiesBtn" class="btn btn-ghost" type="button">Check LIVE/DIE (toÃ n bá»™)</button>
-                        <button id="toggleSelectAllCookiesBtn" class="btn btn-ghost" type="button">Chá»n táº¥t cáº£</button>
-                        <div id="cookieCheckState" class="state-text state-idle">ChÆ°a check cookie.</div>
+                        <button id="checkAllCookiesBtn" class="btn btn-ghost" type="button">Check LIVE/DIE (toàn bộ)</button>
+                        <button id="toggleSelectAllCookiesBtn" class="btn btn-ghost" type="button">Chọn tất cả</button>
+                        <div id="cookieCheckState" class="state-text state-idle">Chưa check cookie.</div>
                     </div>
 
                     <div id="cookieBulkBar" class="bulk-bar hidden">
-                        <div class="bulk-count">ÄÃ£ chá»n <strong id="cookieSelectedCount">0</strong> cookie</div>
+                        <div class="bulk-count">Đã chọn <strong id="cookieSelectedCount">0</strong> cookie</div>
                         <div class="row-actions">
                             <button class="btn-tiny" data-cookie-bulk-act="active" type="button">Active</button>
                             <button class="btn-tiny" data-cookie-bulk-act="disabled" type="button">Disabled</button>
                             <button class="btn-tiny" data-cookie-bulk-act="dead" type="button">Dead</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="sbd-on" type="button">Gáº¯n SBD</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="sbd-off" type="button">Gá»¡ SBD</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="unassign" type="button">Bá» gÃ¡n</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="delete" type="button">XÃ³a</button>
-                            <button class="btn-tiny" data-cookie-bulk-act="check-selected" type="button">Check LIVE/DIE (Ä‘Ã£ chá»n)</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="sbd-on" type="button">Gắn SBD</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="sbd-off" type="button">Gỡ SBD</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="unassign" type="button">Bỏ gán</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="delete" type="button">Xóa</button>
+                            <button class="btn-tiny" data-cookie-bulk-act="check-selected" type="button">Check LIVE/DIE (đã chọn)</button>
                         </div>
                     </div>
 
@@ -339,9 +343,9 @@
                                 <tr>
                                     <th class="check-col"><input id="cookiesSelectAll" class="row-check" type="checkbox"></th>
                                     <th>Cookie</th>
-                                    <th>Tráº¡ng thÃ¡i</th>
-                                    <th>GÃ¡n khÃ¡ch</th>
-                                    <th>Check gáº§n nháº¥t</th>
+                                    <th>Trạng thái</th>
+                                    <th>Gán khách</th>
+                                    <th>Check gần nhất</th>
                                     <th>Note</th>
                                     <th>Hành động</th>
                                 </tr>
@@ -360,17 +364,17 @@
             <header class="modal-head">
                 <div>
                     <span class="eyebrow">Cookie Raw Editor</span>
-                    <h2 id="cookieRawEditorTitle">Sá»­a full cookie raw</h2>
+                    <h2 id="cookieRawEditorTitle">Sửa full cookie raw</h2>
                 </div>
-                <button id="cookieRawEditorCloseBtn" class="btn btn-ghost" type="button">ÄÃ³ng</button>
+                <button id="cookieRawEditorCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
 
             <div class="raw-editor-body">
-                <div id="cookieRawEditorMeta" class="state-text state-idle">0 dÃ²ng â€¢ 0 kÃ½ tá»±</div>
+                <div id="cookieRawEditorMeta" class="state-text state-idle">0 dòng • 0 ký tự</div>
                 <textarea id="cookieRawEditorTextarea" class="text-input raw-editor-textarea" spellcheck="false"></textarea>
                 <div class="raw-editor-actions">
                     <button id="cookieRawEditorCopyBtn" class="btn btn-ghost" type="button">Copy</button>
-                    <button id="cookieRawEditorSaveBtn" class="btn btn-primary" type="button">LÆ°u cookie raw</button>
+                    <button id="cookieRawEditorSaveBtn" class="btn btn-primary" type="button">Lưu cookie raw</button>
                 </div>
             </div>
         </div>

@@ -782,8 +782,12 @@ function renderCookiesTable() {
         const lastCheck = formatDateTime(cookie.lastCheckedAt || cookie.updatedAt);
         const errorLine = cookie.lastError ? `<div class="bad" style="margin-top:4px">${cookie.lastError}</div>` : '';
         const checked = selectedCookieIds.has(cookie.id) ? 'checked' : '';
+        const hasRawCookie = !!String(cookie.cookieRaw || '').trim();
         const noteValue = String(cookie.note || '');
         const escapedNote = escapeHtml(noteValue);
+        const createLinkBtn = hasRawCookie
+            ? `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button">Tạo link</button>`
+            : `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button" disabled title="Cookie này không có raw">Tạo link</button>`;
         const noteHtml = `
             <div class="cookie-note-wrap">
                 <input class="text-input cookie-note-input" type="text" data-cookie-note-input="${cookie.id}" value="${escapedNote}" placeholder="Nhap note...">
@@ -800,7 +804,7 @@ function renderCookiesTable() {
                 <td data-label="Chon" class="check-cell">
                     <input class="row-check cookie-row-check" type="checkbox" data-cookie-select="${cookie.id}" ${checked}>
                 </td>
-                <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span></td>
+                <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span><br>${createLinkBtn}</td>
                 <td data-label="Trang thai">${statusHtml}</td>
                 <td data-label="Gan khach">${assignHtml}</td>
                 <td data-label="Check">${lastCheck}${errorLine}</td>
@@ -850,8 +854,10 @@ async function loadAdminData() {
 
 function clearCustomerForm() {
     const codeEditInput = el('customerCodeEditInput');
+    const warrantyDaysInput = el('customerWarrantyDaysInput');
     el('customerNameInput').value = '';
     el('customerWarrantyInput').value = '';
+    if (warrantyDaysInput) warrantyDaysInput.value = '';
     if (codeEditInput) {
         codeEditInput.value = '';
         codeEditInput.classList.add('hidden');
@@ -860,6 +866,30 @@ function clearCustomerForm() {
     el('cancelEditCustomerBtn').classList.add('hidden');
     const saveBtn = el('saveCustomerBtn');
     if (saveBtn) saveBtn.textContent = 'Luu khach hang';
+}
+
+function applyWarrantyDaysQuick() {
+    const daysInput = el('customerWarrantyDaysInput');
+    const warrantyInput = el('customerWarrantyInput');
+    if (!daysInput || !warrantyInput) return;
+
+    const raw = String(daysInput.value || '').trim();
+    const days = Number(raw);
+    if (!raw || !Number.isInteger(days) || days <= 0) {
+        toast('Vui long nhap so ngay hop le (> 0).', 'warn');
+        return;
+    }
+
+    const target = new Date();
+    target.setDate(target.getDate() + days);
+    const targetLocal = toDatetimeLocalFromIso(target.toISOString());
+    if (!targetLocal) {
+        toast('Khong tinh duoc ngay bao hanh.', 'bad');
+        return;
+    }
+
+    warrantyInput.value = targetLocal;
+    toast(`Da tinh ngay bao hanh sau ${days} ngay.`, 'ok');
 }
 
 function setTab(tab) {
@@ -1062,8 +1092,10 @@ async function handleCustomerTableAction(event) {
     try {
         if (action === 'edit') {
             const codeEditInput = el('customerCodeEditInput');
+            const warrantyDaysInput = el('customerWarrantyDaysInput');
             el('customerNameInput').value = customer.name || '';
             el('customerWarrantyInput').value = toDatetimeLocalFromIso(customer.warrantyExpiresAt);
+            if (warrantyDaysInput) warrantyDaysInput.value = '';
             el('customerEditCodeInput').value = customer.code || '';
             if (codeEditInput) {
                 codeEditInput.value = customer.code || '';
@@ -1435,6 +1467,42 @@ async function handleCookieTableAction(event) {
             return;
         }
 
+        if (action === 'create-youraccount-link') {
+            if (!cookie) return;
+            const raw = String(cookie.cookieRaw || '').trim();
+            if (!raw) {
+                toast('Cookie nay chua co noi dung raw.', 'warn');
+                return;
+            }
+
+            setButtonBusy(target, true, 'Dang tao...');
+            try {
+                const data = await apiRequest('/api/nf-cookie-to-link', 'POST', {
+                    cookieStr: raw,
+                    device: 'mobile'
+                });
+                const url = String(data && data.url ? data.url : '').trim();
+                if (!url) throw new Error('Khong tao duoc link YourAccount.');
+
+                const opened = window.open(url, '_blank', 'noopener');
+                if (!opened || opened.closed) {
+                    toast('Link da tao. Popup bi chan, da copy vao clipboard.', 'warn');
+                }
+
+                try {
+                    await navigator.clipboard.writeText(url);
+                    toast('Da tao link YourAccount va copy clipboard.', 'ok');
+                } catch (copyError) {
+                    toast('Da tao link YourAccount. Khong copy tu dong duoc.', 'warn');
+                }
+            } catch (error) {
+                toast(error.message || 'Tao link YourAccount that bai.', 'bad');
+            } finally {
+                setButtonBusy(target, false);
+            }
+            return;
+        }
+
         if (action === 'edit-raw') {
             if (!cookie) return;
             openCookieRawEditor(cookie, 'edit');
@@ -1768,6 +1836,18 @@ function bindEvents() {
 
     const customerForm = el('customerForm');
     if (customerForm) customerForm.addEventListener('submit', onSubmitCustomerForm);
+
+    const applyWarrantyDaysBtn = el('applyWarrantyDaysBtn');
+    if (applyWarrantyDaysBtn) applyWarrantyDaysBtn.addEventListener('click', applyWarrantyDaysQuick);
+
+    const customerWarrantyDaysInput = el('customerWarrantyDaysInput');
+    if (customerWarrantyDaysInput) {
+        customerWarrantyDaysInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            applyWarrantyDaysQuick();
+        });
+    }
 
     const customerCodeEditInput = el('customerCodeEditInput');
     if (customerCodeEditInput) {
