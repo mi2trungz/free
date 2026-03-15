@@ -1,3 +1,4 @@
+
 const https = require('https');
 const {
     callNetflixCreateAutoLoginToken: callNetflixCreateAutoLoginTokenShared,
@@ -11,6 +12,13 @@ const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
 const DOC_CUSTOMERS = 'settings/nf_customers';
 const DOC_COOKIE_POOL = 'settings/nf_cookie_pool';
 const DOC_META = 'settings/nf_meta';
+
+const COLL_CUSTOMERS_ITEMS = 'settings/nf_customers/items';
+const COLL_COOKIES_ITEMS = 'settings/nf_cookies/items';
+const STORAGE_VERSION_V2 = 2;
+
+let storageVersionCache = null;
+let ensureStoragePromise = null;
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -34,15 +42,28 @@ function parseBody(rawBody) {
     return {};
 }
 
-function firestorePath(docPath) {
+function firestoreDocPath(docPath) {
     return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
+}
+
+function firestoreCollectionPath(collectionPath, query = {}) {
+    const params = Object.entries(query)
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+        .join('&');
+    const suffix = params ? `&${params}` : '';
+    return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collectionPath}?key=${FIREBASE_API_KEY}${suffix}`;
+}
+
+function buildItemDocPath(collectionPath, id) {
+    return `${collectionPath}/${encodeURIComponent(String(id || '').trim())}`;
 }
 
 async function readDoc(docPath) {
     const response = await httpRequest({
         hostname: 'firestore.googleapis.com',
         port: 443,
-        path: firestorePath(docPath),
+        path: firestoreDocPath(docPath),
         method: 'GET'
     });
     if (response.statusCode < 200 || response.statusCode >= 300) return null;
@@ -54,7 +75,7 @@ async function patchDoc(docPath, fields) {
     const response = await httpRequest({
         hostname: 'firestore.googleapis.com',
         port: 443,
-        path: firestorePath(docPath),
+        path: firestoreDocPath(docPath),
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
@@ -62,6 +83,46 @@ async function patchDoc(docPath, fields) {
         }
     }, payload);
     return response.statusCode >= 200 && response.statusCode < 300;
+}
+
+async function deleteDoc(docPath) {
+    const response = await httpRequest({
+        hostname: 'firestore.googleapis.com',
+        port: 443,
+        path: firestoreDocPath(docPath),
+        method: 'DELETE'
+    });
+    return response.statusCode >= 200 && response.statusCode < 300;
+}
+
+async function listCollectionDocs(collectionPath, options = {}) {
+    const pageSize = Math.max(1, Math.min(Number(options.pageSize || 200), 1000));
+    const docs = [];
+    let pageToken = '';
+
+    do {
+        const response = await httpRequest({
+            hostname: 'firestore.googleapis.com',
+            port: 443,
+            path: firestoreCollectionPath(collectionPath, {
+                pageSize,
+                pageToken: pageToken || undefined
+            }),
+            method: 'GET'
+        });
+
+        if (response.statusCode === 404) return [];
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+            throw new Error(`Failed to list collection ${collectionPath}`);
+        }
+
+        let parsed = {};
+        try { parsed = JSON.parse(response.body || '{}'); } catch (e) { parsed = {}; }
+        if (Array.isArray(parsed.documents)) docs.push(...parsed.documents);
+        pageToken = String(parsed.nextPageToken || '').trim();
+    } while (pageToken);
+
+    return docs;
 }
 
 function toStringValue(v) {
@@ -74,13 +135,6 @@ function toTimestampValue(v) {
 
 function toIntegerValue(v) {
     return { integerValue: String(Number(v || 0)) };
-}
-
-function toArrayValue(values) {
-    if (!Array.isArray(values) || values.length === 0) {
-        return { arrayValue: {} };
-    }
-    return { arrayValue: { values } };
 }
 
 function safeString(v, fallback = '') {
@@ -139,49 +193,40 @@ function sanitizeCookie(item) {
     };
 }
 
-function buildCustomerMapValue(customer) {
+function buildCustomerDocFields(customer) {
     return {
-        mapValue: {
-            fields: {
-                code: toStringValue(customer.code),
-                name: toStringValue(customer.name),
-                warrantyExpiresAt: toStringValue(customer.warrantyExpiresAt || ''),
-                status: toStringValue(customer.status),
-                assignedCookieId: toStringValue(customer.assignedCookieId || ''),
-                createdAt: toTimestampValue(customer.createdAt),
-                updatedAt: toTimestampValue(customer.updatedAt),
-                lastLinkedAt: toStringValue(customer.lastLinkedAt || '')
-            }
-        }
+        code: toStringValue(customer.code),
+        name: toStringValue(customer.name),
+        warrantyExpiresAt: toStringValue(customer.warrantyExpiresAt || ''),
+        status: toStringValue(customer.status),
+        assignedCookieId: toStringValue(customer.assignedCookieId || ''),
+        createdAt: toTimestampValue(customer.createdAt),
+        updatedAt: toTimestampValue(customer.updatedAt),
+        lastLinkedAt: toStringValue(customer.lastLinkedAt || '')
     };
 }
 
-function buildCookieMapValue(cookie) {
+function buildCookieDocFields(cookie) {
     return {
-        mapValue: {
-            fields: {
-                id: toStringValue(cookie.id),
-                netflixId: toStringValue(cookie.netflixId),
-                secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
-                cookieRaw: toStringValue(cookie.cookieRaw || ''),
-                note: toStringValue(cookie.note || ''),
-                status: toStringValue(cookie.status),
-                errorTagged: { booleanValue: !!cookie.errorTagged },
-                sbdTagged: { booleanValue: !!cookie.sbdTagged },
-                assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
-                createdAt: toTimestampValue(cookie.createdAt),
-                updatedAt: toTimestampValue(cookie.updatedAt),
-                lastCheckedAt: toStringValue(cookie.lastCheckedAt || ''),
-                lastSuccessAt: toStringValue(cookie.lastSuccessAt || ''),
-                lastErrorAt: toStringValue(cookie.lastErrorAt || ''),
-                lastError: toStringValue(cookie.lastError || '')
-            }
-        }
+        id: toStringValue(cookie.id),
+        netflixId: toStringValue(cookie.netflixId),
+        secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
+        cookieRaw: toStringValue(cookie.cookieRaw || ''),
+        note: toStringValue(cookie.note || ''),
+        status: toStringValue(cookie.status),
+        errorTagged: { booleanValue: !!cookie.errorTagged },
+        sbdTagged: { booleanValue: !!cookie.sbdTagged },
+        assignedCustomerCode: toStringValue(cookie.assignedCustomerCode || ''),
+        createdAt: toTimestampValue(cookie.createdAt),
+        updatedAt: toTimestampValue(cookie.updatedAt),
+        lastCheckedAt: toStringValue(cookie.lastCheckedAt || ''),
+        lastSuccessAt: toStringValue(cookie.lastSuccessAt || ''),
+        lastErrorAt: toStringValue(cookie.lastErrorAt || ''),
+        lastError: toStringValue(cookie.lastError || '')
     };
 }
 
-function parseCustomerMapValue(value) {
-    const fields = (((value || {}).mapValue || {}).fields) || {};
+function parseCustomerFields(fields = {}) {
     return sanitizeCustomer({
         code: fields.code && fields.code.stringValue,
         name: fields.name && fields.name.stringValue,
@@ -194,8 +239,7 @@ function parseCustomerMapValue(value) {
     });
 }
 
-function parseCookieMapValue(value) {
-    const fields = (((value || {}).mapValue || {}).fields) || {};
+function parseCookieFields(fields = {}) {
     return sanitizeCookie({
         id: fields.id && fields.id.stringValue,
         netflixId: fields.netflixId && fields.netflixId.stringValue,
@@ -204,12 +248,10 @@ function parseCookieMapValue(value) {
         note: fields.note && fields.note.stringValue,
         status: fields.status && fields.status.stringValue,
         errorTagged: fields.errorTagged && (
-            fields.errorTagged.booleanValue === true ||
-            fields.errorTagged.booleanValue === 'true'
+            fields.errorTagged.booleanValue === true || fields.errorTagged.booleanValue === 'true'
         ),
         sbdTagged: fields.sbdTagged && (
-            fields.sbdTagged.booleanValue === true ||
-            fields.sbdTagged.booleanValue === 'true'
+            fields.sbdTagged.booleanValue === true || fields.sbdTagged.booleanValue === 'true'
         ),
         assignedCustomerCode: fields.assignedCustomerCode && fields.assignedCustomerCode.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
@@ -221,16 +263,172 @@ function parseCookieMapValue(value) {
     });
 }
 
-function parseCustomersFromDoc(doc) {
-    const fields = (doc && doc.fields) || {};
-    const values = (((fields.customers || {}).arrayValue || {}).values) || [];
-    return values.map(parseCustomerMapValue).filter((item) => !!item.code);
+function parseStorageVersion(metaDoc) {
+    const fields = (metaDoc && metaDoc.fields) || {};
+    const raw = (fields.storageVersion && (fields.storageVersion.integerValue || fields.storageVersion.stringValue)) || '';
+    const version = Number(raw);
+    return Number.isFinite(version) ? version : 0;
 }
 
-function parseCookiesFromDoc(doc) {
+function toCustomerSnapshot(customer = {}) {
+    return [
+        customer.code || '', customer.name || '', customer.warrantyExpiresAt || '', customer.status || '',
+        customer.assignedCookieId || '', customer.createdAt || '', customer.updatedAt || '', customer.lastLinkedAt || ''
+    ].join('|');
+}
+
+function toCookieSnapshot(cookie = {}) {
+    return [
+        cookie.id || '', cookie.netflixId || '', cookie.secureNetflixId || '', cookie.cookieRaw || '', cookie.note || '',
+        cookie.status || '', cookie.errorTagged ? '1' : '0', cookie.sbdTagged ? '1' : '0', cookie.assignedCustomerCode || '',
+        cookie.createdAt || '', cookie.updatedAt || '', cookie.lastCheckedAt || '', cookie.lastSuccessAt || '',
+        cookie.lastErrorAt || '', cookie.lastError || ''
+    ].join('|');
+}
+
+async function runWithConcurrency(items = [], worker, concurrency = 8) {
+    const limit = Math.max(1, Number(concurrency || 1));
+    let cursor = 0;
+    const runners = new Array(Math.min(limit, items.length)).fill(null).map(async () => {
+        while (cursor < items.length) {
+            const index = cursor;
+            cursor += 1;
+            await worker(items[index], index);
+        }
+    });
+    await Promise.all(runners);
+}
+async function readCustomersV2() {
+    const docs = await listCollectionDocs(COLL_CUSTOMERS_ITEMS);
+    return docs
+        .map((doc) => parseCustomerFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.code);
+}
+
+async function readCookiesV2() {
+    const docs = await listCollectionDocs(COLL_COOKIES_ITEMS);
+    return docs
+        .map((doc) => parseCookieFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.netflixId || !!item.cookieRaw);
+}
+
+async function readLegacyCustomers() {
+    const doc = await readDoc(DOC_CUSTOMERS);
+    const fields = (doc && doc.fields) || {};
+    const values = (((fields.customers || {}).arrayValue || {}).values) || [];
+    return values.map((value) => {
+        const mapFields = (((value || {}).mapValue || {}).fields) || {};
+        return parseCustomerFields(mapFields);
+    }).filter((item) => !!item.code);
+}
+
+async function readLegacyCookies() {
+    const doc = await readDoc(DOC_COOKIE_POOL);
     const fields = (doc && doc.fields) || {};
     const values = (((fields.cookies || {}).arrayValue || {}).values) || [];
-    return values.map(parseCookieMapValue).filter((item) => !!item.netflixId || !!item.cookieRaw);
+    return values.map((value) => {
+        const mapFields = (((value || {}).mapValue || {}).fields) || {};
+        return parseCookieFields(mapFields);
+    }).filter((item) => !!item.netflixId || !!item.cookieRaw);
+}
+
+async function upsertCustomers(customers = []) {
+    const normalized = customers.map(sanitizeCustomer).filter((item) => !!item.code && !!item.name);
+    await runWithConcurrency(normalized, async (customer) => {
+        await patchDoc(buildItemDocPath(COLL_CUSTOMERS_ITEMS, customer.code), buildCustomerDocFields(customer));
+    }, 8);
+}
+
+async function upsertCookies(cookies = []) {
+    const normalized = cookies.map(sanitizeCookie).filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+    await runWithConcurrency(normalized, async (cookie) => {
+        await patchDoc(buildItemDocPath(COLL_COOKIES_ITEMS, cookie.id), buildCookieDocFields(cookie));
+    }, 8);
+}
+
+async function deleteCustomersByCodes(codes = []) {
+    const normalized = Array.from(new Set((Array.isArray(codes) ? codes : [])
+        .map((code) => String(code || '').trim().toUpperCase())
+        .filter(Boolean)));
+    await runWithConcurrency(normalized, async (code) => {
+        await deleteDoc(buildItemDocPath(COLL_CUSTOMERS_ITEMS, code));
+    }, 8);
+}
+
+async function deleteCookiesByIds(cookieIds = []) {
+    const normalized = Array.from(new Set((Array.isArray(cookieIds) ? cookieIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)));
+    await runWithConcurrency(normalized, async (id) => {
+        await deleteDoc(buildItemDocPath(COLL_COOKIES_ITEMS, id));
+    }, 8);
+}
+
+async function persistMeta(payload = {}) {
+    const now = new Date().toISOString();
+    const fields = {
+        lastUpdatedAt: toTimestampValue(now),
+        note: toStringValue(safeString(payload.note || 'NF module update')),
+        source: toStringValue(safeString(payload.source || 'api')),
+        totalCustomers: toIntegerValue(payload.totalCustomers || 0),
+        totalCookies: toIntegerValue(payload.totalCookies || 0)
+    };
+    if (payload.storageVersion !== undefined) {
+        fields.storageVersion = toIntegerValue(payload.storageVersion);
+    }
+    const ok = await patchDoc(DOC_META, fields);
+    if (payload.storageVersion !== undefined) {
+        storageVersionCache = Number(payload.storageVersion) || null;
+    }
+    return ok;
+}
+
+async function getStorageVersion() {
+    if (storageVersionCache !== null) return storageVersionCache;
+    const metaDoc = await readDoc(DOC_META);
+    storageVersionCache = parseStorageVersion(metaDoc) || 0;
+    return storageVersionCache;
+}
+
+async function ensureStorageForWrite() {
+    const currentVersion = await getStorageVersion();
+    if (currentVersion >= STORAGE_VERSION_V2) return;
+    if (ensureStoragePromise) {
+        await ensureStoragePromise;
+        return;
+    }
+
+    ensureStoragePromise = (async () => {
+        const [v2Customers, v2Cookies] = await Promise.all([readCustomersV2(), readCookiesV2()]);
+        if (v2Customers.length > 0 || v2Cookies.length > 0) {
+            await persistMeta({
+                source: 'nf-store-detect-v2',
+                note: 'Detected v2 storage',
+                totalCustomers: v2Customers.length,
+                totalCookies: v2Cookies.length,
+                storageVersion: STORAGE_VERSION_V2
+            });
+            return;
+        }
+
+        const [legacyCustomers, legacyCookies] = await Promise.all([readLegacyCustomers(), readLegacyCookies()]);
+        if (legacyCustomers.length > 0) await upsertCustomers(legacyCustomers);
+        if (legacyCookies.length > 0) await upsertCookies(legacyCookies);
+
+        await persistMeta({
+            source: 'nf-store-migration',
+            note: 'Migrated legacy nf storage to v2',
+            totalCustomers: legacyCustomers.length,
+            totalCookies: legacyCookies.length,
+            storageVersion: STORAGE_VERSION_V2
+        });
+    })();
+
+    try {
+        await ensureStoragePromise;
+    } finally {
+        ensureStoragePromise = null;
+    }
 }
 
 function buildCookieSummary(cookies = []) {
@@ -243,62 +441,170 @@ function buildCookieSummary(cookies = []) {
 }
 
 async function readCustomers() {
-    const doc = await readDoc(DOC_CUSTOMERS);
-    return parseCustomersFromDoc(doc);
+    const dataV2 = await readCustomersV2();
+    if (dataV2.length > 0) return dataV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return [];
+
+    return readLegacyCustomers();
 }
 
 async function readCookies() {
-    const doc = await readDoc(DOC_COOKIE_POOL);
-    return parseCookiesFromDoc(doc);
+    const dataV2 = await readCookiesV2();
+    if (dataV2.length > 0) return dataV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return [];
+
+    return readLegacyCookies();
 }
 
 async function persistCustomers(customers = []) {
-    const normalized = customers
-        .map(sanitizeCustomer)
-        .filter((item) => !!item.code && !!item.name);
-    return patchDoc(DOC_CUSTOMERS, {
-        customers: toArrayValue(normalized.map(buildCustomerMapValue)),
-        updatedAt: toTimestampValue(new Date().toISOString()),
-        totalCount: toIntegerValue(normalized.length)
-    });
-}
+    await ensureStorageForWrite();
 
+    const normalized = customers.map(sanitizeCustomer).filter((item) => !!item.code && !!item.name);
+    const existing = await readCustomersV2();
+    const existingMap = new Map(existing.map((item) => [item.code, item]));
+    const incomingMap = new Map(normalized.map((item) => [item.code, item]));
+
+    const toUpsert = [];
+    incomingMap.forEach((nextItem, code) => {
+        const prev = existingMap.get(code);
+        if (!prev || toCustomerSnapshot(prev) !== toCustomerSnapshot(nextItem)) {
+            toUpsert.push(nextItem);
+        }
+    });
+
+    const toDelete = [];
+    existingMap.forEach((_prev, code) => {
+        if (!incomingMap.has(code)) toDelete.push(code);
+    });
+
+    if (toUpsert.length > 0) await upsertCustomers(toUpsert);
+    if (toDelete.length > 0) await deleteCustomersByCodes(toDelete);
+
+    const cookiesCount = (await readCookiesV2()).length;
+    await persistMeta({
+        source: 'persistCustomers',
+        totalCustomers: normalized.length,
+        totalCookies: cookiesCount,
+        storageVersion: STORAGE_VERSION_V2
+    });
+    return true;
+}
 async function persistCookies(cookies = []) {
-    const normalized = cookies
-        .map(sanitizeCookie)
-        .filter((item) => !!item.netflixId || !!item.cookieRaw);
-    const summary = buildCookieSummary(normalized);
-    return patchDoc(DOC_COOKIE_POOL, {
-        cookies: toArrayValue(normalized.map(buildCookieMapValue)),
-        updatedAt: toTimestampValue(new Date().toISOString()),
-        totalCount: toIntegerValue(summary.total),
-        activeCount: toIntegerValue(summary.activeCount),
-        assignedCount: toIntegerValue(summary.assignedCount)
-    });
-}
+    await ensureStorageForWrite();
 
-async function persistMeta(payload = {}) {
-    const now = new Date().toISOString();
-    return patchDoc(DOC_META, {
-        lastUpdatedAt: toTimestampValue(now),
-        note: toStringValue(safeString(payload.note || 'NF module update')),
-        source: toStringValue(safeString(payload.source || 'api')),
-        totalCustomers: toIntegerValue(payload.totalCustomers || 0),
-        totalCookies: toIntegerValue(payload.totalCookies || 0)
+    const normalized = cookies.map(sanitizeCookie).filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+    const existing = await readCookiesV2();
+    const existingMap = new Map(existing.map((item) => [item.id, item]));
+    const incomingMap = new Map(normalized.map((item) => [item.id, item]));
+
+    const toUpsert = [];
+    incomingMap.forEach((nextItem, id) => {
+        const prev = existingMap.get(id);
+        if (!prev || toCookieSnapshot(prev) !== toCookieSnapshot(nextItem)) {
+            toUpsert.push(nextItem);
+        }
     });
+
+    const toDelete = [];
+    existingMap.forEach((_prev, id) => {
+        if (!incomingMap.has(id)) toDelete.push(id);
+    });
+
+    if (toUpsert.length > 0) await upsertCookies(toUpsert);
+    if (toDelete.length > 0) await deleteCookiesByIds(toDelete);
+
+    const customersCount = (await readCustomersV2()).length;
+    await persistMeta({
+        source: 'persistCookies',
+        totalCustomers: customersCount,
+        totalCookies: normalized.length,
+        storageVersion: STORAGE_VERSION_V2
+    });
+    return true;
 }
 
 async function persistAll(customers = [], cookies = [], source = 'api') {
-    const [okCustomers, okCookies] = await Promise.all([
-        persistCustomers(customers),
-        persistCookies(cookies)
+    await ensureStorageForWrite();
+
+    const normalizedCustomers = customers.map(sanitizeCustomer).filter((item) => !!item.code && !!item.name);
+    const normalizedCookies = cookies.map(sanitizeCookie).filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+
+    const [existingCustomers, existingCookies] = await Promise.all([readCustomersV2(), readCookiesV2()]);
+    const existingCustomerMap = new Map(existingCustomers.map((item) => [item.code, item]));
+    const existingCookieMap = new Map(existingCookies.map((item) => [item.id, item]));
+    const incomingCustomerMap = new Map(normalizedCustomers.map((item) => [item.code, item]));
+    const incomingCookieMap = new Map(normalizedCookies.map((item) => [item.id, item]));
+
+    const customerUpserts = [];
+    incomingCustomerMap.forEach((nextItem, code) => {
+        const prev = existingCustomerMap.get(code);
+        if (!prev || toCustomerSnapshot(prev) !== toCustomerSnapshot(nextItem)) customerUpserts.push(nextItem);
+    });
+
+    const cookieUpserts = [];
+    incomingCookieMap.forEach((nextItem, id) => {
+        const prev = existingCookieMap.get(id);
+        if (!prev || toCookieSnapshot(prev) !== toCookieSnapshot(nextItem)) cookieUpserts.push(nextItem);
+    });
+
+    const customerDeletes = [];
+    existingCustomerMap.forEach((_prev, code) => {
+        if (!incomingCustomerMap.has(code)) customerDeletes.push(code);
+    });
+
+    const cookieDeletes = [];
+    existingCookieMap.forEach((_prev, id) => {
+        if (!incomingCookieMap.has(id)) cookieDeletes.push(id);
+    });
+
+    await Promise.all([
+        customerUpserts.length > 0 ? upsertCustomers(customerUpserts) : Promise.resolve(),
+        cookieUpserts.length > 0 ? upsertCookies(cookieUpserts) : Promise.resolve(),
+        customerDeletes.length > 0 ? deleteCustomersByCodes(customerDeletes) : Promise.resolve(),
+        cookieDeletes.length > 0 ? deleteCookiesByIds(cookieDeletes) : Promise.resolve()
     ]);
+
     await persistMeta({
         source,
-        totalCustomers: customers.length,
-        totalCookies: cookies.length
+        totalCustomers: normalizedCustomers.length,
+        totalCookies: normalizedCookies.length,
+        storageVersion: STORAGE_VERSION_V2
     });
-    return okCustomers && okCookies;
+    return true;
+}
+
+async function writeDelta(payload = {}) {
+    await ensureStorageForWrite();
+
+    const upsertCustomersInput = Array.isArray(payload.upsertCustomers) ? payload.upsertCustomers : [];
+    const upsertCookiesInput = Array.isArray(payload.upsertCookies) ? payload.upsertCookies : [];
+    const deleteCustomerCodesInput = Array.isArray(payload.deleteCustomerCodes) ? payload.deleteCustomerCodes : [];
+    const deleteCookieIdsInput = Array.isArray(payload.deleteCookieIds) ? payload.deleteCookieIds : [];
+
+    const normalizedCustomers = upsertCustomersInput.map(sanitizeCustomer).filter((item) => !!item.code && !!item.name);
+    const normalizedCookies = upsertCookiesInput.map(sanitizeCookie).filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+
+    await Promise.all([
+        normalizedCustomers.length > 0 ? upsertCustomers(normalizedCustomers) : Promise.resolve(),
+        normalizedCookies.length > 0 ? upsertCookies(normalizedCookies) : Promise.resolve(),
+        deleteCustomerCodesInput.length > 0 ? deleteCustomersByCodes(deleteCustomerCodesInput) : Promise.resolve(),
+        deleteCookieIdsInput.length > 0 ? deleteCookiesByIds(deleteCookieIdsInput) : Promise.resolve()
+    ]);
+
+    const [customers, cookies] = await Promise.all([readCustomersV2(), readCookiesV2()]);
+    await persistMeta({
+        source: safeString(payload.source || 'writeDelta'),
+        note: safeString(payload.note || 'NF delta update'),
+        totalCustomers: customers.length,
+        totalCookies: cookies.length,
+        storageVersion: STORAGE_VERSION_V2
+    });
+
+    return true;
 }
 
 function makeCustomerCode(existingCodes = []) {
@@ -407,7 +713,6 @@ function extractNetflixIdsFromCookie(cookieVal) {
 
     return { netflixId, secureNetflixId };
 }
-
 function splitImportLines(content = '') {
     return String(content || '')
         .replace(/\r/g, '')
@@ -508,12 +813,17 @@ module.exports = {
     DOC_CUSTOMERS,
     DOC_COOKIE_POOL,
     DOC_META,
+    COLL_CUSTOMERS_ITEMS,
+    COLL_COOKIES_ITEMS,
+    STORAGE_VERSION_V2,
     parseBody,
     readCustomers,
     readCookies,
     persistCustomers,
     persistCookies,
     persistAll,
+    persistMeta,
+    writeDelta,
     sanitizeCustomer,
     sanitizeCookie,
     sanitizeCustomerStatus,

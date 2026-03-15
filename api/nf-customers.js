@@ -2,8 +2,7 @@ const {
     parseBody,
     readCustomers,
     readCookies,
-    persistCustomers,
-    persistAll,
+    writeDelta,
     sanitizeCustomer,
     sanitizeCustomerStatus,
     makeCustomerCode,
@@ -72,8 +71,10 @@ module.exports = async function (req, res) {
                 lastLinkedAt: ''
             });
 
-            const nextCustomers = [next, ...customers];
-            const ok = await persistCustomers(nextCustomers);
+            const ok = await writeDelta({
+                source: 'nf-customers-create',
+                upsertCustomers: [next]
+            });
             if (!ok) return res.status(500).json({ error: 'Failed to create customer' });
             return res.status(200).json({ success: true, customer: customerPublicDto(next) });
         }
@@ -105,23 +106,30 @@ module.exports = async function (req, res) {
             if (!updated.name) return res.status(400).json({ error: 'Customer name cannot be empty' });
             if (!updated.warrantyExpiresAt) return res.status(400).json({ error: 'warrantyExpiresAt cannot be empty' });
 
-            const nextCustomers = customers.slice();
-            nextCustomers[idx] = updated;
             let ok = false;
             if (nextCode !== code) {
                 const now = new Date().toISOString();
                 const cookies = await readCookies();
-                const nextCookies = cookies.map((cookie) => {
-                    if (cookie.assignedCustomerCode !== code) return cookie;
-                    return {
+                const changedCookies = [];
+                cookies.forEach((cookie) => {
+                    if (cookie.assignedCustomerCode !== code) return;
+                    changedCookies.push({
                         ...cookie,
                         assignedCustomerCode: nextCode,
                         updatedAt: now
-                    };
+                    });
                 });
-                ok = await persistAll(nextCustomers, nextCookies, 'nf-customers-update-code');
+                ok = await writeDelta({
+                    source: 'nf-customers-update-code',
+                    upsertCustomers: [updated],
+                    deleteCustomerCodes: [code],
+                    upsertCookies: changedCookies
+                });
             } else {
-                ok = await persistCustomers(nextCustomers);
+                ok = await writeDelta({
+                    source: 'nf-customers-update',
+                    upsertCustomers: [updated]
+                });
             }
             if (!ok) return res.status(500).json({ error: 'Failed to update customer' });
             return res.status(200).json({ success: true, customer: customerPublicDto(updated) });
@@ -134,22 +142,23 @@ module.exports = async function (req, res) {
             const idx = findCustomerIndexByCode(customers, code);
             if (idx < 0) return res.status(404).json({ error: 'Customer not found' });
 
-            const nextCustomers = customers.filter((item) => item.code !== code);
             const cookies = await readCookies();
-            let mutatedCookies = false;
-            const nextCookies = cookies.map((cookie) => {
-                if (cookie.assignedCustomerCode !== code) return cookie;
-                mutatedCookies = true;
-                return {
+            const now = new Date().toISOString();
+            const changedCookies = [];
+            cookies.forEach((cookie) => {
+                if (cookie.assignedCustomerCode !== code) return;
+                changedCookies.push({
                     ...cookie,
                     assignedCustomerCode: '',
-                    updatedAt: new Date().toISOString()
-                };
+                    updatedAt: now
+                });
             });
 
-            const ok = mutatedCookies
-                ? await persistAll(nextCustomers, nextCookies, 'nf-customers-delete')
-                : await persistCustomers(nextCustomers);
+            const ok = await writeDelta({
+                source: 'nf-customers-delete',
+                deleteCustomerCodes: [code],
+                upsertCookies: changedCookies
+            });
             if (!ok) return res.status(500).json({ error: 'Failed to delete customer' });
             return res.status(200).json({ success: true });
         }

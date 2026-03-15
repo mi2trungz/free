@@ -2,7 +2,7 @@ const {
     parseBody,
     readCookies,
     readCustomers,
-    persistAll
+    writeDelta
 } = require('../_nf-store');
 const { requestNetflixToken } = require('../_netflix-token-engine');
 
@@ -30,7 +30,7 @@ function normalizeCode(value = '') {
     return String(value || '').trim().toUpperCase();
 }
 
-function unassignCustomersForCookie(customers = [], cookie, nowIso) {
+function unassignCustomersForCookie(customers = [], cookie, nowIso, changedCustomerCodes = null) {
     let changed = false;
     const cookieId = String(cookie && cookie.id ? cookie.id : '').trim();
     const assignedCode = normalizeCode(cookie && cookie.assignedCustomerCode ? cookie.assignedCustomerCode : '');
@@ -50,6 +50,9 @@ function unassignCustomersForCookie(customers = [], cookie, nowIso) {
             assignedCookieId: '',
             updatedAt: nowIso
         };
+        if (changedCustomerCodes instanceof Set) {
+            changedCustomerCodes.add(customer.code);
+        }
         changed = true;
     }
 
@@ -108,6 +111,7 @@ module.exports = async function (req, res) {
         let sbdCount = 0;
         let errorCount = 0;
         let mutated = false;
+        const changedCustomerCodes = new Set();
         const results = [];
 
         for (let i = 0; i < targetIndexes.length; i += 1) {
@@ -151,7 +155,7 @@ module.exports = async function (req, res) {
                     lastError: reason || 'Access denied by SBD',
                     updatedAt: now
                 };
-                unassignCustomersForCookie(customers, cookie, now);
+                unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
                 sbdCount += 1;
                 mutated = true;
                 results.push({
@@ -173,7 +177,7 @@ module.exports = async function (req, res) {
                     lastError: reason || 'Cookie DIE',
                     updatedAt: now
                 };
-                unassignCustomersForCookie(customers, cookie, now);
+                unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
                 deadCount += 1;
                 mutated = true;
                 results.push({
@@ -193,7 +197,15 @@ module.exports = async function (req, res) {
         }
 
         if (mutated) {
-            const ok = await persistAll(customers, cookies, 'nf-cookies-check');
+            const changedCookies = targetIndexes
+                .map((idx) => cookies[idx])
+                .filter(Boolean);
+            const changedCustomers = customers.filter((customer) => changedCustomerCodes.has(customer.code));
+            const ok = await writeDelta({
+                source: 'nf-cookies-check',
+                upsertCookies: changedCookies,
+                upsertCustomers: changedCustomers
+            });
             if (!ok) return res.status(500).json({ error: 'Failed to persist check results' });
         }
 

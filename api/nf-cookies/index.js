@@ -2,8 +2,7 @@ const {
     parseBody,
     readCookies,
     readCustomers,
-    persistCookies,
-    persistAll,
+    writeDelta,
     sanitizeCookie,
     sanitizeCookieStatus,
     maskNetflixId,
@@ -116,7 +115,8 @@ module.exports = async function (req, res) {
             }
 
             let shouldUnassignAny = false;
-            const nextCookies = cookies.map((current) => {
+            const updatedCookies = [];
+            cookies.forEach((current) => {
                 if (!targetIdSet.has(current.id)) return current;
 
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
@@ -127,7 +127,7 @@ module.exports = async function (req, res) {
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
-                    return sanitizeCookie({
+                    updatedCookies.push(sanitizeCookie({
                         ...current,
                         netflixId: parsedCookieIds.netflixId,
                         secureNetflixId: parsedCookieIds.secureNetflixId || '',
@@ -142,10 +142,11 @@ module.exports = async function (req, res) {
                         lastSuccessAt: '',
                         lastErrorAt: '',
                         lastError: ''
-                    });
+                    }));
+                    return current;
                 }
 
-                return sanitizeCookie({
+                updatedCookies.push(sanitizeCookie({
                     ...current,
                     status: nextStatus,
                     errorTagged: nextErrorTagged,
@@ -154,26 +155,36 @@ module.exports = async function (req, res) {
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,
                     lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError
-                });
+                }));
+                return current;
             });
 
             if (!shouldUnassignAny) {
-                const ok = await persistCookies(nextCookies);
+                const ok = await writeDelta({
+                    source: 'nf-cookies-put',
+                    upsertCookies: updatedCookies
+                });
                 if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
                 return res.status(200).json({ success: true, affectedCount: cookieIds.length });
             }
 
             const customers = await readCustomers();
-            const nextCustomers = customers.map((customer) => {
+            const changedCustomers = [];
+            customers.forEach((customer) => {
                 if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
-                return {
+                changedCustomers.push({
                     ...customer,
                     assignedCookieId: '',
                     updatedAt: now
-                };
+                });
+                return customer;
             });
 
-            const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-put');
+            const ok = await writeDelta({
+                source: 'nf-cookies-put',
+                upsertCookies: updatedCookies,
+                upsertCustomers: changedCustomers
+            });
             if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
@@ -189,18 +200,23 @@ module.exports = async function (req, res) {
 
             const now = new Date().toISOString();
             const targetIdSet = new Set(cookieIds);
-            const nextCookies = cookies.filter((item) => !targetIdSet.has(item.id));
             const customers = await readCustomers();
-            const nextCustomers = customers.map((customer) => {
+            const changedCustomers = [];
+            customers.forEach((customer) => {
                 if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
-                return {
+                changedCustomers.push({
                     ...customer,
                     assignedCookieId: '',
                     updatedAt: now
-                };
+                });
+                return customer;
             });
 
-            const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-delete');
+            const ok = await writeDelta({
+                source: 'nf-cookies-delete',
+                deleteCookieIds: cookieIds,
+                upsertCustomers: changedCustomers
+            });
             if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }

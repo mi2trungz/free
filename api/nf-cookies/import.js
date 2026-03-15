@@ -1,7 +1,7 @@
 const {
     parseBody,
     readCookies,
-    persistCookies,
+    writeDelta,
     sanitizeCookie,
     splitImportCookieBlocks,
     extractNetflixIdsFromCookie,
@@ -81,8 +81,10 @@ module.exports = async function (req, res) {
             });
         }
 
-        const nextPool = [...currentPool, ...added];
-        const ok = await persistCookies(nextPool);
+        const ok = await writeDelta({
+            source: 'nf-cookies-import',
+            upsertCookies: added
+        });
         if (!ok) return res.status(500).json({ error: 'Failed to import cookies' });
 
         return res.status(200).json({

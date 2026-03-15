@@ -4,16 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo Link Đăng Nhập Netflix từ Cookie</title>
+    <title>Tao Link Dang Nhap Netflix tu Cookie</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/nf/styles.css">
     <style>
         .tool-container {
-            max-width: 600px;
+            max-width: 1160px;
             margin: 40px auto;
             padding: 24px;
             background: var(--surface);
@@ -25,7 +23,7 @@
         .tool-title {
             font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
             color: var(--text-base);
             text-align: center;
         }
@@ -33,21 +31,36 @@
         .tool-desc {
             color: var(--text-muted);
             font-size: 0.95rem;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             text-align: center;
             line-height: 1.5;
+        }
+
+        .tool-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .left-panel,
+        .right-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px;
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
         }
 
         .cookie-textarea {
             width: 100%;
-            min-height: 120px;
+            min-height: 180px;
             resize: vertical;
             padding: 12px;
             font-family: 'JetBrains Mono', monospace;
@@ -69,9 +82,16 @@
             border-color: var(--primary);
         }
 
+        .action-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
         .result-box {
-            margin-top: 24px;
-            padding: 16px;
+            margin-top: 12px;
+            padding: 12px;
             background: rgba(34, 197, 94, 0.1);
             border: 1px solid rgba(34, 197, 94, 0.3);
             border-radius: var(--radius-base);
@@ -107,11 +127,63 @@
             color: var(--text-base);
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .right-panel .result-label {
+            color: var(--info);
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
             margin-bottom: 12px;
         }
 
-        .copy-btn {
-            width: 100%;
+        .info-chip {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .info-chip strong {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .info-chip span {
+            font-weight: 700;
+            color: var(--text-base);
+            word-break: break-word;
+        }
+
+        .info-chip.bad {
+            border-color: rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.14);
+        }
+
+        .info-chip.bad span {
+            color: #ffb4b4;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-grid strong {
+            color: var(--text-muted);
+        }
+
+        .info-grid span {
+            color: var(--text-base);
+            word-break: break-word;
         }
 
         .loading-spinner {
@@ -136,6 +208,20 @@
                 transform: rotate(360deg);
             }
         }
+
+        @media (max-width: 900px) {
+            .tool-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .highlight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -146,50 +232,57 @@
 
     <main class="nf-shell">
         <div class="tool-container">
-            <h1 class="tool-title">Tạo Link Đăng Nhập Trực Tiếp</h1>
-            <p class="tool-desc">Dán chuỗi cookie (hoặc chỉ phần <code>NetflixId=...</code>) vào ô bên dưới để tạo link
-                đăng nhập tự động ứng với thiết bị bạn chọn.</p>
+            <h1 class="tool-title">Tao Link Dang Nhap Truc Tiep</h1>
+            <p class="tool-desc">Dan chuoi cookie (hoac chi phan <code>NetflixId=...</code>) vao o ben trai de tao link va co the import vao Cookie tong.</p>
 
-            <form id="linkGeneratorForm">
-                <div class="input-group">
-                    <textarea id="cookieInput" class="text-input cookie-textarea"
-                        placeholder="Dán cookie Netflix vào đây...&#10;Ví dụ: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;"
-                        required></textarea>
+            <div class="tool-layout">
+                <section class="left-panel">
+                    <form id="linkGeneratorForm">
+                        <div class="input-group">
+                            <textarea id="cookieInput" class="text-input cookie-textarea" placeholder="Dan cookie Netflix vao day...&#10;Vi du: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;" required></textarea>
 
-                    <select id="deviceSelect" class="device-select">
-                        <option value="desktop">Máy tính (Desktop / Web)</option>
-                        <option value="mobile">Điện thoại (Mobile App)</option>
-                        <option value="tv">Tivi (Smart TV)</option>
-                    </select>
-                </div>
+                            <select id="deviceSelect" class="device-select">
+                                <option value="desktop">May tinh (Desktop / Web)</option>
+                                <option value="mobile">Dien thoai (Mobile App)</option>
+                                <option value="tv">Tivi (Smart TV)</option>
+                            </select>
+                        </div>
 
-                <button type="submit" id="generateBtn" class="btn btn-primary" style="width: 100%">
-                    <span class="loading-spinner"></span>
-                    Tạo Link Đăng Nhập
-                </button>
-            </form>
+                        <div class="action-row">
+                            <button type="submit" id="generateBtn" class="btn btn-primary">
+                                <span class="loading-spinner"></span>
+                                Tao Link Dang Nhap
+                            </button>
+                            <button type="button" id="importCookieBtn" class="btn btn-ghost">Import cookie vao Cookie tong</button>
+                        </div>
+                    </form>
 
-            <div id="resultBox" class="result-box">
-                <span id="resultLabel" class="result-label">Link Đăng Nhập Của Bạn:</span>
-                <input type="text" id="resultLink" class="result-link" readonly>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" id="copyResultBtn" class="btn btn-primary copy-btn" style="flex: 1;">Sao Chép
-                        Link</button>
-                    <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost"
-                        style="flex: 1; text-align: center;">Mở Thử</a>
-                </div>
-            </div>
+                    <div id="resultBox" class="result-box">
+                        <span class="result-label">Link Dang Nhap Cua Ban:</span>
+                        <input type="text" id="resultLink" class="result-link" readonly>
+                        <div class="action-row">
+                            <button type="button" id="copyResultBtn" class="btn btn-primary">Sao chep link</button>
+                            <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost" style="text-align:center;">Mo thu</a>
+                        </div>
+                    </div>
 
-            <div id="accountInfoBox" class="result-box"
-                style="margin-top: 16px; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
-                <span class="result-label" style="color: var(--info);">Thông Tin Tài Khoản:</span>
-                <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);">
-                </div>
-            </div>
+                    <div id="importStateBox" class="result-box" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.35);">
+                        <span class="result-label">Trang thai import:</span>
+                        <p id="importStateText" style="margin: 0; font-size: 0.9rem; color: var(--text-base);"></p>
+                    </div>
 
-            <div id="errorBox" class="result-box error">
-                <span class="result-label">Lỗi:</span>
-                <p id="errorText" style="margin:0; font-size: 0.9rem;"></p>
+                    <div id="errorBox" class="result-box error">
+                        <span class="result-label">Loi:</span>
+                        <p id="errorText" style="margin:0; font-size: 0.9rem;"></p>
+                    </div>
+                </section>
+
+                <section class="right-panel">
+                    <div id="accountInfoBox" class="result-box" style="margin-top: 0; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                        <span class="result-label">Thong Tin Tai Khoan:</span>
+                        <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);"></div>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
@@ -200,14 +293,31 @@
             const cookieInput = document.getElementById('cookieInput');
             const deviceSelect = document.getElementById('deviceSelect');
             const generateBtn = document.getElementById('generateBtn');
+            const importCookieBtn = document.getElementById('importCookieBtn');
             const resultBox = document.getElementById('resultBox');
             const resultLink = document.getElementById('resultLink');
             const copyResultBtn = document.getElementById('copyResultBtn');
             const openResultBtn = document.getElementById('openResultBtn');
             const errorBox = document.getElementById('errorBox');
             const errorText = document.getElementById('errorText');
+            const importStateBox = document.getElementById('importStateBox');
+            const importStateText = document.getElementById('importStateText');
             const accountInfoBox = document.getElementById('accountInfoBox');
             const accountInfoContent = document.getElementById('accountInfoContent');
+
+            function isTruthy(value) {
+                const text = String(value || '').trim().toLowerCase();
+                return text === 'yes' || text === 'true' || text === '1';
+            }
+
+            function escapeHtml(raw) {
+                return String(raw || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
 
             function showResult(url, accountInfo) {
                 resultBox.classList.add('active');
@@ -217,22 +327,37 @@
 
                 if (accountInfo) {
                     accountInfoBox.classList.add('active');
+
+                    const paymentHoldText = String(accountInfo.on_payment_hold || 'No');
+                    const paymentHoldBad = isTruthy(paymentHoldText);
+
+                    const topFields = [
+                        { label: 'Trang thai', value: accountInfo.ok ? 'Hoat dong' : 'Loi' },
+                        { label: 'Goi cuoc', value: `${accountInfo.plan || 'Khong ro'} ${accountInfo.premium ? '(Premium)' : ''}`.trim() },
+                        { label: 'Quoc gia', value: accountInfo.country || 'N/A' },
+                        { label: 'Man hinh', value: `${accountInfo.max_streams || '?'} man` },
+                        { label: 'Chat luong video', value: accountInfo.video_quality || 'N/A' },
+                        { label: 'Payment Hold', value: paymentHoldText, bad: paymentHoldBad }
+                    ];
+
+                    const chipHtml = topFields.map((item) => `
+                        <div class="info-chip ${item.bad ? 'bad' : ''}">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span>${escapeHtml(item.value)}</span>
+                        </div>
+                    `).join('');
+
                     accountInfoContent.innerHTML = `
-                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 12px;">
-                            <strong>Trạng thái:</strong> <span>${accountInfo.ok ? '✅ Hoạt động' : '❌ Lỗi'}</span>
-                            <strong>Gói cước:</strong> <span>${accountInfo.plan || 'Không rõ'} ${accountInfo.premium ? '(Premium)' : ''}</span>
-                            <strong>Quốc gia:</strong> <span>${accountInfo.country || 'N/A'}</span>
-                            <strong>Màn hình:</strong> <span>${accountInfo.max_streams || '?'} màn</span>
-                            <strong>Giá gói:</strong> <span>${accountInfo.plan_price || 'N/A'}</span>
-                            <strong>Ngày lập:</strong> <span>${accountInfo.member_since || 'N/A'}</span>
-                            <strong>Thanh toán:</strong> <span>${accountInfo.payment_method || 'N/A'}</span>
-                            <strong>Phone:</strong> <span>${accountInfo.phone || 'N/A'} (Verified: ${accountInfo.phone_verified || 'No'})</span>
-                            <strong>Email:</strong> <span>${(accountInfo.email || 'N/A').replace(/\\x40/g, '@')} (Verified: ${accountInfo.email_verified || 'No'})</span>
-                            <strong>Chất lượng video:</strong> <span>${accountInfo.video_quality || 'N/A'}</span>
-                            <strong>Payment Hold:</strong> <span>${accountInfo.on_payment_hold || 'No'}</span>
-                            <strong>Thành viên phụ:</strong> <span>${accountInfo.extra_member || 'No'}</span>
-                            <strong>Profiles:</strong> <span>${accountInfo.profiles || '?'}</span>
-                            <strong>Gia hạn tới:</strong> <span>${accountInfo.next_billing || 'N/A'}</span>
+                        <div class="highlight-grid">${chipHtml}</div>
+                        <div class="info-grid">
+                            <strong>Gia goi:</strong> <span>${escapeHtml(accountInfo.plan_price || 'N/A')}</span>
+                            <strong>Ngay lap:</strong> <span>${escapeHtml(accountInfo.member_since || 'N/A')}</span>
+                            <strong>Thanh toan:</strong> <span>${escapeHtml(accountInfo.payment_method || 'N/A')}</span>
+                            <strong>Phone:</strong> <span>${escapeHtml(accountInfo.phone || 'N/A')} (Verified: ${escapeHtml(accountInfo.phone_verified || 'No')})</span>
+                            <strong>Email:</strong> <span>${escapeHtml(String(accountInfo.email || 'N/A').replace(/\\x40/g, '@'))} (Verified: ${escapeHtml(accountInfo.email_verified || 'No')})</span>
+                            <strong>Thanh vien phu:</strong> <span>${escapeHtml(accountInfo.extra_member || 'No')}</span>
+                            <strong>Profiles:</strong> <span>${escapeHtml(accountInfo.profiles || '?')}</span>
+                            <strong>Gia han toi:</strong> <span>${escapeHtml(accountInfo.next_billing || 'N/A')}</span>
                         </div>
                     `;
                 } else {
@@ -247,10 +372,16 @@
                 errorText.textContent = msg;
             }
 
+            function showImportState(msg) {
+                importStateBox.classList.add('active');
+                importStateText.textContent = msg;
+            }
+
             function hideAlerts() {
                 resultBox.classList.remove('active');
                 errorBox.classList.remove('active');
                 accountInfoBox.classList.remove('active');
+                importStateBox.classList.remove('active');
             }
 
             form.addEventListener('submit', async (e) => {
@@ -261,7 +392,7 @@
                 const device = deviceSelect.value;
 
                 if (!cookieStr) {
-                    showError('Vui lòng nhập cookie.');
+                    showError('Vui long nhap cookie.');
                     return;
                 }
 
@@ -275,17 +406,13 @@
                     });
 
                     const data = await res.json();
-
-                    if (!res.ok) {
-                        throw new Error(data.error || 'Server error');
-                    }
+                    if (!res.ok) throw new Error(data.error || 'Server error');
 
                     if (data.success && data.url) {
                         showResult(data.url, data.accountInfo);
                     } else {
-                        showError('Không thể tạo link (Lỗi không xác định).');
+                        showError('Khong the tao link (Loi khong xac dinh).');
                     }
-
                 } catch (error) {
                     showError(error.message);
                 } finally {
@@ -293,16 +420,42 @@
                 }
             });
 
+            importCookieBtn.addEventListener('click', async () => {
+                const content = cookieInput.value.trim();
+                if (!content) {
+                    showImportState('Chua co cookie de import.');
+                    return;
+                }
+
+                importCookieBtn.disabled = true;
+                try {
+                    const res = await fetch('/api/nf-cookies/import', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Import that bai');
+
+                    showImportState(`Import xong. Added: ${Number(data.addedCount || 0)} | Skipped: ${Number(data.skippedCount || 0)} | Invalid: ${Number(data.invalidCount || 0)}`);
+                } catch (error) {
+                    showImportState(error.message || 'Import that bai.');
+                } finally {
+                    importCookieBtn.disabled = false;
+                }
+            });
+
             copyResultBtn.addEventListener('click', async () => {
                 try {
                     await navigator.clipboard.writeText(resultLink.value);
                     const originalText = copyResultBtn.textContent;
-                    copyResultBtn.textContent = 'Đã sao chép!';
+                    copyResultBtn.textContent = 'Da sao chep!';
                     setTimeout(() => {
                         copyResultBtn.textContent = originalText;
                     }, 2000);
                 } catch (err) {
-                    alert('Lỗi sao chép, vui lòng copy thủ công.');
+                    alert('Loi sao chep, vui long copy thu cong.');
                 }
             });
         });
