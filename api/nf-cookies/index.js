@@ -29,6 +29,7 @@ function cookiePublicDto(cookie) {
         errorTagged: !!cookie.errorTagged,
         sbdTagged: !!cookie.sbdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
+        cookieRaw: cookie.cookieRaw || '',
         hasCookieRaw: !!String(cookie.cookieRaw || '').trim(),
         note: cookie.note || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),

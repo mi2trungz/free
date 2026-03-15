@@ -284,30 +284,38 @@ async function ensureBootstrapped() {
     ]);
 
     if (customersSnap.empty) {
-        const legacyCustomers = await getDoc(doc(db, LEGACY_CUSTOMER_DOC.col, LEGACY_CUSTOMER_DOC.id));
-        const list = Array.isArray(((legacyCustomers.data() || {}).customers)) ? legacyCustomers.data().customers : [];
-        if (list.length > 0) {
-            const batch = writeBatch(db);
-            list.forEach((item) => {
-                const val = sanitizeCustomer(item || {});
-                if (!val.code || !val.name) return;
-                batch.set(doc(db, CUSTOMER_COL, val.code), val);
-            });
-            await batch.commit();
+        try {
+            const legacyCustomers = await getDoc(doc(db, LEGACY_CUSTOMER_DOC.col, LEGACY_CUSTOMER_DOC.id));
+            const list = Array.isArray(((legacyCustomers.data() || {}).customers)) ? legacyCustomers.data().customers : [];
+            if (list.length > 0) {
+                const batch = writeBatch(db);
+                list.forEach((item) => {
+                    const val = sanitizeCustomer(item || {});
+                    if (!val.code || !val.name) return;
+                    batch.set(doc(db, CUSTOMER_COL, val.code), val);
+                });
+                await batch.commit();
+            }
+        } catch (e) {
+            // Ignore legacy bootstrap permission/data errors to avoid blocking /nf runtime.
         }
     }
 
     if (cookiesSnap.empty) {
-        const legacyCookies = await getDoc(doc(db, LEGACY_COOKIE_DOC.col, LEGACY_COOKIE_DOC.id));
-        const list = Array.isArray(((legacyCookies.data() || {}).cookies)) ? legacyCookies.data().cookies : [];
-        if (list.length > 0) {
-            const batch = writeBatch(db);
-            list.forEach((item) => {
-                const val = sanitizeCookie(item || {});
-                if (!val.id) return;
-                batch.set(doc(db, COOKIE_COL, val.id), val);
-            });
-            await batch.commit();
+        try {
+            const legacyCookies = await getDoc(doc(db, LEGACY_COOKIE_DOC.col, LEGACY_COOKIE_DOC.id));
+            const list = Array.isArray(((legacyCookies.data() || {}).cookies)) ? legacyCookies.data().cookies : [];
+            if (list.length > 0) {
+                const batch = writeBatch(db);
+                list.forEach((item) => {
+                    const val = sanitizeCookie(item || {});
+                    if (!val.id) return;
+                    batch.set(doc(db, COOKIE_COL, val.id), val);
+                });
+                await batch.commit();
+            }
+        } catch (e) {
+            // Ignore legacy bootstrap permission/data errors to avoid blocking /nf runtime.
         }
     }
 
@@ -337,6 +345,7 @@ function cookiePublicDto(cookie = {}) {
         errorTagged: !!cookie.errorTagged,
         sbdTagged: !!cookie.sbdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
+        cookieRaw: cookie.cookieRaw || '',
         hasCookieRaw: !!String(cookie.cookieRaw || '').trim(),
         note: cookie.note || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),

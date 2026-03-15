@@ -21,6 +21,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    match /settings/nf_customers {
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/nf_cookie_pool {
+      allow read, write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
