@@ -35,6 +35,7 @@ let rawEditorMode = 'edit';
 let mobileGeneratedLink = '';
 let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
+let lookupLoadingCounter = 0;
 let headerFilterPopupContext = null;
 let tagPickerContext = null;
 
@@ -250,6 +251,24 @@ function setLookupState(text, mode = 'idle') {
     if (!state) return;
     state.textContent = text || '';
     setStateClass(state, mode);
+}
+
+function showLookupLoadingOverlay(message = 'Xin vui lòng chờ trong giây lát') {
+    const overlay = el('lookupLoadingOverlay');
+    const text = el('lookupLoadingText');
+    lookupLoadingCounter += 1;
+    if (text) text.textContent = String(message || 'Xin vui lòng chờ trong giây lát');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    overlay.setAttribute('aria-hidden', 'false');
+}
+
+function hideLookupLoadingOverlay() {
+    const overlay = el('lookupLoadingOverlay');
+    lookupLoadingCounter = Math.max(0, lookupLoadingCounter - 1);
+    if (!overlay || lookupLoadingCounter > 0) return;
+    overlay.classList.add('hidden');
+    overlay.setAttribute('aria-hidden', 'true');
 }
 
 function setCookieCheckState(text, mode = 'idle') {
@@ -527,6 +546,7 @@ async function submitTvCodeFlow() {
     }
 
     if (input) input.value = tvCode;
+    showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
     tvFlowBusy = true;
     setButtonBusy(submitBtn, true, 'Đang xử lý...');
     setTvCodeState('Đang tạo link đăng nhập...', 'loading');
@@ -564,6 +584,7 @@ async function submitTvCodeFlow() {
         setLookupState(error.message || 'Không tạo được link TV.', 'error');
     } finally {
         tvFlowBusy = false;
+        hideLookupLoadingOverlay();
         setButtonBusy(submitBtn, false);
     }
 }
@@ -735,6 +756,7 @@ async function generateDeviceLink(device) {
     setDeviceButtonsEnabled(false);
     setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
+    showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
     const shouldAutoOpen = device === 'desktop';
 
     try {
@@ -759,6 +781,7 @@ async function generateDeviceLink(device) {
     } catch (error) {
         setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
+        hideLookupLoadingOverlay();
         setButtonBusy(clickedButton, false);
         setDeviceButtonsEnabled(currentLookupEligible);
     }

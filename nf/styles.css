@@ -100,7 +100,50 @@ body {
 }
 
 .hero {
+    position: relative;
     padding: 1.1rem 1.1rem 1.2rem 1.1rem;
+}
+
+.lookup-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    border-radius: inherit;
+    background: rgba(6, 10, 20, 0.68);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: wait;
+}
+
+.lookup-loading-box {
+    min-width: min(380px, calc(100% - 2rem));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    background: rgba(15, 22, 38, 0.88);
+    padding: 1rem 1.2rem;
+    text-align: center;
+}
+
+.lookup-loading-box p {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #eaf1ff;
+}
+
+.lookup-loading-spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 3px solid rgba(255, 255, 255, 0.22);
+    border-top-color: #34d399;
+    animation: nfSpin 0.9s linear infinite;
 }
 
 .hero-title {
@@ -812,6 +855,31 @@ body {
     margin-bottom: 0.44rem;
 }
 
+.header-filter-popup #tableHeaderFilterValue {
+    color: #e7eeff;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    -webkit-text-fill-color: #e7eeff;
+}
+
+.header-filter-popup #tableHeaderFilterValue:focus,
+.header-filter-popup #tableHeaderFilterValue:focus-visible {
+    outline: none;
+    border-color: rgba(229, 9, 20, 0.64);
+    box-shadow: var(--ring);
+}
+
+/* Ensure native dropdown options stay readable on bright system popup surfaces. */
+.header-filter-popup #tableHeaderFilterValue option {
+    color: #111827;
+    background: #f8fafc;
+}
+
+.header-filter-popup #tableHeaderFilterValue option:checked {
+    color: #0b1220;
+    background: #dbeafe;
+}
+
 .header-filter-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1212,5 +1280,11 @@ body {
     to {
         transform: translateY(0);
         opacity: 1;
+    }
+}
+
+@keyframes nfSpin {
+    to {
+        transform: rotate(360deg);
     }
 }

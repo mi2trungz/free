@@ -255,34 +255,50 @@ module.exports = async function (req, res) {
             const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
             if (assignedIdx >= 0) {
                 const assignedCookie = cookies[assignedIdx];
-                if (assignedCookie.errorTagged || assignedCookie.sbdTagged || assignedCookie.unknownTagged || assignedCookie.holdTagged) {
+                if (assignedCookie.errorTagged || assignedCookie.sbdTagged || assignedCookie.status === 'dead') {
                     unassignCustomerCurrentCookie();
                 } else {
-                const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
-                if (lockedByOther) {
-                    unassignCustomerCurrentCookie();
-                } else {
-                    const assignedResult = await tryCookieAtIndex(assignedIdx, true);
-                    if (assignedResult) return assignedResult;
-                }
+                    const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
+                    if (lockedByOther) {
+                        unassignCustomerCurrentCookie();
+                    } else {
+                        const assignedResult = await tryCookieAtIndex(assignedIdx, true);
+                        if (assignedResult) return assignedResult;
+                    }
                 }
             } else {
                 unassignCustomerCurrentCookie();
             }
         }
 
+        const normalBucket = [];
+        const holdBucket = [];
+        const unknownBucket = [];
+
         for (let i = 0; i < cookies.length; i += 1) {
             const cookie = cookies[i];
             if (cookie.errorTagged) continue;
             if (cookie.sbdTagged) continue;
-            if (cookie.unknownTagged) continue;
-            if (cookie.holdTagged) continue;
             if (cookie.status !== 'active') continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
             if (cookie.id === assignedCookieId) continue;
 
-            const attemptResult = await tryCookieAtIndex(i, false);
-            if (attemptResult) return attemptResult;
+            if (cookie.holdTagged) {
+                holdBucket.push(i);
+            } else if (cookie.unknownTagged) {
+                unknownBucket.push(i);
+            } else {
+                normalBucket.push(i);
+            }
+        }
+
+        const prioritizedBuckets = [normalBucket, holdBucket, unknownBucket];
+        for (let b = 0; b < prioritizedBuckets.length; b += 1) {
+            const bucket = prioritizedBuckets[b];
+            for (let j = 0; j < bucket.length; j += 1) {
+                const attemptResult = await tryCookieAtIndex(bucket[j], false);
+                if (attemptResult) return attemptResult;
+            }
         }
 
         if (mutated) {
