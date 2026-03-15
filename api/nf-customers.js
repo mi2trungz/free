@@ -84,10 +84,18 @@ module.exports = async function (req, res) {
 
             const idx = findCustomerIndexByCode(customers, code);
             if (idx < 0) return res.status(404).json({ error: 'Customer not found' });
+            const newCode = String(body.newCode || '').trim().toUpperCase();
+            const nextCode = newCode || code;
+            if (!nextCode) return res.status(400).json({ error: 'Customer code cannot be empty' });
+            if (nextCode !== code) {
+                const conflictIndex = findCustomerIndexByCode(customers, nextCode);
+                if (conflictIndex >= 0) return res.status(409).json({ error: 'Customer code already exists' });
+            }
 
             const current = customers[idx];
             const updated = sanitizeCustomer({
                 ...current,
+                code: nextCode,
                 name: body.name !== undefined ? String(body.name || '').trim() : current.name,
                 warrantyExpiresAt: body.warrantyExpiresAt !== undefined ? String(body.warrantyExpiresAt || '').trim() : current.warrantyExpiresAt,
                 status: body.status !== undefined ? sanitizeCustomerStatus(body.status) : current.status,
@@ -99,7 +107,22 @@ module.exports = async function (req, res) {
 
             const nextCustomers = customers.slice();
             nextCustomers[idx] = updated;
-            const ok = await persistCustomers(nextCustomers);
+            let ok = false;
+            if (nextCode !== code) {
+                const now = new Date().toISOString();
+                const cookies = await readCookies();
+                const nextCookies = cookies.map((cookie) => {
+                    if (cookie.assignedCustomerCode !== code) return cookie;
+                    return {
+                        ...cookie,
+                        assignedCustomerCode: nextCode,
+                        updatedAt: now
+                    };
+                });
+                ok = await persistAll(nextCustomers, nextCookies, 'nf-customers-update-code');
+            } else {
+                ok = await persistCustomers(nextCustomers);
+            }
             if (!ok) return res.status(500).json({ error: 'Failed to update customer' });
             return res.status(200).json({ success: true, customer: customerPublicDto(updated) });
         }

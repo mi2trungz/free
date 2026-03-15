@@ -687,6 +687,24 @@ body {
     background: rgba(229, 9, 20, 0.16);
 }
 
+.copy-code-btn {
+    border: 0;
+    background: transparent;
+    color: #e5ecff;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    text-align: left;
+    font-size: inherit;
+}
+
+.copy-code-btn:hover,
+.copy-code-btn:focus-visible {
+    color: #67e8f9;
+    text-decoration: underline;
+    outline: none;
+}
+
 .pill {
     display: inline-flex;
     border-radius: 999px;

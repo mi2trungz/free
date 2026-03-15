@@ -710,7 +710,9 @@ function renderCustomersTable() {
 
     tbody.innerHTML = customersCache.map((customer) => `
         <tr>
-            <td data-label="Ma" class="mono">${customer.code || '-'}</td>
+            <td data-label="Ma">
+                <button class="copy-code-btn mono" type="button" data-copy-code="${customer.code || ''}" title="Bam de copy ma khach">${customer.code || '-'}</button>
+            </td>
             <td data-label="Ten">${customer.name || '-'}</td>
             <td data-label="Bao hanh">${formatWarrantyCell(customer)}</td>
             <td data-label="Cookie" class="mono">${customer.assignedCookieId || '-'}</td>
@@ -828,8 +830,13 @@ async function loadAdminData() {
 }
 
 function clearCustomerForm() {
+    const codeEditInput = el('customerCodeEditInput');
     el('customerNameInput').value = '';
     el('customerWarrantyInput').value = '';
+    if (codeEditInput) {
+        codeEditInput.value = '';
+        codeEditInput.classList.add('hidden');
+    }
     el('customerEditCodeInput').value = '';
     el('cancelEditCustomerBtn').classList.add('hidden');
     const saveBtn = el('saveCustomerBtn');
@@ -963,12 +970,18 @@ function renderAdminState(user) {
 
 async function onSubmitCustomerForm(event) {
     event.preventDefault();
+    const newCodeInput = el('customerCodeEditInput');
     const name = String(el('customerNameInput').value || '').trim();
     const warrantyLocal = String(el('customerWarrantyInput').value || '').trim();
     const editCode = normalizeCode(el('customerEditCodeInput').value || '');
+    const newCode = normalizeCode((newCodeInput && newCodeInput.value) || '');
     const warrantyIso = toIsoFromDatetimeLocal(warrantyLocal);
     if (!name || !warrantyIso) {
         toast('Vui long nhap ten va thoi gian bao hanh.', 'warn');
+        return;
+    }
+    if (editCode && !newCode) {
+        toast('Vui long nhap ma khach hang khi sua.', 'warn');
         return;
     }
 
@@ -980,6 +993,7 @@ async function onSubmitCustomerForm(event) {
             const found = customersCache.find((item) => item.code === editCode);
             await apiRequest('/api/nf-customers', 'PUT', {
                 code: editCode,
+                newCode,
                 name,
                 warrantyExpiresAt: warrantyIso,
                 status: found && found.status ? found.status : 'active'
@@ -1001,6 +1015,17 @@ async function onSubmitCustomerForm(event) {
 async function handleCustomerTableAction(event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
+    const copyCode = normalizeCode(target.dataset.copyCode || '');
+    if (copyCode) {
+        try {
+            await navigator.clipboard.writeText(copyCode);
+            toast('Da sao chep ma khach.', 'ok');
+        } catch (error) {
+            toast(`Khong copy tu dong duoc. Ma: ${copyCode}`, 'warn');
+        }
+        return;
+    }
+
     const action = target.dataset.customerAct;
     const code = normalizeCode(target.dataset.code || '');
     if (!action || !code) return;
@@ -1010,9 +1035,14 @@ async function handleCustomerTableAction(event) {
 
     try {
         if (action === 'edit') {
+            const codeEditInput = el('customerCodeEditInput');
             el('customerNameInput').value = customer.name || '';
             el('customerWarrantyInput').value = toDatetimeLocalFromIso(customer.warrantyExpiresAt);
             el('customerEditCodeInput').value = customer.code || '';
+            if (codeEditInput) {
+                codeEditInput.value = customer.code || '';
+                codeEditInput.classList.remove('hidden');
+            }
             el('cancelEditCustomerBtn').classList.remove('hidden');
             const saveBtn = el('saveCustomerBtn');
             if (saveBtn) saveBtn.textContent = `Cap nhat ${customer.code}`;
@@ -1560,6 +1590,14 @@ function bindEvents() {
 
     const customerForm = el('customerForm');
     if (customerForm) customerForm.addEventListener('submit', onSubmitCustomerForm);
+
+    const customerCodeEditInput = el('customerCodeEditInput');
+    if (customerCodeEditInput) {
+        customerCodeEditInput.addEventListener('input', () => {
+            const normalized = normalizeCode(customerCodeEditInput.value || '');
+            if (normalized !== customerCodeEditInput.value) customerCodeEditInput.value = normalized;
+        });
+    }
 
     const cancelEdit = el('cancelEditCustomerBtn');
     if (cancelEdit) cancelEdit.addEventListener('click', clearCustomerForm);
