@@ -1,6 +1,5 @@
 const {
     parseBody,
-    readCookies,
     extractNetflixIdsFromCookie,
     buildUrlByDevice
 } = require('./_nf-store');
@@ -22,17 +21,8 @@ module.exports = async function (req, res) {
 
     try {
         const body = parseBody(req.body);
-        const cookieId = String(body.cookieId || '').trim();
-        let cookieStr = String(body.cookieStr || '').trim();
+        const cookieStr = String(body.cookieStr || '').trim();
         const device = String(body.device || 'desktop').trim().toLowerCase();
-
-        if (!cookieStr && cookieId) {
-            const cookies = await readCookies();
-            const target = cookies.find((item) => item.id === cookieId);
-            if (!target) return res.status(404).json({ error: 'Cookie not found' });
-            cookieStr = String(target.cookieRaw || '').trim();
-            if (!cookieStr) return res.status(400).json({ error: 'Cookie này không có cookieRaw.' });
-        }
 
         if (!cookieStr) return res.status(400).json({ error: 'Missing cookieStr' });
         if (!ALLOWED_DEVICES.has(device)) return res.status(400).json({ error: 'Invalid device' });

@@ -1,12 +1,9 @@
 const {
     parseBody,
     readCookies,
-    readCookiesByIds,
-    ensureCookieItemsBootstrapped,
     readCustomers,
-    persistCustomers,
-    upsertCookiesBulk,
-    deleteCookiesByIds,
+    persistCookies,
+    persistAll,
     sanitizeCookie,
     sanitizeCookieStatus,
     maskNetflixId,
@@ -30,7 +27,6 @@ function cookiePublicDto(cookie) {
         sbdTagged: !!cookie.sbdTagged,
         assignedCustomerCode: cookie.assignedCustomerCode || '',
         cookieRaw: cookie.cookieRaw || '',
-        hasCookieRaw: !!String(cookie.cookieRaw || '').trim(),
         note: cookie.note || '',
         netflixIdMasked: maskNetflixId(cookie.netflixId),
         createdAt: cookie.createdAt || '',
@@ -53,87 +49,30 @@ function parseCookieIds(body = {}) {
         ids.push(id);
     }
 
-    if (Array.isArray(body.cookieIds)) body.cookieIds.forEach(pushId);
-    if (body.cookieId !== undefined) pushId(body.cookieId);
+    if (Array.isArray(body.cookieIds)) {
+        body.cookieIds.forEach(pushId);
+    }
+    if (body.cookieId !== undefined) {
+        pushId(body.cookieId);
+    }
+
     return ids;
 }
 
-function buildMissingCookieIds(existing = [], cookieIds = []) {
-    const set = new Set((existing || []).map((item) => item.id));
-    return cookieIds.filter((id) => !set.has(id));
-}
-
-async function loadTargetCookies(cookieIds = []) {
-    const direct = await readCookiesByIds(cookieIds);
-    if (direct.length === cookieIds.length) return direct;
-    const missing = buildMissingCookieIds(direct, cookieIds);
-    if (missing.length === 0) return direct;
-
-    // Phase 1 compat: fallback read from legacy pool doc through readCookies().
-    const all = await readCookies();
-    const byId = new Map(all.map((item) => [item.id, item]));
-    const merged = cookieIds.map((id) => byId.get(id)).filter(Boolean);
-    return merged;
-}
-
-function createPerfTracker(method = 'GET') {
-    const start = Date.now();
-    const marks = { method };
-    return {
-        mark(name) {
-            marks[name] = Date.now() - start;
-        },
-        done(statusCode = 200, error = '') {
-            const totalMs = Date.now() - start;
-            const payload = { ...marks, statusCode, totalMs };
-            if (error) payload.error = String(error);
-            const line = `[nf-cookies] ${JSON.stringify(payload)}`;
-            if (totalMs > 1000) {
-                console.warn(`${line} SLOW_REQUEST`);
-            } else {
-                console.log(line);
-            }
-        }
-    };
+function findMissingCookieIds(cookies = [], cookieIds = []) {
+    const existing = new Set(cookies.map((item) => item.id));
+    return cookieIds.filter((id) => !existing.has(id));
 }
 
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
-    const perf = createPerfTracker(req.method);
 
     try {
+        const cookies = await readCookies();
+
         if (req.method === 'GET') {
-            const mode = String((req.query && req.query.mode) || '').trim().toLowerCase();
-            const cookieId = String((req.query && req.query.cookieId) || '').trim();
-
-            perf.mark('parseMs');
-            if (mode === 'raw') {
-                if (!cookieId) {
-                    perf.done(400, 'Missing cookieId');
-                    return res.status(400).json({ error: 'Missing cookieId' });
-                }
-
-                const cookies = await loadTargetCookies([cookieId]);
-                perf.mark('readMs');
-                const target = cookies[0];
-                if (!target) {
-                    perf.done(404, 'Cookie not found');
-                    return res.status(404).json({ error: 'Cookie not found' });
-                }
-                perf.done(200);
-                return res.status(200).json({
-                    cookieId: target.id,
-                    cookieRaw: target.cookieRaw || '',
-                    netflixIdMasked: maskNetflixId(target.netflixId),
-                    updatedAt: target.updatedAt || ''
-                });
-            }
-
-            const cookies = await readCookies();
-            perf.mark('readMs');
             const summary = buildCookieSummary(cookies);
-            perf.done(200);
             return res.status(200).json({
                 ...summary,
                 cookies: cookies.map(cookiePublicDto)
@@ -141,55 +80,45 @@ module.exports = async function (req, res) {
         }
 
         const body = parseBody(req.body);
-        perf.mark('parseMs');
 
         if (req.method === 'PUT') {
-            await ensureCookieItemsBootstrapped();
             const cookieIds = parseCookieIds(body);
-            if (cookieIds.length === 0) {
-                perf.done(400, 'Missing cookieId');
-                return res.status(400).json({ error: 'Missing cookieId' });
-            }
+            if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
 
-            const currentCookies = await loadTargetCookies(cookieIds);
-            perf.mark('readMs');
-            const missingIds = buildMissingCookieIds(currentCookies, cookieIds);
+            const missingIds = findMissingCookieIds(cookies, cookieIds);
             if (missingIds.length > 0) {
-                perf.done(404, 'Cookie not found');
                 return res.status(404).json({ error: 'Cookie not found', missingIds });
             }
 
             const targetIdSet = new Set(cookieIds);
             const now = new Date().toISOString();
+
             const cookieRawInput = body.cookieRaw !== undefined ? String(body.cookieRaw || '').trim() : '';
             const hasCookieRawUpdate = cookieRawInput.length > 0;
             const hasErrorTagUpdate = body.errorTagged !== undefined;
             const hasSbdTagUpdate = body.sbdTagged !== undefined;
             const hasNoteUpdate = body.note !== undefined;
-
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
                 if (cookieIds.length !== 1) {
-                    perf.done(400, 'cookieRaw only supports single cookie update');
                     return res.status(400).json({ error: 'cookieRaw only supports single cookie update' });
                 }
                 const parsedBlocks = splitImportCookieBlocks(cookieRawInput);
                 if (parsedBlocks.length !== 1) {
-                    perf.done(400, 'cookieRaw must contain exactly 1 cookie block');
                     return res.status(400).json({ error: 'cookieRaw must contain exactly 1 cookie block' });
                 }
                 const normalizedCookieRaw = String(parsedBlocks[0] || '').trim();
                 parsedCookieIds = extractNetflixIdsFromCookie(normalizedCookieRaw);
                 if (!parsedCookieIds || !parsedCookieIds.netflixId) {
-                    perf.done(400, 'cookieRaw missing NetflixId');
                     return res.status(400).json({ error: 'cookieRaw missing NetflixId' });
                 }
                 parsedCookieIds.cookieRaw = normalizedCookieRaw;
             }
 
             let shouldUnassignAny = false;
-            const nextCookies = currentCookies.map((current) => {
+            const nextCookies = cookies.map((current) => {
                 if (!targetIdSet.has(current.id)) return current;
+
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
                 const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
@@ -228,60 +157,12 @@ module.exports = async function (req, res) {
                 });
             });
 
-            const okUpsert = await upsertCookiesBulk(nextCookies);
-            perf.mark('writeMs');
-            if (!okUpsert) {
-                perf.done(500, 'Failed to update cookie');
-                return res.status(500).json({ error: 'Failed to update cookie' });
+            if (!shouldUnassignAny) {
+                const ok = await persistCookies(nextCookies);
+                if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
+                return res.status(200).json({ success: true, affectedCount: cookieIds.length });
             }
 
-            if (shouldUnassignAny) {
-                const customers = await readCustomers();
-                const nextCustomers = customers.map((customer) => {
-                    if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
-                    return {
-                        ...customer,
-                        assignedCookieId: '',
-                        updatedAt: now
-                    };
-                });
-                const okCustomers = await persistCustomers(nextCustomers);
-                perf.mark('customerSyncMs');
-                if (!okCustomers) {
-                    perf.done(500, 'Failed to sync customers');
-                    return res.status(500).json({ error: 'Failed to update cookie' });
-                }
-            }
-
-            perf.done(200);
-            return res.status(200).json({ success: true, affectedCount: cookieIds.length });
-        }
-
-        if (req.method === 'DELETE') {
-            await ensureCookieItemsBootstrapped();
-            const cookieIds = parseCookieIds(body);
-            if (cookieIds.length === 0) {
-                perf.done(400, 'Missing cookieId');
-                return res.status(400).json({ error: 'Missing cookieId' });
-            }
-
-            const currentCookies = await loadTargetCookies(cookieIds);
-            perf.mark('readMs');
-            const missingIds = buildMissingCookieIds(currentCookies, cookieIds);
-            if (missingIds.length > 0) {
-                perf.done(404, 'Cookie not found');
-                return res.status(404).json({ error: 'Cookie not found', missingIds });
-            }
-
-            const okDelete = await deleteCookiesByIds(cookieIds);
-            perf.mark('writeMs');
-            if (!okDelete) {
-                perf.done(500, 'Failed to delete cookie');
-                return res.status(500).json({ error: 'Failed to delete cookie' });
-            }
-
-            const now = new Date().toISOString();
-            const targetIdSet = new Set(cookieIds);
             const customers = await readCustomers();
             const nextCustomers = customers.map((customer) => {
                 if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
@@ -291,21 +172,41 @@ module.exports = async function (req, res) {
                     updatedAt: now
                 };
             });
-            const okCustomers = await persistCustomers(nextCustomers);
-            perf.mark('customerSyncMs');
-            if (!okCustomers) {
-                perf.done(500, 'Failed to sync customers');
-                return res.status(500).json({ error: 'Failed to delete cookie' });
-            }
 
-            perf.done(200);
+            const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-put');
+            if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
-        perf.done(405, 'Method not allowed');
+        if (req.method === 'DELETE') {
+            const cookieIds = parseCookieIds(body);
+            if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
+
+            const missingIds = findMissingCookieIds(cookies, cookieIds);
+            if (missingIds.length > 0) {
+                return res.status(404).json({ error: 'Cookie not found', missingIds });
+            }
+
+            const now = new Date().toISOString();
+            const targetIdSet = new Set(cookieIds);
+            const nextCookies = cookies.filter((item) => !targetIdSet.has(item.id));
+            const customers = await readCustomers();
+            const nextCustomers = customers.map((customer) => {
+                if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
+                return {
+                    ...customer,
+                    assignedCookieId: '',
+                    updatedAt: now
+                };
+            });
+
+            const ok = await persistAll(nextCustomers, nextCookies, 'nf-cookies-delete');
+            if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
+            return res.status(200).json({ success: true, affectedCount: cookieIds.length });
+        }
+
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (e) {
-        perf.done(500, e && e.message ? e.message : 'Internal server error');
         return res.status(500).json({ error: e.message || 'Internal server error' });
     }
 };

@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const { requestNetflixToken } = require('./_netflix-token-engine');
 
-const FIREBASE_PROJECT_ID = String(process.env.FIREBASE_PROJECT_ID || '').trim();
-const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || '').trim();
+const FIREBASE_PROJECT_ID = 'trada3k-c402a';
+const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
 const POOL_DOC_PATH = 'settings/netflix_cookie_pool';
 const LEGACY_DOC_PATH = 'settings/netflix_server_cookie';
 const UI_STATUS_DOC_PATH = 'settings/netflix';
@@ -51,9 +51,6 @@ function readLocalSavedCookie() {
 }
 
 function firestorePath(docPath) {
-    if (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY) {
-        throw new Error('Server missing FIREBASE_PROJECT_ID or FIREBASE_API_KEY');
-    }
     return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
 }
 
