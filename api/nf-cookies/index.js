@@ -103,6 +103,9 @@ module.exports = async function (req, res) {
             const hasSbdTagUpdate = body.sbdTagged !== undefined;
             const hasUnknownTagUpdate = body.unknownTagged !== undefined;
             const hasHoldTagUpdate = body.holdTagged !== undefined;
+            const hasOverCapacityTagUpdate = body.overCapacityTagged !== undefined;
+            const hasOverCapacityUntilUpdate = body.overCapacityUntil !== undefined;
+            const hasLastOverCapacityAtUpdate = body.lastOverCapacityAt !== undefined;
             const hasNoteUpdate = body.note !== undefined;
             let parsedCookieIds = null;
             if (hasCookieRawUpdate) {
@@ -131,8 +134,26 @@ module.exports = async function (req, res) {
                 const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
                 const nextUnknownTagged = hasUnknownTagUpdate ? !!body.unknownTagged : !!current.unknownTagged;
                 const nextHoldTagged = hasHoldTagUpdate ? !!body.holdTagged : !!current.holdTagged;
+                const nextOverCapacityTagged = hasOverCapacityTagUpdate ? !!body.overCapacityTagged : !!current.overCapacityTagged;
+                let nextOverCapacityUntil = hasOverCapacityUntilUpdate
+                    ? String(body.overCapacityUntil || '').trim()
+                    : String(current.overCapacityUntil || '').trim();
+                if (hasOverCapacityTagUpdate && !nextOverCapacityTagged) nextOverCapacityUntil = '';
+                const nextOverCapacityUntilTs = Date.parse(nextOverCapacityUntil || '');
+                const isOverCapacityActive = nextOverCapacityTagged
+                    && Number.isFinite(nextOverCapacityUntilTs)
+                    && nextOverCapacityUntilTs > Date.now();
+                const nextLastOverCapacityAt = hasLastOverCapacityAtUpdate
+                    ? String(body.lastOverCapacityAt || '').trim()
+                    : (nextOverCapacityTagged ? (String(current.lastOverCapacityAt || '').trim() || now) : String(current.lastOverCapacityAt || '').trim());
                 const nextNote = hasNoteUpdate ? String(body.note ?? '').trim() : String(current.note || '');
-                const shouldUnassign = !!body.unassign || nextStatus !== 'active' || nextErrorTagged || nextSbdTagged || nextUnknownTagged || nextHoldTagged;
+                const shouldUnassign = !!body.unassign
+                    || nextStatus !== 'active'
+                    || nextErrorTagged
+                    || nextSbdTagged
+                    || nextUnknownTagged
+                    || nextHoldTagged
+                    || isOverCapacityActive;
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
@@ -147,6 +168,9 @@ module.exports = async function (req, res) {
                         sbdTagged: nextSbdTagged,
                         unknownTagged: nextUnknownTagged,
                         holdTagged: nextHoldTagged,
+                        overCapacityTagged: nextOverCapacityTagged,
+                        overCapacityUntil: nextOverCapacityUntil,
+                        lastOverCapacityAt: nextLastOverCapacityAt,
                         assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                         updatedAt: now,
                         lastCheckedAt: '',
@@ -164,6 +188,9 @@ module.exports = async function (req, res) {
                     sbdTagged: nextSbdTagged,
                     unknownTagged: nextUnknownTagged,
                     holdTagged: nextHoldTagged,
+                    overCapacityTagged: nextOverCapacityTagged,
+                    overCapacityUntil: nextOverCapacityUntil,
+                    lastOverCapacityAt: nextLastOverCapacityAt,
                     note: nextNote,
                     assignedCustomerCode: shouldUnassign ? '' : current.assignedCustomerCode,
                     updatedAt: now,

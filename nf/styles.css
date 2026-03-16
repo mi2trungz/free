@@ -735,6 +735,7 @@ body {
 
 .check-cell {
     text-align: center;
+    white-space: nowrap;
 }
 
 .table-wrap {
@@ -829,6 +830,52 @@ body {
 .btn-tiny:hover {
     border-color: rgba(229, 9, 20, 0.5);
     background: rgba(229, 9, 20, 0.16);
+}
+
+.row-menu-trigger {
+    margin-left: 0.36rem;
+    min-width: 30px;
+    padding: 0.2rem 0.4rem;
+}
+
+.row-action-menu {
+    position: fixed;
+    z-index: 120;
+    width: min(260px, calc(100vw - 16px));
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(10, 14, 25, 0.98);
+    box-shadow: 0 20px 42px rgba(0, 0, 0, 0.52);
+    padding: 0.56rem;
+}
+
+.row-action-menu-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #a8badf;
+    margin-bottom: 0.42rem;
+}
+
+.row-action-menu-list {
+    display: grid;
+    gap: 0.34rem;
+}
+
+.row-action-menu-btn {
+    text-align: left;
+    width: 100%;
+    min-height: 34px;
+}
+
+.row-action-menu-btn.danger {
+    border-color: rgba(239, 68, 68, 0.48);
+}
+
+.row-action-menu-btn.danger:hover {
+    border-color: rgba(239, 68, 68, 0.75);
+    background: rgba(239, 68, 68, 0.2);
 }
 
 .header-filter-popup {
@@ -1046,15 +1093,6 @@ body {
     text-decoration: none;
     align-items: center;
     justify-content: center;
-}
-
-.support-overload-btn {
-    width: 100%;
-    margin-top: 0.85rem;
-}
-
-.support-overload-state {
-    margin-top: 0.52rem;
 }
 
 .btn-tv-guide-start {

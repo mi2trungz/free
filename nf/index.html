@@ -104,8 +104,6 @@
             </header>
             <div class="support-body">
                 <p>Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
-                <button id="supportOverloadBtn" class="btn btn-ghost support-link-btn support-overload-btn" type="button">BÁO LỖI QUÁ TẢI NGƯỜI DÙNG</button>
-                <p id="supportOverloadState" class="state-text state-idle support-overload-state">Bấm nút để hệ thống tự kiểm tra cookie hiện tại.</p>
                 <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage</a>
             </div>
         </div>
@@ -298,7 +296,6 @@
                                             <button class="th-filter-btn" type="button" data-table-filter-btn="customers:status" title="Lọc/sort cột Trạng thái">⌕</button>
                                         </div>
                                     </th>
-                                    <th>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody id="customersTableBody"></tbody>
@@ -382,7 +379,6 @@
                                             <button class="th-filter-btn" type="button" data-table-filter-btn="cookies:note" title="Lọc/sort cột Note">⌕</button>
                                         </div>
                                     </th>
-                                    <th>Hành động</th>
                                 </tr>
                             </thead>
                             <tbody id="cookiesTableBody"></tbody>
@@ -442,6 +438,11 @@
             <button id="tableHeaderFilterApplyBtn" class="btn-tiny" type="button">Áp dụng</button>
             <button id="tableHeaderFilterClearBtn" class="btn-tiny" type="button">Xóa cột</button>
         </div>
+    </div>
+
+    <div id="rowActionMenu" class="row-action-menu hidden" aria-hidden="true">
+        <div id="rowActionMenuTitle" class="row-action-menu-title">Hành động</div>
+        <div id="rowActionMenuList" class="row-action-menu-list"></div>
     </div>
 
     <div id="toast" class="toast hidden"></div>

@@ -2423,6 +2423,30 @@
                         <p class="text-xs text-gray-500 mt-1">Nội dung này sẽ hiển thị khi người dùng bấm nút "Hướng dẫn
                             đăng nhập". Sử dụng các nút trên để định dạng text.</p>
                     </div>
+                    <div id="folderCustomCtaSection">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nút CTA riêng cho danh mục miễn phí</label>
+                        <input type="text" id="folderCustomCtaTextInput"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-sm mb-2"
+                            placeholder="VD: THAM GIA TELEGRAM NHẬN THÔNG BÁO">
+                        <input type="text" id="folderCustomCtaUrlInput"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none text-sm"
+                            placeholder="https://... (Link khi bấm nút)">
+                        <p class="text-xs text-gray-500 mt-1">Chỉ áp dụng cho danh mục tài khoản miễn phí. Để trống là tắt nút CTA.</p>
+                    </div>
+                    <div id="folderYoutubeSection">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Video YouTube nhúng cho danh mục miễn phí</label>
+                        <input type="text" id="folderYoutubeTitleInput"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-sm mb-2"
+                            placeholder="VD: Hướng dẫn dùng Quillbot nhanh">
+                        <input type="text" id="folderYoutubeUrlInput"
+                            class="w-full px-3 py-1.5 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-sm"
+                            placeholder="https://youtu.be/... hoặc https://www.youtube.com/watch?v=...">
+                        <p class="text-xs text-gray-500 mt-1">Hiển thị bên dưới nút CTA. Điền đủ tiêu đề + link, hoặc để trống cả 2.</p>
+                    </div>
+                    <div id="folderSkipGlobalPasswordSection" class="flex items-center gap-2">
+                        <input type="checkbox" id="folderSkipGlobalPasswordInput" class="w-4 h-4 text-emerald-600 rounded">
+                        <label for="folderSkipGlobalPasswordInput" class="text-sm text-gray-700">Miễn nhập mã bảo mật chung cho danh mục này</label>
+                    </div>
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="folderMaintenanceInput" class="w-4 h-4 text-indigo-600 rounded">
                         <label for="folderMaintenanceInput" class="text-sm text-gray-700">Đang bảo trì</label>
@@ -4859,8 +4883,9 @@
                 return;
             }
 
-            // Kiểm tra nếu có mã bảo mật chung và người dùng không phải admin
-            if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin()) {
+            // Kiểm tra nếu có mã bảo mật chung và folder không được miễn mã
+            const isPasswordBypassedForFolder = folder && folder.skipGlobalPassword === true;
+            if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin() && !isPasswordBypassedForFolder) {
                 openPasswordModal(index);
                 return;
             }
@@ -5215,6 +5240,36 @@
             const temp = document.createElement('div');
             temp.innerHTML = html;
             return temp.textContent || temp.innerText || '';
+        }
+
+        function normalizeYoutubeEmbedUrl(rawUrl = '') {
+            const input = String(rawUrl || '').trim();
+            if (!input) return '';
+
+            try {
+                const url = new URL(input);
+                const host = url.hostname.replace(/^www\./i, '').replace(/^m\./i, '').toLowerCase();
+                let videoId = '';
+
+                if (host === 'youtu.be') {
+                    videoId = url.pathname.replace(/^\/+/, '').split('/')[0] || '';
+                } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+                    if (url.pathname === '/watch') {
+                        videoId = url.searchParams.get('v') || '';
+                    } else if (url.pathname.startsWith('/embed/')) {
+                        videoId = url.pathname.split('/')[2] || '';
+                    } else if (url.pathname.startsWith('/shorts/')) {
+                        videoId = url.pathname.split('/')[2] || '';
+                    } else if (url.pathname.startsWith('/live/')) {
+                        videoId = url.pathname.split('/')[2] || '';
+                    }
+                }
+
+                if (!/^[A-Za-z0-9_-]{6,}$/.test(videoId)) return '';
+                return `https://www.youtube.com/embed/${videoId}`;
+            } catch (_) {
+                return '';
+            }
         }
 
         function sanitizePricingDetailHtml(html = '') {
@@ -6250,47 +6305,83 @@
 
             let extraHtml = ``;
 
-            // Nút hướng dẫn đăng nhập và thêm tài khoản (thu gọn)
+            // Nút header trong trang danh mục
             const hasLoginGuide = folder.loginGuide && folder.loginGuide.trim() !== '';
             const hasAddButton = isAdmin();
-
-            if (hasLoginGuide || hasAddButton) {
-                if (hasLoginGuide && hasAddButton) {
-                    // Cả 2 nút - đặt cạnh nhau
-                    extraHtml += `<div class="grid grid-cols-2 gap-2 fade-in">`;
-                    extraHtml += `
-                        <button onclick="openLoginGuide(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                            <span class="truncate">Hướng dẫn Đăng nhập</span>
-                        </button>
-                        <button onclick="quickAddAccount(${index})" class="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span class="truncate">Thêm tài khoản</span>
-                        </button>`;
-                    extraHtml += `</div>`;
-                } else if (hasLoginGuide) {
-                    // Chỉ có nút hướng dẫn
-                    extraHtml += `
-                        <button onclick="openLoginGuide(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md fade-in">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                            <span>Hướng dẫn Đăng nhập</span>
-                        </button>`;
-                } else if (hasAddButton) {
-                    // Chỉ có nút thêm tài khoản
-                    extraHtml += `
-                        <button onclick="quickAddAccount(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md fade-in">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span>Thêm tài khoản</span>
-                        </button>`;
+            const isFreeAccountsFolder = folder.type !== 'premium' && folder.type !== 'popup' && folder.type !== 'link';
+            const folderCustomCtaText = (folder.customCtaText || '').trim();
+            const folderCustomCtaUrl = (folder.customCtaUrl || '').trim();
+            const folderYoutubeTitle = (folder.youtubeTitle || '').trim();
+            const folderYoutubeEmbedUrl = normalizeYoutubeEmbedUrl(folder.youtubeUrl || '');
+            let hasCustomFreeButton = false;
+            if (isFreeAccountsFolder && folderCustomCtaText !== '' && folderCustomCtaUrl !== '') {
+                try {
+                    const parsed = new URL(folderCustomCtaUrl);
+                    hasCustomFreeButton = ['http:', 'https:'].includes(parsed.protocol);
+                } catch (_) {
+                    hasCustomFreeButton = false;
                 }
+            }
+
+            const actionButtons = [];
+            if (hasLoginGuide) {
+                actionButtons.push(`
+                    <button onclick="openLoginGuide(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 rounded-lg text-xs font-semibold border border-indigo-200 hover:from-indigo-100 hover:to-purple-100 transition-all shadow-sm hover:shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span class="truncate">Hướng dẫn Đăng nhập</span>
+                    </button>
+                `);
+            }
+            if (hasAddButton) {
+                actionButtons.push(`
+                    <button onclick="quickAddAccount(${index})" class="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 rounded-lg text-xs font-semibold border border-green-200 hover:from-green-100 hover:to-emerald-100 transition-all shadow-sm hover:shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span class="truncate">Thêm tài khoản</span>
+                    </button>
+                `);
+            }
+            if (hasCustomFreeButton) {
+                actionButtons.push(`
+                    <div class="flex justify-center">
+                        <a href="${escapeHtml(folderCustomCtaUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center justify-center gap-2 py-2.5 px-5 bg-gradient-to-r from-cyan-50 to-blue-50 text-blue-700 rounded-xl text-[13px] sm:text-sm font-bold border border-blue-200 hover:from-cyan-100 hover:to-blue-100 transition-all shadow-md hover:shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 3h7m0 0v7m0-7L10 14m-4 0H3m3 0v3m0-3l-3 3" />
+                            </svg>
+                            <span class="whitespace-nowrap">${escapeHtml(folderCustomCtaText)}</span>
+                        </a>
+                    </div>
+                `);
+            }
+
+            if (actionButtons.length > 0) {
+                let gridClass = 'grid grid-cols-1 gap-2 fade-in';
+                if (actionButtons.length === 2) gridClass = 'grid grid-cols-2 gap-2 fade-in';
+                if (actionButtons.length >= 3) gridClass = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 fade-in';
+                extraHtml += `<div class="${gridClass}">${actionButtons.join('')}</div>`;
+            }
+
+            if (isFreeAccountsFolder && folderYoutubeTitle !== '' && folderYoutubeEmbedUrl !== '') {
+                const youtubeSectionTopSpacing = actionButtons.length > 0 ? 'mt-3' : '';
+                extraHtml += `
+                    <div class="${youtubeSectionTopSpacing} max-w-3xl mx-auto fade-in">
+                        <h3 class="text-center text-[15px] sm:text-base font-extrabold text-slate-800 mb-2">${escapeHtml(folderYoutubeTitle)}</h3>
+                        <div class="relative pt-[56.25%] rounded-2xl overflow-hidden border border-red-100 shadow-[0_12px_30px_rgba(239,68,68,0.18)] bg-black">
+                            <iframe
+                                src="${escapeHtml(folderYoutubeEmbedUrl)}"
+                                class="absolute inset-0 w-full h-full"
+                                loading="lazy"
+                                title="${escapeHtml(folderYoutubeTitle)}"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                `;
             }
 
 
@@ -7783,6 +7874,11 @@
             document.getElementById('folderNotesInput').value = '';
             document.getElementById('folderCategoryNotesInput').value = '';
             document.getElementById('folderLoginGuideInput').innerHTML = '';
+            document.getElementById('folderCustomCtaTextInput').value = '';
+            document.getElementById('folderCustomCtaUrlInput').value = '';
+            document.getElementById('folderYoutubeTitleInput').value = '';
+            document.getElementById('folderYoutubeUrlInput').value = '';
+            document.getElementById('folderSkipGlobalPasswordInput').checked = false;
             document.getElementById('folderNoteInput').value = '';
             // Toggle hiển thị fields theo loại danh mục
             toggleFolderTypeFields();
@@ -7800,14 +7896,27 @@
         function toggleFolderTypeFields() {
             const popupSection = document.getElementById('folderPopupContentSection');
             const priceSection = document.getElementById('folderPriceSection');
+            const customCtaSection = document.getElementById('folderCustomCtaSection');
+            const youtubeSection = document.getElementById('folderYoutubeSection');
+            const skipGlobalPasswordSection = document.getElementById('folderSkipGlobalPasswordSection');
             const isPopup = document.getElementById('folderTypePopupInput')?.checked;
             const isPremium = document.getElementById('folderTypePremiumInput')?.checked;
+            const isAccounts = document.getElementById('folderTypeAccountsInput')?.checked;
 
             if (popupSection) {
                 popupSection.classList.toggle('hidden', !isPopup && !isPremium);
             }
             if (priceSection) {
                 priceSection.classList.toggle('hidden', !isPremium);
+            }
+            if (customCtaSection) {
+                customCtaSection.classList.toggle('hidden', !isAccounts);
+            }
+            if (youtubeSection) {
+                youtubeSection.classList.toggle('hidden', !isAccounts);
+            }
+            if (skipGlobalPasswordSection) {
+                skipGlobalPasswordSection.classList.toggle('hidden', !isAccounts);
             }
         }
 
@@ -7851,6 +7960,11 @@
 
             // Load login guide
             document.getElementById('folderLoginGuideInput').innerHTML = folder.loginGuide || '';
+            document.getElementById('folderCustomCtaTextInput').value = folder.customCtaText || '';
+            document.getElementById('folderCustomCtaUrlInput').value = folder.customCtaUrl || '';
+            document.getElementById('folderYoutubeTitleInput').value = folder.youtubeTitle || '';
+            document.getElementById('folderYoutubeUrlInput').value = folder.youtubeUrl || '';
+            document.getElementById('folderSkipGlobalPasswordInput').checked = folder.skipGlobalPassword || false;
 
             // Load price (for premium folders)
             document.getElementById('folderPriceInput').value = folder.price || '';
@@ -7893,6 +8007,11 @@
             const notesText = document.getElementById('folderNotesInput').value.trim();
             const categoryNotesText = document.getElementById('folderCategoryNotesInput').value.trim();
             const loginGuideText = document.getElementById('folderLoginGuideInput').innerHTML.trim();
+            const customCtaText = document.getElementById('folderCustomCtaTextInput').value.trim();
+            const customCtaUrl = document.getElementById('folderCustomCtaUrlInput').value.trim();
+            const youtubeTitle = document.getElementById('folderYoutubeTitleInput').value.trim();
+            const youtubeRawUrl = document.getElementById('folderYoutubeUrlInput').value.trim();
+            const skipGlobalPassword = document.getElementById('folderSkipGlobalPasswordInput').checked;
             const priceText = document.getElementById('folderPriceInput').value.trim();
             const adminNoteText = isAdmin() ? document.getElementById('folderNoteInput').value.trim() : '';
             const errorEl = document.getElementById('folderEditError');
@@ -7908,6 +8027,46 @@
                 errorEl.textContent = 'Vui lòng nhập nội dung popup';
                 errorEl.classList.remove('hidden');
                 return;
+            }
+
+            // CTA theo từng danh mục free: chỉ nhận khi điền đủ text + url, và url phải hợp lệ
+            let normalizedCustomCtaUrl = '';
+            let normalizedYoutubeEmbedUrl = '';
+            if (folderType === 'accounts') {
+                if ((customCtaText && !customCtaUrl) || (!customCtaText && customCtaUrl)) {
+                    errorEl.textContent = 'Vui lòng nhập đủ nội dung nút CTA và link CTA, hoặc để trống cả 2.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (customCtaText && customCtaUrl) {
+                    try {
+                        const parsed = new URL(customCtaUrl);
+                        if (!['http:', 'https:'].includes(parsed.protocol)) {
+                            errorEl.textContent = 'Link CTA phải bắt đầu bằng http:// hoặc https://';
+                            errorEl.classList.remove('hidden');
+                            return;
+                        }
+                        normalizedCustomCtaUrl = parsed.href;
+                    } catch (_) {
+                        errorEl.textContent = 'Link CTA không hợp lệ.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                }
+
+                if ((youtubeTitle && !youtubeRawUrl) || (!youtubeTitle && youtubeRawUrl)) {
+                    errorEl.textContent = 'Vui lòng nhập đủ tiêu đề video YouTube và link video, hoặc để trống cả 2.';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                if (youtubeTitle && youtubeRawUrl) {
+                    normalizedYoutubeEmbedUrl = normalizeYoutubeEmbedUrl(youtubeRawUrl);
+                    if (!normalizedYoutubeEmbedUrl) {
+                        errorEl.textContent = 'Link YouTube không hợp lệ. Hỗ trợ youtube.com hoặc youtu.be';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                }
             }
 
             // Parse notes từ textarea (mỗi dòng là một note, bỏ qua dòng trống)
@@ -7948,6 +8107,11 @@
                     }
                 } else {
                     newFolder.accounts = [];
+                    newFolder.customCtaText = customCtaText || '';
+                    newFolder.customCtaUrl = normalizedCustomCtaUrl || '';
+                    newFolder.youtubeTitle = youtubeTitle || '';
+                    newFolder.youtubeUrl = normalizedYoutubeEmbedUrl || '';
+                    newFolder.skipGlobalPassword = !!skipGlobalPassword;
                 }
 
                 DATA.push(newFolder);
@@ -7975,11 +8139,21 @@
                     }
                     // Xóa field accounts nếu chuyển từ accounts sang popup/premium
                     delete DATA[editingFolderIndex].accounts;
+                    delete DATA[editingFolderIndex].customCtaText;
+                    delete DATA[editingFolderIndex].customCtaUrl;
+                    delete DATA[editingFolderIndex].youtubeTitle;
+                    delete DATA[editingFolderIndex].youtubeUrl;
+                    delete DATA[editingFolderIndex].skipGlobalPassword;
                 } else {
                     // Đảm bảo có field accounts nếu là loại accounts
                     if (!DATA[editingFolderIndex].accounts) {
                         DATA[editingFolderIndex].accounts = [];
                     }
+                    DATA[editingFolderIndex].customCtaText = customCtaText || '';
+                    DATA[editingFolderIndex].customCtaUrl = normalizedCustomCtaUrl || '';
+                    DATA[editingFolderIndex].youtubeTitle = youtubeTitle || '';
+                    DATA[editingFolderIndex].youtubeUrl = normalizedYoutubeEmbedUrl || '';
+                    DATA[editingFolderIndex].skipGlobalPassword = !!skipGlobalPassword;
                     // Xóa field popupContent và price nếu chuyển từ popup/premium sang accounts
                     delete DATA[editingFolderIndex].popupContent;
                     delete DATA[editingFolderIndex].price;

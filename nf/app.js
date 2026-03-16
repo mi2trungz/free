@@ -38,6 +38,9 @@ let tvFlowBusy = false;
 let lookupLoadingCounter = 0;
 let headerFilterPopupContext = null;
 let tagPickerContext = null;
+let rowActionMenuContext = null;
+let rowLongPressTimer = null;
+let rowLongPressPointerId = null;
 
 const tableViewState = {
     cookies: {
@@ -116,6 +119,10 @@ function toMillis(iso = '') {
     return Number.isFinite(val) ? val : 0;
 }
 
+function buildOverCapacityUntilIso(durationMs = 60 * 60 * 1000) {
+    return new Date(Date.now() + Math.max(60 * 1000, Number(durationMs || 0))).toISOString();
+}
+
 function getCustomerNameMap() {
     const map = new Map();
     if (!Array.isArray(customersCache)) return map;
@@ -141,7 +148,7 @@ function getCookieColumnDisplay(cookie = {}, column = '', customerNameMap = new 
         if (cookie.sbdTagged) tags.push('SBD');
         if (cookie.unknownTagged) tags.push('UNKNOW');
         if (cookie.holdTagged) tags.push('HOLD');
-        if (cookie.overCapacityTagged) tags.push('OVERCAP');
+        if (cookie.overCapacityTagged) tags.push('QUA TAI');
         return `${cookie.status || 'active'} ${tags.join(' ')}`.trim();
     }
     if (column === 'assigned') return `${assignedCode} ${assignedName}`.trim();
@@ -431,7 +438,6 @@ function openSupportModal() {
     const section = el('deviceSection');
     const modal = el('supportModal');
     if (!section || !modal || section.classList.contains('hidden')) return;
-    setSupportOverloadState('Bam nut de he thong tu kiem tra cookie hien tai.', 'idle');
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -441,60 +447,6 @@ function closeSupportModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
-}
-
-function setSupportOverloadState(text, mode = 'idle') {
-    const state = el('supportOverloadState');
-    if (!state) return;
-    state.textContent = text || '';
-    setStateClass(state, mode);
-}
-
-async function runSupportOverloadCheck() {
-    if (runtimeBlocked) return;
-    if (!currentLookupCode || !currentLookupEligible) {
-        setSupportOverloadState('Ma khach hang chua du dieu kien de check.', 'warning');
-        return;
-    }
-
-    const btn = el('supportOverloadBtn');
-    setButtonBusy(btn, true, 'Dang kiem tra...');
-    showLookupLoadingOverlay('Dang kiem tra qua tai nguoi dung...');
-    setSupportOverloadState('Dang kiem tra cookie LIVE va trang thai qua tai...', 'loading');
-
-    try {
-        const data = await apiRequest('/api/nf-support-overload-check', 'POST', { customerCode: currentLookupCode });
-        const outcome = String(data && data.outcome ? data.outcome : '').trim();
-        if (outcome === 'not_assigned') {
-            setSupportOverloadState('Khach dang khong duoc gan cookie.', 'warning');
-            setLookupState('Khach dang khong duoc gan cookie.', 'warning');
-            return;
-        }
-        if (outcome === 'not_live') {
-            setSupportOverloadState(data.message || 'Cookie hien tai khong LIVE.', 'error');
-            setLookupState('Cookie hien tai khong LIVE.', 'error');
-            return;
-        }
-        if (outcome === 'overloaded_unassigned') {
-            const untilText = formatDateTime(data.overCapacityUntil || '');
-            setSupportOverloadState(`Da qua tai. Da bo gan va khoa tam den ${untilText || '-'}.`, 'warning');
-            setLookupState('Da phat hien qua tai. He thong da bo gan cookie va se tu dong ne tam trong 30 phut.', 'warning');
-            return;
-        }
-        if (outcome === 'live_ok') {
-            setSupportOverloadState('Cookie LIVE va khong co dau hieu qua tai.', 'success');
-            setLookupState('Cookie LIVE va khong co dau hieu qua tai.', 'success');
-            return;
-        }
-        setSupportOverloadState(data.message || 'Khong ket luan duoc tinh trang qua tai.', 'warning');
-        setLookupState(data.message || 'Khong ket luan duoc tinh trang qua tai.', 'warning');
-    } catch (error) {
-        setSupportOverloadState(error.message || 'Khong the check qua tai luc nay.', 'error');
-        setLookupState(error.message || 'Khong the check qua tai luc nay.', 'error');
-    } finally {
-        hideLookupLoadingOverlay();
-        setButtonBusy(btn, false);
-    }
 }
 
 function openRenewModal() {
@@ -860,33 +812,26 @@ function renderCustomersTable() {
     const tbody = el('customersTableBody');
     if (!tbody) return;
     if (!Array.isArray(customersCache) || customersCache.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua co khach hang. Tao ma moi de bat dau.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" data-label="Trang thai">Chua co khach hang. Tao ma moi de bat dau.</td></tr>';
         return;
     }
 
     const visibleCustomers = applyCustomerFiltersAndSort(customersCache);
     if (visibleCustomers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Khong co khach hang nao phu hop bo loc hien tai.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" data-label="Trang thai">Khong co khach hang nao phu hop bo loc hien tai.</td></tr>';
         return;
     }
 
     tbody.innerHTML = visibleCustomers.map((customer) => `
-        <tr>
+        <tr data-row-kind="customer" data-row-code="${customer.code || ''}">
             <td data-label="Ma">
                 <button class="copy-code-btn mono" type="button" data-copy-code="${customer.code || ''}" title="Bam de copy ma khach">${customer.code || '-'}</button>
+                <button class="btn-tiny row-menu-trigger" type="button" data-row-menu-trigger="1" title="Mo menu hanh dong">...</button>
             </td>
             <td data-label="Ten">${customer.name || '-'}</td>
             <td data-label="Bao hanh">${formatWarrantyCell(customer)}</td>
             <td data-label="Cookie" class="mono">${customer.assignedCookieId || '-'}</td>
             <td data-label="Trang thai"><span class="${getStatusPillClass(customer.status)}">${customer.status || 'active'}</span></td>
-            <td data-label="Hanh dong">
-                <div class="row-actions">
-                    <button class="btn-tiny" data-customer-act="edit" data-code="${customer.code}">Sua</button>
-                    <button class="btn-tiny" data-customer-act="error" data-code="${customer.code}">ERROR</button>
-                    <button class="btn-tiny" data-customer-act="toggle" data-code="${customer.code}">${customer.status === 'inactive' ? 'Kich hoat' : 'Khoa'}</button>
-                    <button class="btn-tiny" data-customer-act="delete" data-code="${customer.code}">Xoa</button>
-                </div>
-            </td>
         </tr>
     `).join('');
     renderHeaderFilterIndicators();
@@ -909,7 +854,7 @@ function renderCookiesSummary() {
     const overcapCount = cookiesCache.filter((c) => !!c.overCapacityTagged).length;
     const assignedCount = cookiesCache.filter((c) => !!String(c.assignedCustomerCode || '').trim()).length;
     const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - overcapCount - assignedCount);
-    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | OVERCAP: ${overcapCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
+    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | QUA TAI: ${overcapCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
 }
 
 function renderCookiesTable() {
@@ -917,14 +862,14 @@ function renderCookiesTable() {
     if (!tbody) return;
     syncCookieSelection();
     if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
         updateCookieSelectionUi();
         return;
     }
     const customerNameMap = getCustomerNameMap();
     const visibleCookies = applyCookieFiltersAndSort(cookiesCache);
     if (visibleCookies.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" data-label="Trang thai">Khong co cookie nao phu hop bo loc hien tai.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Khong co cookie nao phu hop bo loc hien tai.</td></tr>';
         updateCookieSelectionUi();
         return;
     }
@@ -956,31 +901,19 @@ function renderCookiesTable() {
             ${cookie.sbdTagged ? '<span class="pill pill-sbd">SBD</span>' : ''}
             ${cookie.unknownTagged ? '<span class="pill pill-unknown">UNKNOW</span>' : ''}
             ${cookie.holdTagged ? '<span class="pill pill-hold">HOLD</span>' : ''}
-            ${cookie.overCapacityTagged ? '<span class="pill pill-overcap">OVERCAP</span>' : ''}
+            ${cookie.overCapacityTagged ? '<span class="pill pill-overcap">QUA TAI</span>' : ''}
         `;
         return `
-            <tr>
+            <tr data-row-kind="cookie" data-row-cookie-id="${cookie.id}">
                 <td data-label="Chon" class="check-cell">
                     <input class="row-check cookie-row-check" type="checkbox" data-cookie-select="${cookie.id}" ${checked}>
+                    <button class="btn-tiny row-menu-trigger" type="button" data-row-menu-trigger="1" title="Mo menu hanh dong">...</button>
                 </td>
                 <td data-label="Cookie" class="mono">${cookie.netflixIdMasked || '-'}<br><span class="state-idle">${cookie.id || '-'}</span><br>${createLinkBtn}</td>
                 <td data-label="Trang thai">${statusHtml}</td>
                 <td data-label="Gan khach">${assignHtml}</td>
                 <td data-label="Check">${lastCheck}${errorLine}</td>
                 <td data-label="Note">${noteHtml}</td>
-                <td data-label="Hanh dong">
-                    <div class="row-actions">
-                        <button class="btn-tiny" data-cookie-act="active" data-id="${cookie.id}">Active</button>
-                        <button class="btn-tiny" data-cookie-act="disabled" data-id="${cookie.id}">Disabled</button>
-                        <button class="btn-tiny" data-cookie-act="dead" data-id="${cookie.id}">Dead</button>
-                        <button class="btn-tiny" data-cookie-act="tag-add" data-id="${cookie.id}">GẮN</button>
-                        <button class="btn-tiny" data-cookie-act="tag-remove" data-id="${cookie.id}">GỠ</button>
-                        <button class="btn-tiny" data-cookie-act="view-raw" data-id="${cookie.id}">Xem raw</button>
-                        <button class="btn-tiny" data-cookie-act="edit-raw" data-id="${cookie.id}">Sua raw</button>
-                        <button class="btn-tiny" data-cookie-act="unassign" data-id="${cookie.id}">Bo gan</button>
-                        <button class="btn-tiny" data-cookie-act="delete" data-id="${cookie.id}">Xoa</button>
-                    </div>
-                </td>
             </tr>
         `;
     }).join('');
@@ -1380,27 +1313,11 @@ async function onSubmitCustomerForm(event) {
     }
 }
 
-async function handleCustomerTableAction(event) {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    const copyCode = normalizeCode(target.dataset.copyCode || '');
-    if (copyCode) {
-        try {
-            await navigator.clipboard.writeText(copyCode);
-            toast('Da sao chep ma khach.', 'ok');
-        } catch (error) {
-            toast(`Khong copy tu dong duoc. Ma: ${copyCode}`, 'warn');
-        }
-        return;
-    }
-
-    const action = target.dataset.customerAct;
-    const code = normalizeCode(target.dataset.code || '');
-    if (!action || !code) return;
-
-    const customer = customersCache.find((item) => item.code === code);
+async function runCustomerAction(action = '', code = '', triggerButton = null) {
+    const customerCode = normalizeCode(code);
+    if (!action || !customerCode) return;
+    const customer = customersCache.find((item) => item.code === customerCode);
     if (!customer) return;
-
     try {
         if (action === 'edit') {
             const codeEditInput = el('customerCodeEditInput');
@@ -1421,7 +1338,7 @@ async function handleCustomerTableAction(event) {
 
         if (action === 'toggle') {
             await apiRequest('/api/nf-customers', 'PUT', {
-                code,
+                code: customerCode,
                 name: customer.name,
                 warrantyExpiresAt: customer.warrantyExpiresAt,
                 status: customer.status === 'inactive' ? 'active' : 'inactive'
@@ -1437,20 +1354,68 @@ async function handleCustomerTableAction(event) {
                 toast('Khach nay chua co cookie de gan ERROR.', 'warn');
                 return;
             }
-            await applyCookieAction('error-on', [assignedCookieId], null, { busyLabel: 'Dang xu ly...' });
+            await applyCookieAction('error-on', [assignedCookieId], triggerButton, { busyLabel: 'Dang xu ly...' });
+            return;
+        }
+
+        if (action === 'overload') {
+            const assignedCookieId = String(customer.assignedCookieId || '').trim();
+            if (!assignedCookieId) {
+                toast('Khach nay chua co cookie de gan QUA TAI.', 'warn');
+                return;
+            }
+            const nowIso = new Date().toISOString();
+            const overCapacityUntil = buildOverCapacityUntilIso(60 * 60 * 1000);
+            await applyCookieAction('overcap-on', [assignedCookieId], triggerButton, {
+                busyLabel: 'Dang xu ly...',
+                overCapacityUntil,
+                lastOverCapacityAt: nowIso,
+                lastError: `Manual QUA TAI by customer ${customerCode}`
+            });
             return;
         }
 
         if (action === 'delete') {
-            const ok = window.confirm(`Xoa ma khach ${code}?`);
+            const ok = window.confirm(`Xoa ma khach ${customerCode}?`);
             if (!ok) return;
-            await apiRequest('/api/nf-customers', 'DELETE', { code });
+            await apiRequest('/api/nf-customers', 'DELETE', { code: customerCode });
             toast('Da xoa khach hang.', 'ok');
             await Promise.all([loadCustomers(), loadCookies()]);
         }
     } catch (error) {
         toast(error.message || 'Thao tac khach hang that bai.', 'bad');
     }
+}
+
+async function handleCustomerTableAction(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const menuTrigger = target.closest('[data-row-menu-trigger]');
+    if (menuTrigger instanceof HTMLElement) {
+        event.preventDefault();
+        const row = menuTrigger.closest('tr[data-row-kind]');
+        if (row instanceof HTMLElement) {
+            openRowActionMenuForRow(row, menuTrigger);
+        }
+        return;
+    }
+
+    const copyCode = normalizeCode(target.dataset.copyCode || '');
+    if (copyCode) {
+        try {
+            await navigator.clipboard.writeText(copyCode);
+            toast('Da sao chep ma khach.', 'ok');
+        } catch (error) {
+            toast(`Khong copy tu dong duoc. Ma: ${copyCode}`, 'warn');
+        }
+        return;
+    }
+
+    const action = String(target.dataset.customerAct || '').trim();
+    const code = normalizeCode(target.dataset.code || '');
+    if (!action || !code) return;
+    await runCustomerAction(action, code, target);
 }
 
 async function importCookies() {
@@ -1527,7 +1492,8 @@ function shouldRefreshCustomersForCookieAction(action = '') {
         || action === 'error-on'
         || action === 'sbd-on'
         || action === 'unknown-on'
-        || action === 'hold-on';
+        || action === 'hold-on'
+        || action === 'overcap-on';
 }
 
 function getCookieActionSuccessMessage(action = '', count = 1) {
@@ -1545,6 +1511,8 @@ function getCookieActionSuccessMessage(action = '', count = 1) {
     if (action === 'unknown-off') return amount > 1 ? `Da go tag UNKNOW cho ${amount} cookie.` : 'Da go tag UNKNOW cho cookie.';
     if (action === 'hold-on') return amount > 1 ? `Da gan tag HOLD cho ${amount} cookie.` : 'Da gan tag HOLD cho cookie.';
     if (action === 'hold-off') return amount > 1 ? `Da go tag HOLD cho ${amount} cookie.` : 'Da go tag HOLD cho cookie.';
+    if (action === 'overcap-on') return amount > 1 ? `Da gan tag QUA TAI cho ${amount} cookie trong 1 gio.` : 'Da gan tag QUA TAI cho cookie trong 1 gio.';
+    if (action === 'overcap-off') return amount > 1 ? `Da go tag QUA TAI cho ${amount} cookie.` : 'Da go tag QUA TAI cho cookie.';
     if (action === 'save-note') return 'Da cap nhat note cookie.';
     return 'Da cap nhat cookie.';
 }
@@ -1618,6 +1586,24 @@ function applyOptimisticCookieAction(action = '', cookieIds = [], options = {}) 
                 updatedAt: now
             };
         }
+        if (action === 'overcap-on' || action === 'overcap-off') {
+            const overCapacityTagged = action === 'overcap-on';
+            return {
+                ...cookie,
+                overCapacityTagged,
+                overCapacityUntil: overCapacityTagged
+                    ? String(options.overCapacityUntil || buildOverCapacityUntilIso(60 * 60 * 1000))
+                    : '',
+                lastOverCapacityAt: overCapacityTagged
+                    ? String(options.lastOverCapacityAt || now)
+                    : String(cookie.lastOverCapacityAt || ''),
+                lastError: overCapacityTagged
+                    ? String(options.lastError || cookie.lastError || 'Manual QUA TAI')
+                    : cookie.lastError,
+                assignedCustomerCode: overCapacityTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
         return cookie;
     });
 
@@ -1638,6 +1624,24 @@ function buildCookieActionRequest(action = '', cookieIds = [], options = {}) {
     if (action === 'sbd-on' || action === 'sbd-off') return { method: 'PUT', body: { ...base, sbdTagged: action === 'sbd-on' } };
     if (action === 'unknown-on' || action === 'unknown-off') return { method: 'PUT', body: { ...base, unknownTagged: action === 'unknown-on' } };
     if (action === 'hold-on' || action === 'hold-off') return { method: 'PUT', body: { ...base, holdTagged: action === 'hold-on' } };
+    if (action === 'overcap-on' || action === 'overcap-off') {
+        return {
+            method: 'PUT',
+            body: {
+                ...base,
+                overCapacityTagged: action === 'overcap-on',
+                overCapacityUntil: action === 'overcap-on'
+                    ? String(options.overCapacityUntil || buildOverCapacityUntilIso(60 * 60 * 1000))
+                    : '',
+                lastOverCapacityAt: action === 'overcap-on'
+                    ? String(options.lastOverCapacityAt || new Date().toISOString())
+                    : '',
+                lastError: action === 'overcap-on'
+                    ? String(options.lastError || 'Manual QUA TAI')
+                    : String(options.lastError || '')
+            }
+        };
+    }
     if (action === 'save-note') return { method: 'PUT', body: { cookieId: firstId, note: String(options.noteValue || '').trim() } };
     return null;
 }
@@ -1730,6 +1734,49 @@ async function applyBulkCookieAction(action, triggerButton = null) {
     await applyCookieAction(action, cookieIds, triggerButton, { busyLabel: 'Dang xu ly...' });
 }
 
+async function runCookieRowAction(action = '', cookieId = '', triggerButton = null) {
+    const id = String(cookieId || '').trim();
+    if (!action || !id) return;
+    const cookie = cookiesCache.find((item) => item.id === id);
+    if (!cookie) return;
+
+    if (action === 'delete') {
+        const ok = window.confirm('Xoa cookie nay khoi danh sach?');
+        if (!ok) return;
+        await applyCookieAction('delete', [id], triggerButton, { busyLabel: 'Dang xu ly...' });
+        return;
+    }
+    if (action === 'unassign') {
+        await applyCookieAction('unassign', [id], triggerButton, { busyLabel: 'Dang xu ly...' });
+        return;
+    }
+    if (action === 'active' || action === 'disabled' || action === 'dead') {
+        await applyCookieAction(action, [id], triggerButton, { busyLabel: 'Dang xu ly...' });
+        return;
+    }
+    if (action === 'tag-add') {
+        openTagPickerModal([id], 'add');
+        return;
+    }
+    if (action === 'tag-remove') {
+        openTagPickerModal([id], 'remove');
+        return;
+    }
+    if (action === 'view-raw') {
+        const raw = String(cookie.cookieRaw || '').trim();
+        if (!raw) {
+            toast('Cookie nay chua co noi dung raw.', 'warn');
+            return;
+        }
+        openCookieRawEditor(cookie, 'view');
+        return;
+    }
+    if (action === 'edit-raw') {
+        openCookieRawEditor(cookie, 'edit');
+        return;
+    }
+}
+
 function handleCookieTableChange(event) {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
@@ -1777,6 +1824,15 @@ function handleCookieBulkAction(event) {
 async function handleCookieTableAction(event) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
+    const menuTrigger = target.closest('[data-row-menu-trigger]');
+    if (menuTrigger instanceof HTMLElement) {
+        event.preventDefault();
+        const row = menuTrigger.closest('tr[data-row-kind]');
+        if (row instanceof HTMLElement) {
+            openRowActionMenuForRow(row, menuTrigger);
+        }
+        return;
+    }
     const action = target.dataset.cookieAct;
     const cookieId = String(target.dataset.id || '').trim();
     if (!action || !cookieId) return;
@@ -1792,13 +1848,7 @@ async function handleCookieTableAction(event) {
         }
 
         if (action === 'view-raw') {
-            if (!cookie) return;
-            const raw = String(cookie.cookieRaw || '').trim();
-            if (!raw) {
-                toast('Cookie nay chua co noi dung raw.', 'warn');
-                return;
-            }
-            openCookieRawEditor(cookie, 'view');
+            await runCookieRowAction('view-raw', cookieId, target);
             return;
         }
 
@@ -1839,35 +1889,32 @@ async function handleCookieTableAction(event) {
         }
 
         if (action === 'edit-raw') {
-            if (!cookie) return;
-            openCookieRawEditor(cookie, 'edit');
+            await runCookieRowAction('edit-raw', cookieId, target);
             return;
         }
 
         if (action === 'delete') {
-            const ok = window.confirm('Xoa cookie nay khoi danh sach?');
-            if (!ok) return;
-            await applyCookieAction('delete', [cookieId], target, { busyLabel: 'Dang xu ly...' });
+            await runCookieRowAction('delete', cookieId, target);
             return;
         }
 
         if (action === 'unassign') {
-            await applyCookieAction('unassign', [cookieId], target, { busyLabel: 'Dang xu ly...' });
+            await runCookieRowAction('unassign', cookieId, target);
             return;
         }
 
         if (action === 'active' || action === 'disabled' || action === 'dead') {
-            await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
+            await runCookieRowAction(action, cookieId, target);
             return;
         }
 
         if (action === 'tag-add') {
-            openTagPickerModal([cookieId], 'add');
+            await runCookieRowAction('tag-add', cookieId, target);
             return;
         }
 
         if (action === 'tag-remove') {
-            openTagPickerModal([cookieId], 'remove');
+            await runCookieRowAction('tag-remove', cookieId, target);
             return;
         }
 
@@ -1895,6 +1942,153 @@ function handleCookieTableKeydown(event) {
     const row = target.closest('tr');
     const saveBtn = row ? row.querySelector(`[data-cookie-act="save-note"][data-id="${cookieId}"]`) : null;
     if (saveBtn instanceof HTMLElement) saveBtn.click();
+}
+
+function closeRowActionMenu() {
+    const menu = el('rowActionMenu');
+    if (!menu) return;
+    menu.classList.add('hidden');
+    menu.setAttribute('aria-hidden', 'true');
+    rowActionMenuContext = null;
+}
+
+function getCustomerRowMenuItems(code = '') {
+    const customer = customersCache.find((item) => item.code === code);
+    if (!customer) return [];
+    return [
+        { action: 'edit', label: 'Sua' },
+        { action: 'error', label: 'ERROR' },
+        { action: 'overload', label: 'QUA TAI' },
+        { action: 'toggle', label: customer.status === 'inactive' ? 'Kich hoat' : 'Khoa' },
+        { action: 'delete', label: 'Xoa', danger: true }
+    ];
+}
+
+function getCookieRowMenuItems(cookieId = '') {
+    const cookie = cookiesCache.find((item) => item.id === cookieId);
+    if (!cookie) return [];
+    return [
+        { action: 'active', label: 'Active' },
+        { action: 'disabled', label: 'Disabled' },
+        { action: 'dead', label: 'Dead' },
+        { action: 'tag-add', label: 'GAN TAG' },
+        { action: 'tag-remove', label: 'GO TAG' },
+        { action: 'view-raw', label: 'Xem raw' },
+        { action: 'edit-raw', label: 'Sua raw' },
+        { action: 'unassign', label: 'Bo gan' },
+        { action: 'delete', label: 'Xoa', danger: true }
+    ];
+}
+
+function openRowActionMenuForRow(row, anchorEl = null, point = null) {
+    if (!(row instanceof HTMLElement)) return;
+    const kind = String(row.dataset.rowKind || '').trim();
+    const code = normalizeCode(row.dataset.rowCode || '');
+    const cookieId = String(row.dataset.rowCookieId || '').trim();
+    const title = kind === 'customer' ? `Khach ${code || ''}` : `Cookie ${cookieId || ''}`;
+    const items = kind === 'customer' ? getCustomerRowMenuItems(code) : getCookieRowMenuItems(cookieId);
+    if (items.length === 0) {
+        closeRowActionMenu();
+        return;
+    }
+
+    const menu = el('rowActionMenu');
+    const menuTitle = el('rowActionMenuTitle');
+    const menuList = el('rowActionMenuList');
+    if (!menu || !menuTitle || !menuList) return;
+
+    menuTitle.textContent = title;
+    menuList.innerHTML = items.map((item) => `
+        <button
+            class="btn-tiny row-action-menu-btn${item.danger ? ' danger' : ''}"
+            type="button"
+            data-row-menu-act="${item.action}"
+        >${item.label}</button>
+    `).join('');
+
+    rowActionMenuContext = {
+        kind,
+        code,
+        cookieId
+    };
+
+    menu.classList.remove('hidden');
+    menu.setAttribute('aria-hidden', 'false');
+
+    const menuRect = menu.getBoundingClientRect();
+    const anchorRect = anchorEl instanceof HTMLElement ? anchorEl.getBoundingClientRect() : null;
+    const desiredX = point && Number.isFinite(point.x)
+        ? point.x
+        : anchorRect ? (anchorRect.left + Math.min(anchorRect.width, 30)) : 8;
+    const desiredY = point && Number.isFinite(point.y)
+        ? point.y
+        : anchorRect ? (anchorRect.bottom + 6) : 8;
+    const maxX = Math.max(8, window.innerWidth - menuRect.width - 8);
+    const maxY = Math.max(8, window.innerHeight - menuRect.height - 8);
+    menu.style.left = `${Math.min(maxX, Math.max(8, desiredX))}px`;
+    menu.style.top = `${Math.min(maxY, Math.max(8, desiredY))}px`;
+}
+
+function findRowFromEventTarget(target) {
+    if (!(target instanceof HTMLElement)) return null;
+    const row = target.closest('tr[data-row-kind]');
+    return row instanceof HTMLElement ? row : null;
+}
+
+function clearRowLongPressTimer() {
+    if (rowLongPressTimer) {
+        window.clearTimeout(rowLongPressTimer);
+        rowLongPressTimer = null;
+    }
+    rowLongPressPointerId = null;
+}
+
+function onRowPointerDown(event) {
+    if (!(event.target instanceof HTMLElement)) return;
+    if (event.pointerType === 'mouse') return;
+    const row = findRowFromEventTarget(event.target);
+    if (!row) return;
+    if (event.target.closest('button, input, textarea, select, a')) return;
+    clearRowLongPressTimer();
+    rowLongPressPointerId = event.pointerId;
+    rowLongPressTimer = window.setTimeout(() => {
+        openRowActionMenuForRow(row, null, { x: event.clientX, y: event.clientY });
+        clearRowLongPressTimer();
+    }, 600);
+}
+
+function onRowPointerUpOrCancel(event) {
+    if (rowLongPressPointerId === null || event.pointerId !== rowLongPressPointerId) return;
+    clearRowLongPressTimer();
+}
+
+function onRowTableContextMenu(event) {
+    if (!(event.target instanceof HTMLElement)) return;
+    const row = findRowFromEventTarget(event.target);
+    if (!row) return;
+    if (event.target.closest('input, textarea')) return;
+    event.preventDefault();
+    openRowActionMenuForRow(row, null, { x: event.clientX, y: event.clientY });
+}
+
+async function onRowActionMenuClick(event) {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const action = String(target.dataset.rowMenuAct || '').trim();
+    if (!action || !rowActionMenuContext) return;
+    const { kind, code, cookieId } = rowActionMenuContext;
+    closeRowActionMenu();
+    if (kind === 'customer') {
+        await runCustomerAction(action, code, target);
+        return;
+    }
+    if (kind === 'cookie') {
+        try {
+            await runCookieRowAction(action, cookieId, target);
+        } catch (error) {
+            toast(error.message || 'Cap nhat cookie that bai.', 'bad');
+        }
+    }
 }
 
 async function onAdminLogin() {
@@ -1975,9 +2169,6 @@ function bindEvents() {
 
     const supportFanpageLink = el('supportFanpageLink');
     if (supportFanpageLink) supportFanpageLink.setAttribute('href', SUPPORT_FANPAGE_URL);
-
-    const supportOverloadBtn = el('supportOverloadBtn');
-    if (supportOverloadBtn) supportOverloadBtn.addEventListener('click', runSupportOverloadCheck);
 
     const renewNetflixBtn = el('renewNetflixBtn');
     if (renewNetflixBtn) renewNetflixBtn.addEventListener('click', openRenewModal);
@@ -2209,13 +2400,28 @@ function bindEvents() {
     if (cancelEdit) cancelEdit.addEventListener('click', clearCustomerForm);
 
     const customersBody = el('customersTableBody');
-    if (customersBody) customersBody.addEventListener('click', handleCustomerTableAction);
+    if (customersBody) {
+        customersBody.addEventListener('click', handleCustomerTableAction);
+        customersBody.addEventListener('contextmenu', onRowTableContextMenu);
+        customersBody.addEventListener('pointerdown', onRowPointerDown);
+        customersBody.addEventListener('pointerup', onRowPointerUpOrCancel);
+        customersBody.addEventListener('pointercancel', onRowPointerUpOrCancel);
+    }
 
     const cookiesBody = el('cookiesTableBody');
     if (cookiesBody) {
         cookiesBody.addEventListener('click', handleCookieTableAction);
         cookiesBody.addEventListener('change', handleCookieTableChange);
         cookiesBody.addEventListener('keydown', handleCookieTableKeydown);
+        cookiesBody.addEventListener('contextmenu', onRowTableContextMenu);
+        cookiesBody.addEventListener('pointerdown', onRowPointerDown);
+        cookiesBody.addEventListener('pointerup', onRowPointerUpOrCancel);
+        cookiesBody.addEventListener('pointercancel', onRowPointerUpOrCancel);
+    }
+
+    const rowActionMenu = el('rowActionMenu');
+    if (rowActionMenu) {
+        rowActionMenu.addEventListener('click', onRowActionMenuClick);
     }
 
     const cookiesSelectAll = el('cookiesSelectAll');
@@ -2318,7 +2524,13 @@ function bindEvents() {
 
     document.addEventListener('click', () => {
         closeHeaderFilterPopup();
+        closeRowActionMenu();
     });
+
+    window.addEventListener('scroll', closeRowActionMenu, true);
+    window.addEventListener('resize', closeRowActionMenu);
+    window.addEventListener('pointerup', clearRowLongPressTimer);
+    window.addEventListener('pointercancel', clearRowLongPressTimer);
 
     const importBtn = el('importCookiesBtn');
     if (importBtn) importBtn.addEventListener('click', importCookies);
@@ -2347,6 +2559,10 @@ function bindEvents() {
         if (event.key !== 'Escape') return;
         if (headerFilterPopupContext) {
             closeHeaderFilterPopup();
+            return;
+        }
+        if (rowActionMenuContext) {
+            closeRowActionMenu();
             return;
         }
         const tagModal = el('tagPickerModal');
