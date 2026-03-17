@@ -748,6 +748,31 @@ async function generateDeviceLinkLegacy(device) {
     }
 }
 
+function openDeferredTabAndNavigate(options = {}) {
+    const loadingTitle = options.loadingTitle || 'Dang tao link Netflix...';
+    const loadingSubtitle = options.loadingSubtitle || 'Vui long cho trong giay lat.';
+    const popupWindow = window.open('about:blank', '_blank');
+    if (!popupWindow) {
+        return { popupWindow: null, wasBlocked: true };
+    }
+
+    try {
+        popupWindow.document.title = 'NF';
+        popupWindow.document.body.style.margin = '0';
+        popupWindow.document.body.style.fontFamily = 'Arial, sans-serif';
+        popupWindow.document.body.style.background = '#0b0f1c';
+        popupWindow.document.body.style.color = '#ffffff';
+        popupWindow.document.body.style.display = 'flex';
+        popupWindow.document.body.style.alignItems = 'center';
+        popupWindow.document.body.style.justifyContent = 'center';
+        popupWindow.document.body.innerHTML = `<div style="text-align:center;"><div style="font-size:18px;font-weight:700;margin-bottom:8px;">${loadingTitle}</div><div style="font-size:14px;opacity:.86;">${loadingSubtitle}</div></div>`;
+    } catch (e) {
+        // Ignore if browser restricts writing to about:blank.
+    }
+
+    return { popupWindow, wasBlocked: false };
+}
+
 async function generateDeviceLink(device) {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
@@ -766,6 +791,19 @@ async function generateDeviceLink(device) {
 
     showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
     const shouldAutoOpen = device === 'desktop';
+    let deferredPopup = null;
+
+    if (shouldAutoOpen) {
+        const { popupWindow, wasBlocked } = openDeferredTabAndNavigate({
+            loadingTitle: 'Dang tao link Netflix...',
+            loadingSubtitle: 'Vui long cho trong giay lat.'
+        });
+        deferredPopup = popupWindow;
+        if (wasBlocked) {
+            setLookupState('Trinh duyet chan tab moi, dang mo trong tab hien tai.', 'warning');
+            toast('Popup bi chan. Dang mo trong tab hien tai.', 'warn');
+        }
+    }
 
     try {
         const data = await apiRequest('/api/nf-generate-link', 'POST', {
@@ -775,18 +813,20 @@ async function generateDeviceLink(device) {
         if (!data.url) throw new Error('Không tạo được link');
 
         if (shouldAutoOpen) {
-            const opened = window.open(data.url, '_blank');
-            if (!opened || opened.closed) {
-                setLookupState('Đã tạo link thành công nhưng popup bị chặn. Hãy cho phép popup rồi thử lại.', 'warning');
-                toast('Popup bị chặn. Hãy bật popup cho trang này.', 'warn');
-            } else {
+            if (deferredPopup && !deferredPopup.closed) {
+                deferredPopup.location.href = data.url;
                 setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
+            } else {
+                window.location.href = data.url;
             }
         } else {
             openMobileLinkModal(data.url);
             setLookupState('Tạo link điện thoại thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
         }
     } catch (error) {
+        if (deferredPopup && !deferredPopup.closed) {
+            try { deferredPopup.close(); } catch (e) { /* ignore */ }
+        }
         setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         hideLookupLoadingOverlay();
@@ -2621,3 +2661,5 @@ function bootstrap() {
 }
 
 bootstrap();
+
+

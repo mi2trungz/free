@@ -1105,6 +1105,16 @@
                 font-size: 1.18rem;
             }
 
+            .netflix-entry-chevron {
+                width: 2.35rem;
+                height: 2.35rem;
+            }
+
+            .netflix-entry-chevron svg {
+                width: 0.95rem;
+                height: 0.95rem;
+            }
+
             .netflix-feature-title {
                 font-size: 1.3rem;
             }
@@ -1168,7 +1178,10 @@
             .hero-brand-bounce,
             .netflix-feature,
             .netflix-entry-card,
-            .netflix-cta-item {
+            .netflix-cta-item,
+            .instruction-fanpage-cta,
+            .instruction-fanpage-icon,
+            .password-guide-cta-bounce {
                 animation: none !important;
                 transform: none !important;
             }
@@ -1290,6 +1303,96 @@
 
         .animate-cta-bounce {
             animation: ctaBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes passwordGuideBounceSoft {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            50% {
+                transform: translateY(-2px) scale(1.01);
+            }
+        }
+
+        .password-guide-cta-bounce {
+            animation: passwordGuideBounceSoft 2.4s ease-in-out infinite;
+            transform-origin: center;
+            will-change: transform;
+        }
+
+        .password-guide-cta-bounce:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes instructionCtaBounce {
+
+            0%,
+            100% {
+                transform: translateY(0) scale(1);
+            }
+
+            45% {
+                transform: translateY(-3px) scale(1.016);
+            }
+        }
+
+        @keyframes instructionCtaRing {
+
+            0%,
+            100% {
+                box-shadow: 0 12px 26px rgba(29, 78, 216, 0.22), 0 4px 10px rgba(59, 130, 246, 0.16);
+            }
+
+            50% {
+                box-shadow: 0 18px 34px rgba(29, 78, 216, 0.3), 0 8px 16px rgba(59, 130, 246, 0.24);
+            }
+        }
+
+        @keyframes instructionIconBeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.11);
+            }
+        }
+
+        .instruction-fanpage-cta {
+            position: relative;
+            overflow: hidden;
+            animation: instructionCtaBounce 2.1s ease-in-out infinite, instructionCtaRing 2.1s ease-in-out infinite;
+        }
+
+        .instruction-fanpage-cta::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            border: 1px solid rgba(191, 219, 254, 0.9);
+            opacity: 0.82;
+            pointer-events: none;
+        }
+
+        .instruction-fanpage-cta:hover {
+            animation-play-state: paused;
+            transform: translateY(-3px);
+            box-shadow: 0 20px 38px rgba(29, 78, 216, 0.34), 0 9px 20px rgba(59, 130, 246, 0.25);
+        }
+
+        .instruction-fanpage-cta:focus-visible {
+            outline: 3px solid rgba(96, 165, 250, 0.45);
+            outline-offset: 2px;
+        }
+
+        .instruction-fanpage-icon {
+            animation: instructionIconBeat 1.8s ease-in-out infinite;
+            transform-origin: center;
         }
 
         @keyframes noticeDealPulse {
@@ -1687,18 +1790,18 @@
 
     <!-- MODAL NHẬP MẬT KHẨU -->
     <div id="passwordModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in">
+        <div class="relative w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 shadow-[0_18px_46px_rgba(15,23,42,0.14)]">
             <button onclick="closePasswordModal()"
-                class="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"><svg
-                    xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                class="absolute right-3.5 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"><svg
+                    xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg></button>
-            <div class="p-7 text-center sm:p-8">
-                <div class="mx-auto inline-flex h-14 items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 text-[11px] font-black uppercase tracking-[0.14em] text-indigo-700 shadow-sm">
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none"
+            <div class="p-5 text-center sm:p-6">
+                <div class="mx-auto inline-flex h-12 items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-indigo-700 shadow-sm">
+                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -1706,24 +1809,24 @@
                     </span>
                     Bảo mật truy cập
                 </div>
-                <h3 class="mt-5 text-[1.9rem] font-black tracking-tight text-slate-900 sm:text-[2.1rem]">Yêu cầu bảo mật</h3>
-                <p class="mt-2 text-sm font-medium leading-relaxed text-slate-500 sm:text-[15px]">Nhập mật mã 4 số để mở danh mục này.</p>
-                <div class="mt-7 space-y-4">
+                <h3 class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.75rem]">Yêu cầu bảo mật</h3>
+                <p class="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-500 sm:text-sm">Nhập mật mã 4 số để mở danh mục này.</p>
+                <div class="mt-5 space-y-3">
                     <input type="password" id="modalPasswordInput"
-                        class="w-full rounded-[1.4rem] border border-slate-300 bg-white px-5 py-4 text-center text-2xl font-black tracking-[0.45em] text-slate-800 shadow-[inset_0_1px_3px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:tracking-[0.45em] placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                        class="w-full rounded-[1.1rem] border border-slate-300 bg-white px-4 py-3 text-center text-[1.4rem] font-black tracking-[0.34em] text-slate-800 shadow-[inset_0_1px_3px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:tracking-[0.34em] placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                         placeholder="• • • •" maxlength="4" oninput="checkModalAutoLogin()">
-                    <div class="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left shadow-sm">
-                        <span class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-left shadow-sm">
+                        <span class="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"
                                     d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
                             </svg>
                         </span>
-                        <p class="pt-0.5 text-sm font-semibold leading-relaxed text-amber-800">Mật mã thay đổi thường xuyên để đảm bảo an toàn truy cập.</p>
+                        <p class="pt-0.5 text-[13px] font-semibold leading-relaxed text-amber-800">Mật mã thay đổi thường xuyên để hạn chế các thành phần spam.</p>
                     </div>
                     <button onclick="openInstructions()"
-                        class="flex w-full items-center justify-center gap-2 rounded-[1.2rem] bg-slate-900 py-3.5 text-base font-black text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 hover:bg-slate-800">
+                        class="password-guide-cta-bounce flex w-full items-center justify-center gap-2 rounded-[1rem] bg-slate-900 py-3 text-[15px] font-black text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:bg-slate-800">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1733,7 +1836,7 @@
                     </button>
 
                     <button onclick="checkModalPassword()"
-                        class="w-full rounded-[1.2rem] border border-slate-300 bg-white py-3.5 text-base font-bold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50">
+                        class="w-full rounded-[1rem] border border-slate-300 bg-white py-3 text-[15px] font-bold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50">
                         Mở Khóa
                     </button>
 
@@ -1796,55 +1899,55 @@
 
     <!-- MODAL HƯỚNG DẪN -->
     <div id="instructionModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in">
+        <div class="relative w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 shadow-[0_20px_52px_rgba(15,23,42,0.15)]">
             <button onclick="closeInstructions()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"><svg
-                    xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                class="absolute right-3.5 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"><svg
+                    xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg></button>
-            <div class="p-8">
-                <div class="w-14 h-14 bg-indigo-100 rounded-full flex items-center justify-center mb-4"><svg
-                        xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none"
+            <div class="p-5 sm:p-6">
+                <div class="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-600 shadow-sm"><svg
+                        xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg></div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2">Hướng dẫn lấy mã</h3>
-                <div class="space-y-4 text-sm text-gray-600 mt-4">
+                <h3 class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.7rem]">Hướng dẫn lấy mã</h3>
+                <div class="mt-4 space-y-3 text-[15px] font-medium leading-relaxed text-slate-600">
                     <p>Để nhận mật mã truy cập vào hệ thống, bạn vui lòng thực hiện các bước sau:</p>
-                    <ol class="list-decimal pl-5 space-y-2 marker:text-indigo-600 marker:font-bold">
+                    <ol class="list-decimal space-y-1.5 pl-5 marker:font-black marker:text-indigo-600">
                         <li>Nhắn tin vào Fanpage <strong>TRÀ ĐÁ 3K</strong>. (Link bên dưới)</li>
                         <li>Nhắn chính xác cú pháp: <strong class="text-indigo-700">LAYMA</strong></li>
                         <li>Lấy mã và truy cập hệ thống.</li>
                     </ol>
                     <div
-                        class="p-3 bg-red-50 text-red-600 text-xs rounded-lg font-medium border border-red-100 flex items-start gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 mt-0.5" fill="none"
+                        class="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50/90 px-3.5 py-2.5 text-[13px] font-semibold text-red-600 shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span>Lưu ý: Mã sẽ được thay đổi mỗi ngày.</span>
                     </div>
-                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank"
-                        class="block bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-xl text-center mt-4 hover:from-blue-100 hover:to-indigo-100 hover:border-blue-300 transition-all group cursor-pointer decoration-0 shadow-sm hover:shadow-md animate-cta-bounce">
-                        <p class="text-xs text-gray-600 uppercase font-semibold mb-2 tracking-wide">Truy cập Fanpage</p>
+                    <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
+                        class="instruction-fanpage-cta group mt-4 block rounded-2xl border border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-100 px-4 py-4 text-center decoration-0 transition-all">
+                        <p class="mb-2 text-[11px] font-extrabold uppercase tracking-[0.1em] text-slate-600">Truy cập Fanpage</p>
                         <div
-                            class="text-blue-600 font-bold text-base group-hover:text-blue-700 flex items-center justify-center gap-2">
+                            class="flex items-center justify-center gap-2 text-[1.2rem] font-black tracking-tight text-blue-700 group-hover:text-blue-800 sm:text-[1.3rem]">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                                viewBox="0 0 16 16" class="animate-pulse">
+                                viewBox="0 0 16 16" class="instruction-fanpage-icon h-6 w-6">
                                 <path
                                     d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951" />
                             </svg>
-                            <span>TRÀ ĐÁ 3K</span>
+                            <span class="leading-none">TRÀ ĐÁ 3K</span>
                         </div>
-                        <p class="text-[10px] text-gray-500 mt-2">Click để mở Fanpage và nhắn "LAYMA"</p>
+                        <p class="mt-2 text-[11px] font-medium text-slate-500">Click để mở Fanpage và nhắn "LAYMA"</p>
                     </a>
                 </div>
                 <button onclick="closeInstructions()"
-                    class="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">Đã
+                    class="mt-5 w-full rounded-[1rem] border border-indigo-200 bg-white py-3 text-[15px] font-bold text-indigo-700 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800">Đã
                     hiểu</button>
             </div>
         </div>
@@ -3152,7 +3255,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                 </svg>
                             </span>
-                            <span class="pt-0.5 text-emerald-700">Chất lượng FULL HD</span>
+                            <span class="pt-0.5 text-emerald-700">Chất lượng FULL HD 4K</span>
                         </li>
                     </ul>
                 </button>
@@ -3209,7 +3312,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                 </svg>
                             </span>
-                            <span class="pt-0.5 text-emerald-700">Chất lượng FULL HD</span>
+                            <span class="pt-0.5 text-emerald-700">Chất lượng FULL HD 4K</span>
                         </li>
                     </ul>
                 </div>
@@ -3662,22 +3765,22 @@
                 <!-- NETFLIX ENTRY (HOME TEASER) -->
                 <div id="netflixAutoLinkContainer" class="max-w-4xl mx-auto px-4 mt-2 mb-8 hidden">
                     <button type="button" onclick="showNetflixPackageSelectorModal()"
-                        class="w-full rounded-[1.7rem] sm:rounded-[2rem] border border-rose-300/90 bg-gradient-to-r from-[#fffdf8] via-[#fff1f5] to-[#fff3eb] px-3.5 py-3.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_18px_38px_rgba(244,63,94,0.11)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_24px_48px_rgba(244,63,94,0.18)] sm:px-6 sm:py-5">
+                        class="w-full rounded-[1.45rem] sm:rounded-[2rem] border border-rose-300/90 bg-gradient-to-r from-[#fffdf8] via-[#fff1f5] to-[#fff3eb] px-3 py-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_rgba(244,63,94,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_20px_40px_rgba(244,63,94,0.16)] sm:px-6 sm:py-5">
                         <div class="mb-2 flex sm:hidden">
-                            <span class="inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 via-fuchsia-500 to-orange-500 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-white shadow-[0_10px_20px_rgba(236,72,153,0.28)]">
+                            <span class="inline-flex items-center rounded-full bg-gradient-to-r from-rose-600 via-fuchsia-500 to-orange-500 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.07em] text-white shadow-[0_6px_14px_rgba(236,72,153,0.22)]">
                                 HOT
                             </span>
                         </div>
 
-                        <div class="flex items-center justify-between gap-2.5 sm:gap-4">
+                        <div class="flex items-center justify-between gap-2 sm:gap-4">
                             <div class="min-w-0 flex flex-1 items-center gap-2 sm:gap-3">
                                 <span class="hidden sm:inline-flex flex-shrink-0 items-center rounded-full bg-gradient-to-r from-rose-600 via-fuchsia-500 to-orange-500 px-3.5 py-1.5 text-[10.5px] font-black uppercase tracking-[0.11em] text-white shadow-[0_10px_20px_rgba(236,72,153,0.28)]">
                                     HOT
                                 </span>
-                                <span class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-black text-[1.7rem] font-black leading-none text-[#E50914] shadow-[0_8px_16px_rgba(15,23,42,0.18)] ring-1 ring-white/60 sm:h-11 sm:w-11 sm:text-[2.2rem]">N</span>
-                                <h3 class="min-w-0 text-[1.04rem] font-black uppercase leading-[1.03] tracking-[-0.016em] sm:text-[1.65rem] sm:tracking-[-0.012em] sm:leading-[1.12]">
+                                <span class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-black text-[1.45rem] font-black leading-none text-[#E50914] shadow-[0_6px_12px_rgba(15,23,42,0.15)] ring-1 ring-white/60 sm:h-11 sm:w-11 sm:rounded-lg sm:text-[2.2rem]">N</span>
+                                <h3 class="min-w-0 text-[0.94rem] font-black uppercase leading-[1.18] tracking-[-0.01em] sm:text-[1.65rem] sm:tracking-[-0.012em] sm:leading-[1.12]">
                                     <span class="block whitespace-nowrap text-[#E50914] sm:inline">XEM NETFLIX PREMIUM</span>
-                                    <span class="block text-emerald-600 sm:inline sm:ml-2">MIỄN PHÍ</span>
+                                    <span class="block mt-0.5 text-emerald-600 sm:inline sm:ml-2 sm:mt-0">MIỄN PHÍ</span>
                                 </h3>
                             </div>
                             <span class="netflix-entry-chevron">
@@ -5563,6 +5666,29 @@
             }
         }
 
+        function scrollNetflixRouteToVipLine() {
+            if (!isNetflixRouteRequested()) return;
+            const isMobile = window.matchMedia('(max-width: 767px)').matches;
+            const targetId = isMobile ? 'netflixVipCard' : 'netflixWarningBox';
+            const tryScroll = () => {
+                const target = document.getElementById(targetId);
+                if (!target) return false;
+                const rectTop = target.getBoundingClientRect().top + window.scrollY;
+                const offset = isMobile ? 18 : 96;
+                const targetY = Math.max(0, rectTop - offset);
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
+                return true;
+            };
+
+            if (tryScroll()) return;
+            requestAnimationFrame(() => {
+                if (tryScroll()) return;
+                setTimeout(() => {
+                    tryScroll();
+                }, 120);
+            });
+        }
+
         function setVisualRouteMode(mode = 'default') {
             if (!document || !document.body) return;
             document.body.classList.toggle('view-netflix', mode === 'netflix');
@@ -5711,7 +5837,7 @@
                                     <span class="netflix-platform-label">Xem trên<br>tivi</span>
                                 </button>
                             </div>
-                            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left shadow-sm">
+                            <div id="netflixWarningBox" class="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left shadow-sm">
                                 <div class="flex items-start gap-3">
                                     <span class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -5731,7 +5857,7 @@
                             ` : ''}
                         </div>
                     </div>
-                    <button type="button" onclick="showNetflixProModal()"
+                    <button type="button" id="netflixVipCard" onclick="showNetflixProModal()"
                         class="mt-7 w-full rounded-[2rem] border border-rose-200 bg-gradient-to-br from-white via-rose-50/80 to-orange-50 px-5 py-5 text-left shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(244,63,94,0.16)] sm:px-6 sm:py-6">
                         <div class="flex items-start justify-between gap-3">
                             <div class="inline-flex h-10 items-center gap-2 rounded-full bg-rose-600 px-4 text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-sm">
@@ -5746,7 +5872,7 @@
                             <div>
                                 <h4 class="text-3xl font-black leading-none tracking-tight text-slate-900 sm:text-[2.6rem]">NETFLIX VIP</h4>
                                 <p class="mt-3 text-2xl font-black uppercase leading-none tracking-tight text-rose-600 sm:text-[2.35rem]">CHỈ TỪ 19K</p>
-                                <p class="mt-3 text-sm font-semibold leading-relaxed text-slate-500 sm:text-base">Xem mượt trên mọi thiết bị, ổn định hơn và có bảo hành 24/7.</p>
+                                <p id="netflixVipSupportLine" class="mt-3 text-sm font-semibold leading-relaxed text-slate-500 sm:text-base">Xem mượt trên mọi thiết bị, ổn định hơn và có bảo hành 24/7.</p>
                             </div>
                             <div class="space-y-3">
                                 <div class="flex items-start gap-3 text-base font-bold leading-relaxed text-emerald-700 sm:text-lg">
@@ -5771,7 +5897,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                         </svg>
                                     </span>
-                                    <span class="pt-0.5">Chất lượng FULL HD</span>
+                                    <span class="pt-0.5">Chất lượng FULL HD 4K</span>
                                 </div>
                             </div>
                         </div>
@@ -5867,7 +5993,7 @@
 
             updateNetflixFeatureVisibility();
             if (syncHash) setNetflixRouteHash();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            scrollNetflixRouteToVipLine();
             window.dispatchEvent(new Event('scroll'));
         }
 
@@ -6559,6 +6685,30 @@
             return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
         }
 
+        function openDeferredTabAndNavigate(options = {}) {
+            const loadingTitle = options.loadingTitle || 'Đang chuẩn bị Netflix...';
+            const loadingSubtitle = options.loadingSubtitle || 'Vui lòng chờ trong giây lát.';
+            const popupWindow = window.open('about:blank', '_blank');
+            if (!popupWindow) {
+                return { popupWindow: null, wasBlocked: true };
+            }
+
+            try {
+                popupWindow.document.title = 'Netflix';
+                popupWindow.document.body.style.margin = '0';
+                popupWindow.document.body.style.fontFamily = 'Arial, sans-serif';
+                popupWindow.document.body.style.display = 'flex';
+                popupWindow.document.body.style.alignItems = 'center';
+                popupWindow.document.body.style.justifyContent = 'center';
+                popupWindow.document.body.style.height = '100vh';
+                popupWindow.document.body.innerHTML = `<div style="text-align:center;color:#374151;"><div style="font-size:18px;font-weight:700;margin-bottom:8px;">${loadingTitle}</div><div style="font-size:14px;">${loadingSubtitle}</div></div>`;
+            } catch (e) {
+                // Ignore if browser restricts writing to about:blank.
+            }
+
+            return { popupWindow, wasBlocked: false };
+        }
+
         function setModalNetflixButtonLoading(isLoading) {
             const btn = document.getElementById('modalNetflixDesktopBtn');
             if (!btn) return;
@@ -6800,20 +6950,12 @@
             }
 
             // Open a tab synchronously from user click so browser won't block later redirect.
-            const popupWindow = window.open('about:blank', '_blank');
-            if (popupWindow) {
-                try {
-                    popupWindow.document.title = 'Netflix';
-                    popupWindow.document.body.style.margin = '0';
-                    popupWindow.document.body.style.fontFamily = 'Arial, sans-serif';
-                    popupWindow.document.body.style.display = 'flex';
-                    popupWindow.document.body.style.alignItems = 'center';
-                    popupWindow.document.body.style.justifyContent = 'center';
-                    popupWindow.document.body.style.height = '100vh';
-                    popupWindow.document.body.innerHTML = '<div style="text-align:center;color:#374151;"><div style="font-size:18px;font-weight:700;margin-bottom:8px;">Đang chuẩn bị Netflix...</div><div style="font-size:14px;">Vui lòng chờ trong giây lát.</div></div>';
-                } catch (e) {
-                    // Ignore if browser restricts writing to about:blank.
-                }
+            const { popupWindow, wasBlocked } = openDeferredTabAndNavigate({
+                loadingTitle: 'Đang chuẩn bị Netflix...',
+                loadingSubtitle: 'Vui lòng chờ trong giây lát.'
+            });
+            if (wasBlocked) {
+                showAlert('Thông báo', 'Trình duyệt chặn tab mới, đang mở trong tab hiện tại.', 'warning');
             }
 
             setModalNetflixButtonLoading(true);
@@ -6828,6 +6970,9 @@
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok || !data.nftoken) {
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
                     const msg = data.error || 'Không tạo được link Netflix cho tài khoản này';
                     showAlert('Lỗi Netflix', msg, 'error');
                     return;
@@ -9001,6 +9146,15 @@
             if (!btnLink) return;
             if (isNetflixDirectLoginLoading) return;
 
+            // Open a tab synchronously from click to avoid popup blockers after async fetch.
+            const { popupWindow, wasBlocked } = openDeferredTabAndNavigate({
+                loadingTitle: 'Đang tạo link Netflix...',
+                loadingSubtitle: 'Vui lòng chờ trong giây lát.'
+            });
+            if (wasBlocked) {
+                showAlert('Thông báo', 'Trình duyệt chặn tab mới, đang mở trong tab hiện tại.', 'warning');
+            }
+
             isNetflixDirectLoginLoading = true;
             setNetflixDirectLoginLoading(btnLink, true);
 
@@ -9012,6 +9166,9 @@
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok || !data.nftoken) {
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
                     netflixPoolApiReachable = true;
                     showAlert(
                         'Netflix tạm lỗi',
@@ -9036,9 +9193,16 @@
                 }
 
                 btnLink.href = targetUrl;
-                window.open(targetUrl, '_blank');
+                if (popupWindow && !popupWindow.closed) {
+                    popupWindow.location.href = targetUrl;
+                } else {
+                    window.location.href = targetUrl;
+                }
                 refreshNetflixCookiePool({ silent: true });
             } catch (e) {
+                if (popupWindow && !popupWindow.closed) {
+                    try { popupWindow.close(); } catch (closeErr) { }
+                }
                 netflixPoolApiReachable = false;
                 showAlert(
                     'Netflix tạm lỗi',
