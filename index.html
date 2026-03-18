@@ -2629,6 +2629,10 @@
                         <input type="checkbox" id="accountHiddenInput" class="w-4 h-4 text-orange-600 rounded">
                         <label for="accountHiddenInput" class="text-xs text-gray-700">Tạm ẩn tài khoản</label>
                     </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="accountOverloadedInput" class="w-4 h-4 text-amber-600 rounded">
+                        <label for="accountOverloadedInput" class="text-xs text-gray-700">Đánh dấu quá tải</label>
+                    </div>
                     <div id="accountNoteSection" class="hidden">
                         <label class="block text-xs font-medium text-gray-700 mb-1.5">Ghi chú (Chỉ Admin)</label>
                         <textarea id="accountNoteInput" rows="2"
@@ -4643,6 +4647,7 @@
                                     if (folder.accounts) {
                                         folder.accounts.forEach(acc => {
                                             if (acc.showOtp === undefined) acc.showOtp = true;
+                                            if (acc.overloaded === undefined) acc.overloaded = false;
                                         });
                                     }
                                     // Migration for ChatGPT Go note (preserve existing hardcoded note)
@@ -4755,6 +4760,7 @@
                         if (folder.accounts) {
                             folder.accounts.forEach(acc => {
                                 if (acc.showOtp === undefined) acc.showOtp = true;
+                                if (acc.overloaded === undefined) acc.overloaded = false;
                             });
                         }
                     });
@@ -4860,6 +4866,7 @@
                                     if (folder.accounts) {
                                         folder.accounts.forEach(acc => {
                                             if (acc.showOtp === undefined) acc.showOtp = true;
+                                            if (acc.overloaded === undefined) acc.overloaded = false;
                                         });
                                     }
                                 });
@@ -6605,6 +6612,9 @@
                 const hiddenBadge = (acc.hidden && isAdmin())
                     ? '<span class="inline-flex items-center rounded-full bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 text-[10px] font-bold tracking-wide">Đang ẩn</span>'
                     : '';
+                const overloadedBadge = acc.overloaded
+                    ? '<span class="inline-flex items-center rounded-full bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 text-[10px] font-bold tracking-wide">ĐANG QUÁ TẢI</span>'
+                    : '';
 
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left px-4 py-3.5 rounded-2xl border-2 border-slate-300 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.10)] hover:shadow-[0_14px_30px_rgba(79,70,229,0.18)] hover:border-indigo-300 flex items-center gap-3.5 group focus:outline-none focus:ring-2 focus:ring-indigo-500/60 transition-all duration-300 hover:-translate-y-0.5`;
@@ -6627,6 +6637,7 @@
                         <div class="flex items-center gap-2 mb-0.5">
                             <div class="acc-name font-extrabold text-[1.08rem] text-slate-700 group-hover:text-slate-900 truncate leading-tight">${acc.name}</div>
                             ${hiddenBadge}
+                            ${overloadedBadge}
                         </div>
                         ${accountSubTextHtml}
                         ${timeAgoHtml}
@@ -6999,14 +7010,17 @@
             if (currentFolderIndex === -1) return;
             const folder = DATA[currentFolderIndex];
             if (!folder || !folder.accounts[accIndex]) return;
+            const acc = folder.accounts[accIndex];
+            if (acc.overloaded && !isAdmin()) {
+                showAlert('Thông báo', 'Hiện tại tài khoản đang quá tải người dùng, hãy quay lại sau nhé!', 'warning');
+                return;
+            }
             const netflixFolderActive = isNetflixFolder(folder);
             if (netflixFolderActive && !skipNetflixUsageNoticeOnce) {
                 showNetflixUsageNoticeModal(accIndex);
                 return;
             }
             skipNetflixUsageNoticeOnce = false;
-
-            const acc = folder.accounts[accIndex];
             currentAccountIndex = accIndex;
 
             // Populate Modal
@@ -8445,6 +8459,7 @@
                         <div class="font-semibold text-gray-800 flex items-center gap-2">
                             ${acc.name}
                             ${acc.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Đã ẩn</span>' : ''}
+                            ${acc.overloaded ? '<span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">ĐANG QUÁ TẢI</span>' : ''}
                         </div>
                         <div class="flex gap-2 items-center">
                             <div class="flex flex-col gap-1">
@@ -8522,6 +8537,7 @@
             document.getElementById('accountNetflixCookieInput').placeholder = 'Dán cookie Netscape hoặc chuỗi có NetflixId/SecureNetflixId cho tài khoản này...';
             document.getElementById('accountShowOtpInput').checked = true;
             document.getElementById('accountHiddenInput').checked = false;
+            document.getElementById('accountOverloadedInput').checked = false;
             document.getElementById('accountNoteInput').value = '';
             toggleAccountNetflixCookieSection();
             // Hiển thị phần note nếu là admin
@@ -8549,6 +8565,7 @@
             document.getElementById('accountNetflixCookieInput').placeholder = 'Dán cookie Netscape hoặc chuỗi có NetflixId/SecureNetflixId cho tài khoản này...';
             document.getElementById('accountShowOtpInput').checked = acc.showOtp !== false;
             document.getElementById('accountHiddenInput').checked = acc.hidden || false;
+            document.getElementById('accountOverloadedInput').checked = acc.overloaded || false;
             // Load admin note
             document.getElementById('accountNoteInput').value = acc.adminNote || '';
             toggleAccountNetflixCookieSection();
@@ -8577,6 +8594,7 @@
             const netflixCookieRaw = document.getElementById('accountNetflixCookieInput').value.trim();
             const showOtp = document.getElementById('accountShowOtpInput').checked;
             const hidden = document.getElementById('accountHiddenInput').checked;
+            const overloaded = document.getElementById('accountOverloadedInput').checked;
             const adminNoteText = isAdmin() ? document.getElementById('accountNoteInput').value.trim() : '';
             const errorEl = document.getElementById('accountEditError');
             const currentFolder = DATA[currentAdminFolderIndex];
@@ -8612,6 +8630,7 @@
                 secret: secret,
                 showOtp: showOtp,
                 hidden: hidden,
+                overloaded: overloaded,
                 adminNote: adminNoteText,
                 netflixCookieRaw: netflixFolder ? netflixCookieRaw : '',
                 netflixId: netflixFolder ? (cookieIds.netflixId || '') : '',
