@@ -9308,7 +9308,25 @@
                     body: JSON.stringify({})
                 });
                 const data = await response.json().catch(() => ({}));
-                if (!response.ok || !data.nftoken) {
+                if (!response.ok) {
+                    if (response.status === 503 && tryOpenNetflixDesktopFallback(popupWindow)) {
+                        return;
+                    }
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
+                    showAlert(
+                        'Netflix tạm lỗi',
+                        'Tài khoản netflix hiện đang gặp sự cố, hãy báo lỗi cho admin',
+                        'error',
+                        {
+                            actionLabel: 'Báo lỗi',
+                            actionUrl: 'https://www.facebook.com/trada3k.vn'
+                        }
+                    );
+                    return;
+                }
+                if (!data.nftoken) {
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
