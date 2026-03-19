@@ -2171,6 +2171,22 @@
                     </div>
 
                     <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Fallback link Netflix Desktop (chỉ khi lỗi 503)</label>
+                        <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                            <input type="checkbox" id="netflixDesktopFallbackEnabledInput" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span>Bật mở link fallback khi API /api/nftoken trả 503</span>
+                        </label>
+                        <input type="text" id="netflixDesktopFallbackUrlInput"
+                            class="w-full mt-3 px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
+                            placeholder="https://... (Link fallback admin)">
+                        <p class="text-xs text-gray-500 mt-2">Chỉ dùng khi tạo link xem trên máy tính bị Service Unavailable (503).</p>
+                        <button onclick="saveNetflixDesktopFallbackSettings()"
+                            class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
+                            Lưu fallback Netflix Desktop
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mã bảo mật chung cho tất cả danh
                             mục</label>
                         <input type="text" id="globalAccessPasswordInput"
@@ -4052,6 +4068,8 @@
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
         let POPUP_AD_IMAGE_URL = 'popupqc.png'; // Link banner popup lúc mới vào
+        let NETFLIX_DESKTOP_FALLBACK_ENABLED = true; // Bật fallback link desktop khi API nftoken trả 503
+        let NETFLIX_DESKTOP_FALLBACK_URL = ''; // Link fallback desktop do admin cấu hình
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
         let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà FREE
         let PREMIUM_SECTION_DESC = 'Các dịch vụ cao cấp với mức giá ưu đãi'; // Mô tả section dịch vụ VIP
@@ -4060,6 +4078,17 @@
         function sanitizeFacebookLinksInHtml(html) {
             if (!html || typeof html !== 'string') return html;
             return html.replace(/https?:\/\/(?:www\.)?facebook\.com\/profile\.php\?id=61570933838011/gi, FANPAGE_URL);
+        }
+        function parseBooleanSetting(value, defaultValue = false) {
+            if (value === undefined || value === null) return !!defaultValue;
+            if (typeof value === 'boolean') return value;
+            if (typeof value === 'number') return value !== 0;
+            if (typeof value === 'string') {
+                const normalized = value.trim().toLowerCase();
+                if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
+                if (['false', '0', 'no', 'off', ''].includes(normalized)) return false;
+            }
+            return !!value;
         }
         let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
@@ -4565,6 +4594,8 @@
                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                 localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+                localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
+                localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL || '');
                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
@@ -4580,6 +4611,8 @@
                             globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
                             adBannerUrl: AD_BANNER_URL,
                             popupAdImageUrl: POPUP_AD_IMAGE_URL,
+                            netflixDesktopFallbackEnabled: NETFLIX_DESKTOP_FALLBACK_ENABLED,
+                            netflixDesktopFallbackUrl: NETFLIX_DESKTOP_FALLBACK_URL || '',
                             accountSectionDesc: ACCOUNT_SECTION_DESC,
                             popupSectionDesc: POPUP_SECTION_DESC,
                             premiumSectionDesc: PREMIUM_SECTION_DESC,
@@ -4674,6 +4707,21 @@
                                         POPUP_AD_IMAGE_URL = savedPopupBanner;
                                     }
                                 }
+                                // Load fallback link cho Netflix desktop
+                                if (firestoreData.netflixDesktopFallbackEnabled !== undefined) {
+                                    NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(firestoreData.netflixDesktopFallbackEnabled, true);
+                                    localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
+                                } else {
+                                    const savedFallbackEnabled = localStorage.getItem('trada_netflix_desktop_fallback_enabled');
+                                    NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(savedFallbackEnabled, true);
+                                }
+                                if (firestoreData.netflixDesktopFallbackUrl !== undefined) {
+                                    NETFLIX_DESKTOP_FALLBACK_URL = String(firestoreData.netflixDesktopFallbackUrl || '').trim();
+                                    localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL);
+                                } else {
+                                    const savedFallbackUrl = localStorage.getItem('trada_netflix_desktop_fallback_url');
+                                    NETFLIX_DESKTOP_FALLBACK_URL = savedFallbackUrl ? String(savedFallbackUrl).trim() : '';
+                                }
                                 // Load section descriptions
                                 if (firestoreData.accountSectionDesc !== undefined) {
                                     ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
@@ -4766,6 +4814,10 @@
                     if (savedPopupBannerUrl) {
                         POPUP_AD_IMAGE_URL = savedPopupBannerUrl;
                     }
+                    const savedFallbackEnabled = localStorage.getItem('trada_netflix_desktop_fallback_enabled');
+                    NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(savedFallbackEnabled, true);
+                    const savedFallbackUrl = localStorage.getItem('trada_netflix_desktop_fallback_url');
+                    NETFLIX_DESKTOP_FALLBACK_URL = savedFallbackUrl ? String(savedFallbackUrl).trim() : '';
                     const savedPricingProducts = localStorage.getItem('trada_pricing_products');
                     if (savedPricingProducts) {
                         PRICING_PRODUCTS = JSON.parse(savedPricingProducts);
@@ -4786,6 +4838,10 @@
                     if (saved) {
                         DATA = JSON.parse(saved);
                     }
+                    const savedFallbackEnabled = localStorage.getItem('trada_netflix_desktop_fallback_enabled');
+                    NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(savedFallbackEnabled, true);
+                    const savedFallbackUrl = localStorage.getItem('trada_netflix_desktop_fallback_url');
+                    NETFLIX_DESKTOP_FALLBACK_URL = savedFallbackUrl ? String(savedFallbackUrl).trim() : '';
                     const savedPricingProducts = localStorage.getItem('trada_pricing_products');
                     if (savedPricingProducts) {
                         PRICING_PRODUCTS = JSON.parse(savedPricingProducts);
@@ -4879,6 +4935,12 @@
                                 if (firestoreData.popupAdImageUrl !== undefined) {
                                     POPUP_AD_IMAGE_URL = firestoreData.popupAdImageUrl || 'popupqc.png';
                                 }
+                                if (firestoreData.netflixDesktopFallbackEnabled !== undefined) {
+                                    NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(firestoreData.netflixDesktopFallbackEnabled, true);
+                                }
+                                if (firestoreData.netflixDesktopFallbackUrl !== undefined) {
+                                    NETFLIX_DESKTOP_FALLBACK_URL = String(firestoreData.netflixDesktopFallbackUrl || '').trim();
+                                }
                                 // Load section descriptions
                                 if (firestoreData.accountSectionDesc !== undefined) {
                                     ACCOUNT_SECTION_DESC = firestoreData.accountSectionDesc || 'Tài khoản premium các ứng dụng phổ biến';
@@ -4897,6 +4959,8 @@
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
                                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                                 localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+                                localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
+                                localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL || '');
                                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
                                 localStorage.setItem('trada_popup_section_desc', POPUP_SECTION_DESC);
                                 localStorage.setItem('trada_premium_section_desc', PREMIUM_SECTION_DESC);
@@ -6935,6 +6999,31 @@
             }
         }
 
+        function getNetflixDesktopFallbackUrl() {
+            const rawUrl = String(NETFLIX_DESKTOP_FALLBACK_URL || '').trim();
+            if (!rawUrl) return '';
+            try {
+                const parsed = new URL(rawUrl);
+                if (!/^https?:$/i.test(parsed.protocol)) return '';
+                return parsed.toString();
+            } catch (e) {
+                return '';
+            }
+        }
+
+        function tryOpenNetflixDesktopFallback(popupWindow) {
+            if (!NETFLIX_DESKTOP_FALLBACK_ENABLED) return false;
+            const fallbackUrl = getNetflixDesktopFallbackUrl();
+            if (!fallbackUrl) return false;
+
+            if (popupWindow && !popupWindow.closed) {
+                popupWindow.location.href = fallbackUrl;
+            } else {
+                window.location.href = fallbackUrl;
+            }
+            return true;
+        }
+
         async function openNetflixForCurrentAccountByPlatform(platform = 'desktop') {
             if (currentFolderIndex === -1 || currentAccountIndex === -1) return;
             const folder = DATA[currentFolderIndex];
@@ -6972,12 +7061,22 @@
                     })
                 });
                 const data = await response.json().catch(() => ({}));
-                if (!response.ok || !data.nftoken) {
+                if (!response.ok) {
+                    if (response.status === 503 && tryOpenNetflixDesktopFallback(popupWindow)) {
+                        return;
+                    }
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
                     const msg = data.error || 'Không tạo được link Netflix cho tài khoản này';
                     showAlert('Lỗi Netflix', msg, 'error');
+                    return;
+                }
+                if (!data.nftoken) {
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
+                    showAlert('Lỗi Netflix', 'Không tạo được link Netflix cho tài khoản này', 'error');
                     return;
                 }
 
@@ -7569,6 +7668,38 @@
             }
         }
 
+        function saveNetflixDesktopFallbackSettings() {
+            const enabledInput = document.getElementById('netflixDesktopFallbackEnabledInput');
+            const urlInput = document.getElementById('netflixDesktopFallbackUrlInput');
+            if (!enabledInput || !urlInput) return;
+
+            NETFLIX_DESKTOP_FALLBACK_ENABLED = !!enabledInput.checked;
+            NETFLIX_DESKTOP_FALLBACK_URL = String(urlInput.value || '').trim();
+
+            localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
+            localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL);
+
+            if (window.firebaseDb && window.firebaseDoc && window.firebaseUpdateDoc) {
+                try {
+                    const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
+                    window.firebaseUpdateDoc(dataRef, {
+                        netflixDesktopFallbackEnabled: NETFLIX_DESKTOP_FALLBACK_ENABLED,
+                        netflixDesktopFallbackUrl: NETFLIX_DESKTOP_FALLBACK_URL
+                    }).then(() => {
+                        showAlert("Thành công", "Đã lưu cài đặt fallback Netflix Desktop!", 'success');
+                    }).catch((error) => {
+                        console.error("Error saving Netflix desktop fallback settings:", error);
+                        showAlert("Lỗi", "Không thể lưu cài đặt fallback lên Firestore, đã lưu vào localStorage", 'warning');
+                    });
+                } catch (error) {
+                    console.error("Error saving Netflix desktop fallback settings:", error);
+                    showAlert("Lỗi", "Không thể lưu cài đặt fallback lên Firestore, đã lưu vào localStorage", 'warning');
+                }
+            } else {
+                showAlert("Thành công", "Đã lưu cài đặt fallback Netflix Desktop vào localStorage!", 'success');
+            }
+        }
+
         // Save Ad Banner URL
         function saveAdBannerUrl() {
             const urlInput = document.getElementById('adBannerUrlInput');
@@ -7719,10 +7850,14 @@
             const accountDescInput = document.getElementById('accountSectionDescInput');
             const popupDescInput = document.getElementById('popupSectionDescInput');
             const premiumDescInput = document.getElementById('premiumSectionDescInput');
+            const netflixFallbackEnabledInput = document.getElementById('netflixDesktopFallbackEnabledInput');
+            const netflixFallbackUrlInput = document.getElementById('netflixDesktopFallbackUrlInput');
 
             if (accountDescInput) accountDescInput.value = ACCOUNT_SECTION_DESC || '';
             if (popupDescInput) popupDescInput.value = POPUP_SECTION_DESC || '';
             if (premiumDescInput) premiumDescInput.value = PREMIUM_SECTION_DESC || '';
+            if (netflixFallbackEnabledInput) netflixFallbackEnabledInput.checked = !!NETFLIX_DESKTOP_FALLBACK_ENABLED;
+            if (netflixFallbackUrlInput) netflixFallbackUrlInput.value = NETFLIX_DESKTOP_FALLBACK_URL || '';
             renderAdminPricingProducts();
         }
 
