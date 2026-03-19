@@ -5,8 +5,7 @@ const {
     persistCookies,
     findCustomerByCode,
     isCustomerWarrantyValid,
-    extractNetflixIdsFromCookie,
-    buildApiErrorPayload
+    extractNetflixIdsFromCookie
 } = require('./_nf-store');
 
 const TV8_URL = 'https://www.netflix.com/tv8';
@@ -323,12 +322,10 @@ module.exports = async function (req, res) {
             message
         });
     } catch (e) {
-        const payload = buildApiErrorPayload(e, 'Internal server error');
         return res.status(500).json({
             success: false,
             outcome: 'failed',
-            message: payload.error,
-            ...(payload.debug ? { debug: payload.debug } : {})
+            message: e.message || 'Internal server error'
         });
     }
 };

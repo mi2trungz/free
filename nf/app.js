@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
 const ADMIN_EMAIL = 'cungbocap306@gmail.com';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
@@ -19,8 +19,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 let currentLookupCode = '';
 let currentLookupEligible = false;
@@ -37,19 +35,12 @@ let rawEditorMode = 'edit';
 let mobileGeneratedLink = '';
 let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
-let lookupDebounceTimer = null;
 let lookupLoadingCounter = 0;
 let headerFilterPopupContext = null;
 let tagPickerContext = null;
 let rowActionMenuContext = null;
 let rowLongPressTimer = null;
 let rowLongPressPointerId = null;
-let adminDataLoading = false;
-let customersLoaded = false;
-let cookiesLoaded = false;
-let customersLoading = false;
-let cookiesLoading = false;
-let adminDataStale = false;
 
 const tableViewState = {
     cookies: {
@@ -340,16 +331,10 @@ function setControlRuntimeDisabled(disabled) {
     const lookupBtn = el('lookupBtn');
     const codeInput = el('customerCodeInput');
     const adminLoginBtn = el('adminLoginBtn');
-    const adminPasswordLoginBtn = el('adminPasswordLoginBtn');
-    const adminEmailInput = el('adminEmailInput');
-    const adminPasswordInput = el('adminPasswordInput');
 
     if (lookupBtn) lookupBtn.disabled = disabled;
     if (codeInput) codeInput.disabled = disabled;
     if (adminLoginBtn) adminLoginBtn.disabled = disabled;
-    if (adminPasswordLoginBtn) adminPasswordLoginBtn.disabled = disabled;
-    if (adminEmailInput) adminEmailInput.disabled = disabled;
-    if (adminPasswordInput) adminPasswordInput.disabled = disabled;
     if (disabled) {
         setDeviceButtonsEnabled(false);
         setDeviceSectionVisible(false);
@@ -399,15 +384,6 @@ async function apiRequest(url, method = 'GET', body = null) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.error || 'Yeu cau that bai');
     return data;
-}
-
-function scheduleLookupCustomerCode() {
-    if (runtimeBlocked) return;
-    if (lookupDebounceTimer) clearTimeout(lookupDebounceTimer);
-    lookupDebounceTimer = setTimeout(() => {
-        lookupDebounceTimer = null;
-        lookupCustomerCode();
-    }, 1000);
 }
 
 function setButtonBusy(button, busy, busyText = 'Dang xu ly...') {
@@ -712,9 +688,7 @@ async function lookupCustomerCode() {
         renderLookupResultV2(data);
     } catch (error) {
         resetLookupResult();
-        if (!onQuotaFriendlyLookupError(error)) {
-            setLookupState(error.message || 'Khong kiem tra duoc ma.', 'error');
-        }
+        setLookupState(error.message || 'Không kiểm tra được mã.', 'error');
     } finally {
         setButtonBusy(lookupBtn, false);
     }
@@ -877,10 +851,6 @@ function formatWarrantyCell(customer) {
 function renderCustomersTable() {
     const tbody = el('customersTableBody');
     if (!tbody) return;
-    if (!customersLoaded) {
-        tbody.innerHTML = '<tr><td colspan="5" data-label="Trang thai">Chua tai danh sach khach. Bam "Load danh sach khach" de tai du lieu.</td></tr>';
-        return;
-    }
     if (!Array.isArray(customersCache) || customersCache.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" data-label="Trang thai">Chua co khach hang. Tao ma moi de bat dau.</td></tr>';
         return;
@@ -910,10 +880,6 @@ function renderCustomersTable() {
 function renderCookiesSummary() {
     const summary = el('cookieSummary');
     if (!summary) return;
-    if (!cookiesLoaded) {
-        summary.textContent = 'Chua tai danh sach cookie.';
-        return;
-    }
     if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
         summary.textContent = '';
         return;
@@ -935,11 +901,6 @@ function renderCookiesTable() {
     const tbody = el('cookiesTableBody');
     if (!tbody) return;
     syncCookieSelection();
-    if (!cookiesLoaded) {
-        tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua tai danh sach cookie. Bam "Load danh sach cookie" de tai du lieu.</td></tr>';
-        updateCookieSelectionUi();
-        return;
-    }
     if (!Array.isArray(cookiesCache) || cookiesCache.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" data-label="Trang thai">Chua co cookie trong pool. Hay import danh sach cookie.</td></tr>';
         updateCookieSelectionUi();
@@ -1153,171 +1114,26 @@ function mapTagAction(tagKey = '', mode = 'add') {
 }
 
 async function loadCustomers() {
-    if (customersLoading) return;
-    customersLoading = true;
-    const loadBtn = el('loadCustomersBtn');
-    setButtonBusy(loadBtn, true, 'Dang tai...');
-    updateAdminLoadStateUi();
-    try {
-        const data = await apiRequest('/api/nf-customers', 'GET');
-        customersCache = Array.isArray(data.customers) ? data.customers : [];
-        customersLoaded = true;
-        renderCustomersTable();
-        renderCookiesTable();
-    } finally {
-        customersLoading = false;
-        setButtonBusy(loadBtn, false);
-        updateAdminLoadStateUi();
-    }
+    const data = await apiRequest('/api/nf-customers', 'GET');
+    customersCache = Array.isArray(data.customers) ? data.customers : [];
+    renderCustomersTable();
+    renderCookiesTable();
 }
 
 async function loadCookies() {
-    if (cookiesLoading) return;
-    cookiesLoading = true;
-    const loadBtn = el('loadCookiesBtn');
-    setButtonBusy(loadBtn, true, 'Dang tai...');
-    updateAdminLoadStateUi();
-    try {
-        const data = await apiRequest('/api/nf-cookies', 'GET');
-        cookiesCache = Array.isArray(data.cookies) ? data.cookies : [];
-        cookiesSummary = data;
-        cookiesLoaded = true;
-        syncCookieSelection();
-        renderCookiesSummary();
-        renderCookiesTable();
-    } finally {
-        cookiesLoading = false;
-        setButtonBusy(loadBtn, false);
-        updateAdminLoadStateUi();
-    }
+    const data = await apiRequest('/api/nf-cookies', 'GET');
+    cookiesCache = Array.isArray(data.cookies) ? data.cookies : [];
+    cookiesSummary = data;
+    syncCookieSelection();
+    renderCookiesSummary();
+    renderCookiesTable();
 }
 
 async function loadAdminData() {
-    if (adminDataLoading) return;
-    adminDataLoading = true;
-    updateAdminLoadStateUi();
     try {
         await Promise.all([loadCustomers(), loadCookies()]);
-        adminDataStale = false;
     } catch (error) {
         toast(error.message || 'Khong tai duoc du lieu admin.', 'bad');
-    } finally {
-        adminDataLoading = false;
-        updateAdminLoadStateUi();
-    }
-}
-
-function isCurrentUserAdmin() {
-    const user = auth && auth.currentUser;
-    return !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
-}
-
-function ensureAdminDataLoaded() {
-    if (!isCurrentUserAdmin()) return;
-    if ((customersLoaded && cookiesLoaded) || adminDataLoading) return;
-    loadAdminData();
-}
-
-function clearAdminCachesLocal() {
-    adminDataLoading = false;
-    customersLoaded = false;
-    cookiesLoaded = false;
-    customersLoading = false;
-    cookiesLoading = false;
-    adminDataStale = false;
-    customersCache = [];
-    cookiesCache = [];
-    cookiesSummary = null;
-    selectedCookieIds = new Set();
-    renderCustomersTable();
-    renderCookiesSummary();
-    renderCookiesTable();
-    updateCookieSelectionUi();
-    updateAdminLoadStateUi();
-}
-
-function markAdminDataStale() {
-    adminDataStale = true;
-    updateAdminLoadStateUi();
-}
-
-async function loadAdminDataIfNeeded() {
-    if (!isCurrentUserAdmin()) return;
-    if ((customersLoaded && cookiesLoaded) || adminDataLoading) return;
-    await loadAdminData();
-}
-
-function resetAdminStateOnLogout() {
-    clearAdminCachesLocal();
-}
-
-function onQuotaFriendlyLookupError(error) {
-    const message = String((error && error.message) || '').toLowerCase();
-    if (message.includes('han muc doc du lieu hom nay')) {
-        setLookupState('He thong dang qua gioi han doc du lieu hom nay. Vui long thu lai sau.', 'warning');
-        return true;
-    }
-    return false;
-}
-
-async function onLoadCustomersClick() {
-    if (runtimeBlocked) return;
-    try {
-        await loadCustomers();
-        if (!adminDataLoading && cookiesLoaded) adminDataStale = false;
-    } catch (error) {
-        toast(error.message || 'Khong tai duoc danh sach khach.', 'bad');
-    } finally {
-        updateAdminLoadStateUi();
-    }
-}
-
-async function onLoadCookiesClick() {
-    if (runtimeBlocked) return;
-    try {
-        await loadCookies();
-        if (!adminDataLoading && customersLoaded) adminDataStale = false;
-    } catch (error) {
-        toast(error.message || 'Khong tai duoc danh sach cookie.', 'bad');
-    } finally {
-        updateAdminLoadStateUi();
-    }
-}
-
-function updateAdminLoadStateUi() {
-    const customersState = el('customersLoadState');
-    const cookiesState = el('cookiesLoadState');
-
-    if (customersState) {
-        if (customersLoading) {
-            customersState.textContent = 'Dang tai danh sach khach...';
-            setStateClass(customersState, 'loading');
-        } else if (!customersLoaded) {
-            customersState.textContent = 'Chua tai danh sach khach. Bam Load danh sach khach.';
-            setStateClass(customersState, 'idle');
-        } else if (adminDataStale) {
-            customersState.textContent = 'Dang hien thi du lieu cuc bo, bam Load de dong bo day du.';
-            setStateClass(customersState, 'warning');
-        } else {
-            customersState.textContent = 'Danh sach khach da duoc tai.';
-            setStateClass(customersState, 'success');
-        }
-    }
-
-    if (cookiesState) {
-        if (cookiesLoading) {
-            cookiesState.textContent = 'Dang tai danh sach cookie...';
-            setStateClass(cookiesState, 'loading');
-        } else if (!cookiesLoaded) {
-            cookiesState.textContent = 'Chua tai danh sach cookie. Bam Load danh sach cookie.';
-            setStateClass(cookiesState, 'idle');
-        } else if (adminDataStale) {
-            cookiesState.textContent = 'Du lieu cookie co the da cu. Bam Load de dong bo.';
-            setStateClass(cookiesState, 'warning');
-        } else {
-            cookiesState.textContent = 'Danh sach cookie da duoc tai.';
-            setStateClass(cookiesState, 'success');
-        }
     }
 }
 
@@ -1369,7 +1185,6 @@ function setTab(tab) {
     });
     el('tabCustomers').classList.toggle('hidden', activeTab !== 'customers');
     el('tabCookies').classList.toggle('hidden', activeTab !== 'cookies');
-    updateAdminLoadStateUi();
 }
 
 function openAdminModal() {
@@ -1377,7 +1192,6 @@ function openAdminModal() {
     if (!modal) return;
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
-    updateAdminLoadStateUi();
 }
 
 function closeAdminModal() {
@@ -1492,11 +1306,7 @@ function renderAdminState(user) {
         setStateClass(authState, isAdmin ? 'success' : 'idle');
     }
 
-    if (!isAdmin) {
-        resetAdminStateOnLogout();
-        return;
-    }
-    updateAdminLoadStateUi();
+    if (isAdmin) loadAdminData();
 }
 
 async function onSubmitCustomerForm(event) {
@@ -1530,25 +1340,12 @@ async function onSubmitCustomerForm(event) {
                 status: found && found.status ? found.status : 'active'
             });
             toast('Da cap nhat khach hang.', 'ok');
-            if (customersLoaded) await loadCustomers();
-            else markAdminDataStale();
         } else {
-            const created = await apiRequest('/api/nf-customers', 'POST', { name, warrantyExpiresAt: warrantyIso });
+            await apiRequest('/api/nf-customers', 'POST', { name, warrantyExpiresAt: warrantyIso });
             toast('Da tao ma khach hang moi.', 'ok');
-            const newCustomer = created && created.customer ? created.customer : null;
-            if (newCustomer && newCustomer.code) {
-                const codeKey = normalizeCode(newCustomer.code);
-                customersCache = [newCustomer, ...customersCache.filter((item) => normalizeCode(item.code) !== codeKey)];
-                customersLoaded = true;
-                adminDataStale = true;
-                updateAdminLoadStateUi();
-                renderCustomersTable();
-                renderCookiesTable();
-            } else {
-                markAdminDataStale();
-            }
         }
         clearCustomerForm();
+        await loadCustomers();
     } catch (error) {
         toast(error.message || 'Luu khach hang that bai.', 'bad');
     } finally {
@@ -1684,8 +1481,7 @@ async function importCookies() {
             setStateClass(state, 'success');
         }
         toast('Import cookie thanh cong.', 'ok');
-        if (cookiesLoaded) await loadCookies();
-        else markAdminDataStale();
+        await loadCookies();
         input.value = '';
     } catch (error) {
         if (state) {
@@ -1718,22 +1514,12 @@ function restoreCookiesCache(snapshot = []) {
 }
 
 function refreshAdminDataInBackground(options = {}) {
-    if (!isCurrentUserAdmin()) return;
     const { cookies = true, customers = false } = options;
-    if (!cookies && !customers) return;
-    adminDataStale = true;
-    updateAdminLoadStateUi();
-    const modal = el('nfAdminModal');
-    const isAdminOpen = !!(modal && !modal.classList.contains('hidden'));
-    if (!isAdminOpen) return;
     const jobs = [];
-    if (cookies && cookiesLoaded) jobs.push(loadCookies());
-    if (customers && customersLoaded) jobs.push(loadCustomers());
+    if (cookies) jobs.push(loadCookies());
+    if (customers) jobs.push(loadCustomers());
     if (jobs.length === 0) return;
-    Promise.all(jobs).then(() => {
-        adminDataStale = false;
-        updateAdminLoadStateUi();
-    }).catch((error) => {
+    Promise.all(jobs).catch((error) => {
         toast(error.message || 'Khong dong bo du lieu nen duoc.', 'warn');
     });
 }
@@ -2345,80 +2131,52 @@ async function onRowActionMenuClick(event) {
     }
 }
 
-async function onAdminLogin(method = 'google') {
+async function onAdminLogin() {
     if (runtimeBlocked) return;
+    const email = String(el('adminEmailInput').value || '').trim();
+    const password = String(el('adminPasswordInput').value || '').trim();
+    if (!email || !password) {
+        toast('Vui long nhap email va mat khau.', 'warn');
+        return;
+    }
 
     const loginBtn = el('adminLoginBtn');
-    const passwordLoginBtn = el('adminPasswordLoginBtn');
     const authState = el('adminAuthState');
-    const usingPassword = method === 'password';
-    const activeBtn = usingPassword ? passwordLoginBtn : loginBtn;
-    setButtonBusy(activeBtn, true, usingPassword ? 'Dang dang nhap...' : 'Dang dang nhap Google...');
+    setButtonBusy(loginBtn, true, 'Dang dang nhap...');
     if (authState) {
         authState.textContent = 'Dang xac thuc...';
         setStateClass(authState, 'loading');
     }
 
     try {
-        let cred = null;
-        if (usingPassword) {
-            const email = String(el('adminEmailInput').value || '').trim();
-            const password = String(el('adminPasswordInput').value || '').trim();
-            if (!email || !password) {
-                throw new Error('Vui long nhap email va mat khau admin.');
-            }
-            cred = await signInWithEmailAndPassword(auth, email, password);
-        } else {
-            cred = await signInWithPopup(auth, googleProvider);
-        }
+        const cred = await signInWithEmailAndPassword(auth, email, password);
         const user = cred.user;
         if (!user || !user.email || user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
             await signOut(auth);
             throw new Error('Tai khoan nay khong co quyen admin /nf.');
         }
-        toast('Dang nhap admin thanh cong.', 'ok');
+            toast('Đăng nhập admin thành công.', 'ok');
     } catch (error) {
-        let finalError = error;
-        if (
-            !usingPassword
-            && error
-            && (error.code === 'auth/popup-blocked'
-                || error.code === 'auth/popup-closed-by-user'
-                || error.code === 'auth/cancelled-popup-request'
-                || error.code === 'auth/operation-not-supported-in-this-environment')
-        ) {
-            await signInWithRedirect(auth, googleProvider);
-            return;
-        }
-        if (
-            error
-            && usingPassword
-            && (error.code === 'auth/user-not-found'
-                || error.code === 'auth/invalid-credential'
-                || error.code === 'auth/wrong-password')
-        ) {
-            finalError = new Error('Email hoac mat khau admin khong dung.');
-        }
         if (authState) {
-            authState.textContent = finalError.message || 'Dang nhap that bai.';
+            authState.textContent = error.message || 'Đăng nhập thất bại.';
             setStateClass(authState, 'error');
         }
-        toast(finalError.message || 'Dang nhap that bai.', 'bad');
+        toast(error.message || 'Đăng nhập thất bại.', 'bad');
     } finally {
-        setButtonBusy(activeBtn, false);
+        setButtonBusy(loginBtn, false);
     }
 }
 
 function bindEvents() {
     const lookupBtn = el('lookupBtn');
-    if (lookupBtn) lookupBtn.addEventListener('click', scheduleLookupCustomerCode);
+    if (lookupBtn) lookupBtn.addEventListener('click', lookupCustomerCode);
 
     const codeInput = el('customerCodeInput');
     if (codeInput) {
         codeInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                scheduleLookupCustomerCode();
+                lookupCustomerCode();
             }
         });
     }
@@ -2625,20 +2383,7 @@ function bindEvents() {
     }
 
     const adminLoginBtn = el('adminLoginBtn');
-    if (adminLoginBtn) adminLoginBtn.addEventListener('click', () => onAdminLogin('google'));
-
-    const adminPasswordLoginBtn = el('adminPasswordLoginBtn');
-    if (adminPasswordLoginBtn) adminPasswordLoginBtn.addEventListener('click', () => onAdminLogin('password'));
-
-    const adminPasswordInput = el('adminPasswordInput');
-    if (adminPasswordInput) {
-        adminPasswordInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                onAdminLogin('password');
-            }
-        });
-    }
+    if (adminLoginBtn) adminLoginBtn.addEventListener('click', onAdminLogin);
 
     const adminLogoutBtn = el('adminLogoutBtn');
     if (adminLogoutBtn) {
@@ -2667,12 +2412,6 @@ function bindEvents() {
     tabButtons.forEach((btn) => {
         btn.addEventListener('click', () => setTab(btn.dataset.tab));
     });
-
-    const loadCustomersBtn = el('loadCustomersBtn');
-    if (loadCustomersBtn) loadCustomersBtn.addEventListener('click', onLoadCustomersClick);
-
-    const loadCookiesBtn = el('loadCookiesBtn');
-    if (loadCookiesBtn) loadCookiesBtn.addEventListener('click', onLoadCookiesClick);
 
     const customerForm = el('customerForm');
     if (customerForm) customerForm.addEventListener('submit', onSubmitCustomerForm);
@@ -2910,10 +2649,6 @@ function bootstrap() {
     resetCookieFilters();
     resetCustomerFilters();
     setTab(activeTab);
-    renderCustomersTable();
-    renderCookiesSummary();
-    renderCookiesTable();
-    updateAdminLoadStateUi();
     resetLookupResult();
     setLookupState('Vui lòng nhập mã khách hàng.', 'idle');
     setCookieCheckState('Chua check cookie.', 'idle');
@@ -2926,6 +2661,5 @@ function bootstrap() {
 }
 
 bootstrap();
-
 
 

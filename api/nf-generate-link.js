@@ -7,8 +7,7 @@ const {
     isCustomerWarrantyValid,
     isCookieOverCapacityActive,
     buildUrlByDevice,
-    extractNetflixIdsFromCookie,
-    buildApiErrorPayload
+    extractNetflixIdsFromCookie
 } = require('./_nf-store');
 const { requestNetflixToken } = require('./_netflix-token-engine');
 
@@ -324,6 +323,6 @@ module.exports = async function (req, res) {
 
         return res.status(503).json({ error: 'Không còn cookie LIVE khả dụng trong danh sách.' });
     } catch (e) {
-        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
+        return res.status(500).json({ error: e.message || 'Internal server error' });
     }
 };

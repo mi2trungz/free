@@ -217,14 +217,13 @@
 
             <div id="adminAuthBox" class="auth-box">
                 <h3>Đăng nhập admin</h3>
-                <p>Đăng nhập bằng Google hoặc mật khẩu. Chỉ email admin được quyền quản trị khu vực này.</p>
+                <p>Chỉ email admin được quyền quản trị khu vực này.</p>
                 <div class="auth-grid">
                     <input id="adminEmailInput" class="text-input" type="email" placeholder="Email admin">
                     <input id="adminPasswordInput" class="text-input" type="password" placeholder="Mật khẩu">
                 </div>
                 <div class="auth-actions">
-                    <button id="adminLoginBtn" class="btn btn-primary" type="button">Đăng nhập với Google</button>
-                    <button id="adminPasswordLoginBtn" class="btn btn-ghost" type="button">Đăng nhập mật khẩu</button>
+                    <button id="adminLoginBtn" class="btn btn-primary" type="button">Đăng nhập</button>
                     <div id="adminAuthState" class="state-text state-idle">Chưa đăng nhập.</div>
                 </div>
             </div>
@@ -246,11 +245,7 @@
                 <section id="tabCustomers" class="tab-section">
                     <div class="section-head">
                         <h3>Tạo hoặc cập nhật mã khách hàng</h3>
-                        <div class="section-head-actions">
-                            <button id="loadCustomersBtn" class="btn btn-ghost" type="button">Load danh sách khách</button>
-                        </div>
                     </div>
-                    <div id="customersLoadState" class="state-text state-idle">Chưa tải danh sách khách. Bấm Load danh sách khách.</div>
                     <form id="customerForm">
                         <div class="form-grid">
                             <input id="customerCodeEditInput" class="text-input hidden" type="text" placeholder="Mã khách hàng (ví dụ: NFABC123)" autocomplete="off">
@@ -312,11 +307,7 @@
                     <div class="section-head">
                         <h3>Cookie tổng</h3>
                         <p>Nhấn nút import để mở form nhập cookie tổng.</p>
-                        <div class="section-head-actions">
-                            <button id="loadCookiesBtn" class="btn btn-ghost" type="button">Load danh sách cookie</button>
-                        </div>
                     </div>
-                    <div id="cookiesLoadState" class="state-text state-idle">Chưa tải danh sách cookie. Bấm Load danh sách cookie.</div>
 
                     <button id="toggleCookieImportBtn" class="btn btn-ghost import-toggle-btn" type="button">Import cookie tổng</button>
                     <div id="cookieImportCollapse" class="import-collapse hidden">

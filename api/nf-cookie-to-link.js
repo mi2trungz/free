@@ -1,8 +1,7 @@
 ﻿const {
     parseBody,
     extractNetflixIdsFromCookie,
-    buildUrlByDevice,
-    buildApiErrorPayload
+    buildUrlByDevice
 } = require('./_nf-store');
 const { requestNetflixToken, detectPlaybackOverCapacity } = require('./_netflix-token-engine');
 
@@ -88,6 +87,6 @@ module.exports = async function (req, res) {
             overloadMessage: 'Khong the xac dinh qua tai vi cookie chua LIVE.'
         });
     } catch (e) {
-        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
+        return res.status(500).json({ error: e.message || 'Internal server error' });
     }
 };

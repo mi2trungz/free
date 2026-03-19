@@ -5,8 +5,7 @@ const {
     writeDelta,
     findCustomerByCode,
     isCustomerWarrantyValid,
-    extractNetflixIdsFromCookie,
-    buildApiErrorPayload
+    extractNetflixIdsFromCookie
 } = require('./_nf-store');
 const { requestNetflixToken, detectPlaybackOverCapacity } = require('./_netflix-token-engine');
 
@@ -165,6 +164,6 @@ module.exports = async function (req, res) {
             message: 'Cookie LIVE va khong co dau hieu qua tai.'
         });
     } catch (e) {
-        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
+        return res.status(500).json({ error: e.message || 'Internal server error' });
     }
 };
