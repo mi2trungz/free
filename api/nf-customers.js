@@ -7,8 +7,13 @@ const {
     sanitizeCustomerStatus,
     makeCustomerCode,
     findCustomerIndexByCode,
-    buildWarrantyInfo
+    buildWarrantyInfo,
+    buildApiErrorPayload
 } = require('./_nf-store');
+const { getCache, setCache, deleteCache } = require('./_nf-cache');
+
+const CUSTOMERS_CACHE_KEY = 'customers:list';
+const CUSTOMERS_CACHE_TTL_MS = 30 * 1000;
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -38,19 +43,23 @@ module.exports = async function (req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
-        const customers = await readCustomers();
-
         if (req.method === 'GET') {
+            const cached = getCache(CUSTOMERS_CACHE_KEY);
+            if (cached) return res.status(200).json(cached);
+            const customers = await readCustomers();
             const sorted = customers
                 .slice()
                 .sort((a, b) => (new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
-            return res.status(200).json({
+            const payload = {
                 total: sorted.length,
                 customers: sorted.map(customerPublicDto)
-            });
+            };
+            setCache(CUSTOMERS_CACHE_KEY, payload, CUSTOMERS_CACHE_TTL_MS);
+            return res.status(200).json(payload);
         }
 
         const body = parseBody(req.body);
+        const customers = await readCustomers();
 
         if (req.method === 'POST') {
             const name = String(body.name || '').trim();
@@ -76,6 +85,8 @@ module.exports = async function (req, res) {
                 upsertCustomers: [next]
             });
             if (!ok) return res.status(500).json({ error: 'Failed to create customer' });
+            deleteCache(CUSTOMERS_CACHE_KEY);
+            deleteCache(`lookup:${next.code}`);
             return res.status(200).json({ success: true, customer: customerPublicDto(next) });
         }
 
@@ -132,6 +143,14 @@ module.exports = async function (req, res) {
                 });
             }
             if (!ok) return res.status(500).json({ error: 'Failed to update customer' });
+            deleteCache(CUSTOMERS_CACHE_KEY);
+            deleteCache('cookies:list');
+            if (nextCode !== code) {
+                deleteCache(`lookup:${code}`);
+                deleteCache(`lookup:${nextCode}`);
+            } else {
+                deleteCache(`lookup:${code}`);
+            }
             return res.status(200).json({ success: true, customer: customerPublicDto(updated) });
         }
 
@@ -160,11 +179,14 @@ module.exports = async function (req, res) {
                 upsertCookies: changedCookies
             });
             if (!ok) return res.status(500).json({ error: 'Failed to delete customer' });
+            deleteCache(CUSTOMERS_CACHE_KEY);
+            deleteCache('cookies:list');
+            deleteCache(`lookup:${code}`);
             return res.status(200).json({ success: true });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (e) {
-        return res.status(500).json({ error: e.message || 'Internal server error' });
+        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
     }
 };

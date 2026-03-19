@@ -13,8 +13,8 @@ const DOC_CUSTOMERS = 'settings/nf_customers';
 const DOC_COOKIE_POOL = 'settings/nf_cookie_pool';
 const DOC_META = 'settings/nf_meta';
 
-const COLL_CUSTOMERS_ITEMS = 'settings/nf_customers/items';
-const COLL_COOKIES_ITEMS = 'settings/nf_cookies/items';
+const COLL_CUSTOMERS_ITEMS = 'nf_customer_items';
+const COLL_COOKIES_ITEMS = 'nf_cookie_items';
 const STORAGE_VERSION_V2 = 2;
 
 let storageVersionCache = null;
@@ -42,6 +42,89 @@ function parseBody(rawBody) {
     return {};
 }
 
+function parseFirestoreErrorBody(rawBody) {
+    if (!rawBody || typeof rawBody !== 'string') return {};
+    try {
+        const parsed = JSON.parse(rawBody);
+        const err = parsed && parsed.error ? parsed.error : {};
+        return {
+            status: String(err.status || '').trim(),
+            message: String(err.message || '').trim()
+        };
+    } catch (e) {
+        return {};
+    }
+}
+
+function createFirestoreCollectionListError(collectionPath, statusCode, responseBody) {
+    const parsed = parseFirestoreErrorBody(responseBody);
+    const err = new Error(`Failed to list collection ${collectionPath}`);
+    err.code = parsed.status === 'RESOURCE_EXHAUSTED'
+        ? 'FIRESTORE_QUOTA_EXCEEDED'
+        : 'FIRESTORE_LIST_COLLECTION_FAILED';
+    err.source = 'firestore';
+    err.statusCode = Number(statusCode) || 0;
+    err.collectionPath = String(collectionPath || '').trim();
+    err.firestoreStatus = parsed.status || '';
+    err.firestoreMessage = parsed.message || '';
+    return err;
+}
+
+function createFirestoreDocReadError(docPath, statusCode, responseBody) {
+    const parsed = parseFirestoreErrorBody(responseBody);
+    const err = new Error(`Failed to read document ${docPath}`);
+    err.code = parsed.status === 'RESOURCE_EXHAUSTED'
+        ? 'FIRESTORE_QUOTA_EXCEEDED'
+        : 'FIRESTORE_READ_DOC_FAILED';
+    err.source = 'firestore';
+    err.statusCode = Number(statusCode) || 0;
+    err.docPath = String(docPath || '').trim();
+    err.firestoreStatus = parsed.status || '';
+    err.firestoreMessage = parsed.message || '';
+    return err;
+}
+
+function isQuotaExceededError(error) {
+    const code = String(error && error.code ? error.code : '').trim().toUpperCase();
+    const status = Number(error && error.statusCode ? error.statusCode : 0);
+    const firestoreStatus = String(error && error.firestoreStatus ? error.firestoreStatus : '').trim().toUpperCase();
+    const firestoreMessage = String(error && error.firestoreMessage ? error.firestoreMessage : '');
+    const message = String(error && error.message ? error.message : '');
+    if (code === 'FIRESTORE_QUOTA_EXCEEDED') return true;
+    if (firestoreStatus === 'RESOURCE_EXHAUSTED') return true;
+    if (status === 429) return true;
+    return /quota|resource exhausted|too many/i.test(`${firestoreMessage} ${message}`);
+}
+
+function toSafeDebugError(error) {
+    const input = error || {};
+    const debug = {};
+    if (input.code) debug.code = String(input.code);
+    if (Number.isFinite(Number(input.statusCode)) && Number(input.statusCode) > 0) {
+        debug.status = Number(input.statusCode);
+    }
+    if (input.source) debug.source = String(input.source);
+    if (input.collectionPath) debug.collectionPath = String(input.collectionPath);
+    if (input.docPath) debug.docPath = String(input.docPath);
+    if (input.firestoreStatus) debug.firestoreStatus = String(input.firestoreStatus);
+    if (input.firestoreMessage) debug.firestoreMessage = String(input.firestoreMessage);
+    return debug;
+}
+
+function buildApiErrorPayload(error, fallbackMessage = 'Internal server error') {
+    const isQuota = isQuotaExceededError(error);
+    const message = String((error && error.message) || '').trim();
+    const payload = {
+        error: isQuota
+            ? 'He thong tam het han muc doc du lieu hom nay. Vui long thu lai sau.'
+            : (message || String(fallbackMessage || 'Internal server error'))
+    };
+    const debug = toSafeDebugError(error);
+    if (isQuota) debug.code = 'FIRESTORE_QUOTA_EXCEEDED';
+    if (Object.keys(debug).length > 0) payload.debug = debug;
+    return payload;
+}
+
 function firestoreDocPath(docPath) {
     return `/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${docPath}?key=${FIREBASE_API_KEY}`;
 }
@@ -67,6 +150,20 @@ async function readDoc(docPath) {
         method: 'GET'
     });
     if (response.statusCode < 200 || response.statusCode >= 300) return null;
+    try { return JSON.parse(response.body || '{}'); } catch (e) { return null; }
+}
+
+async function readDocStrict(docPath) {
+    const response = await httpRequest({
+        hostname: 'firestore.googleapis.com',
+        port: 443,
+        path: firestoreDocPath(docPath),
+        method: 'GET'
+    });
+    if (response.statusCode === 404) return null;
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw createFirestoreDocReadError(docPath, response.statusCode, response.body);
+    }
     try { return JSON.parse(response.body || '{}'); } catch (e) { return null; }
 }
 
@@ -113,7 +210,7 @@ async function listCollectionDocs(collectionPath, options = {}) {
 
         if (response.statusCode === 404) return [];
         if (response.statusCode < 200 || response.statusCode >= 300) {
-            throw new Error(`Failed to list collection ${collectionPath}`);
+            throw createFirestoreCollectionListError(collectionPath, response.statusCode, response.body);
         }
 
         let parsed = {};
@@ -493,6 +590,24 @@ async function readCustomers() {
     return readLegacyCustomers();
 }
 
+async function readCustomerByCode(customerCode = '') {
+    const normalizedCode = String(customerCode || '').trim().toUpperCase();
+    if (!normalizedCode) return null;
+
+    const docPath = buildItemDocPath(COLL_CUSTOMERS_ITEMS, normalizedCode);
+    const doc = await readDocStrict(docPath);
+    if (doc && doc.fields) {
+        const parsed = parseCustomerFields(doc.fields || {});
+        if (parsed && parsed.code) return parsed;
+    }
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return null;
+
+    const legacy = await readLegacyCustomers();
+    return findCustomerByCode(legacy, normalizedCode);
+}
+
 async function readCookies() {
     const dataV2 = await readCookiesV2();
     if (dataV2.length > 0) return dataV2;
@@ -867,6 +982,7 @@ module.exports = {
     STORAGE_VERSION_V2,
     parseBody,
     readCustomers,
+    readCustomerByCode,
     readCookies,
     persistCustomers,
     persistCookies,
@@ -888,6 +1004,7 @@ module.exports = {
     extractNetflixIdsFromCookie,
     splitImportLines,
     splitImportCookieBlocks,
+    buildApiErrorPayload,
     isLikelyDeadCookie,
     isTokenPermissionDenied,
     callNetflixCreateAutoLoginToken,

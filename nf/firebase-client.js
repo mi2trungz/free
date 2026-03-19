@@ -3,6 +3,9 @@ import {
     getAuth,
     setPersistence,
     browserLocalPersistence,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithRedirect,
     signInWithEmailAndPassword,
     signOut,
     onAuthStateChanged
@@ -29,6 +32,7 @@ let auth = null;
 let db = null;
 let initPromise = null;
 let bootstrapped = false;
+let googleProvider = null;
 
 function ensureConfigured() {
     if (!hasFirebaseConfig()) {
@@ -42,6 +46,8 @@ async function ensureInit() {
         ensureConfigured();
         firebaseApp = initializeApp(NF_FIREBASE_CONFIG);
         auth = getAuth(firebaseApp);
+        googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
         await setPersistence(auth, browserLocalPersistence);
         db = getFirestore(firebaseApp);
     })();
@@ -395,11 +401,31 @@ async function handleAdminRoute(url = '', method = 'GET', body = {}) {
 
     if (url === '/api/admin/login' && method === 'POST') {
         await ensureInit();
-        const email = String(body.email || '').trim().toLowerCase();
-        const password = String(body.password || '');
-        if (!email || !password) throw new Error('Email hoac mat khau khong hop le.');
-        const cred = await signInWithEmailAndPassword(auth, email, password);
-        const loggedEmail = String((cred.user && cred.user.email) || '').trim().toLowerCase();
+        const provider = String(body.provider || 'google').trim().toLowerCase();
+        let cred = null;
+        if (provider === 'password') {
+            const email = String(body.email || '').trim();
+            const password = String(body.password || '');
+            if (!email || !password) throw new Error('Email hoac mat khau khong hop le.');
+            cred = await signInWithEmailAndPassword(auth, email, password);
+        } else {
+            try {
+                cred = await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                if (
+                    error
+                    && (error.code === 'auth/popup-blocked'
+                        || error.code === 'auth/popup-closed-by-user'
+                        || error.code === 'auth/cancelled-popup-request'
+                        || error.code === 'auth/operation-not-supported-in-this-environment')
+                ) {
+                    await signInWithRedirect(auth, googleProvider);
+                    return { success: true, redirecting: true };
+                }
+                throw error;
+            }
+        }
+        const loggedEmail = String((cred && cred.user && cred.user.email) || '').trim().toLowerCase();
         if (NF_ADMIN_EMAILS.length > 0 && !NF_ADMIN_EMAILS.includes(loggedEmail)) {
             await signOut(auth);
             throw new Error('Email khong co quyen admin.');
@@ -753,9 +779,9 @@ export async function firebaseImportCookies(content = '') {
     return handleCookiesImport({ content });
 }
 
-export async function firebaseAdminLogin(email = '', password = '') {
+export async function firebaseAdminLogin(provider = 'google', email = '', password = '') {
     await ensureInit();
-    return handleAdminRoute('/api/admin/login', 'POST', { email, password });
+    return handleAdminRoute('/api/admin/login', 'POST', { provider, email, password });
 }
 
 export async function firebaseAdminLogout() {

@@ -2,8 +2,10 @@ const {
     parseBody,
     readCookies,
     readCustomers,
-    writeDelta
+    writeDelta,
+    buildApiErrorPayload
 } = require('../_nf-store');
+const { deleteCache, invalidatePrefix } = require('../_nf-cache');
 const { requestNetflixToken } = require('../_netflix-token-engine');
 
 function setCors(res) {
@@ -242,6 +244,9 @@ module.exports = async function (req, res) {
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to persist check results' });
+            deleteCache('cookies:list');
+            deleteCache('customers:list');
+            invalidatePrefix('lookup:');
         }
 
         return res.status(200).json({
@@ -254,6 +259,6 @@ module.exports = async function (req, res) {
             results
         });
     } catch (e) {
-        return res.status(500).json({ error: e.message || 'Internal server error' });
+        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
     }
 };

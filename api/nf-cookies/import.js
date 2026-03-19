@@ -5,8 +5,10 @@ const {
     sanitizeCookie,
     splitImportCookieBlocks,
     extractNetflixIdsFromCookie,
-    makeCustomerCode
+    makeCustomerCode,
+    buildApiErrorPayload
 } = require('../_nf-store');
+const { deleteCache } = require('../_nf-cache');
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -86,6 +88,7 @@ module.exports = async function (req, res) {
             upsertCookies: added
         });
         if (!ok) return res.status(500).json({ error: 'Failed to import cookies' });
+        deleteCache('cookies:list');
 
         return res.status(200).json({
             success: true,
@@ -94,6 +97,6 @@ module.exports = async function (req, res) {
             invalidCount: invalid
         });
     } catch (e) {
-        return res.status(500).json({ error: e.message || 'Internal server error' });
+        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
     }
 };

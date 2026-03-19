@@ -8,8 +8,13 @@ const {
     maskNetflixId,
     buildCookieSummary,
     extractNetflixIdsFromCookie,
-    splitImportCookieBlocks
+    splitImportCookieBlocks,
+    buildApiErrorPayload
 } = require('../_nf-store');
+const { getCache, setCache, deleteCache, invalidatePrefix } = require('../_nf-cache');
+
+const COOKIES_CACHE_KEY = 'cookies:list';
+const COOKIES_CACHE_TTL_MS = 30 * 1000;
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -73,17 +78,21 @@ module.exports = async function (req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
-        const cookies = await readCookies();
-
         if (req.method === 'GET') {
+            const cached = getCache(COOKIES_CACHE_KEY);
+            if (cached) return res.status(200).json(cached);
+            const cookies = await readCookies();
             const summary = buildCookieSummary(cookies);
-            return res.status(200).json({
+            const payload = {
                 ...summary,
                 cookies: cookies.map(cookiePublicDto)
-            });
+            };
+            setCache(COOKIES_CACHE_KEY, payload, COOKIES_CACHE_TTL_MS);
+            return res.status(200).json(payload);
         }
 
         const body = parseBody(req.body);
+        const cookies = await readCookies();
 
         if (req.method === 'PUT') {
             const cookieIds = parseCookieIds(body);
@@ -205,6 +214,7 @@ module.exports = async function (req, res) {
                     upsertCookies: updatedCookies
                 });
                 if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
+                deleteCache(COOKIES_CACHE_KEY);
                 return res.status(200).json({ success: true, affectedCount: cookieIds.length });
             }
 
@@ -226,6 +236,9 @@ module.exports = async function (req, res) {
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
+            deleteCache(COOKIES_CACHE_KEY);
+            deleteCache('customers:list');
+            invalidatePrefix('lookup:');
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
@@ -258,11 +271,14 @@ module.exports = async function (req, res) {
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
+            deleteCache(COOKIES_CACHE_KEY);
+            deleteCache('customers:list');
+            invalidatePrefix('lookup:');
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (e) {
-        return res.status(500).json({ error: e.message || 'Internal server error' });
+        return res.status(500).json(buildApiErrorPayload(e, 'Internal server error'));
     }
 };
