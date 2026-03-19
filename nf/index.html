@@ -232,10 +232,13 @@
                 <div class="admin-bar">
                     <div id="adminIdentity" class="admin-identity">Chưa đăng nhập admin</div>
                     <div class="admin-actions">
+                        <button id="adminLoadCustomersBtn" class="btn btn-ghost" type="button">Load danh sách khách</button>
+                        <button id="adminLoadCookiesBtn" class="btn btn-ghost" type="button">Load danh sách cookie</button>
                         <button id="adminOpenTestBtn" class="btn btn-ghost" type="button">Truy cập test</button>
                         <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Đăng xuất</button>
                     </div>
                 </div>
+                <div id="adminLoadState" class="state-text state-idle">Đăng nhập để tải dữ liệu admin theo từng danh sách.</div>
 
                 <div class="tab-row">
                     <button class="tab-btn active" data-tab="customers" type="button">Khách hàng</button>
@@ -245,6 +248,17 @@
                 <section id="tabCustomers" class="tab-section">
                     <div class="section-head">
                         <h3>Tạo hoặc cập nhật mã khách hàng</h3>
+                    </div>
+                    <div class="admin-actions" style="margin-bottom:12px; gap:8px; flex-wrap:wrap;">
+                        <input id="customerSearchInput" class="text-input" type="text" placeholder="Tìm mã hoặc tên khách..." autocomplete="off" style="max-width:320px;">
+                        <button id="customerSearchAllBtn" class="btn btn-ghost hidden" type="button">Tìm toàn bộ</button>
+                        <button id="customerSearchClearBtn" class="btn btn-ghost" type="button">Xóa tìm</button>
+                        <div id="customerSearchState" class="state-text state-idle">Tìm nhanh trong dữ liệu đã tải.</div>
+                    </div>
+                    <div class="admin-actions" style="margin-bottom:12px;">
+                        <button id="customersPrevBtn" class="btn btn-ghost" type="button">Trang trước</button>
+                        <button id="customersNextBtn" class="btn btn-ghost" type="button">Trang sau</button>
+                        <div id="customersPagerInfo" class="state-text state-idle">Trang 1/1 • Tong 0</div>
                     </div>
                     <form id="customerForm">
                         <div class="form-grid">
@@ -307,6 +321,11 @@
                     <div class="section-head">
                         <h3>Cookie tổng</h3>
                         <p>Nhấn nút import để mở form nhập cookie tổng.</p>
+                    </div>
+                    <div class="admin-actions" style="margin-bottom:12px;">
+                        <button id="cookiesPrevBtn" class="btn btn-ghost" type="button">Trang trước</button>
+                        <button id="cookiesNextBtn" class="btn btn-ghost" type="button">Trang sau</button>
+                        <div id="cookiesPagerInfo" class="state-text state-idle">Trang 1/1 • Tong 0</div>
                     </div>
 
                     <button id="toggleCookieImportBtn" class="btn btn-ghost import-toggle-btn" type="button">Import cookie tổng</button>

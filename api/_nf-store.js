@@ -12,6 +12,7 @@ const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
 const DOC_CUSTOMERS = 'settings/nf_customers';
 const DOC_COOKIE_POOL = 'settings/nf_cookie_pool';
 const DOC_META = 'settings/nf_meta';
+const DOC_COOKIE_INDEX = 'settings/nf_cookie_index';
 
 const COLL_CUSTOMERS_ITEMS = 'settings/nf_customers/items';
 const COLL_COOKIES_ITEMS = 'settings/nf_cookies/items';
@@ -95,8 +96,58 @@ async function deleteDoc(docPath) {
     return response.statusCode >= 200 && response.statusCode < 300;
 }
 
+function parseFirestoreErrorPayload(response = {}) {
+    let parsed = {};
+    try { parsed = JSON.parse(response.body || '{}'); } catch (e) { parsed = {}; }
+    const err = parsed && parsed.error ? parsed.error : {};
+    const statusText = String(err.status || '').trim().toUpperCase();
+    const message = String(err.message || '').trim();
+    return { statusText, message };
+}
+
+function buildListCollectionError(collectionPath = '', response = {}) {
+    const statusCode = Number(response.statusCode || 0);
+    const parsed = parseFirestoreErrorPayload(response);
+    const statusText = parsed.statusText;
+    const message = parsed.message;
+    const hint = String(message || '').toUpperCase();
+
+    let code = 'FIRESTORE_LIST_FAILED';
+    let httpStatus = 500;
+    let publicMessage = `Failed to list collection ${collectionPath}`;
+
+    if (statusCode === 429 || statusText === 'RESOURCE_EXHAUSTED' || hint.includes('RESOURCE_EXHAUSTED') || hint.includes('QUOTA')) {
+        code = 'QUOTA_EXCEEDED';
+        httpStatus = 503;
+        publicMessage = 'Firestore read quota exceeded';
+    } else if (statusCode === 403 || statusText === 'PERMISSION_DENIED' || hint.includes('PERMISSION_DENIED')) {
+        code = 'PERMISSION_DENIED';
+        httpStatus = 403;
+        publicMessage = 'Permission denied while reading Firestore';
+    } else if (
+        statusCode === 503
+        || statusText === 'UNAVAILABLE'
+        || statusText === 'DEADLINE_EXCEEDED'
+        || hint.includes('UNAVAILABLE')
+        || hint.includes('DEADLINE_EXCEEDED')
+    ) {
+        code = 'FIRESTORE_UNAVAILABLE';
+        httpStatus = 503;
+        publicMessage = 'Firestore service is temporarily unavailable';
+    }
+
+    const error = new Error(publicMessage);
+    error.code = code;
+    error.httpStatus = httpStatus;
+    error.firestoreStatusCode = statusCode;
+    error.firestoreStatus = statusText || '';
+    error.firestoreMessage = message || '';
+    return error;
+}
+
 async function listCollectionDocs(collectionPath, options = {}) {
     const pageSize = Math.max(1, Math.min(Number(options.pageSize || 200), 1000));
+    const maxDocs = Math.max(0, Number(options.maxDocs || 0));
     const docs = [];
     let pageToken = '';
 
@@ -113,16 +164,95 @@ async function listCollectionDocs(collectionPath, options = {}) {
 
         if (response.statusCode === 404) return [];
         if (response.statusCode < 200 || response.statusCode >= 300) {
-            throw new Error(`Failed to list collection ${collectionPath}`);
+            const listErr = buildListCollectionError(collectionPath, response);
+            console.error('[nf-store] listCollectionDocs failed', {
+                collectionPath,
+                statusCode: listErr.firestoreStatusCode,
+                firestoreStatus: listErr.firestoreStatus,
+                code: listErr.code
+            });
+            throw listErr;
         }
 
         let parsed = {};
         try { parsed = JSON.parse(response.body || '{}'); } catch (e) { parsed = {}; }
-        if (Array.isArray(parsed.documents)) docs.push(...parsed.documents);
+        if (Array.isArray(parsed.documents)) {
+            docs.push(...parsed.documents);
+            if (maxDocs > 0 && docs.length >= maxDocs) {
+                return docs.slice(0, maxDocs);
+            }
+        }
         pageToken = String(parsed.nextPageToken || '').trim();
     } while (pageToken);
 
     return docs;
+}
+
+async function listCollectionDocsPage(collectionPath, options = {}) {
+    const targetPage = Math.max(1, Number(options.page || 1));
+    const pageSize = Math.max(1, Math.min(Number(options.pageSize || 25), 200));
+    let pageToken = '';
+    let currentPage = 1;
+
+    while (currentPage <= targetPage) {
+        const response = await httpRequest({
+            hostname: 'firestore.googleapis.com',
+            port: 443,
+            path: firestoreCollectionPath(collectionPath, {
+                pageSize,
+                pageToken: pageToken || undefined
+            }),
+            method: 'GET'
+        });
+
+        if (response.statusCode === 404) {
+            return {
+                documents: [],
+                nextPageToken: '',
+                hasNextPage: false
+            };
+        }
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+            const listErr = buildListCollectionError(collectionPath, response);
+            console.error('[nf-store] listCollectionDocsPage failed', {
+                collectionPath,
+                statusCode: listErr.firestoreStatusCode,
+                firestoreStatus: listErr.firestoreStatus,
+                code: listErr.code
+            });
+            throw listErr;
+        }
+
+        let parsed = {};
+        try { parsed = JSON.parse(response.body || '{}'); } catch (e) { parsed = {}; }
+        const documents = Array.isArray(parsed.documents) ? parsed.documents : [];
+        const nextToken = String(parsed.nextPageToken || '').trim();
+
+        if (currentPage === targetPage) {
+            return {
+                documents,
+                nextPageToken: nextToken,
+                hasNextPage: !!nextToken
+            };
+        }
+
+        if (!nextToken) {
+            return {
+                documents: [],
+                nextPageToken: '',
+                hasNextPage: false
+            };
+        }
+
+        pageToken = nextToken;
+        currentPage += 1;
+    }
+
+    return {
+        documents: [],
+        nextPageToken: '',
+        hasNextPage: false
+    };
 }
 
 function toStringValue(v) {
@@ -135,6 +265,17 @@ function toTimestampValue(v) {
 
 function toIntegerValue(v) {
     return { integerValue: String(Number(v || 0)) };
+}
+
+function toArrayStringValue(values = []) {
+    const normalized = Array.from(new Set((Array.isArray(values) ? values : [])
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)));
+    return {
+        arrayValue: {
+            values: normalized.map((value) => ({ stringValue: value }))
+        }
+    };
 }
 
 function safeString(v, fallback = '') {
@@ -302,6 +443,227 @@ function parseStorageVersion(metaDoc) {
     return Number.isFinite(version) ? version : 0;
 }
 
+function parseMetaIntegerField(fields = {}, key = '') {
+    const raw = fields[key] && (fields[key].integerValue || fields[key].stringValue);
+    const num = Number(raw);
+    return Number.isFinite(num) ? num : 0;
+}
+
+function parseStringArrayField(fields = {}, key = '') {
+    const values = (((fields[key] || {}).arrayValue || {}).values) || [];
+    return values
+        .map((value) => String((value || {}).stringValue || '').trim())
+        .filter(Boolean);
+}
+
+async function readMetaStats() {
+    const metaDoc = await readDoc(DOC_META);
+    const fields = (metaDoc && metaDoc.fields) || {};
+    return {
+        totalCustomers: parseMetaIntegerField(fields, 'totalCustomers'),
+        totalCookies: parseMetaIntegerField(fields, 'totalCookies'),
+        activeCount: parseMetaIntegerField(fields, 'activeCount'),
+        disabledCount: parseMetaIntegerField(fields, 'disabledCount'),
+        deadCount: parseMetaIntegerField(fields, 'deadCount'),
+        assignedCount: parseMetaIntegerField(fields, 'assignedCount'),
+        unknownCount: parseMetaIntegerField(fields, 'unknownCount'),
+        holdCount: parseMetaIntegerField(fields, 'holdCount'),
+        overCapacityCount: parseMetaIntegerField(fields, 'overCapacityCount')
+    };
+}
+
+function emptyCookieCounters() {
+    return {
+        totalCookies: 0,
+        activeCount: 0,
+        disabledCount: 0,
+        deadCount: 0,
+        assignedCount: 0,
+        unknownCount: 0,
+        holdCount: 0,
+        overCapacityCount: 0
+    };
+}
+
+function addCookieCounters(base = {}, next = {}, scale = 1) {
+    const safeScale = Number(scale || 0);
+    const output = {
+        totalCookies: Number(base.totalCookies || 0),
+        activeCount: Number(base.activeCount || 0),
+        disabledCount: Number(base.disabledCount || 0),
+        deadCount: Number(base.deadCount || 0),
+        assignedCount: Number(base.assignedCount || 0),
+        unknownCount: Number(base.unknownCount || 0),
+        holdCount: Number(base.holdCount || 0),
+        overCapacityCount: Number(base.overCapacityCount || 0)
+    };
+    output.totalCookies += safeScale * Number(next.totalCookies || 0);
+    output.activeCount += safeScale * Number(next.activeCount || 0);
+    output.disabledCount += safeScale * Number(next.disabledCount || 0);
+    output.deadCount += safeScale * Number(next.deadCount || 0);
+    output.assignedCount += safeScale * Number(next.assignedCount || 0);
+    output.unknownCount += safeScale * Number(next.unknownCount || 0);
+    output.holdCount += safeScale * Number(next.holdCount || 0);
+    output.overCapacityCount += safeScale * Number(next.overCapacityCount || 0);
+    return output;
+}
+
+function computeCookieCounters(item) {
+    if (!item || !item.id || (!item.netflixId && !item.cookieRaw)) return emptyCookieCounters();
+    const status = String(item.status || '').trim().toLowerCase();
+    return {
+        totalCookies: 1,
+        activeCount: status === 'active' ? 1 : 0,
+        disabledCount: status === 'disabled' ? 1 : 0,
+        deadCount: status === 'dead' ? 1 : 0,
+        assignedCount: item.assignedCustomerCode ? 1 : 0,
+        unknownCount: item.unknownTagged ? 1 : 0,
+        holdCount: item.holdTagged ? 1 : 0,
+        overCapacityCount: isCookieOverCapacityActive(item) ? 1 : 0
+    };
+}
+
+function clampNonNegative(value) {
+    return Math.max(0, Number(value || 0));
+}
+
+function applyMetaDelta(metaDoc, delta = {}) {
+    const fields = (metaDoc && metaDoc.fields) || {};
+    const next = {
+        totalCustomers: clampNonNegative(parseMetaIntegerField(fields, 'totalCustomers') + Number(delta.totalCustomers || 0)),
+        totalCookies: clampNonNegative(parseMetaIntegerField(fields, 'totalCookies') + Number(delta.totalCookies || 0)),
+        activeCount: clampNonNegative(parseMetaIntegerField(fields, 'activeCount') + Number(delta.activeCount || 0)),
+        disabledCount: clampNonNegative(parseMetaIntegerField(fields, 'disabledCount') + Number(delta.disabledCount || 0)),
+        deadCount: clampNonNegative(parseMetaIntegerField(fields, 'deadCount') + Number(delta.deadCount || 0)),
+        assignedCount: clampNonNegative(parseMetaIntegerField(fields, 'assignedCount') + Number(delta.assignedCount || 0)),
+        unknownCount: clampNonNegative(parseMetaIntegerField(fields, 'unknownCount') + Number(delta.unknownCount || 0)),
+        holdCount: clampNonNegative(parseMetaIntegerField(fields, 'holdCount') + Number(delta.holdCount || 0)),
+        overCapacityCount: clampNonNegative(parseMetaIntegerField(fields, 'overCapacityCount') + Number(delta.overCapacityCount || 0))
+    };
+    return {
+        totalCustomers: next.totalCustomers,
+        totalCookies: next.totalCookies,
+        cookieSummary: {
+            total: next.totalCookies,
+            activeCount: next.activeCount,
+            disabledCount: next.disabledCount,
+            deadCount: next.deadCount,
+            assignedCount: next.assignedCount,
+            unknownCount: next.unknownCount,
+            holdCount: next.holdCount,
+            overCapacityCount: next.overCapacityCount
+        }
+    };
+}
+
+async function persistMetaDelta(payload = {}) {
+    const delta = payload && payload.delta ? payload.delta : {};
+    const hasDelta = Object.keys(delta).some((key) => Number(delta[key] || 0) !== 0);
+    if (!hasDelta && payload.storageVersion === undefined) return true;
+    const metaDoc = await readDoc(DOC_META);
+    const next = applyMetaDelta(metaDoc, delta);
+    return persistMeta({
+        source: safeString(payload.source || 'writeDelta'),
+        note: safeString(payload.note || 'NF delta update'),
+        totalCustomers: next.totalCustomers,
+        totalCookies: next.totalCookies,
+        cookieSummary: next.cookieSummary,
+        storageVersion: payload.storageVersion !== undefined ? payload.storageVersion : STORAGE_VERSION_V2
+    });
+}
+
+function getCookieIndexBucket(cookie) {
+    if (!cookie || !cookie.id) return '';
+    if (cookie.status !== 'active') return '';
+    if (cookie.errorTagged || cookie.sbdTagged) return '';
+    if (isCookieOverCapacityActive(cookie)) return '';
+    if (cookie.holdTagged) return 'holdIds';
+    if (cookie.unknownTagged) return 'unknownIds';
+    return 'normalIds';
+}
+
+function buildCookieIndexFromCookies(cookies = []) {
+    const normalIds = [];
+    const holdIds = [];
+    const unknownIds = [];
+    const seen = new Set();
+    (Array.isArray(cookies) ? cookies : []).forEach((cookie) => {
+        if (!cookie || !cookie.id) return;
+        if (seen.has(cookie.id)) return;
+        seen.add(cookie.id);
+        const bucket = getCookieIndexBucket(cookie);
+        if (bucket === 'normalIds') normalIds.push(cookie.id);
+        else if (bucket === 'holdIds') holdIds.push(cookie.id);
+        else if (bucket === 'unknownIds') unknownIds.push(cookie.id);
+    });
+    return { normalIds, holdIds, unknownIds };
+}
+
+async function persistCookieIndex(indexPayload = {}) {
+    const now = new Date().toISOString();
+    return patchDoc(DOC_COOKIE_INDEX, {
+        normalIds: toArrayStringValue(indexPayload.normalIds || []),
+        holdIds: toArrayStringValue(indexPayload.holdIds || []),
+        unknownIds: toArrayStringValue(indexPayload.unknownIds || []),
+        updatedAt: toTimestampValue(indexPayload.updatedAt || now)
+    });
+}
+
+async function readCookieIndex() {
+    const doc = await readDoc(DOC_COOKIE_INDEX);
+    const fields = (doc && doc.fields) || {};
+    const exists = !!doc;
+    return {
+        exists,
+        normalIds: parseStringArrayField(fields, 'normalIds'),
+        holdIds: parseStringArrayField(fields, 'holdIds'),
+        unknownIds: parseStringArrayField(fields, 'unknownIds'),
+        updatedAt: String((fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue)) || '').trim()
+    };
+}
+
+async function updateCookieIndexDelta(changedCookies = [], deletedIds = []) {
+    const normalizedDeleted = new Set((Array.isArray(deletedIds) ? deletedIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean));
+    const normalizedChanged = (Array.isArray(changedCookies) ? changedCookies : [])
+        .map((item) => sanitizeCookie(item))
+        .filter((item) => !!item.id);
+    if (normalizedDeleted.size === 0 && normalizedChanged.length === 0) return true;
+
+    const current = await readCookieIndex();
+    const merged = {
+        normalIds: Array.from(new Set(current.normalIds || [])),
+        holdIds: Array.from(new Set(current.holdIds || [])),
+        unknownIds: Array.from(new Set(current.unknownIds || []))
+    };
+
+    const changedIdSet = new Set(normalizedChanged.map((item) => item.id));
+    const removeIdSet = new Set([...normalizedDeleted, ...changedIdSet]);
+    const removeFromBucket = (ids = []) => ids.filter((id) => !removeIdSet.has(id));
+    merged.normalIds = removeFromBucket(merged.normalIds);
+    merged.holdIds = removeFromBucket(merged.holdIds);
+    merged.unknownIds = removeFromBucket(merged.unknownIds);
+
+    normalizedChanged.forEach((cookie) => {
+        if (normalizedDeleted.has(cookie.id)) return;
+        const bucket = getCookieIndexBucket(cookie);
+        if (!bucket) return;
+        if (bucket === 'normalIds') merged.normalIds.push(cookie.id);
+        if (bucket === 'holdIds') merged.holdIds.push(cookie.id);
+        if (bucket === 'unknownIds') merged.unknownIds.push(cookie.id);
+    });
+
+    return persistCookieIndex(merged);
+}
+
+async function rebuildCookieIndex() {
+    const cookies = await readCookiesV2();
+    const payload = buildCookieIndexFromCookies(cookies);
+    await persistCookieIndex(payload);
+    return payload;
+}
+
 function toCustomerSnapshot(customer = {}) {
     return [
         customer.code || '', customer.name || '', customer.warrantyExpiresAt || '', customer.status || '',
@@ -350,6 +712,59 @@ async function readCookiesV2() {
     return docs
         .map((doc) => parseCookieFields(doc && doc.fields ? doc.fields : {}))
         .filter((item) => !!item.netflixId || !!item.cookieRaw);
+}
+
+async function readCustomerByCodeV2(code = '') {
+    const normalized = String(code || '').trim().toUpperCase();
+    if (!normalized) return null;
+    const doc = await readDoc(buildItemDocPath(COLL_CUSTOMERS_ITEMS, normalized));
+    if (!doc || !doc.fields) return null;
+    const parsed = parseCustomerFields(doc.fields);
+    return parsed && parsed.code ? parsed : null;
+}
+
+async function readCookieByIdV2(cookieId = '') {
+    const normalized = String(cookieId || '').trim();
+    if (!normalized) return null;
+    const doc = await readDoc(buildItemDocPath(COLL_COOKIES_ITEMS, normalized));
+    if (!doc || !doc.fields) return null;
+    const parsed = parseCookieFields(doc.fields);
+    return parsed && parsed.id ? parsed : null;
+}
+
+async function readCustomersByCodesV2(codes = []) {
+    const normalized = Array.from(new Set((Array.isArray(codes) ? codes : [])
+        .map((code) => String(code || '').trim().toUpperCase())
+        .filter(Boolean)));
+    if (normalized.length === 0) return [];
+    const docs = await Promise.all(normalized.map((code) => readDoc(buildItemDocPath(COLL_CUSTOMERS_ITEMS, code))));
+    return docs
+        .map((doc) => parseCustomerFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.code);
+}
+
+async function readCookiesByIdsV2(cookieIds = []) {
+    const normalized = Array.from(new Set((Array.isArray(cookieIds) ? cookieIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)));
+    if (normalized.length === 0) return [];
+    const docs = await Promise.all(normalized.map((id) => readDoc(buildItemDocPath(COLL_COOKIES_ITEMS, id))));
+    return docs
+        .map((doc) => parseCookieFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.id);
+}
+
+async function readCookieCandidatesForGenerate(options = {}) {
+    const limit = Math.max(1, Math.min(Number(options.limit || 200), 500));
+    const scanMax = Math.max(limit, Math.min(Number(options.scanMax || 800), 2000));
+    const docs = await listCollectionDocs(COLL_COOKIES_ITEMS, {
+        pageSize: 200,
+        maxDocs: scanMax
+    });
+    const cookies = docs
+        .map((doc) => parseCookieFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+    return cookies.slice(0, limit);
 }
 
 async function readLegacyCustomers() {
@@ -413,6 +828,15 @@ async function persistMeta(payload = {}) {
         totalCustomers: toIntegerValue(payload.totalCustomers || 0),
         totalCookies: toIntegerValue(payload.totalCookies || 0)
     };
+    if (payload.cookieSummary && typeof payload.cookieSummary === 'object') {
+        fields.activeCount = toIntegerValue(payload.cookieSummary.activeCount || 0);
+        fields.disabledCount = toIntegerValue(payload.cookieSummary.disabledCount || 0);
+        fields.deadCount = toIntegerValue(payload.cookieSummary.deadCount || 0);
+        fields.assignedCount = toIntegerValue(payload.cookieSummary.assignedCount || 0);
+        fields.unknownCount = toIntegerValue(payload.cookieSummary.unknownCount || 0);
+        fields.holdCount = toIntegerValue(payload.cookieSummary.holdCount || 0);
+        fields.overCapacityCount = toIntegerValue(payload.cookieSummary.overCapacityCount || 0);
+    }
     if (payload.storageVersion !== undefined) {
         fields.storageVersion = toIntegerValue(payload.storageVersion);
     }
@@ -448,6 +872,7 @@ async function ensureStorageForWrite() {
                 totalCookies: v2Cookies.length,
                 storageVersion: STORAGE_VERSION_V2
             });
+            await rebuildCookieIndex();
             return;
         }
 
@@ -462,6 +887,7 @@ async function ensureStorageForWrite() {
             totalCookies: legacyCookies.length,
             storageVersion: STORAGE_VERSION_V2
         });
+        await rebuildCookieIndex();
     })();
 
     try {
@@ -503,6 +929,184 @@ async function readCookies() {
     return readLegacyCookies();
 }
 
+function buildPageMeta(total = 0, page = 1, pageSize = 25, hasNextPage = false) {
+    const safeTotal = Math.max(0, Number(total || 0));
+    const safePageSize = Math.max(1, Number(pageSize || 25));
+    const safePage = Math.max(1, Number(page || 1));
+    const totalPages = Math.max(1, Math.ceil(safeTotal / safePageSize));
+    const normalizedPage = Math.min(safePage, totalPages);
+    const hasPrev = normalizedPage > 1;
+    const hasNext = !!hasNextPage || normalizedPage < totalPages;
+    return {
+        total: safeTotal,
+        page: normalizedPage,
+        pageSize: safePageSize,
+        totalPages,
+        hasNext,
+        hasPrev
+    };
+}
+
+async function readCustomersPage(options = {}) {
+    const page = Math.max(1, Number(options.page || 1));
+    const pageSize = Math.max(1, Math.min(Number(options.pageSize || 25), 100));
+    const pageResult = await listCollectionDocsPage(COLL_CUSTOMERS_ITEMS, { page, pageSize });
+    const items = (Array.isArray(pageResult.documents) ? pageResult.documents : [])
+        .map((doc) => parseCustomerFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.code);
+
+    const meta = await readMetaStats();
+    const pageMeta = buildPageMeta(meta.totalCustomers, page, pageSize, pageResult.hasNextPage);
+
+    if (items.length > 0 || pageMeta.total > 0) {
+        return {
+            items,
+            ...pageMeta
+        };
+    }
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) {
+        return {
+            items: [],
+            ...pageMeta
+        };
+    }
+
+    const legacy = await readLegacyCustomers();
+    const sorted = legacy
+        .slice()
+        .sort((a, b) => (new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()));
+    const start = (page - 1) * pageSize;
+    const legacyItems = sorted.slice(start, start + pageSize);
+    return {
+        items: legacyItems,
+        ...buildPageMeta(sorted.length, page, pageSize, start + pageSize < sorted.length)
+    };
+}
+
+async function readCookiesPage(options = {}) {
+    const page = Math.max(1, Number(options.page || 1));
+    const pageSize = Math.max(1, Math.min(Number(options.pageSize || 25), 100));
+    const pageResult = await listCollectionDocsPage(COLL_COOKIES_ITEMS, { page, pageSize });
+    const items = (Array.isArray(pageResult.documents) ? pageResult.documents : [])
+        .map((doc) => parseCookieFields(doc && doc.fields ? doc.fields : {}))
+        .filter((item) => !!item.netflixId || !!item.cookieRaw);
+
+    const meta = await readMetaStats();
+    const pageMeta = buildPageMeta(meta.totalCookies, page, pageSize, pageResult.hasNextPage);
+
+    if (items.length > 0 || pageMeta.total > 0) {
+        return {
+            items,
+            summary: {
+                total: pageMeta.total,
+                activeCount: meta.activeCount || 0,
+                disabledCount: meta.disabledCount || 0,
+                deadCount: meta.deadCount || 0,
+                assignedCount: meta.assignedCount || 0,
+                unknownCount: meta.unknownCount || 0,
+                holdCount: meta.holdCount || 0,
+                overCapacityCount: meta.overCapacityCount || 0
+            },
+            ...pageMeta
+        };
+    }
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) {
+        return {
+            items: [],
+            summary: {
+                total: pageMeta.total,
+                activeCount: 0,
+                disabledCount: 0,
+                deadCount: 0,
+                assignedCount: 0,
+                unknownCount: 0,
+                holdCount: 0,
+                overCapacityCount: 0
+            },
+            ...pageMeta
+        };
+    }
+
+    const legacy = await readLegacyCookies();
+    const start = (page - 1) * pageSize;
+    const legacyItems = legacy.slice(start, start + pageSize);
+    return {
+        items: legacyItems,
+        summary: buildCookieSummary(legacy),
+        ...buildPageMeta(legacy.length, page, pageSize, start + pageSize < legacy.length)
+    };
+}
+
+async function readCustomerByCode(code = '') {
+    const normalized = String(code || '').trim().toUpperCase();
+    if (!normalized) return null;
+    const customerV2 = await readCustomerByCodeV2(normalized);
+    if (customerV2) return customerV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return null;
+    const legacy = await readLegacyCustomers();
+    return legacy.find((item) => item.code === normalized) || null;
+}
+
+async function readCookieById(cookieId = '') {
+    const normalized = String(cookieId || '').trim();
+    if (!normalized) return null;
+    const cookieV2 = await readCookieByIdV2(normalized);
+    if (cookieV2) return cookieV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return null;
+    const legacy = await readLegacyCookies();
+    return legacy.find((item) => item.id === normalized) || null;
+}
+
+async function readCustomersByCodes(codes = []) {
+    const requested = Array.from(new Set((Array.isArray(codes) ? codes : [])
+        .map((code) => String(code || '').trim().toUpperCase())
+        .filter(Boolean)));
+    if (requested.length === 0) return [];
+
+    const foundV2 = await readCustomersByCodesV2(requested);
+    const foundCodes = new Set(foundV2.map((item) => item.code));
+    const missing = requested.filter((code) => !foundCodes.has(code));
+    if (missing.length === 0) return foundV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return foundV2;
+    const legacy = await readLegacyCustomers();
+    const legacyMap = new Map(legacy.map((item) => [item.code, item]));
+    return [
+        ...foundV2,
+        ...missing.map((code) => legacyMap.get(code)).filter(Boolean)
+    ];
+}
+
+async function readCookiesByIds(cookieIds = []) {
+    const requested = Array.from(new Set((Array.isArray(cookieIds) ? cookieIds : [])
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)));
+    if (requested.length === 0) return [];
+
+    const foundV2 = await readCookiesByIdsV2(requested);
+    const foundIds = new Set(foundV2.map((item) => item.id));
+    const missing = requested.filter((id) => !foundIds.has(id));
+    if (missing.length === 0) return foundV2;
+
+    const version = await getStorageVersion();
+    if (version >= STORAGE_VERSION_V2) return foundV2;
+    const legacy = await readLegacyCookies();
+    const legacyMap = new Map(legacy.map((item) => [item.id, item]));
+    return [
+        ...foundV2,
+        ...missing.map((id) => legacyMap.get(id)).filter(Boolean)
+    ];
+}
+
 async function persistCustomers(customers = []) {
     await ensureStorageForWrite();
 
@@ -527,11 +1131,13 @@ async function persistCustomers(customers = []) {
     if (toUpsert.length > 0) await upsertCustomers(toUpsert);
     if (toDelete.length > 0) await deleteCustomersByCodes(toDelete);
 
-    const cookiesCount = (await readCookiesV2()).length;
+    const cookiesSnapshot = await readCookiesV2();
+    const cookiesCount = cookiesSnapshot.length;
     await persistMeta({
         source: 'persistCustomers',
         totalCustomers: normalized.length,
         totalCookies: cookiesCount,
+        cookieSummary: buildCookieSummary(cookiesSnapshot),
         storageVersion: STORAGE_VERSION_V2
     });
     return true;
@@ -565,8 +1171,10 @@ async function persistCookies(cookies = []) {
         source: 'persistCookies',
         totalCustomers: customersCount,
         totalCookies: normalized.length,
+        cookieSummary: buildCookieSummary(normalized),
         storageVersion: STORAGE_VERSION_V2
     });
+    await rebuildCookieIndex();
     return true;
 }
 
@@ -615,8 +1223,10 @@ async function persistAll(customers = [], cookies = [], source = 'api') {
         source,
         totalCustomers: normalizedCustomers.length,
         totalCookies: normalizedCookies.length,
+        cookieSummary: buildCookieSummary(normalizedCookies),
         storageVersion: STORAGE_VERSION_V2
     });
+    await rebuildCookieIndex();
     return true;
 }
 
@@ -628,24 +1238,85 @@ async function writeDelta(payload = {}) {
     const deleteCustomerCodesInput = Array.isArray(payload.deleteCustomerCodes) ? payload.deleteCustomerCodes : [];
     const deleteCookieIdsInput = Array.isArray(payload.deleteCookieIds) ? payload.deleteCookieIds : [];
 
-    const normalizedCustomers = upsertCustomersInput.map(sanitizeCustomer).filter((item) => !!item.code && !!item.name);
-    const normalizedCookies = upsertCookiesInput.map(sanitizeCookie).filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw));
+    const normalizedDeleteCustomerCodes = Array.from(new Set(deleteCustomerCodesInput
+        .map((code) => String(code || '').trim().toUpperCase())
+        .filter(Boolean)));
+    const normalizedDeleteCookieIds = Array.from(new Set(deleteCookieIdsInput
+        .map((id) => String(id || '').trim())
+        .filter(Boolean)));
+
+    const deleteCustomerSet = new Set(normalizedDeleteCustomerCodes);
+    const deleteCookieSet = new Set(normalizedDeleteCookieIds);
+    const normalizedCustomers = upsertCustomersInput
+        .map(sanitizeCustomer)
+        .filter((item) => !!item.code && !!item.name && !deleteCustomerSet.has(item.code));
+    const normalizedCookies = upsertCookiesInput
+        .map(sanitizeCookie)
+        .filter((item) => !!item.id && (!!item.netflixId || !!item.cookieRaw) && !deleteCookieSet.has(item.id));
+
+    const customerTouchedCodes = Array.from(new Set([
+        ...normalizedCustomers.map((item) => item.code),
+        ...normalizedDeleteCustomerCodes
+    ]));
+    const cookieTouchedIds = Array.from(new Set([
+        ...normalizedCookies.map((item) => item.id),
+        ...normalizedDeleteCookieIds
+    ]));
+
+    const [prevCustomers, prevCookies] = await Promise.all([
+        customerTouchedCodes.length > 0 ? readCustomersByCodesV2(customerTouchedCodes) : Promise.resolve([]),
+        cookieTouchedIds.length > 0 ? readCookiesByIdsV2(cookieTouchedIds) : Promise.resolve([])
+    ]);
+    const prevCustomerMap = new Map(prevCustomers.map((item) => [item.code, item]));
+    const prevCookieMap = new Map(prevCookies.map((item) => [item.id, item]));
+
+    const nextCustomerMap = new Map(prevCustomerMap);
+    normalizedCustomers.forEach((item) => nextCustomerMap.set(item.code, item));
+    normalizedDeleteCustomerCodes.forEach((code) => nextCustomerMap.delete(code));
+
+    const nextCookieMap = new Map(prevCookieMap);
+    normalizedCookies.forEach((item) => nextCookieMap.set(item.id, item));
+    normalizedDeleteCookieIds.forEach((id) => nextCookieMap.delete(id));
+
+    let metaDelta = {
+        totalCustomers: 0,
+        totalCookies: 0,
+        activeCount: 0,
+        disabledCount: 0,
+        deadCount: 0,
+        assignedCount: 0,
+        unknownCount: 0,
+        holdCount: 0,
+        overCapacityCount: 0
+    };
+
+    customerTouchedCodes.forEach((code) => {
+        const had = prevCustomerMap.has(code) ? 1 : 0;
+        const has = nextCustomerMap.has(code) ? 1 : 0;
+        metaDelta.totalCustomers += (has - had);
+    });
+
+    cookieTouchedIds.forEach((id) => {
+        const prev = prevCookieMap.get(id) || null;
+        const next = nextCookieMap.get(id) || null;
+        metaDelta = addCookieCounters(metaDelta, computeCookieCounters(prev), -1);
+        metaDelta = addCookieCounters(metaDelta, computeCookieCounters(next), 1);
+    });
 
     await Promise.all([
         normalizedCustomers.length > 0 ? upsertCustomers(normalizedCustomers) : Promise.resolve(),
         normalizedCookies.length > 0 ? upsertCookies(normalizedCookies) : Promise.resolve(),
-        deleteCustomerCodesInput.length > 0 ? deleteCustomersByCodes(deleteCustomerCodesInput) : Promise.resolve(),
-        deleteCookieIdsInput.length > 0 ? deleteCookiesByIds(deleteCookieIdsInput) : Promise.resolve()
+        normalizedDeleteCustomerCodes.length > 0 ? deleteCustomersByCodes(normalizedDeleteCustomerCodes) : Promise.resolve(),
+        normalizedDeleteCookieIds.length > 0 ? deleteCookiesByIds(normalizedDeleteCookieIds) : Promise.resolve()
     ]);
 
-    const [customers, cookies] = await Promise.all([readCustomersV2(), readCookiesV2()]);
-    await persistMeta({
+    await persistMetaDelta({
+        delta: metaDelta,
         source: safeString(payload.source || 'writeDelta'),
         note: safeString(payload.note || 'NF delta update'),
-        totalCustomers: customers.length,
-        totalCookies: cookies.length,
         storageVersion: STORAGE_VERSION_V2
     });
+    await updateCookieIndexDelta(normalizedCookies, normalizedDeleteCookieIds);
 
     return true;
 }
@@ -862,16 +1533,28 @@ module.exports = {
     DOC_CUSTOMERS,
     DOC_COOKIE_POOL,
     DOC_META,
+    DOC_COOKIE_INDEX,
     COLL_CUSTOMERS_ITEMS,
     COLL_COOKIES_ITEMS,
     STORAGE_VERSION_V2,
     parseBody,
     readCustomers,
     readCookies,
+    readCustomersPage,
+    readCookiesPage,
+    readCustomerByCode,
+    readCookieById,
+    readCustomersByCodes,
+    readCookiesByIds,
+    readCookieCandidatesForGenerate,
+    readCookieIndex,
+    updateCookieIndexDelta,
+    rebuildCookieIndex,
     persistCustomers,
     persistCookies,
     persistAll,
     persistMeta,
+    persistMetaDelta,
     writeDelta,
     sanitizeCustomer,
     sanitizeCookie,
@@ -881,6 +1564,7 @@ module.exports = {
     findCustomerByCode,
     findCustomerIndexByCode,
     maskNetflixId,
+    computeCookieCounters,
     buildCookieSummary,
     buildWarrantyInfo,
     isCustomerWarrantyValid,

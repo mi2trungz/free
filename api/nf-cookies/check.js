@@ -1,9 +1,12 @@
-const {
+﻿const {
     parseBody,
     readCookies,
+    readCookiesByIds,
     readCustomers,
+    readCustomerByCode,
     writeDelta
 } = require('../_nf-store');
+const { invalidateMany } = require('../_response-cache');
 const { requestNetflixToken } = require('../_netflix-token-engine');
 
 function setCors(res) {
@@ -41,33 +44,21 @@ function isPaymentHoldYes(value = '') {
     return text === 'yes' || text === 'true' || text === '1';
 }
 
-function unassignCustomersForCookie(customers = [], cookie, nowIso, changedCustomerCodes = null) {
-    let changed = false;
+async function unassignCustomersForCookieSelected(cookie, nowIso, changedCustomersMap) {
     const cookieId = String(cookie && cookie.id ? cookie.id : '').trim();
     const assignedCode = normalizeCode(cookie && cookie.assignedCustomerCode ? cookie.assignedCustomerCode : '');
+    if (!cookieId && !assignedCode) return;
 
-    for (let i = 0; i < customers.length; i += 1) {
-        const customer = customers[i];
-        const customerCode = normalizeCode(customer.code || '');
-        const byCookieId = String(customer.assignedCookieId || '').trim() === cookieId;
-        const byStaleCode = !!assignedCode
-            && customerCode === assignedCode
-            && (!customer.assignedCookieId || String(customer.assignedCookieId || '').trim() === cookieId);
-
-        if (!byCookieId && !byStaleCode) continue;
-
-        customers[i] = {
-            ...customer,
-            assignedCookieId: '',
-            updatedAt: nowIso
-        };
-        if (changedCustomerCodes instanceof Set) {
-            changedCustomerCodes.add(customer.code);
+    if (assignedCode) {
+        const customer = await readCustomerByCode(assignedCode);
+        if (customer && String(customer.assignedCookieId || '').trim() === cookieId) {
+            changedCustomersMap.set(customer.code, {
+                ...customer,
+                assignedCookieId: '',
+                updatedAt: nowIso
+            });
         }
-        changed = true;
     }
-
-    return changed;
 }
 
 module.exports = async function (req, res) {
@@ -82,27 +73,27 @@ module.exports = async function (req, res) {
             return res.status(400).json({ error: 'Invalid mode. Use "selected" or "all".' });
         }
 
-        const [cookies, customers] = await Promise.all([readCookies(), readCustomers()]);
-
+        let cookies = [];
         let targetIndexes = [];
         let selectedIds = [];
+        let customers = [];
+
         if (mode === 'all') {
+            // Intentionally heavy path: full scan for admin "check all".
+            [cookies, customers] = await Promise.all([readCookies(), readCustomers()]);
             targetIndexes = cookies.map((_, index) => index);
         } else {
             selectedIds = parseCookieIds(body);
             if (selectedIds.length === 0) {
                 return res.status(400).json({ error: 'Missing cookieIds for selected mode' });
             }
-            const selectedSet = new Set(selectedIds);
-            targetIndexes = cookies
-                .map((item, index) => ({ id: item.id, index }))
-                .filter((item) => selectedSet.has(item.id))
-                .map((item) => item.index);
-            const foundIds = new Set(targetIndexes.map((idx) => cookies[idx].id));
+            cookies = await readCookiesByIds(selectedIds);
+            const foundIds = new Set(cookies.map((item) => item.id));
             const missingIds = selectedIds.filter((id) => !foundIds.has(id));
             if (missingIds.length > 0) {
                 return res.status(404).json({ error: 'Cookie not found', missingIds });
             }
+            targetIndexes = cookies.map((_item, index) => index);
         }
 
         if (targetIndexes.length === 0) {
@@ -123,7 +114,35 @@ module.exports = async function (req, res) {
         let errorCount = 0;
         let mutated = false;
         const changedCustomerCodes = new Set();
+        const changedCustomersMap = new Map();
         const results = [];
+
+        function unassignCustomersForCookieAll(cookie, nowIso) {
+            let changed = false;
+            const cookieId = String(cookie && cookie.id ? cookie.id : '').trim();
+            const assignedCode = normalizeCode(cookie && cookie.assignedCustomerCode ? cookie.assignedCustomerCode : '');
+
+            for (let i = 0; i < customers.length; i += 1) {
+                const customer = customers[i];
+                const customerCode = normalizeCode(customer.code || '');
+                const byCookieId = String(customer.assignedCookieId || '').trim() === cookieId;
+                const byStaleCode = !!assignedCode
+                    && customerCode === assignedCode
+                    && (!customer.assignedCookieId || String(customer.assignedCookieId || '').trim() === cookieId);
+
+                if (!byCookieId && !byStaleCode) continue;
+
+                customers[i] = {
+                    ...customer,
+                    assignedCookieId: '',
+                    updatedAt: nowIso
+                };
+                changedCustomerCodes.add(customer.code);
+                changed = true;
+            }
+
+            return changed;
+        }
 
         for (let i = 0; i < targetIndexes.length; i += 1) {
             const index = targetIndexes[i];
@@ -155,7 +174,11 @@ module.exports = async function (req, res) {
                     updatedAt: now
                 };
                 if (hasPolicyTag) {
-                    unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
+                    if (mode === 'all') {
+                        unassignCustomersForCookieAll(cookie, now);
+                    } else {
+                        await unassignCustomersForCookieSelected(cookie, now, changedCustomersMap);
+                    }
                     errorCount += 1;
                     results.push({
                         cookieId: cookie.id,
@@ -188,7 +211,11 @@ module.exports = async function (req, res) {
                     lastError: reason || 'Access denied by SBD',
                     updatedAt: now
                 };
-                unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
+                if (mode === 'all') {
+                    unassignCustomersForCookieAll(cookie, now);
+                } else {
+                    await unassignCustomersForCookieSelected(cookie, now, changedCustomersMap);
+                }
                 sbdCount += 1;
                 mutated = true;
                 results.push({
@@ -212,7 +239,11 @@ module.exports = async function (req, res) {
                     lastError: reason || 'Cookie DIE',
                     updatedAt: now
                 };
-                unassignCustomersForCookie(customers, cookie, now, changedCustomerCodes);
+                if (mode === 'all') {
+                    unassignCustomersForCookieAll(cookie, now);
+                } else {
+                    await unassignCustomersForCookieSelected(cookie, now, changedCustomersMap);
+                }
                 deadCount += 1;
                 mutated = true;
                 results.push({
@@ -235,13 +266,16 @@ module.exports = async function (req, res) {
             const changedCookies = targetIndexes
                 .map((idx) => cookies[idx])
                 .filter(Boolean);
-            const changedCustomers = customers.filter((customer) => changedCustomerCodes.has(customer.code));
+            const changedCustomers = mode === 'all'
+                ? customers.filter((customer) => changedCustomerCodes.has(customer.code))
+                : Array.from(changedCustomersMap.values());
             const ok = await writeDelta({
                 source: 'nf-cookies-check',
                 upsertCookies: changedCookies,
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to persist check results' });
+            invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
         }
 
         return res.status(200).json({

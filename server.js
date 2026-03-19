@@ -75,7 +75,8 @@ function invokeServerlessApi(handler, req, res) {
         const reqLike = {
             method: req.method,
             headers: req.headers,
-            body
+            body,
+            url: req.url
         };
 
         const resLike = {

@@ -1,14 +1,19 @@
-const {
+﻿const {
     parseBody,
-    readCustomers,
-    readCookies,
-    persistAll,
-    findCustomerByCode,
+    readCustomerByCode,
+    readCookieById,
+    readCookieIndex,
+    readCookiesByIds,
+    readCookieCandidatesForGenerate,
+    writeDelta,
     isCustomerWarrantyValid,
     isCookieOverCapacityActive,
     buildUrlByDevice,
-    extractNetflixIdsFromCookie
+    extractNetflixIdsFromCookie,
+    sanitizeCookie,
+    sanitizeCustomer
 } = require('./_nf-store');
+const { invalidateMany } = require('./_response-cache');
 const { requestNetflixToken } = require('./_netflix-token-engine');
 
 const ALLOWED_DEVICES = new Set(['desktop', 'mobile', 'tv']);
@@ -40,7 +45,6 @@ function resolveEffectiveCookieIds(cookie = {}) {
     const parsedNetflixId = String(parsed.netflixId || '').trim();
     const parsedSecureNetflixId = String(parsed.secureNetflixId || '').trim();
 
-    // Ưu tiên field đã lưu; chỉ fallback khi thiếu hoặc có dấu hiệu bất thường.
     const hasInvalidStoredNetflixId = !!storedNetflixId && /\s/.test(storedNetflixId);
     const hasInvalidStoredSecureNetflixId = !!storedSecureNetflixId && /\s/.test(storedSecureNetflixId);
 
@@ -75,6 +79,32 @@ function evaluateCookieAccountTags(accountInfo = null) {
     };
 }
 
+function invalidateGenerateCaches() {
+    invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
+}
+
+function buildPrioritizedCookieIdsFromIndex(indexDoc = {}, limit = 220) {
+    const maxTake = Math.max(limit, Math.min(limit * 4, 1200));
+    const ids = [];
+    const seen = new Set();
+    const groups = [
+        Array.isArray(indexDoc.normalIds) ? indexDoc.normalIds : [],
+        Array.isArray(indexDoc.holdIds) ? indexDoc.holdIds : [],
+        Array.isArray(indexDoc.unknownIds) ? indexDoc.unknownIds : []
+    ];
+    for (let g = 0; g < groups.length; g += 1) {
+        const group = groups[g];
+        for (let i = 0; i < group.length; i += 1) {
+            const id = String(group[i] || '').trim();
+            if (!id || seen.has(id)) continue;
+            seen.add(id);
+            ids.push(id);
+            if (ids.length >= maxTake) return ids;
+        }
+    }
+    return ids;
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -87,33 +117,48 @@ module.exports = async function (req, res) {
         if (!customerCode) return res.status(400).json({ error: 'Missing customerCode' });
         if (!ALLOWED_DEVICES.has(device)) return res.status(400).json({ error: 'Invalid device' });
 
-        const [customers, cookies] = await Promise.all([readCustomers(), readCookies()]);
-        const customer = findCustomerByCode(customers, customerCode);
+        const customer = await readCustomerByCode(customerCode);
         if (!customer) return res.status(404).json({ error: 'Mã khách hàng không tồn tại.' });
         if (customer.status === 'inactive') return res.status(403).json({ error: 'Mã khách hàng đang tạm khóa.' });
         if (!isCustomerWarrantyValid(customer)) return res.status(403).json({ error: 'Mã khách hàng đã hết thời gian bảo hành.' });
 
         const now = new Date().toISOString();
-        const customerIndex = customers.findIndex((item) => item.code === customer.code);
-        let mutated = false;
+        const customerNext = sanitizeCustomer({ ...customer });
+        const cookieUpserts = new Map();
+        let customerMutated = false;
         let hasPermissionDeniedCookie = false;
 
-        function unassignCustomerCurrentCookie() {
-            if (!customers[customerIndex].assignedCookieId) return;
-            customers[customerIndex] = {
-                ...customers[customerIndex],
-                assignedCookieId: '',
-                updatedAt: now
-            };
-            mutated = true;
+        function queueCookie(cookiePayload) {
+            const sanitized = sanitizeCookie(cookiePayload);
+            cookieUpserts.set(sanitized.id, sanitized);
+            return sanitized;
         }
 
-        async function finalizeSuccess(cookieIndex, nftoken, reusedCookie) {
-            const currentCookie = cookies[cookieIndex];
-            cookies[cookieIndex] = {
-                ...currentCookie,
+        function queueCustomerUpdate(payload = {}) {
+            const next = sanitizeCustomer({
+                ...customerNext,
+                ...payload,
+                updatedAt: payload.updatedAt || now
+            });
+            Object.assign(customerNext, next);
+            customerMutated = true;
+            return next;
+        }
+
+        async function persistDelta(source = 'nf-generate-link') {
+            const upsertCookies = Array.from(cookieUpserts.values());
+            const upsertCustomers = customerMutated ? [sanitizeCustomer(customerNext)] : [];
+            if (upsertCookies.length === 0 && upsertCustomers.length === 0) return true;
+            const ok = await writeDelta({ source, upsertCookies, upsertCustomers });
+            if (ok) invalidateGenerateCaches();
+            return ok;
+        }
+
+        async function finalizeSuccess(cookie, nftoken, reusedCookie) {
+            const updatedCookie = queueCookie({
+                ...cookie,
                 status: 'active',
-                assignedCustomerCode: customers[customerIndex].code,
+                assignedCustomerCode: customerNext.code,
                 unknownTagged: false,
                 holdTagged: false,
                 overCapacityTagged: false,
@@ -124,59 +169,63 @@ module.exports = async function (req, res) {
                 lastErrorAt: '',
                 lastError: '',
                 updatedAt: now
-            };
-            customers[customerIndex] = {
-                ...customers[customerIndex],
-                assignedCookieId: currentCookie.id,
+            });
+            queueCustomerUpdate({
+                assignedCookieId: updatedCookie.id,
                 lastLinkedAt: now,
                 updatedAt: now
-            };
-            mutated = true;
-            await persistAll(customers, cookies, 'nf-generate-link-success');
+            });
+
+            const ok = await persistDelta('nf-generate-link-success');
+            if (!ok) return res.status(500).json({ error: 'Failed to persist generated link state' });
             return res.status(200).json({
                 success: true,
                 customer: {
-                    code: customers[customerIndex].code,
-                    name: customers[customerIndex].name
+                    code: customerNext.code,
+                    name: customerNext.name
                 },
-                cookieId: currentCookie.id,
+                cookieId: updatedCookie.id,
                 reusedCookie: !!reusedCookie,
                 device,
                 url: buildUrlByDevice(nftoken, device)
             });
         }
 
-        async function tryCookieAtIndex(cookieIndex, reusedCookie) {
-            const cookie = cookies[cookieIndex];
+        function unassignCurrentCustomerCookie() {
+            if (!customerNext.assignedCookieId) return;
+            queueCustomerUpdate({
+                assignedCookieId: '',
+                updatedAt: now
+            });
+        }
+
+        async function tryCookie(cookie, reusedCookie) {
             const ids = resolveEffectiveCookieIds(cookie);
             if (!ids.netflixId) {
-                cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], 'Cookie không có NetflixId hợp lệ.');
-                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                    unassignCustomerCurrentCookie();
+                queueCookie(markCookieDead(cookie, 'Cookie không có NetflixId hợp lệ.'));
+                if (customerNext.assignedCookieId === cookie.id) {
+                    unassignCurrentCustomerCookie();
                 }
-                mutated = true;
                 return null;
             }
 
             const tokenResult = await requestNetflixToken(ids.netflixId, ids.secureNetflixId || '');
-
             if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
                 if (!tokenResult.accountInfo) {
-                    cookies[cookieIndex] = {
-                        ...cookies[cookieIndex],
+                    queueCookie({
+                        ...cookie,
                         status: 'active',
                         assignedCustomerCode: '',
                         unknownTagged: false,
                         holdTagged: false,
                         lastCheckedAt: now,
                         lastErrorAt: now,
-                        lastError: 'Cookie LIVE nhung khong lay duoc account info.',
+                        lastError: 'Cookie LIVE nhưng không lấy được account info.',
                         updatedAt: now
-                    };
-                    if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                        unassignCustomerCurrentCookie();
+                    });
+                    if (customerNext.assignedCookieId === cookie.id) {
+                        unassignCurrentCustomerCookie();
                     }
-                    mutated = true;
                     return null;
                 }
 
@@ -185,33 +234,31 @@ module.exports = async function (req, res) {
                     const tagMessage = [];
                     if (tags.unknownTagged) tagMessage.push('UNKNOW');
                     if (tags.holdTagged) tagMessage.push('HOLD');
-                    cookies[cookieIndex] = {
-                        ...cookies[cookieIndex],
+                    queueCookie({
+                        ...cookie,
                         status: 'active',
                         assignedCustomerCode: '',
                         unknownTagged: tags.unknownTagged,
                         holdTagged: tags.holdTagged,
                         lastCheckedAt: now,
                         lastErrorAt: now,
-                        lastError: `Cookie LIVE nhung bi tag ${tagMessage.join('+')}.`,
+                        lastError: `Cookie LIVE nhưng bị tag ${tagMessage.join('+')}.`,
                         updatedAt: now
-                    };
-                    if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                        unassignCustomerCurrentCookie();
+                    });
+                    if (customerNext.assignedCookieId === cookie.id) {
+                        unassignCurrentCustomerCookie();
                     }
-                    mutated = true;
                     return null;
                 }
 
-                return finalizeSuccess(cookieIndex, tokenResult.nftoken, reusedCookie);
+                return finalizeSuccess(cookie, tokenResult.nftoken, reusedCookie);
             }
 
             const reason = tokenResult.error || 'Cookie error';
-
             if (tokenResult.outcome === 'sbd_blocked') {
                 hasPermissionDeniedCookie = true;
-                cookies[cookieIndex] = {
-                    ...cookies[cookieIndex],
+                queueCookie({
+                    ...cookie,
                     status: 'active',
                     sbdTagged: true,
                     unknownTagged: false,
@@ -221,27 +268,26 @@ module.exports = async function (req, res) {
                     lastErrorAt: now,
                     lastError: reason,
                     updatedAt: now
-                };
-                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                    unassignCustomerCurrentCookie();
+                });
+                if (customerNext.assignedCookieId === cookie.id) {
+                    unassignCurrentCustomerCookie();
                 }
-                mutated = true;
                 return null;
             }
 
             if (tokenResult.outcome === 'dead') {
-                cookies[cookieIndex] = markCookieDead(cookies[cookieIndex], reason);
-                cookies[cookieIndex].unknownTagged = false;
-                cookies[cookieIndex].holdTagged = false;
-                if (customers[customerIndex].assignedCookieId === cookies[cookieIndex].id) {
-                    unassignCustomerCurrentCookie();
+                const deadCookie = markCookieDead(cookie, reason);
+                deadCookie.unknownTagged = false;
+                deadCookie.holdTagged = false;
+                queueCookie(deadCookie);
+                if (customerNext.assignedCookieId === cookie.id) {
+                    unassignCurrentCustomerCookie();
                 }
-                mutated = true;
                 return null;
             }
 
-            cookies[cookieIndex] = {
-                ...cookies[cookieIndex],
+            queueCookie({
+                ...cookie,
                 status: 'active',
                 unknownTagged: false,
                 holdTagged: false,
@@ -249,70 +295,87 @@ module.exports = async function (req, res) {
                 lastErrorAt: now,
                 lastError: reason,
                 updatedAt: now
-            };
-            mutated = true;
+            });
             return null;
         }
 
-        const assignedCookieId = customers[customerIndex].assignedCookieId || '';
+        const assignedCookieId = String(customerNext.assignedCookieId || '').trim();
         if (assignedCookieId) {
-            const assignedIdx = cookies.findIndex((item) => item.id === assignedCookieId);
-            if (assignedIdx >= 0) {
-                const assignedCookie = cookies[assignedIdx];
+            const assignedCookie = await readCookieById(assignedCookieId);
+            if (assignedCookie) {
                 if (
                     assignedCookie.errorTagged
                     || assignedCookie.sbdTagged
                     || assignedCookie.status === 'dead'
                     || isCookieOverCapacityActive(assignedCookie)
                 ) {
-                    unassignCustomerCurrentCookie();
+                    unassignCurrentCustomerCookie();
                 } else {
-                    const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customers[customerIndex].code;
+                    const lockedByOther = assignedCookie.assignedCustomerCode && assignedCookie.assignedCustomerCode !== customerNext.code;
                     if (lockedByOther) {
-                        unassignCustomerCurrentCookie();
+                        unassignCurrentCustomerCookie();
                     } else {
-                        const assignedResult = await tryCookieAtIndex(assignedIdx, true);
+                        const assignedResult = await tryCookie(assignedCookie, true);
                         if (assignedResult) return assignedResult;
                     }
                 }
             } else {
-                unassignCustomerCurrentCookie();
+                unassignCurrentCustomerCookie();
             }
+        }
+
+        let candidates = [];
+        let shouldFallbackScan = false;
+        try {
+            const indexDoc = await readCookieIndex();
+            const candidateIds = buildPrioritizedCookieIdsFromIndex(indexDoc, 220);
+            if (candidateIds.length > 0) {
+                const maxRead = Math.max(220, Math.min(candidateIds.length, 420));
+                candidates = await readCookiesByIds(candidateIds.slice(0, maxRead));
+            } else if (!indexDoc.exists) {
+                shouldFallbackScan = true;
+            }
+        } catch (e) {
+            shouldFallbackScan = true;
+        }
+
+        if (shouldFallbackScan || candidates.length === 0) {
+            candidates = await readCookieCandidatesForGenerate({
+                limit: 220,
+                scanMax: 700
+            });
         }
 
         const normalBucket = [];
         const holdBucket = [];
         const unknownBucket = [];
 
-        for (let i = 0; i < cookies.length; i += 1) {
-            const cookie = cookies[i];
+        for (let i = 0; i < candidates.length; i += 1) {
+            const cookie = candidates[i];
+            if (!cookie || !cookie.id) continue;
             if (cookie.errorTagged) continue;
             if (cookie.sbdTagged) continue;
             if (cookie.status !== 'active') continue;
             if (isCookieOverCapacityActive(cookie)) continue;
-            if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customers[customerIndex].code) continue;
+            if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customerNext.code) continue;
             if (cookie.id === assignedCookieId) continue;
 
-            if (cookie.holdTagged) {
-                holdBucket.push(i);
-            } else if (cookie.unknownTagged) {
-                unknownBucket.push(i);
-            } else {
-                normalBucket.push(i);
-            }
+            if (cookie.holdTagged) holdBucket.push(cookie);
+            else if (cookie.unknownTagged) unknownBucket.push(cookie);
+            else normalBucket.push(cookie);
         }
 
         const prioritizedBuckets = [normalBucket, holdBucket, unknownBucket];
         for (let b = 0; b < prioritizedBuckets.length; b += 1) {
             const bucket = prioritizedBuckets[b];
             for (let j = 0; j < bucket.length; j += 1) {
-                const attemptResult = await tryCookieAtIndex(bucket[j], false);
+                const attemptResult = await tryCookie(bucket[j], false);
                 if (attemptResult) return attemptResult;
             }
         }
 
-        if (mutated) {
-            await persistAll(customers, cookies, 'nf-generate-link-no-live');
+        if (cookieUpserts.size > 0 || customerMutated) {
+            await persistDelta('nf-generate-link-no-live');
         }
 
         if (hasPermissionDeniedCookie) {
@@ -326,3 +389,4 @@ module.exports = async function (req, res) {
         return res.status(500).json({ error: e.message || 'Internal server error' });
     }
 };
+

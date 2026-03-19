@@ -225,6 +225,10 @@ module.exports = async function (req, res) {
         return;
     }
 
+    return res.status(410).json({
+        error: 'Netflix LIVE/DIE status API has been disabled to optimize Firestore reads.'
+    });
+
     try {
         const currentPool = await ensurePoolWithMigration();
 

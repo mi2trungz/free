@@ -7,6 +7,7 @@ const {
     extractNetflixIdsFromCookie,
     makeCustomerCode
 } = require('../_nf-store');
+const { invalidateMany } = require('../_response-cache');
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -86,6 +87,7 @@ module.exports = async function (req, res) {
             upsertCookies: added
         });
         if (!ok) return res.status(500).json({ error: 'Failed to import cookies' });
+        invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
 
         return res.status(200).json({
             success: true,

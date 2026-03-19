@@ -1,7 +1,18 @@
 const https = require('https');
 
+const tokenCache = new Map();
+const TOKEN_CACHE_TTL_OK_MS = 25 * 1000;
+const TOKEN_CACHE_TTL_QUOTA_MS = 8 * 1000;
+const TOKEN_CACHE_TTL_ERROR_MS = 5 * 1000;
+
 function isTokenPermissionDenied(errorText = '') {
     return /detailedaccessdeniedexception|access denied by sbd|permission_denied/i.test(String(errorText || ''));
+}
+
+function isQuotaError(errorText = '', statusCode = 0) {
+    const msg = String(errorText || '').toLowerCase();
+    if (statusCode === 429) return true;
+    return /quota|resource_exhausted|too many requests|rate limit|exceeded/i.test(msg);
 }
 
 function isLikelyDeadCookie(errorText = '', statusCode = 0) {
@@ -203,22 +214,61 @@ function classifyNetflixTokenResult(result = {}) {
     return { outcome: 'error', nftoken: '', statusCode, error: errorText || 'Unknown token error' };
 }
 
+function getTokenCacheKey(netflixId = '', secureNetflixId = '') {
+    return `${String(netflixId || '').trim()}|${String(secureNetflixId || '').trim()}`;
+}
+
+function getCachedTokenResult(key = '') {
+    const cached = tokenCache.get(key);
+    if (!cached) return null;
+    if (cached.expiresAt <= Date.now()) {
+        tokenCache.delete(key);
+        return null;
+    }
+    return cached.value;
+}
+
+function getResultTtlMs(result = {}) {
+    if (result && result.outcome === 'ok' && result.nftoken) return TOKEN_CACHE_TTL_OK_MS;
+    if (isQuotaError(result && result.error, Number(result && result.statusCode))) return TOKEN_CACHE_TTL_QUOTA_MS;
+    return TOKEN_CACHE_TTL_ERROR_MS;
+}
+
+function setCachedTokenResult(key = '', result = {}) {
+    const ttlMs = getResultTtlMs(result);
+    tokenCache.set(key, {
+        value: result,
+        expiresAt: Date.now() + Math.max(0, ttlMs)
+    });
+}
+
 async function requestNetflixToken(netflixId, secureNetflixId) {
+    const cacheKey = getTokenCacheKey(netflixId, secureNetflixId);
+    const cached = getCachedTokenResult(cacheKey);
+    if (cached) return cached;
+
     const raw = await callNetflixCreateAutoLoginToken(netflixId, secureNetflixId || '');
     const result = classifyNetflixTokenResult(raw);
 
     if (result.outcome === 'ok' && result.nftoken) {
         const infoResult = await callNfCheckerAccountInfo(netflixId);
-        return {
+        const enriched = {
             ...result,
             accountInfo: infoResult.ok ? (infoResult.accountInfo || null) : null
         };
+        setCachedTokenResult(cacheKey, enriched);
+        return enriched;
+    }
+
+    if (isQuotaError(result.error, result.statusCode)) {
+        setCachedTokenResult(cacheKey, result);
+        return result;
     }
 
     if (result.outcome === 'sbd_blocked' || (result.outcome === 'dead' && !secureNetflixId)) {
         const fallback = await callNfCheckerApi(netflixId);
         if (fallback.ok && fallback.nftoken) {
-            return {
+            const fallbackResult = {
                 outcome: 'ok',
                 nftoken: fallback.nftoken,
                 statusCode: 200,
@@ -226,9 +276,12 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
                 source: 'nfchecker_fallback',
                 accountInfo: fallback.accountInfo || null
             };
+            setCachedTokenResult(cacheKey, fallbackResult);
+            return fallbackResult;
         }
     }
 
+    setCachedTokenResult(cacheKey, result);
     return result;
 }
 
@@ -238,5 +291,6 @@ module.exports = {
     detectPlaybackOverCapacity,
     callNetflixCreateAutoLoginToken,
     classifyNetflixTokenResult,
-    requestNetflixToken
+    requestNetflixToken,
+    isQuotaError
 };

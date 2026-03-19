@@ -2153,37 +2153,9 @@
                 <div id="adminSettingsContent" class="space-y-4 hidden">
                     <h4 class="text-lg font-bold text-gray-800 mb-4">Cài đặt hệ thống</h4>
 
-                    <!-- Quản lý Cookie Pool Netflix -->
                     <div class="bg-indigo-50 rounded-xl p-4 border-2 border-indigo-200">
-                        <div class="flex items-center justify-between mb-2 gap-3">
-                            <label class="block text-sm font-bold text-indigo-800">Cookie Pool Netflix (Failover)</label>
-                            <span id="netflixPoolSummaryBadge"
-                                class="text-xs font-semibold px-2 py-1 rounded bg-gray-200 text-gray-600">Chưa tải</span>
-                        </div>
-                        <p class="text-xs text-indigo-600 mb-3">Không tự động lấy link định kỳ. Khi user bấm nút xem Netflix ở trang chủ, hệ thống sẽ thử tuần tự cookie LIVE theo thứ tự mới thêm trước.</p>
-
-                        <textarea id="netflixCookiePoolInput" rows="4"
-                            class="w-full px-3 py-2 rounded-lg border-2 border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-xs font-mono mb-3"
-                            placeholder="Dán 1 hoặc nhiều cookie Netflix (Netscape hoặc chuỗi có NetflixId/SecureNetflixId), ngăn cách bằng dòng trống..."></textarea>
-
-                        <div class="flex gap-2 items-center">
-                            <button id="btnAddNetflixCookiePool" onclick="addNetflixCookieToPool()"
-                                class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>Thêm cookie vào pool</span>
-                            </button>
-                            <button type="button" onclick="refreshNetflixCookiePool()"
-                                class="bg-white text-indigo-700 border border-indigo-300 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-all text-sm font-semibold">
-                                Tải lại danh sách
-                            </button>
-                            <span id="netflixPoolStatusText" class="text-xs text-gray-500 ml-auto"></span>
-                        </div>
-
-                        <div id="netflixCookiePoolList" class="mt-3 space-y-2 max-h-56 overflow-y-auto custom-scrollbar"></div>
+                        <label class="block text-sm font-bold text-indigo-800">Netflix Status</label>
+                        <p class="text-xs text-indigo-600 mt-2">Đã tắt hoàn toàn trạng thái LIVE/DIE để tối ưu read Firestore.</p>
                     </div>
 
                     <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
@@ -2912,10 +2884,6 @@
                                     <span class="text-[11px] sm:text-[18px] leading-[1.05] sm:leading-tight font-black text-center uppercase tracking-wide">XEM TRÊN<br>TIVI</span>
                                 </button>
                             </div>
-                            <button id="modalNetflixCheckBtn" onclick="checkNetflixCookieStatusForCurrentAccount()"
-                                class="hidden mt-2 w-full bg-white text-indigo-700 border border-indigo-200 px-3 py-2.5 rounded-lg text-sm font-bold hover:bg-indigo-50 transition-all shadow-sm hover:shadow-md">
-                                CHECK COOKIE LIVE/DIE
-                            </button>
                             <p id="modalNetflixCookieState" class="text-[11px] text-gray-500 mt-2 text-center"></p>
                         </div>
 
@@ -4360,6 +4328,7 @@
 
         async function handleLogout() {
             try {
+                stopDataListener();
                 await window.firebaseSignOut(window.firebaseAuth);
                 // checkAuthState() will be triggered automatically by onAuthStateChanged
             } catch (error) {
@@ -4422,6 +4391,7 @@
             if (adminBtn) adminBtn.classList.add('hidden');
             if (logoutBtn) logoutBtn.classList.add('hidden');
             if (loginBtn) loginBtn.classList.remove('hidden');
+            stopDataListener();
 
             applyRouteFromUrl();
             loadDataFromStorage({ pricingOnly: true }).then(() => {
@@ -4434,6 +4404,7 @@
         function checkAuthState() {
             window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
                 currentUser = user;
+                const shouldEnableRealtime = !IS_PRICING_ROUTE && isAdmin();
                 const landingPage = document.getElementById('landingPage');
                 const mainApp = document.getElementById('mainApp');
                 const userEmail = document.getElementById('userEmail');
@@ -4478,8 +4449,12 @@
                     if (currentFolderIndex === -1) applyRouteFromUrl();
                 }, 0);
 
+                if (!shouldEnableRealtime) {
+                    stopDataListener();
+                }
+
                 loadDataFromStorage({ pricingOnly: IS_PRICING_ROUTE }).then(() => {
-                    if (!IS_PRICING_ROUTE) {
+                    if (shouldEnableRealtime) {
                         setupDataListener();
                     }
                     if (
@@ -4843,18 +4818,28 @@
         let netflixUsageNoticeCountdownTimer = null;
         let disclaimerTimer = null;
 
-        function setupDataListener() {
-            // Hủy listener cũ nếu có
+        function stopDataListener() {
             if (dataListener) {
                 dataListener();
                 dataListener = null;
             }
+        }
 
-            // Thiết lập real-time listener để tự động cập nhật (cho tất cả người dùng, kể cả khách)
+        function setupDataListener() {
+            // Hủy listener cũ nếu có
+            stopDataListener();
+
+            // Chỉ admin mới bật realtime để giảm read cho user thường.
+            if (!isAdmin()) {
+                console.log('Realtime listener skipped for non-admin user');
+                return;
+            }
+
+            // Thiết lập real-time listener cho admin.
             if (window.firebaseDb && window.firebaseDoc && window.firebaseOnSnapshot) {
                 try {
                     const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
-                    console.log('🔄 Setting up Firestore real-time listener (for all users)...');
+                    console.log('🔄 Setting up Firestore real-time listener (admin only)...');
                     dataListener = window.firebaseOnSnapshot(dataRef, (docSnap) => {
                         if (docSnap.exists()) {
                             const firestoreData = docSnap.data();
@@ -5857,11 +5842,6 @@
                                     </div>
                                 </div>
                             </div>
-                            ${isAdmin() ? `
-                                <button type="button" id="btnNetflixQuickCheck" class="netflix-check-btn" onclick="checkNetflixCookiePoolQuickStatus()">
-                                    Check cookie LIVE/DIE
-                                </button>
-                            ` : ''}
                         </div>
                     </div>
                     <button type="button" id="netflixVipCard" onclick="showNetflixProModal()"
@@ -7391,7 +7371,6 @@
             adminModal.classList.add('flex');
             switchAdminTab('folders');
             loadAdminFolders();
-            refreshNetflixCookiePool({ silent: true });
         }
 
         function closeAdminModal() {
@@ -7732,7 +7711,6 @@
             if (accountDescInput) accountDescInput.value = ACCOUNT_SECTION_DESC || '';
             if (popupDescInput) popupDescInput.value = POPUP_SECTION_DESC || '';
             if (premiumDescInput) premiumDescInput.value = PREMIUM_SECTION_DESC || '';
-            refreshNetflixCookiePool({ silent: true });
             renderAdminPricingProducts();
         }
 
@@ -9188,7 +9166,6 @@
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
-                    netflixPoolApiReachable = true;
                     showAlert(
                         'Netflix tạm lỗi',
                         'Tài khoản netflix hiện đang gặp sự cố, hãy báo lỗi cho admin',
@@ -9198,10 +9175,8 @@
                             actionUrl: 'https://www.facebook.com/trada3k.vn'
                         }
                     );
-                    await refreshNetflixCookiePool({ silent: true });
                     return;
                 }
-                netflixPoolApiReachable = true;
                 let targetUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
 
                 const preserveUnsupported = btnLink.dataset.preserveUnsupported === '1';
@@ -9217,12 +9192,10 @@
                 } else {
                     window.location.href = targetUrl;
                 }
-                refreshNetflixCookiePool({ silent: true });
             } catch (e) {
                 if (popupWindow && !popupWindow.closed) {
                     try { popupWindow.close(); } catch (closeErr) { }
                 }
-                netflixPoolApiReachable = false;
                 showAlert(
                     'Netflix tạm lỗi',
                     'Tài khoản netflix hiện đang gặp sự cố, hãy báo lỗi cho admin',
@@ -9303,10 +9276,6 @@
             updateNetflixUserFacingStatus();
 
             if (!IS_PRICING_ROUTE) {
-                // Keep first paint fast, move network-heavy tasks to idle time.
-                runNonCriticalTask(() => {
-                    refreshNetflixCookiePool({ silent: true });
-                }, 1500);
                 runNonCriticalTask(() => {
                     initDeferredHomeMedia();
                 }, 1800);

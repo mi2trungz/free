@@ -1,12 +1,12 @@
-const {
+﻿const {
     parseBody,
-    readCustomers,
-    readCookies,
+    readCustomerByCode,
+    readCookieById,
     writeDelta,
-    findCustomerByCode,
     isCustomerWarrantyValid,
     extractNetflixIdsFromCookie
 } = require('./_nf-store');
+const { invalidateMany } = require('./_response-cache');
 const { requestNetflixToken, detectPlaybackOverCapacity } = require('./_netflix-token-engine');
 
 const OVERCAP_TTL_MINUTES = 30;
@@ -37,6 +37,10 @@ function resolveEffectiveCookieIds(cookie = {}) {
     return { netflixId, secureNetflixId };
 }
 
+function invalidateOverloadCaches() {
+    invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -47,8 +51,7 @@ module.exports = async function (req, res) {
         const customerCode = String(body.customerCode || '').trim().toUpperCase();
         if (!customerCode) return res.status(400).json({ error: 'Missing customerCode' });
 
-        const [customers, cookies] = await Promise.all([readCustomers(), readCookies()]);
-        const customer = findCustomerByCode(customers, customerCode);
+        const customer = await readCustomerByCode(customerCode);
         if (!customer) return res.status(404).json({ error: 'Ma khach hang khong ton tai.' });
         if (customer.status === 'inactive') return res.status(403).json({ error: 'Ma khach hang dang tam khoa.' });
         if (!isCustomerWarrantyValid(customer)) return res.status(403).json({ error: 'Ma khach hang da het thoi gian bao hanh.' });
@@ -62,7 +65,7 @@ module.exports = async function (req, res) {
             });
         }
 
-        const cookie = cookies.find((item) => String(item.id || '').trim() === assignedCookieId);
+        const cookie = await readCookieById(assignedCookieId);
         if (!cookie) {
             const now = new Date().toISOString();
             await writeDelta({
@@ -73,6 +76,7 @@ module.exports = async function (req, res) {
                     updatedAt: now
                 }]
             });
+            invalidateOverloadCaches();
             return res.status(200).json({
                 success: true,
                 outcome: 'not_assigned',
@@ -134,6 +138,7 @@ module.exports = async function (req, res) {
                 upsertCustomers: [updatedCustomer]
             });
             if (!ok) return res.status(500).json({ error: 'Failed to persist overload result' });
+            invalidateOverloadCaches();
             return res.status(200).json({
                 success: true,
                 outcome: 'overloaded_unassigned',
@@ -156,6 +161,7 @@ module.exports = async function (req, res) {
                     updatedAt: now
                 }]
             });
+            invalidateOverloadCaches();
         }
 
         return res.status(200).json({

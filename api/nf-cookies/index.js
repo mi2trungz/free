@@ -1,21 +1,38 @@
-const {
+﻿const {
     parseBody,
-    readCookies,
-    readCustomers,
+    readCookiesPage,
+    readCookiesByIds,
+    readCustomersByCodes,
     writeDelta,
     sanitizeCookie,
     sanitizeCookieStatus,
     maskNetflixId,
-    buildCookieSummary,
     extractNetflixIdsFromCookie,
     splitImportCookieBlocks
 } = require('../_nf-store');
+const { getOrSet, invalidateMany } = require('../_response-cache');
+
+const COOKIES_CACHE_NS = 'nf_cookies_get';
+const COOKIES_CACHE_TTL_MS = 60 * 1000;
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 25;
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function parsePagination(req) {
+    try {
+        const parsed = new URL(String((req && req.url) || ''), 'http://localhost');
+        const page = Math.max(1, Number(parsed.searchParams.get('page') || DEFAULT_PAGE));
+        const pageSize = Math.max(1, Math.min(Number(parsed.searchParams.get('pageSize') || DEFAULT_PAGE_SIZE), 100));
+        return { page, pageSize };
+    } catch (e) {
+        return { page: DEFAULT_PAGE, pageSize: DEFAULT_PAGE_SIZE };
+    }
 }
 
 function cookiePublicDto(cookie) {
@@ -68,19 +85,48 @@ function findMissingCookieIds(cookies = [], cookieIds = []) {
     return cookieIds.filter((id) => !existing.has(id));
 }
 
+function invalidateCookieRelatedCaches() {
+    invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     try {
-        const cookies = await readCookies();
-
         if (req.method === 'GET') {
-            const summary = buildCookieSummary(cookies);
-            return res.status(200).json({
-                ...summary,
-                cookies: cookies.map(cookiePublicDto)
-            });
+            const { page, pageSize } = parsePagination(req);
+            const cacheKey = `p=${page}|s=${pageSize}`;
+            const { value } = await getOrSet(
+                COOKIES_CACHE_NS,
+                cacheKey,
+                async () => {
+                    const paged = await readCookiesPage({ page, pageSize });
+                    const items = (paged.items || []).map(cookiePublicDto);
+                    return {
+                        summary: paged.summary || {
+                            total: paged.total || 0,
+                            activeCount: 0,
+                            disabledCount: 0,
+                            deadCount: 0,
+                            assignedCount: 0,
+                            unknownCount: 0,
+                            holdCount: 0,
+                            overCapacityCount: 0
+                        },
+                        items,
+                        cookies: items,
+                        total: paged.total || 0,
+                        page: paged.page || page,
+                        pageSize: paged.pageSize || pageSize,
+                        totalPages: paged.totalPages || 1,
+                        hasNext: !!paged.hasNext,
+                        hasPrev: !!paged.hasPrev
+                    };
+                },
+                COOKIES_CACHE_TTL_MS
+            );
+            return res.status(200).json(value);
         }
 
         const body = parseBody(req.body);
@@ -89,6 +135,7 @@ module.exports = async function (req, res) {
             const cookieIds = parseCookieIds(body);
             if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
 
+            const cookies = await readCookiesByIds(cookieIds);
             const missingIds = findMissingCookieIds(cookies, cookieIds);
             if (missingIds.length > 0) {
                 return res.status(404).json({ error: 'Cookie not found', missingIds });
@@ -126,8 +173,10 @@ module.exports = async function (req, res) {
 
             let shouldUnassignAny = false;
             const updatedCookies = [];
+            const impactedCustomerCodes = new Set();
+
             cookies.forEach((current) => {
-                if (!targetIdSet.has(current.id)) return current;
+                if (!targetIdSet.has(current.id)) return;
 
                 const nextStatus = body.status !== undefined ? sanitizeCookieStatus(body.status) : current.status;
                 const nextErrorTagged = hasErrorTagUpdate ? !!body.errorTagged : !!current.errorTagged;
@@ -154,6 +203,10 @@ module.exports = async function (req, res) {
                     || nextUnknownTagged
                     || nextHoldTagged
                     || isOverCapacityActive;
+
+                if (String(current.assignedCustomerCode || '').trim()) {
+                    impactedCustomerCodes.add(String(current.assignedCustomerCode || '').trim().toUpperCase());
+                }
                 if (shouldUnassign) shouldUnassignAny = true;
 
                 if (hasCookieRawUpdate) {
@@ -178,7 +231,7 @@ module.exports = async function (req, res) {
                         lastErrorAt: '',
                         lastError: ''
                     }));
-                    return current;
+                    return;
                 }
 
                 updatedCookies.push(sanitizeCookie({
@@ -196,7 +249,6 @@ module.exports = async function (req, res) {
                     updatedAt: now,
                     lastError: body.lastError !== undefined ? String(body.lastError || '') : current.lastError
                 }));
-                return current;
             });
 
             if (!shouldUnassignAny) {
@@ -205,19 +257,20 @@ module.exports = async function (req, res) {
                     upsertCookies: updatedCookies
                 });
                 if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
+                invalidateCookieRelatedCaches();
                 return res.status(200).json({ success: true, affectedCount: cookieIds.length });
             }
 
-            const customers = await readCustomers();
             const changedCustomers = [];
-            customers.forEach((customer) => {
-                if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
+            const candidates = await readCustomersByCodes(Array.from(impactedCustomerCodes));
+            const targetIdSetStr = new Set(cookieIds.map((id) => String(id)));
+            candidates.forEach((customer) => {
+                if (!targetIdSetStr.has(String(customer.assignedCookieId || '').trim())) return;
                 changedCustomers.push({
                     ...customer,
                     assignedCookieId: '',
                     updatedAt: now
                 });
-                return customer;
             });
 
             const ok = await writeDelta({
@@ -226,6 +279,7 @@ module.exports = async function (req, res) {
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
+            invalidateCookieRelatedCaches();
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
@@ -233,23 +287,27 @@ module.exports = async function (req, res) {
             const cookieIds = parseCookieIds(body);
             if (cookieIds.length === 0) return res.status(400).json({ error: 'Missing cookieId' });
 
+            const cookies = await readCookiesByIds(cookieIds);
             const missingIds = findMissingCookieIds(cookies, cookieIds);
             if (missingIds.length > 0) {
                 return res.status(404).json({ error: 'Cookie not found', missingIds });
             }
 
             const now = new Date().toISOString();
-            const targetIdSet = new Set(cookieIds);
-            const customers = await readCustomers();
+            const targetIdSet = new Set(cookieIds.map((id) => String(id).trim()));
+            const impactedCodes = new Set(cookies
+                .map((cookie) => String(cookie.assignedCustomerCode || '').trim().toUpperCase())
+                .filter(Boolean));
+
+            const customers = await readCustomersByCodes(Array.from(impactedCodes));
             const changedCustomers = [];
             customers.forEach((customer) => {
-                if (!targetIdSet.has(customer.assignedCookieId || '')) return customer;
+                if (!targetIdSet.has(String(customer.assignedCookieId || '').trim())) return;
                 changedCustomers.push({
                     ...customer,
                     assignedCookieId: '',
                     updatedAt: now
                 });
-                return customer;
             });
 
             const ok = await writeDelta({
@@ -258,11 +316,15 @@ module.exports = async function (req, res) {
                 upsertCustomers: changedCustomers
             });
             if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
+            invalidateCookieRelatedCaches();
             return res.status(200).json({ success: true, affectedCount: cookieIds.length });
         }
 
         return res.status(405).json({ error: 'Method not allowed' });
     } catch (e) {
-        return res.status(500).json({ error: e.message || 'Internal server error' });
+        const status = Math.max(400, Math.min(599, Number(e && e.httpStatus ? e.httpStatus : 500)));
+        const payload = { error: (e && e.message) || 'Internal server error' };
+        if (e && e.code) payload.code = e.code;
+        return res.status(status).json(payload);
     }
 };

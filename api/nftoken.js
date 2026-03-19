@@ -9,6 +9,13 @@ const POOL_DOC_PATH = 'settings/netflix_cookie_pool';
 const LEGACY_DOC_PATH = 'settings/netflix_server_cookie';
 const UI_STATUS_DOC_PATH = 'settings/netflix';
 const LOCAL_COOKIE_STORE = path.join(__dirname, '..', 'data', 'netflix-cookie.json');
+const POOL_CACHE_TTL_MS = 60 * 1000;
+
+let poolCache = {
+    value: null,
+    expiresAt: 0
+};
+let poolLoadPromise = null;
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -169,6 +176,22 @@ function buildSummary(cookies = []) {
     return { total, activeCount, deadCount, hasCookie: activeCount > 0 };
 }
 
+function clonePool(cookies = []) {
+    return (Array.isArray(cookies) ? cookies : []).map((item) => sanitizeCookieItem({ ...item }));
+}
+
+function setPoolCache(cookies = []) {
+    poolCache = {
+        value: clonePool(cookies),
+        expiresAt: Date.now() + POOL_CACHE_TTL_MS
+    };
+}
+
+function getPoolCacheIfFresh() {
+    if (!poolCache.value || poolCache.expiresAt <= Date.now()) return null;
+    return clonePool(poolCache.value);
+}
+
 async function persistPool(cookies = []) {
     const normalized = cookies.map(sanitizeCookieItem).filter((item) => !!item.netflixId);
     const summary = buildSummary(normalized);
@@ -191,6 +214,10 @@ async function persistPool(cookies = []) {
         totalCount: toIntegerValue(summary.total),
         updatedAt: toTimestampValue(nowIso)
     });
+
+    if (okPool) {
+        setPoolCache(normalized);
+    }
 
     return okPool;
 }
@@ -216,6 +243,29 @@ async function ensurePoolWithMigration() {
     })];
     await persistPool(migrated);
     return migrated;
+}
+
+async function getPoolCachedOrLoad() {
+    const cached = getPoolCacheIfFresh();
+    if (cached) return cached;
+
+    if (poolLoadPromise) {
+        const shared = await poolLoadPromise;
+        return clonePool(shared);
+    }
+
+    poolLoadPromise = (async () => {
+        const loaded = await ensurePoolWithMigration();
+        setPoolCache(loaded);
+        return clonePool(loaded);
+    })();
+
+    try {
+        const shared = await poolLoadPromise;
+        return clonePool(shared);
+    } finally {
+        poolLoadPromise = null;
+    }
 }
 
 async function readAccountCookieFromFirestore(accountKey) {
@@ -276,7 +326,7 @@ module.exports = async function (req, res) {
             return res.status(200).json({ nftoken: result.nftoken });
         }
 
-        const pool = await ensurePoolWithMigration();
+        const pool = await getPoolCachedOrLoad();
         const activeIndexes = [];
         for (let i = 0; i < pool.length; i += 1) {
             if (pool[i].status === 'active') activeIndexes.push(i);
