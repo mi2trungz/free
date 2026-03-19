@@ -11,6 +11,7 @@ const nfSupportOverloadCheckHandler = require('./api/nf-support-overload-check')
 const nfCookieToLinkHandler = require('./api/nf-cookie-to-link');
 const nfTvActivateHandler = require('./api/nf-tv-activate');
 const nftokenHandler = require('./api/nftoken');
+const netflixCookieHandler = require('./api/netflix-cookie');
 
 const PORT = 3005;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -120,7 +121,7 @@ function invokeServerlessApi(handler, req, res) {
 const server = http.createServer((req, res) => {
     // Enable CORS for local development just in case
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     const requestPath = String(req.url || '/').split('?')[0];
@@ -155,45 +156,13 @@ const server = http.createServer((req, res) => {
     if (requestPath === '/api/nftoken') {
         return invokeServerlessApi(nftokenHandler, req, res);
     }
+    if (requestPath === '/api/netflix-cookie') {
+        return invokeServerlessApi(netflixCookieHandler, req, res);
+    }
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);
         return res.end();
-    }
-
-    if (req.method === 'GET' && req.url === '/api/netflix-cookie') {
-        const saved = readStoredNetflixCookie();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ hasCookie: !!(saved && saved.netflixId) }));
-    }
-
-    if (req.method === 'POST' && req.url === '/api/netflix-cookie') {
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-
-        req.on('end', () => {
-            try {
-                const data = JSON.parse(body || '{}');
-                const { netflixId, secureNetflixId } = data;
-                if (!netflixId) {
-                    res.writeHead(400, { 'Content-Type': 'application/json' });
-                    return res.end(JSON.stringify({ error: 'Missing NetflixId' }));
-                }
-                const ok = writeStoredNetflixCookie(netflixId, secureNetflixId);
-                if (!ok) {
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    return res.end(JSON.stringify({ error: 'Failed to save cookie on server' }));
-                }
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                return res.end(JSON.stringify({ success: true }));
-            } catch (e) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                return res.end(JSON.stringify({ error: 'Bad Request JSON' }));
-            }
-        });
-        return;
     }
 
     // Serve Static Files

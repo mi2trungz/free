@@ -2155,10 +2155,10 @@
 
                     <div class="bg-indigo-50 rounded-xl p-4 border-2 border-indigo-200">
                         <label class="block text-sm font-bold text-indigo-800">Netflix Pool (Nhập nhanh)</label>
-                        <p class="text-xs text-indigo-600 mt-2">Dán cookie pool fallback. Không bật trạng thái LIVE/DIE để tiết kiệm read Firestore.</p>
+                        <p class="text-xs text-indigo-600 mt-2">Dán 1 cookie text bình thường để lưu vào pool fallback Netflix.</p>
                         <textarea id="netflixCookiePoolInput" rows="4"
                             class="w-full mt-3 px-3 py-2 rounded-lg border-2 border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-xs font-mono"
-                            placeholder="Dán 1 hoặc nhiều cookie Netflix (Netscape hoặc chuỗi có NetflixId/SecureNetflixId), ngăn cách bằng dòng trống..."></textarea>
+                            placeholder="Dán cookie text Netflix (ví dụ: NetflixId=...; SecureNetflixId=...;)"></textarea>
                         <button id="btnAddNetflixCookiePool" onclick="addNetflixCookieToPool()"
                             class="mt-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -2168,18 +2168,27 @@
                             </svg>
                             <span>Lưu cookie pool</span>
                         </button>
+                        <div class="mt-3 flex items-center gap-2 flex-wrap">
+                            <span id="netflixPoolSummaryBadge" class="text-xs font-semibold px-2 py-1 rounded bg-gray-200 text-gray-600">Chưa tải</span>
+                            <span id="netflixPoolStatusText" class="text-xs text-gray-500"></span>
+                            <button id="btnNetflixQuickCheck" type="button" onclick="checkNetflixCookiePoolQuickStatus()"
+                                class="ml-auto text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-50">
+                                Check cookie LIVE/DIE
+                            </button>
+                        </div>
+                        <div id="netflixCookiePoolList" class="mt-3 space-y-2"></div>
                     </div>
 
                     <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Fallback link Netflix Desktop (chỉ khi lỗi 503)</label>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Fallback link Netflix Desktop (chỉ khi lỗi server 5xx)</label>
                         <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
                             <input type="checkbox" id="netflixDesktopFallbackEnabledInput" class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                            <span>Bật mở link fallback khi API /api/nftoken trả 503</span>
+                            <span>Bật mở link fallback khi API tạo link bị lỗi server</span>
                         </label>
                         <input type="text" id="netflixDesktopFallbackUrlInput"
                             class="w-full mt-3 px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="https://... (Link fallback admin)">
-                        <p class="text-xs text-gray-500 mt-2">Chỉ dùng khi tạo link xem trên máy tính bị Service Unavailable (503).</p>
+                        <p class="text-xs text-gray-500 mt-2">Chỉ dùng khi tạo link xem trên máy tính gặp lỗi server (5xx).</p>
                         <button onclick="saveNetflixDesktopFallbackSettings()"
                             class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all text-sm font-semibold">
                             Lưu fallback Netflix Desktop
@@ -4068,7 +4077,7 @@
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
         let POPUP_AD_IMAGE_URL = 'popupqc.png'; // Link banner popup lúc mới vào
-        let NETFLIX_DESKTOP_FALLBACK_ENABLED = true; // Bật fallback link desktop khi API nftoken trả 503
+        let NETFLIX_DESKTOP_FALLBACK_ENABLED = true; // Bật fallback link desktop khi API tạo link lỗi server
         let NETFLIX_DESKTOP_FALLBACK_URL = ''; // Link fallback desktop do admin cấu hình
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
         let POPUP_SECTION_DESC = 'Nhận ngay các phần quà hấp dẫn'; // Mô tả section nhận quà FREE
@@ -7035,9 +7044,9 @@
                 return;
             }
 
-            const ids = getNetflixCookieIdsForAccount(acc);
-            if (!ids.netflixId) {
-                showAlert('Thiếu cookie Netflix', 'Tài khoản này chưa có NetflixId. Vui lòng vào Admin > Quản lý tài khoản để cập nhật cookie cho tài khoản này.', 'warning');
+            const cookieStr = getCookieTextForNetflixAccount(acc);
+            if (!cookieStr) {
+                showAlert('Thiếu cookie Netflix', 'Tài khoản này chưa có cookie hợp lệ. Vui lòng vào Admin > Quản lý tài khoản để cập nhật cookie cho tài khoản này.', 'warning');
                 return;
             }
 
@@ -7052,17 +7061,17 @@
 
             setModalNetflixButtonLoading(true);
             try {
-                const response = await fetch('/api/nftoken', {
+                const response = await fetch('/api/nf-cookie-to-link', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        netflixId: ids.netflixId,
-                        secureNetflixId: ids.secureNetflixId || ''
+                        cookieStr,
+                        device: 'desktop'
                     })
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    if (response.status === 503 && tryOpenNetflixDesktopFallback(popupWindow)) {
+                    if (response.status >= 500 && tryOpenNetflixDesktopFallback(popupWindow)) {
                         return;
                     }
                     if (popupWindow && !popupWindow.closed) {
@@ -7072,7 +7081,7 @@
                     showAlert('Lỗi Netflix', msg, 'error');
                     return;
                 }
-                if (!data.nftoken) {
+                if (!data.url) {
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
@@ -7080,7 +7089,7 @@
                     return;
                 }
 
-                let targetUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
+                const targetUrl = String(data.url || '').trim();
                 if (popupWindow && !popupWindow.closed) {
                     popupWindow.location.href = targetUrl;
                 } else {
@@ -7859,6 +7868,7 @@
             if (netflixFallbackEnabledInput) netflixFallbackEnabledInput.checked = !!NETFLIX_DESKTOP_FALLBACK_ENABLED;
             if (netflixFallbackUrlInput) netflixFallbackUrlInput.value = NETFLIX_DESKTOP_FALLBACK_URL || '';
             renderAdminPricingProducts();
+            refreshNetflixCookiePool({ silent: true });
         }
 
         function renderPricingPackagePrice(pkg = {}) {
@@ -9055,6 +9065,36 @@
             return { netflixId, secureNetflixId };
         }
 
+        function buildCookieTextFromNetflixIds(netflixId = '', secureNetflixId = '') {
+            const n = String(netflixId || '').trim();
+            const s = String(secureNetflixId || '').trim();
+            if (!n) return '';
+            if (s) return `NetflixId=${n}; SecureNetflixId=${s};`;
+            return `NetflixId=${n};`;
+        }
+
+        function getCookieTextForNetflixAccount(acc) {
+            const raw = String((acc && acc.netflixCookieRaw) || '').trim();
+            const parsedFromRaw = extractNetflixIdsFromCookie(raw);
+            if (raw && parsedFromRaw.netflixId) return raw;
+            const ids = getNetflixCookieIdsForAccount(acc);
+            return buildCookieTextFromNetflixIds(ids.netflixId, ids.secureNetflixId || '');
+        }
+
+        function getActiveNetflixPoolCookieText() {
+            const list = Array.isArray(netflixCookiePoolListCache) ? netflixCookiePoolListCache : [];
+            for (let i = 0; i < list.length; i += 1) {
+                const item = list[i];
+                const status = String(item && item.status ? item.status : 'active').toLowerCase();
+                if (status !== 'active') continue;
+                const raw = String((item && item.cookieRaw) || '').trim();
+                if (raw && extractNetflixIdsFromCookie(raw).netflixId) return raw;
+                const rebuilt = buildCookieTextFromNetflixIds(item.netflixId, item.secureNetflixId || '');
+                if (rebuilt) return rebuilt;
+            }
+            return '';
+        }
+
         function maskNetflixId(netflixId = '') {
             const val = String(netflixId || '').trim();
             if (!val) return 'N/A';
@@ -9122,6 +9162,10 @@
                     : '';
                 const toggleLabel = status === 'disabled' ? 'Bật lại' : 'Tắt';
                 const toggleNextStatus = status === 'disabled' ? 'active' : 'disabled';
+                const rawCookie = String(cookie.cookieRaw || '').trim();
+                const preview = rawCookie
+                    ? (rawCookie.length > 160 ? `${rawCookie.slice(0, 160)}...` : rawCookie)
+                    : buildCookieTextFromNetflixIds(cookie.netflixId, cookie.secureNetflixId || '');
                 return `
                     <div class="bg-white rounded-lg border border-indigo-100 p-2.5">
                         <div class="flex items-start justify-between gap-2">
@@ -9131,9 +9175,12 @@
                                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${statusClass}">${statusLabelByCookieStatus(status)}</span>
                                 </div>
                                 <p class="text-[11px] text-gray-500 mt-1">Cập nhật: ${updatedAt}</p>
+                                <p class="text-[11px] text-slate-600 mt-1 break-all">${preview || 'Không có cookie text'}</p>
                                 ${infoLine}
                             </div>
                             <div class="flex items-center gap-1 flex-shrink-0">
+                                <button type="button" onclick="copyNetflixPoolCookieText('${cookie.id}')"
+                                    class="text-[11px] font-semibold px-2 py-1 rounded-md border border-indigo-200 text-indigo-700 hover:bg-indigo-50">Copy</button>
                                 <button type="button" onclick="setNetflixCookieStatus('${cookie.id}', '${toggleNextStatus}')"
                                     class="text-[11px] font-semibold px-2 py-1 rounded-md border border-gray-200 hover:bg-gray-100">${toggleLabel}</button>
                                 <button type="button" onclick="deleteNetflixCookie('${cookie.id}')"
@@ -9143,6 +9190,26 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        async function copyNetflixPoolCookieText(cookieId) {
+            const list = Array.isArray(netflixCookiePoolListCache) ? netflixCookiePoolListCache : [];
+            const target = list.find((item) => String(item.id || '') === String(cookieId || ''));
+            if (!target) {
+                showAlert('Lỗi', 'Không tìm thấy cookie để copy', 'error');
+                return;
+            }
+            const text = String(target.cookieRaw || '').trim() || buildCookieTextFromNetflixIds(target.netflixId, target.secureNetflixId || '');
+            if (!text) {
+                showAlert('Lỗi', 'Cookie này không có nội dung để copy', 'error');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                showAlert('Thành công', 'Đã copy cookie', 'success');
+            } catch (e) {
+                showAlert('Lỗi', 'Không copy được cookie trên trình duyệt này', 'error');
+            }
         }
 
         async function fetchNetflixCookiePoolSummary() {
@@ -9190,27 +9257,23 @@
 
             setNetflixPoolActionLoading(true);
             try {
-                const blocks = splitCookiePoolInput(cookieVal);
-                const candidates = blocks.map((block) => extractNetflixIdsFromCookie(block)).filter((ids) => !!ids.netflixId);
-                if (candidates.length === 0) {
+                const parsed = extractNetflixIdsFromCookie(cookieVal);
+                if (!parsed.netflixId) {
                     throw new Error('Không tìm thấy NetflixId hợp lệ trong nội dung đã dán.');
                 }
-                for (let i = 0; i < candidates.length; i += 1) {
-                    const ids = candidates[i];
-                    const response = await fetch('/api/netflix-cookie', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            netflixId: ids.netflixId,
-                            secureNetflixId: ids.secureNetflixId || ''
-                        })
-                    });
-                    const data = await response.json().catch(() => ({}));
-                    if (!response.ok) throw new Error(data.error || 'Không thêm được cookie');
-                }
+                const response = await fetch('/api/netflix-cookie', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cookieRaw: cookieVal
+                    })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.error || 'Không thêm được cookie');
 
                 input.value = '';
-                showAlert('Thành công', `Đã thêm ${candidates.length} cookie vào pool Netflix.`, 'success');
+                showAlert('Thành công', 'Đã lưu cookie text vào pool Netflix.', 'success');
+                await refreshNetflixCookiePool({ silent: true });
             } catch (e) {
                 showAlert('Lỗi', e.message || 'Không thể thêm cookie vào pool', 'error');
             } finally {
@@ -9302,14 +9365,31 @@
             setNetflixDirectLoginLoading(btnLink, true);
 
             try {
-                const response = await fetch('/api/nftoken', {
+                let cookieStr = getActiveNetflixPoolCookieText();
+                if (!cookieStr) {
+                    await refreshNetflixCookiePool({ silent: true });
+                    cookieStr = getActiveNetflixPoolCookieText();
+                }
+                if (!cookieStr) {
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
+                    showAlert(
+                        'Netflix tạm lỗi',
+                        'Hiện chưa có cookie LIVE trong pool Netflix.',
+                        'error'
+                    );
+                    return;
+                }
+
+                const response = await fetch('/api/nf-cookie-to-link', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({ cookieStr, device: 'desktop' })
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    if (response.status === 503 && tryOpenNetflixDesktopFallback(popupWindow)) {
+                    if (response.status >= 500 && tryOpenNetflixDesktopFallback(popupWindow)) {
                         return;
                     }
                     if (popupWindow && !popupWindow.closed) {
@@ -9326,7 +9406,7 @@
                     );
                     return;
                 }
-                if (!data.nftoken) {
+                if (!data.url) {
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
@@ -9341,7 +9421,7 @@
                     );
                     return;
                 }
-                let targetUrl = 'https://netflix.com/?nftoken=' + data.nftoken;
+                let targetUrl = String(data.url || '').trim();
 
                 const preserveUnsupported = btnLink.dataset.preserveUnsupported === '1';
                 if (preserveUnsupported) {
