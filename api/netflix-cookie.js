@@ -87,64 +87,11 @@ function sanitizeCookieStatus(status) {
     return 'active';
 }
 
-function extractNetflixIdsFromCookie(cookieVal) {
-    const raw = String(cookieVal || '').trim();
-    if (!raw) return { netflixId: '', secureNetflixId: '' };
-
-    let netflixId = '';
-    let secureNetflixId = '';
-    const lines = raw.split('\n');
-
-    for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i];
-        const parts = line.split('\t');
-        if (parts.length >= 7) {
-            const name = String(parts[5] || '').trim();
-            const value = String(parts[6] || '').trim();
-            if (name === 'NetflixId' && value) netflixId = value;
-            if (name === 'SecureNetflixId' && value) secureNetflixId = value;
-            continue;
-        }
-        if (line.includes('NetflixId=')) {
-            const n = line.match(/NetflixId=([^;\s]+)/i);
-            const s = line.match(/SecureNetflixId=([^;\s]+)/i);
-            if (n && n[1]) netflixId = String(n[1]).trim();
-            if (s && s[1]) secureNetflixId = String(s[1]).trim();
-        }
-    }
-
-    if (!netflixId) {
-        const n = raw.match(/NetflixId=([^;\s]+)/i);
-        if (n && n[1]) netflixId = String(n[1]).trim();
-    }
-    if (!secureNetflixId) {
-        const s = raw.match(/SecureNetflixId=([^;\s]+)/i);
-        if (s && s[1]) secureNetflixId = String(s[1]).trim();
-    }
-
-    return { netflixId, secureNetflixId };
-}
-
-function buildCookieRawFromIds(netflixId, secureNetflixId) {
-    const netflix = String(netflixId || '').trim();
-    const secure = String(secureNetflixId || '').trim();
-    if (!netflix) return '';
-    if (secure) return `NetflixId=${netflix}; SecureNetflixId=${secure};`;
-    return `NetflixId=${netflix};`;
-}
-
 function sanitizeCookieItem(item) {
-    const cookieRaw = String(item.cookieRaw || '').trim();
-    const idsFromRaw = extractNetflixIdsFromCookie(cookieRaw);
-    const netflixId = String(item.netflixId || idsFromRaw.netflixId || '').trim();
-    const secureNetflixId = String(item.secureNetflixId || idsFromRaw.secureNetflixId || '').trim();
-    const normalizedRaw = cookieRaw || buildCookieRawFromIds(netflixId, secureNetflixId);
-
     return {
         id: String(item.id || makeCookieId()),
-        netflixId,
-        secureNetflixId,
-        cookieRaw: normalizedRaw,
+        netflixId: String(item.netflixId || '').trim(),
+        secureNetflixId: String(item.secureNetflixId || '').trim(),
         status: sanitizeCookieStatus(item.status || 'active'),
         createdAt: item.createdAt || new Date().toISOString(),
         updatedAt: item.updatedAt || new Date().toISOString(),
@@ -161,7 +108,6 @@ function buildCookieMapValue(cookie) {
                 id: toStringValue(cookie.id),
                 netflixId: toStringValue(cookie.netflixId),
                 secureNetflixId: toStringValue(cookie.secureNetflixId || ''),
-                cookieRaw: toStringValue(cookie.cookieRaw || ''),
                 status: toStringValue(cookie.status),
                 createdAt: toTimestampValue(cookie.createdAt),
                 updatedAt: toTimestampValue(cookie.updatedAt),
@@ -179,7 +125,6 @@ function parseCookieMapValue(value) {
         id: fields.id && fields.id.stringValue,
         netflixId: fields.netflixId && fields.netflixId.stringValue,
         secureNetflixId: fields.secureNetflixId && fields.secureNetflixId.stringValue,
-        cookieRaw: fields.cookieRaw && fields.cookieRaw.stringValue,
         status: fields.status && fields.status.stringValue,
         createdAt: fields.createdAt && (fields.createdAt.timestampValue || fields.createdAt.stringValue),
         updatedAt: fields.updatedAt && (fields.updatedAt.timestampValue || fields.updatedAt.stringValue),
@@ -261,20 +206,12 @@ async function ensurePoolWithMigration() {
         id: makeCookieId(),
         netflixId: legacyNetflixId,
         secureNetflixId: legacySecureNetflixId,
-        cookieRaw: buildCookieRawFromIds(legacyNetflixId, legacySecureNetflixId),
         status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     })];
     await persistPool(migrated);
     return migrated;
-}
-
-function toPublicCookie(cookie) {
-    return {
-        ...cookie,
-        maskedNetflixId: maskNetflixId(cookie.netflixId)
-    };
 }
 
 module.exports = async function (req, res) {
@@ -288,84 +225,35 @@ module.exports = async function (req, res) {
         return;
     }
 
+    if (req.method !== 'POST') {
+        return res.status(410).json({
+            error: 'Netflix LIVE/DIE status API has been disabled to optimize Firestore reads.'
+        });
+    }
+
     try {
-        if (req.method === 'GET') {
-            const pool = await ensurePoolWithMigration();
-            const summary = buildSummary(pool);
-            return res.status(200).json({
-                ...summary,
-                cookies: pool.map(toPublicCookie)
-            });
+        const currentPool = await ensurePoolWithMigration();
+
+        const body = parseBody(req.body);
+        const netflixId = body.netflixId ? String(body.netflixId).trim() : '';
+        const secureNetflixId = body.secureNetflixId ? String(body.secureNetflixId).trim() : '';
+        if (!netflixId) {
+            return res.status(400).json({ error: 'Missing NetflixId' });
         }
-
-        if (req.method === 'POST') {
-            const currentPool = await ensurePoolWithMigration();
-            const body = parseBody(req.body);
-            const cookieRaw = String(body.cookieRaw || '').trim();
-
-            let ids;
-            if (cookieRaw) {
-                ids = extractNetflixIdsFromCookie(cookieRaw);
-            } else {
-                const netflixId = String(body.netflixId || '').trim();
-                const secureNetflixId = String(body.secureNetflixId || '').trim();
-                ids = { netflixId, secureNetflixId };
-            }
-
-            if (!ids.netflixId) {
-                return res.status(400).json({ error: 'Cookie không hợp lệ: thiếu NetflixId' });
-            }
-
-            const nextItem = sanitizeCookieItem({
+        const nextPool = [
+            sanitizeCookieItem({
                 id: makeCookieId(),
-                netflixId: ids.netflixId,
-                secureNetflixId: ids.secureNetflixId || '',
-                cookieRaw: cookieRaw || buildCookieRawFromIds(ids.netflixId, ids.secureNetflixId || ''),
+                netflixId,
+                secureNetflixId,
                 status: 'active',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
-            });
-            const nextPool = [nextItem, ...currentPool];
-            const ok = await persistPool(nextPool);
-            if (!ok) return res.status(500).json({ error: 'Failed to save cookie pool' });
-            return res.status(200).json({ success: true, cookie: toPublicCookie(nextItem) });
-        }
-
-        if (req.method === 'PUT') {
-            const body = parseBody(req.body);
-            const cookieId = String(body.cookieId || '').trim();
-            if (!cookieId) return res.status(400).json({ error: 'Missing cookieId' });
-
-            const pool = await ensurePoolWithMigration();
-            const idx = pool.findIndex((item) => String(item.id || '') === cookieId);
-            if (idx < 0) return res.status(404).json({ error: 'Cookie not found' });
-
-            pool[idx] = sanitizeCookieItem({
-                ...pool[idx],
-                status: sanitizeCookieStatus(body.status),
-                updatedAt: new Date().toISOString()
-            });
-
-            const ok = await persistPool(pool);
-            if (!ok) return res.status(500).json({ error: 'Failed to update cookie' });
-            return res.status(200).json({ success: true, cookie: toPublicCookie(pool[idx]) });
-        }
-
-        if (req.method === 'DELETE') {
-            const body = parseBody(req.body);
-            const cookieId = String(body.cookieId || '').trim();
-            if (!cookieId) return res.status(400).json({ error: 'Missing cookieId' });
-
-            const pool = await ensurePoolWithMigration();
-            const nextPool = pool.filter((item) => String(item.id || '') !== cookieId);
-            if (nextPool.length === pool.length) return res.status(404).json({ error: 'Cookie not found' });
-
-            const ok = await persistPool(nextPool);
-            if (!ok) return res.status(500).json({ error: 'Failed to delete cookie' });
-            return res.status(200).json({ success: true });
-        }
-
-        return res.status(405).json({ error: 'Method not allowed' });
+            }),
+            ...currentPool
+        ];
+        const ok = await persistPool(nextPool);
+        if (!ok) return res.status(500).json({ error: 'Failed to save cookie pool' });
+        return res.status(200).json({ success: true });
     } catch (e) {
         return res.status(500).json({ error: e.message || 'Internal error' });
     }
