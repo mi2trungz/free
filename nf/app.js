@@ -46,11 +46,17 @@ let lookupRequestInFlight = false;
 let adminCustomersLoaded = false;
 let adminCookiesLoaded = false;
 const ADMIN_PAGE_SIZE = 25;
+const XLSX_ESM_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
+const DEVICE_CONFIRM_DELAY_MS = 2000;
 const customersPageState = { page: 1, pageSize: ADMIN_PAGE_SIZE, total: 0, totalPages: 1, hasNext: false, hasPrev: false, search: '' };
 const cookiesPageState = { page: 1, pageSize: ADMIN_PAGE_SIZE, total: 0, totalPages: 1, hasNext: false, hasPrev: false };
 let customerSearchLocalQuery = '';
 let customerSearchServerQuery = '';
 let customerSearchDebounceTimer = null;
+let xlsxModulePromise = null;
+let pendingConfirmDevice = '';
+let deviceConfirmReadyAt = 0;
+let deviceConfirmCountdownTimer = null;
 
 const tableViewState = {
     cookies: {
@@ -281,6 +287,11 @@ function setStateClass(target, mode = 'idle') {
 function setLookupState(text, mode = 'idle') {
     const state = el('lookupState');
     if (!state) return;
+    if (mode === 'success') {
+        state.textContent = '';
+        setStateClass(state, 'idle');
+        return;
+    }
     state.textContent = text || '';
     setStateClass(state, mode);
 }
@@ -436,6 +447,7 @@ function setDeviceSectionVisible(visible) {
     const section = el('deviceSection');
     if (!section) return;
     section.classList.toggle('hidden', !visible);
+    if (!visible) closeDeviceConfirmModal();
     if (!visible) closeSupportModal();
     if (!visible) closeTvGuideModal();
     if (!visible) closeMobileLinkModal();
@@ -559,6 +571,76 @@ function closeTvCodeModal() {
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
     input.value = '';
+}
+
+function getDeviceLabel(device = '') {
+    if (device === 'desktop') return 'Máy tính';
+    if (device === 'mobile') return 'Điện thoại';
+    if (device === 'tv') return 'TV';
+    return 'thiết bị này';
+}
+
+function stopDeviceConfirmCountdown() {
+    if (deviceConfirmCountdownTimer) {
+        clearInterval(deviceConfirmCountdownTimer);
+        deviceConfirmCountdownTimer = null;
+    }
+}
+
+function refreshDeviceConfirmUi() {
+    const countdown = el('deviceConfirmCountdown');
+    const okBtn = el('deviceConfirmOkBtn');
+    const remainingMs = Math.max(0, deviceConfirmReadyAt - Date.now());
+    const remainingSeconds = Math.ceil(remainingMs / 1000);
+    const ready = remainingMs <= 0;
+    if (okBtn) okBtn.disabled = !ready;
+    if (countdown) {
+        if (ready) {
+            countdown.textContent = 'Bạn có thể bấm "Có" để tiếp tục.';
+            setStateClass(countdown, 'success');
+        } else {
+            countdown.textContent = `Vui lòng chờ ${remainingSeconds} giây để xác nhận.`;
+            setStateClass(countdown, 'warning');
+        }
+    }
+    if (ready) stopDeviceConfirmCountdown();
+}
+
+function openDeviceConfirmModal(device = '') {
+    const modal = el('deviceConfirmModal');
+    const title = el('deviceConfirmTitle');
+    const hint = el('deviceConfirmHint');
+    if (!modal || !title || !hint) return;
+    pendingConfirmDevice = String(device || '').trim();
+    const deviceLabel = getDeviceLabel(pendingConfirmDevice);
+    title.textContent = `Bạn có chắc chắn đang dùng ${deviceLabel} không?`;
+    hint.textContent = 'Vui lòng xác nhận đúng thiết bị để tránh lỗi đăng nhập.';
+    deviceConfirmReadyAt = Date.now() + DEVICE_CONFIRM_DELAY_MS;
+    stopDeviceConfirmCountdown();
+    refreshDeviceConfirmUi();
+    deviceConfirmCountdownTimer = window.setInterval(refreshDeviceConfirmUi, 150);
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDeviceConfirmModal() {
+    const modal = el('deviceConfirmModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    pendingConfirmDevice = '';
+    deviceConfirmReadyAt = 0;
+    stopDeviceConfirmCountdown();
+}
+
+function proceedDeviceAction(device = '') {
+    const normalized = String(device || '').trim();
+    if (!normalized) return;
+    if (normalized === 'tv') {
+        openTvGuideModal();
+        return;
+    }
+    generateDeviceLink(normalized);
 }
 
 async function submitTvCodeFlow() {
@@ -1013,8 +1095,8 @@ function renderCookiesTable() {
         const noteValue = String(cookie.note || '');
         const escapedNote = escapeHtml(noteValue);
         const createLinkBtn = hasRawCookie
-            ? `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button">Táº¡o link</button>`
-            : `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button" disabled title="Cookie nÃ y khÃ´ng cÃ³ raw">Táº¡o link</button>`;
+            ? `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button">Tạo link</button>`
+            : `<button class="btn-tiny cookie-link-btn" data-cookie-act="create-youraccount-link" data-id="${cookie.id}" type="button" disabled title="Cookie này không có raw">Tạo link</button>`;
         const noteHtml = `
             <div class="cookie-note-wrap">
                 <input class="text-input cookie-note-input" type="text" data-cookie-note-input="${cookie.id}" value="${escapedNote}" placeholder="Nhap note...">
@@ -1102,7 +1184,7 @@ function openHeaderFilterPopup(triggerBtn, table = '', column = '') {
     headerFilterPopupContext = { table, column, triggerBtn };
     const state = tableViewState[table] || {};
     const filter = (state.filters && state.filters[column]) || { search: '', value: '' };
-    title.textContent = `Lá»c cá»™t: ${column}`;
+    title.textContent = `Lọc cột: ${column}`;
     searchInput.value = filter.search || '';
 
     const uniqueValues = getColumnUniqueValues(table, column);
@@ -1183,7 +1265,7 @@ function openTagPickerModal(cookieIds = [], mode = 'add') {
     if (!modal || !title || !hint || !optionsWrap) return;
 
     tagPickerContext = { ids, mode };
-    title.textContent = mode === 'add' ? 'Gáº®N TAG COOKIE' : 'Gá»  TAG COOKIE';
+    title.textContent = mode === 'add' ? 'GẮN TAG COOKIE' : 'GỠ TAG COOKIE';
     hint.textContent = `Da chon ${ids.length} cookie.`;
     optionsWrap.innerHTML = options
         .map((tagDef) => `<button class="btn btn-ghost tag-picker-btn" type="button" data-tag-picker-key="${tagDef.key}">${mode === 'add' ? 'Gan' : 'Go'} ${tagDef.label}</button>`)
@@ -1407,7 +1489,7 @@ function updateRawEditorMeta() {
     if (!meta || !textarea) return;
     const raw = String(textarea.value || '');
     const lines = raw ? raw.split('\n').length : 0;
-    meta.textContent = `${lines} dÃ²ng â€¢ ${raw.length} kÃ½ tá»±`;
+    meta.textContent = `${lines} dòng • ${raw.length} ký tự`;
 }
 
 function openCookieRawEditor(cookie, mode = 'edit') {
@@ -1422,7 +1504,7 @@ function openCookieRawEditor(cookie, mode = 'edit') {
     rawEditorInitialRaw = String(cookie.cookieRaw || '');
     rawEditorMode = mode === 'view' ? 'view' : 'edit';
 
-    title.textContent = rawEditorMode === 'view' ? 'Xem full cookie raw' : 'Sá»­a full cookie raw';
+    title.textContent = rawEditorMode === 'view' ? 'Xem full cookie raw' : 'Sửa full cookie raw';
     textarea.value = rawEditorInitialRaw;
     textarea.readOnly = rawEditorMode === 'view';
     saveBtn.classList.toggle('hidden', rawEditorMode !== 'edit');
@@ -1742,6 +1824,64 @@ async function importCookies() {
     } finally {
         setButtonBusy(importBtn, false);
     }
+}
+
+function isExcelFile(file) {
+    if (!file) return false;
+    const fileName = String(file.name || '').toLowerCase();
+    if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) return true;
+    const fileType = String(file.type || '').toLowerCase();
+    return fileType.includes('spreadsheetml') || fileType.includes('ms-excel');
+}
+
+async function getXlsxModule() {
+    if (!xlsxModulePromise) {
+        xlsxModulePromise = import(XLSX_ESM_URL);
+    }
+    return xlsxModulePromise;
+}
+
+async function readExcelCookiesFromColumnA(file) {
+    const XLSX = await getXlsxModule();
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const firstSheetName = Array.isArray(workbook.SheetNames) ? workbook.SheetNames[0] : '';
+    if (!firstSheetName) {
+        throw new Error('File Excel khong co sheet du lieu.');
+    }
+
+    const sheet = workbook.Sheets[firstSheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+    const cookies = rows
+        .map((row) => {
+            if (!Array.isArray(row)) return '';
+            return String(row[0] ?? '').trim();
+        })
+        .filter(Boolean);
+
+    if (cookies[0] && cookies[0].toLowerCase() === 'cookie') {
+        cookies.shift();
+    }
+
+    if (cookies.length === 0) {
+        throw new Error('Khong tim thay cookie hop le o cot A cua file Excel.');
+    }
+    return cookies;
+}
+
+function appendCookieBlocks(cookieBlocks = []) {
+    const input = el('cookieImportInput');
+    if (!input) return 0;
+
+    const normalizedBlocks = cookieBlocks
+        .map((block) => String(block || '').trim())
+        .filter(Boolean);
+    if (normalizedBlocks.length === 0) return 0;
+
+    const incoming = normalizedBlocks.join('\n\n');
+    const current = String(input.value || '').trim();
+    input.value = current ? `${current}\n\n${incoming}` : incoming;
+    return normalizedBlocks.length;
 }
 
 function summarizeCheckResult(data = {}) {
@@ -2405,13 +2545,13 @@ async function onAdminLogin() {
             await signOut(auth);
             throw new Error('Tai khoan nay khong co quyen admin /nf.');
         }
-            toast('ÄÄƒng nháº­p admin thÃ nh cÃ´ng.', 'ok');
+            toast('Đăng nhập admin thành công.', 'ok');
     } catch (error) {
         if (authState) {
-            authState.textContent = error.message || 'ÄÄƒng nháº­p tháº¥t báº¡i.';
+            authState.textContent = error.message || 'Đăng nhập thất bại.';
             setStateClass(authState, 'error');
         }
-        toast(error.message || 'ÄÄƒng nháº­p tháº¥t báº¡i.', 'bad');
+        toast(error.message || 'Đăng nhập thất bại.', 'bad');
     } finally {
         setButtonBusy(loginBtn, false);
     }
@@ -2546,13 +2686,36 @@ function bindEvents() {
     deviceButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
             const device = String(btn.dataset.device || 'desktop');
-            if (device === 'tv') {
-                openTvGuideModal();
-                return;
-            }
-            generateDeviceLink(device);
+            if (!device) return;
+            openDeviceConfirmModal(device);
         });
     });
+
+    const deviceConfirmModal = el('deviceConfirmModal');
+    if (deviceConfirmModal) {
+        deviceConfirmModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeDeviceConfirm === '1') {
+                closeDeviceConfirmModal();
+            }
+        });
+    }
+
+    const deviceConfirmCloseBtn = el('deviceConfirmCloseBtn');
+    if (deviceConfirmCloseBtn) deviceConfirmCloseBtn.addEventListener('click', closeDeviceConfirmModal);
+
+    const deviceConfirmCancelBtn = el('deviceConfirmCancelBtn');
+    if (deviceConfirmCancelBtn) deviceConfirmCancelBtn.addEventListener('click', closeDeviceConfirmModal);
+
+    const deviceConfirmOkBtn = el('deviceConfirmOkBtn');
+    if (deviceConfirmOkBtn) {
+        deviceConfirmOkBtn.addEventListener('click', () => {
+            if (Date.now() < deviceConfirmReadyAt) return;
+            const nextDevice = pendingConfirmDevice;
+            closeDeviceConfirmModal();
+            proceedDeviceAction(nextDevice);
+        });
+    }
 
     const supportBtn = el('supportWarrantyBtn');
     if (supportBtn) supportBtn.addEventListener('click', openSupportModal);
@@ -2605,18 +2768,18 @@ function bindEvents() {
             const output = el('mobileLinkOutput');
             const link = String((output && output.value) || mobileGeneratedLink || '').trim();
             if (!link) {
-                toast('ChÆ°a cÃ³ link Ä‘á»ƒ sao chÃ©p.', 'warn');
+                toast('Chưa có link để sao chép.', 'warn');
                 return;
             }
             try {
                 await navigator.clipboard.writeText(link);
-                toast('ÄÃ£ sao chÃ©p link.', 'ok');
+                toast('Đã sao chép link.', 'ok');
             } catch (error) {
                 if (output) {
                     output.focus();
                     output.select();
                 }
-                toast('KhÃ´ng sao chÃ©p tá»± Ä‘á»™ng Ä‘Æ°á»£c. HÃ£y copy thá»§ cÃ´ng.', 'warn');
+                toast('Không sao chép tự động được. Hãy copy thủ công.', 'warn');
             }
         });
     }
@@ -2627,9 +2790,9 @@ function bindEvents() {
             const unsupportedLink = 'https://www.netflix.com/unsupported';
             try {
                 await navigator.clipboard.writeText(unsupportedLink);
-                toast('ÄÃ£ sao chÃ©p link netflix.com/unsupported.', 'ok');
+                toast('Đã sao chép link netflix.com/unsupported.', 'ok');
             } catch (error) {
-                toast('KhÃ´ng sao chÃ©p tá»± Ä‘á»™ng Ä‘Æ°á»£c. HÃ£y copy thá»§ cÃ´ng link netflix.com/unsupported.', 'warn');
+                toast('Không sao chép tự động được. Hãy copy thủ công link netflix.com/unsupported.', 'warn');
             }
         });
     }
@@ -2751,9 +2914,9 @@ function bindEvents() {
         adminLogoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
-                toast('ÄÃ£ Ä‘Äƒng xuáº¥t.', 'ok');
+                toast('Đã đăng xuất.', 'ok');
             } catch (error) {
-                toast(error.message || 'ÄÄƒng xuáº¥t tháº¥t báº¡i.', 'bad');
+                toast(error.message || 'Đăng xuất thất bại.', 'bad');
             }
         });
     }
@@ -2856,7 +3019,7 @@ function bindEvents() {
             if (!collapse) return;
             const willOpen = collapse.classList.contains('hidden');
             collapse.classList.toggle('hidden', !willOpen);
-            toggleCookieImportBtn.textContent = willOpen ? 'ÄÃ³ng import cookie tá»•ng' : 'Import cookie tá»•ng';
+            toggleCookieImportBtn.textContent = willOpen ? 'Đóng import cookie tổng' : 'Import cookie tổng';
         });
     }
 
@@ -2944,6 +3107,16 @@ function bindEvents() {
             const file = input.files && input.files[0];
             if (!file) return;
             try {
+                if (isExcelFile(file)) {
+                    const cookies = await readExcelCookiesFromColumnA(file);
+                    const addedCount = appendCookieBlocks(cookies);
+                    if (addedCount <= 0) {
+                        throw new Error('Khong tim thay cookie hop le o cot A cua file Excel.');
+                    }
+                    toast(`Da nap ${addedCount} cookie tu file Excel.`, 'ok');
+                    return;
+                }
+
                 const text = await file.text();
                 const current = String(el('cookieImportInput').value || '').trim();
                 el('cookieImportInput').value = current ? `${current}\n${text}` : text;
@@ -2969,6 +3142,11 @@ function bindEvents() {
         const tagModal = el('tagPickerModal');
         if (tagModal && !tagModal.classList.contains('hidden')) {
             closeTagPickerModal();
+            return;
+        }
+        const deviceConfirmModal = el('deviceConfirmModal');
+        if (deviceConfirmModal && !deviceConfirmModal.classList.contains('hidden')) {
+            closeDeviceConfirmModal();
             return;
         }
         const guideModal = el('tvGuideModal');

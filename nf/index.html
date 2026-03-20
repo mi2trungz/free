@@ -204,6 +204,27 @@
         </div>
     </section>
 
+    <section id="deviceConfirmModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-device-confirm="1"></div>
+        <div class="modal-card support-card device-confirm-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Xác nhận thiết bị</span>
+                    <h2 id="deviceConfirmTitle">Bạn có chắc chắn đang dùng thiết bị này không?</h2>
+                </div>
+                <button id="deviceConfirmCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body">
+                <p id="deviceConfirmHint">Vui lòng xác nhận đúng thiết bị để tiếp tục.</p>
+                <div id="deviceConfirmCountdown" class="state-text state-warning">Vui lòng chờ 2 giây để xác nhận.</div>
+                <div class="device-confirm-actions">
+                    <button id="deviceConfirmOkBtn" class="btn btn-primary" type="button" disabled>Có</button>
+                    <button id="deviceConfirmCancelBtn" class="btn btn-ghost" type="button">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="nfAdminModal" class="modal hidden" aria-hidden="true">
         <div class="modal-backdrop" data-close-admin="1"></div>
         <div class="modal-card">
@@ -331,9 +352,10 @@
                     <button id="toggleCookieImportBtn" class="btn btn-ghost import-toggle-btn" type="button">Import cookie tổng</button>
                     <div id="cookieImportCollapse" class="import-collapse hidden">
                         <div class="import-grid">
-                            <textarea id="cookieImportInput" class="text-input text-area" placeholder="Dán cookie vào đây..."></textarea>
+                            <textarea id="cookieImportInput" class="text-input text-area" placeholder="Dán cookie vào đây... (Excel: mỗi hàng 1 cookie ở cột A)"></textarea>
                             <div class="import-actions">
-                                <input id="cookieImportFileInput" type="file" accept=".txt,.log">
+                                <input id="cookieImportFileInput" type="file" accept=".xlsx,.xls,.txt,.log">
+                                <div class="state-text state-idle">Chọn Excel (.xlsx/.xls): Sheet đầu, cột A, mỗi dòng 1 cookie.</div>
                                 <button id="importCookiesBtn" class="btn btn-primary" type="button">Import cookie</button>
                                 <div id="cookieImportState" class="state-text state-idle"></div>
                             </div>

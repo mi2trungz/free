@@ -1065,6 +1065,10 @@ body {
     width: min(560px, calc(100% - 1rem));
 }
 
+.device-confirm-card {
+    width: min(460px, calc(100% - 1rem));
+}
+
 .support-body {
     padding: 0.95rem 1rem 1rem 1rem;
 }
@@ -1093,6 +1097,14 @@ body {
     text-decoration: none;
     align-items: center;
     justify-content: center;
+}
+
+.device-confirm-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .btn-tv-guide-start {
