@@ -285,11 +285,11 @@ function setLookupState(text, mode = 'idle') {
     setStateClass(state, mode);
 }
 
-function showLookupLoadingOverlay(message = 'Xin vui lÃ²ng chá» trong giÃ¢y lÃ¡t') {
+function showLookupLoadingOverlay(message = 'Xin vui lòng chờ trong giây lát') {
     const overlay = el('lookupLoadingOverlay');
     const text = el('lookupLoadingText');
     lookupLoadingCounter += 1;
-    if (text) text.textContent = String(message || 'Xin vui lÃ²ng chá» trong giÃ¢y lÃ¡t');
+    if (text) text.textContent = String(message || 'Xin vui lòng chờ trong giây lát');
     if (!overlay) return;
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
@@ -374,9 +374,9 @@ function applyRuntimeGuard() {
 
     if (isFileMode) {
         guard.classList.remove('hidden');
-        guardText.textContent = 'Báº¡n Ä‘ang má»Ÿ báº±ng file://. HÃ£y cháº¡y qua server: http://localhost:3005/nf';
+        guardText.textContent = 'Bạn đang mở bằng file://. Hãy chạy qua server: http://localhost:3005/nf';
         setControlRuntimeDisabled(true);
-        setLookupState('Cáº§n má»Ÿ Ä‘Ãºng qua server Ä‘á»ƒ sá»­ dá»¥ng API.', 'warning');
+        setLookupState('Cần mở đúng qua server để sử dụng API.', 'warning');
         return;
     }
 
@@ -454,7 +454,7 @@ function isExpiredLookupPayload(payload) {
     const reason = String(payload.reason || '').trim().toLowerCase();
     if (reason === LOOKUP_REASON_EXPIRED) return true;
     const message = String(payload.message || '').toLowerCase();
-    return message.includes('háº¿t háº¡n') || message.includes('het han');
+    return message.includes('hết hạn') || message.includes('het han');
 }
 
 function openSupportModal() {
@@ -540,7 +540,7 @@ function openTvCodeModal() {
     tvFlowBusy = false;
     tvGeneratedLoginLink = '';
     input.value = '';
-    setTvCodeState('Nháº­p Ä‘Ãºng 8 sá»‘ rá»“i báº¥m xÃ¡c nháº­n. Há»‡ thá»‘ng sáº½ má»Ÿ link Ä‘Äƒng nháº­p trÆ°á»›c, sau Ä‘Ã³ tá»± chuyá»ƒn sang netflix.com/tv8.', 'idle');
+    setTvCodeState('Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.', 'idle');
     const manualLoginLink = el('tvManualLoginLink');
     if (manualLoginLink) {
         manualLoginLink.setAttribute('href', '#');
@@ -564,7 +564,7 @@ function closeTvCodeModal() {
 async function submitTvCodeFlow() {
     if (runtimeBlocked || tvFlowBusy) return;
     if (!currentLookupCode || !currentLookupEligible) {
-        setTvCodeState('MÃ£ khÃ¡ch chÆ°a Ä‘á»§ Ä‘iá»u kiá»‡n sá»­ dá»¥ng.', 'warning');
+        setTvCodeState('Mã khách chưa đủ điều kiện sử dụng.', 'warning');
         return;
     }
 
@@ -573,22 +573,22 @@ async function submitTvCodeFlow() {
     const raw = String((input && input.value) || '');
     const tvCode = raw.replace(/\D/g, '').slice(0, 8);
     if (!/^\d{8}$/.test(tvCode)) {
-        setTvCodeState('MÃ£ TV pháº£i gá»“m Ä‘Ãºng 8 sá»‘.', 'warning');
+        setTvCodeState('Mã TV phải gồm đúng 8 số.', 'warning');
         return;
     }
 
     if (input) input.value = tvCode;
-    showLookupLoadingOverlay('Xin vui lÃ²ng chá» trong giÃ¢y lÃ¡t');
+    showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
     tvFlowBusy = true;
-    setButtonBusy(submitBtn, true, 'Äang xá»­ lÃ½...');
-    setTvCodeState('Äang táº¡o link Ä‘Äƒng nháº­p...', 'loading');
+    setButtonBusy(submitBtn, true, 'Đang xử lý...');
+    setTvCodeState('Đang tạo link đăng nhập...', 'loading');
 
     try {
         const linkData = await apiRequest('/api/nf-generate-link', 'POST', {
             customerCode: currentLookupCode,
             device: 'mobile'
         });
-        if (!linkData || !linkData.url) throw new Error('KhÃ´ng táº¡o Ä‘Æ°á»£c link Ä‘Äƒng nháº­p.');
+        if (!linkData || !linkData.url) throw new Error('Không tạo được link đăng nhập.');
 
         tvGeneratedLoginLink = String(linkData.url || '').trim();
         const manualLoginLink = el('tvManualLoginLink');
@@ -599,21 +599,21 @@ async function submitTvCodeFlow() {
 
         const popup = window.open('about:blank', '_blank');
         if (!popup || popup.closed) {
-            setTvCodeState('TrÃ¬nh duyá»‡t Ä‘ang cháº·n popup. HÃ£y báº¥m "Má»Ÿ link Ä‘Äƒng nháº­p" rá»“i tiáº¿p tá»¥c báº¥m "Má»Ÿ netflix.com/tv8".', 'warning');
-            setLookupState('TrÃ¬nh duyá»‡t cháº·n popup. Vui lÃ²ng má»Ÿ thá»§ cÃ´ng 2 link trong popup TV.', 'warning');
+            setTvCodeState('Trình duyệt đang chặn popup. Hãy bấm "Mở link đăng nhập" rồi tiếp tục bấm "Mở netflix.com/tv8".', 'warning');
+            setLookupState('Trình duyệt chặn popup. Vui lòng mở thủ công 2 link trong popup TV.', 'warning');
             return;
         }
 
         popup.location.href = tvGeneratedLoginLink;
-        setTvCodeState(`ÄÃ£ má»Ÿ link Ä‘Äƒng nháº­p. Sau ${Math.round(TV_REDIRECT_DELAY_MS / 1000)} giÃ¢y sáº½ tá»± chuyá»ƒn sang netflix.com/tv8 Ä‘á»ƒ báº¡n nháº­p mÃ£ TV.`, 'success');
-        setLookupState('ÄÃ£ má»Ÿ link Ä‘Äƒng nháº­p TV. Sáº¯p chuyá»ƒn sang netflix.com/tv8...', 'success');
+        setTvCodeState(`Đã mở link đăng nhập. Sau ${Math.round(TV_REDIRECT_DELAY_MS / 1000)} giây sẽ tự chuyển sang netflix.com/tv8 để bạn nhập mã TV.`, 'success');
+        setLookupState('Đã mở link đăng nhập TV. Sắp chuyển sang netflix.com/tv8...', 'success');
 
         window.setTimeout(() => {
             if (popup && !popup.closed) popup.location.href = TV8_MANUAL_URL;
         }, TV_REDIRECT_DELAY_MS);
     } catch (error) {
-        setTvCodeState(`${error.message || 'Xá»­ lÃ½ mÃ£ TV tháº¥t báº¡i.'} Báº¡n cÃ³ thá»ƒ má»Ÿ thá»§ cÃ´ng link Ä‘Äƒng nháº­p rá»“i vÃ o ${TV8_MANUAL_URL}.`, 'error');
-        setLookupState(error.message || 'KhÃ´ng táº¡o Ä‘Æ°á»£c link TV.', 'error');
+        setTvCodeState(`${error.message || 'Xử lý mã TV thất bại.'} Bạn có thể mở thủ công link đăng nhập rồi vào ${TV8_MANUAL_URL}.`, 'error');
+        setLookupState(error.message || 'Không tạo được link TV.', 'error');
     } finally {
         tvFlowBusy = false;
         hideLookupLoadingOverlay();
@@ -652,10 +652,10 @@ function renderLookupResult(payload) {
     setDeviceButtonsEnabled(currentLookupEligible && !expired);
 
     if (currentLookupEligible) {
-        setLookupState('hÃ£y chá»n thiáº¿t bá»‹ báº¡n Ä‘ang dÃ¹ng Ä‘á»ƒ tiáº¿n hÃ nh sá»­ dá»¥ng netflix', 'success');
+        setLookupState('Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix', 'success');
         return;
     } else {
-        setLookupState(payload.message || 'MÃ£ chÆ°a Ä‘á»§ Ä‘iá»u kiá»‡n sá»­ dá»¥ng.', 'warning');
+        setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
     }
 }
 
@@ -681,16 +681,16 @@ function renderLookupResultV2(payload) {
     setDeviceButtonsEnabled(currentLookupEligible && !expired);
 
     if (currentLookupEligible) {
-        setLookupState('hÃ£y chá»n thiáº¿t bá»‹ báº¡n Ä‘ang dÃ¹ng Ä‘á»ƒ tiáº¿n hÃ nh sá»­ dá»¥ng netflix', 'success');
+        setLookupState('Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix', 'success');
         return;
     }
 
     if (expired) {
-        setLookupState('GÃ“I NETFLIX Cá»¦A Báº N ÄÃƒ Háº¾T Háº N.', 'warning');
+        setLookupState('GÓI NETFLIX CỦA BẠN ĐÃ HẾT HẠN.', 'warning');
         return;
     }
 
-    setLookupState(payload.message || 'MÃ£ chÆ°a Ä‘á»§ Ä‘iá»u kiá»‡n sá»­ dá»¥ng.', 'warning');
+    setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
 }
 
 async function lookupCustomerCode() {
@@ -700,21 +700,21 @@ async function lookupCustomerCode() {
     const code = normalizeCode(input && input.value);
     if (!code) {
         resetLookupResult();
-        setLookupState('Vui long nhap ma khach hang.', 'warning');
+        setLookupState('Vui lòng nhập mã khách hàng.', 'warning');
         return;
     }
 
     const lookupBtn = el('lookupBtn');
     lookupRequestInFlight = true;
-    setButtonBusy(lookupBtn, true, 'Dang kiem tra...');
-    setLookupState('Dang kiem tra ma khach hang...', 'loading');
+    setButtonBusy(lookupBtn, true, 'Đang kiểm tra...');
+    setLookupState('Đang kiểm tra mã khách hàng...', 'loading');
 
     try {
         const data = await apiRequest('/api/nf-customer-lookup', 'POST', { customerCode: code });
         renderLookupResultV2(data);
     } catch (error) {
         resetLookupResult();
-        setLookupState(error.message || 'Khong kiem tra duoc ma.', 'error');
+        setLookupState(error.message || 'Không kiểm tra được mã.', 'error');
     } finally {
         lookupRequestInFlight = false;
         setButtonBusy(lookupBtn, false);
@@ -734,18 +734,18 @@ function scheduleLookupCustomerCode(delayMs = 1200) {
 async function generateDeviceLinkLegacy(device) {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
-        toast('Vui lÃ²ng kiá»ƒm tra mÃ£ trÆ°á»›c.', 'warn');
+        toast('Vui lòng kiểm tra mã trước.', 'warn');
         return;
     }
     if (!currentLookupEligible) {
-        toast('MÃ£ khÃ¡ch hÃ ng chÆ°a Ä‘á»§ Ä‘iá»u kiá»‡n.', 'warn');
+        toast('Mã khách hàng chưa đủ điều kiện.', 'warn');
         return;
     }
 
     const clickedButton = document.querySelector(`.btn-device[data-device="${device}"]`);
-    setButtonBusy(clickedButton, true, 'Äang táº¡o link...');
+    setButtonBusy(clickedButton, true, 'Đang tạo link...');
     setDeviceButtonsEnabled(false);
-    setLookupState('Äang kiá»ƒm tra cookie LIVE vÃ  táº¡o link...', 'loading');
+    setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
     const popup = window.open('about:blank', '_blank');
     if (popup) {
@@ -758,7 +758,7 @@ async function generateDeviceLinkLegacy(device) {
             popup.document.body.style.display = 'flex';
             popup.document.body.style.alignItems = 'center';
             popup.document.body.style.justifyContent = 'center';
-            popup.document.body.innerHTML = '<div>Äang táº¡o link Netflix...</div>';
+            popup.document.body.innerHTML = '<div>Đang tạo link Netflix...</div>';
         } catch (e) {
             // ignore
         }
@@ -769,16 +769,16 @@ async function generateDeviceLinkLegacy(device) {
             customerCode: currentLookupCode,
             device
         });
-        if (!data.url) throw new Error('KhÃ´ng táº¡o Ä‘Æ°á»£c link');
+        if (!data.url) throw new Error('Không tạo được link');
 
         if (popup && !popup.closed) popup.location.href = data.url;
         else window.open(data.url, '_blank');
-        setLookupState('ÄÃ£ táº¡o link thÃ nh cÃ´ng. Äang má»Ÿ Netflix...', 'success');
+        setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
     } catch (error) {
         if (popup && !popup.closed) {
             try { popup.close(); } catch (e) { /* ignore */ }
         }
-        setLookupState(error.message || 'KhÃ´ng táº¡o Ä‘Æ°á»£c link.', 'error');
+        setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         setButtonBusy(clickedButton, false);
         setDeviceButtonsEnabled(currentLookupEligible);
@@ -813,20 +813,20 @@ function openDeferredTabAndNavigate(options = {}) {
 async function generateDeviceLink(device) {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
-        toast('Vui lÃ²ng kiá»ƒm tra mÃ£ trÆ°á»›c.', 'warn');
+        toast('Vui lòng kiểm tra mã trước.', 'warn');
         return;
     }
     if (!currentLookupEligible) {
-        toast('MÃ£ khÃ¡ch hÃ ng chÆ°a Ä‘á»§ Ä‘iá»u kiá»‡n.', 'warn');
+        toast('Mã khách hàng chưa đủ điều kiện.', 'warn');
         return;
     }
 
     const clickedButton = document.querySelector(`.btn-device[data-device="${device}"]`);
-    setButtonBusy(clickedButton, true, 'Äang táº¡o link...');
+    setButtonBusy(clickedButton, true, 'Đang tạo link...');
     setDeviceButtonsEnabled(false);
-    setLookupState('Äang kiá»ƒm tra cookie LIVE vÃ  táº¡o link...', 'loading');
+    setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
-    showLookupLoadingOverlay('Xin vui lÃ²ng chá» trong giÃ¢y lÃ¡t');
+    showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
     const shouldAutoOpen = device === 'desktop';
     let deferredPopup = null;
 
@@ -837,8 +837,8 @@ async function generateDeviceLink(device) {
         });
         deferredPopup = popupWindow;
         if (wasBlocked) {
-            setLookupState('Trinh duyet chan tab moi, dang mo trong tab hien tai.', 'warning');
-            toast('Popup bi chan. Dang mo trong tab hien tai.', 'warn');
+            setLookupState('Trình duyệt chặn tab mới, đang mở trong tab hiện tại.', 'warning');
+            toast('Popup bị chặn. Đang mở trong tab hiện tại.', 'warn');
         }
     }
 
@@ -847,24 +847,24 @@ async function generateDeviceLink(device) {
             customerCode: currentLookupCode,
             device
         });
-        if (!data.url) throw new Error('KhÃ´ng táº¡o Ä‘Æ°á»£c link');
+        if (!data.url) throw new Error('Không tạo được link');
 
         if (shouldAutoOpen) {
             if (deferredPopup && !deferredPopup.closed) {
                 deferredPopup.location.href = data.url;
-                setLookupState('ÄÃ£ táº¡o link thÃ nh cÃ´ng. Äang má»Ÿ Netflix...', 'success');
+                setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
             } else {
                 window.location.href = data.url;
             }
         } else {
             openMobileLinkModal(data.url);
-            setLookupState('Táº¡o link Ä‘iá»‡n thoáº¡i thÃ nh cÃ´ng. HÃ£y sao chÃ©p link vÃ  lÃ m theo hÆ°á»›ng dáº«n.', 'success');
+            setLookupState('Tạo link điện thoại thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
         }
     } catch (error) {
         if (deferredPopup && !deferredPopup.closed) {
             try { deferredPopup.close(); } catch (e) { /* ignore */ }
         }
-        setLookupState(error.message || 'KhÃ´ng táº¡o Ä‘Æ°á»£c link.', 'error');
+        setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         hideLookupLoadingOverlay();
         setButtonBusy(clickedButton, false);
@@ -3011,7 +3011,7 @@ function bootstrap() {
     resetCustomerFilters();
     setTab(activeTab);
     resetLookupResult();
-    setLookupState('Vui lÃ²ng nháº­p mÃ£ khÃ¡ch hÃ ng.', 'idle');
+    setLookupState('Vui lòng nhập mã khách hàng.', 'idle');
     setCookieCheckState('Chua check cookie.', 'idle');
     updateCookieSelectionUi();
     renderCustomersPager();

@@ -105,6 +105,31 @@ function buildPrioritizedCookieIdsFromIndex(indexDoc = {}, limit = 220) {
     return ids;
 }
 
+function toSortableMillis(value = '') {
+    const ms = new Date(String(value || '').trim()).getTime();
+    return Number.isFinite(ms) ? ms : 0;
+}
+
+function resolveCookieNewnessMillis(cookie = {}) {
+    const createdMs = toSortableMillis(cookie.createdAt || '');
+    if (createdMs > 0) return createdMs;
+    return toSortableMillis(cookie.updatedAt || '');
+}
+
+function sortBucketByNewestFirst(bucket = []) {
+    return (Array.isArray(bucket) ? bucket : [])
+        .map((cookie, index) => ({
+            cookie,
+            index,
+            newnessMs: resolveCookieNewnessMillis(cookie)
+        }))
+        .sort((a, b) => {
+            if (b.newnessMs !== a.newnessMs) return b.newnessMs - a.newnessMs;
+            return a.index - b.index;
+        })
+        .map((item) => item.cookie);
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -365,7 +390,11 @@ module.exports = async function (req, res) {
             else normalBucket.push(cookie);
         }
 
-        const prioritizedBuckets = [normalBucket, holdBucket, unknownBucket];
+        const prioritizedBuckets = [
+            sortBucketByNewestFirst(normalBucket),
+            sortBucketByNewestFirst(holdBucket),
+            sortBucketByNewestFirst(unknownBucket)
+        ];
         for (let b = 0; b < prioritizedBuckets.length; b += 1) {
             const bucket = prioritizedBuckets[b];
             for (let j = 0; j < bucket.length; j += 1) {
