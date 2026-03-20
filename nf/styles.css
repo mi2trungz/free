@@ -1069,6 +1069,10 @@ body {
     width: min(460px, calc(100% - 1rem));
 }
 
+.mobile-os-card {
+    width: min(460px, calc(100% - 1rem));
+}
+
 .support-body {
     padding: 0.95rem 1rem 1rem 1rem;
 }
@@ -1105,6 +1109,40 @@ body {
     gap: 0.6rem;
     justify-content: flex-end;
     flex-wrap: wrap;
+}
+
+.mobile-os-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.mobile-os-actions .btn {
+    flex: 1;
+    min-width: 130px;
+}
+
+#deviceConfirmModal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+#deviceConfirmModal .modal-card {
+    margin: 0;
+}
+
+#mobileOsModal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+}
+
+#mobileOsModal .modal-card {
+    margin: 0;
 }
 
 .btn-tv-guide-start {

@@ -47,7 +47,7 @@ let adminCustomersLoaded = false;
 let adminCookiesLoaded = false;
 const ADMIN_PAGE_SIZE = 25;
 const XLSX_ESM_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
-const DEVICE_CONFIRM_DELAY_MS = 2000;
+const DEVICE_CONFIRM_DELAY_MS = 3000;
 const customersPageState = { page: 1, pageSize: ADMIN_PAGE_SIZE, total: 0, totalPages: 1, hasNext: false, hasPrev: false, search: '' };
 const cookiesPageState = { page: 1, pageSize: ADMIN_PAGE_SIZE, total: 0, totalPages: 1, hasNext: false, hasPrev: false };
 let customerSearchLocalQuery = '';
@@ -55,6 +55,8 @@ let customerSearchServerQuery = '';
 let customerSearchDebounceTimer = null;
 let xlsxModulePromise = null;
 let pendingConfirmDevice = '';
+let pendingMobileOs = 'android';
+let pendingMobileDeviceType = 'mobile';
 let deviceConfirmReadyAt = 0;
 let deviceConfirmCountdownTimer = null;
 let cookieExcelImportInProgress = false;
@@ -517,12 +519,36 @@ function closeTvGuideModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-function openMobileLinkModal(url = '') {
+function applyMobileGuideByOs(os = 'android') {
+    const normalized = String(os || 'android').toLowerCase() === 'ios' ? 'ios' : 'android';
+    const step2 = el('mobileGuideStep2');
+    const step3 = el('mobileGuideStep3');
+    const copyUnsupportedBtn = el('copyUnsupportedLinkBtn');
+    if (step2) {
+        step2.textContent = normalized === 'ios'
+            ? 'Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại (Safari) và tiến hành truy cập'
+            : 'Bước 2: Dán vào trình duyệt mà bạn đặt làm mặc định trên điện thoại và tiến hành truy cập';
+    }
+    if (step3) {
+        if (normalized === 'ios') {
+            step3.textContent = 'Bước 3: Nhấn vào biểu tượng Netflix ở trên cùng góc trái';
+        } else {
+            step3.innerHTML = 'Bước 3: Tiếp tục truy cập trang <span class="mobile-guide-link-text">netflix.com/unsupported</span>';
+        }
+    }
+    if (copyUnsupportedBtn) {
+        copyUnsupportedBtn.classList.toggle('hidden', normalized === 'ios');
+    }
+}
+
+function openMobileLinkModal(url = '', os = 'android') {
     const modal = el('mobileLinkModal');
     const output = el('mobileLinkOutput');
     if (!modal || !output) return;
     mobileGeneratedLink = String(url || '').trim();
+    pendingMobileOs = String(os || 'android').toLowerCase() === 'ios' ? 'ios' : 'android';
     output.value = mobileGeneratedLink;
+    applyMobileGuideByOs(pendingMobileOs);
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -535,6 +561,38 @@ function closeMobileLinkModal() {
     modal.setAttribute('aria-hidden', 'true');
     output.value = '';
     mobileGeneratedLink = '';
+    pendingMobileOs = 'android';
+}
+
+function normalizeFrontendDevice(device = '') {
+    const normalized = String(device || '').trim().toLowerCase();
+    if (normalized === 'desktop' || normalized === 'mobile' || normalized === 'tablet' || normalized === 'tv') return normalized;
+    return '';
+}
+
+function mapFrontendDeviceToApiDevice(device = '') {
+    const normalized = normalizeFrontendDevice(device);
+    if (!normalized) return '';
+    if (normalized === 'tablet') return 'mobile';
+    return normalized;
+}
+
+function openMobileOsModal(deviceType = 'mobile') {
+    if (!currentLookupCode || !currentLookupEligible) return;
+    const section = el('deviceSection');
+    const modal = el('mobileOsModal');
+    if (!section || !modal || section.classList.contains('hidden')) return;
+    pendingMobileDeviceType = normalizeFrontendDevice(deviceType) || 'mobile';
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeMobileOsModal() {
+    const modal = el('mobileOsModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    pendingMobileDeviceType = 'mobile';
 }
 
 function setTvCodeState(text, mode = 'idle') {
@@ -577,6 +635,7 @@ function closeTvCodeModal() {
 function getDeviceLabel(device = '') {
     if (device === 'desktop') return 'Máy tính';
     if (device === 'mobile') return 'Điện thoại';
+    if (device === 'tablet') return 'Máy tính bảng';
     if (device === 'tv') return 'TV';
     return 'thiết bị này';
 }
@@ -635,10 +694,14 @@ function closeDeviceConfirmModal() {
 }
 
 function proceedDeviceAction(device = '') {
-    const normalized = String(device || '').trim();
+    const normalized = normalizeFrontendDevice(device);
     if (!normalized) return;
     if (normalized === 'tv') {
         openTvGuideModal();
+        return;
+    }
+    if (normalized === 'mobile' || normalized === 'tablet') {
+        openMobileOsModal(normalized);
         return;
     }
     generateDeviceLink(normalized);
@@ -893,7 +956,7 @@ function openDeferredTabAndNavigate(options = {}) {
     return { popupWindow, wasBlocked: false };
 }
 
-async function generateDeviceLink(device) {
+async function generateDeviceLink(device, mobileOs = 'android') {
     if (runtimeBlocked) return;
     if (!currentLookupCode) {
         toast('Vui lòng kiểm tra mã trước.', 'warn');
@@ -904,13 +967,20 @@ async function generateDeviceLink(device) {
         return;
     }
 
-    const clickedButton = document.querySelector(`.btn-device[data-device="${device}"]`);
+    const frontendDevice = normalizeFrontendDevice(device);
+    const apiDevice = mapFrontendDeviceToApiDevice(frontendDevice);
+    if (!frontendDevice || !apiDevice) {
+        toast('Thiết bị không hợp lệ.', 'warn');
+        return;
+    }
+
+    const clickedButton = document.querySelector(`.btn-device[data-device="${frontendDevice}"]`);
     setButtonBusy(clickedButton, true, 'Đang tạo link...');
     setDeviceButtonsEnabled(false);
     setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
 
     showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
-    const shouldAutoOpen = device === 'desktop';
+    const shouldAutoOpen = apiDevice === 'desktop';
     let deferredPopup = null;
 
     if (shouldAutoOpen) {
@@ -928,7 +998,7 @@ async function generateDeviceLink(device) {
     try {
         const data = await apiRequest('/api/nf-generate-link', 'POST', {
             customerCode: currentLookupCode,
-            device
+            device: apiDevice
         });
         if (!data.url) throw new Error('Không tạo được link');
 
@@ -940,8 +1010,8 @@ async function generateDeviceLink(device) {
                 window.location.href = data.url;
             }
         } else {
-            openMobileLinkModal(data.url);
-            setLookupState('Tạo link điện thoại thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
+            openMobileLinkModal(data.url, mobileOs);
+            setLookupState(`Tạo link ${getDeviceLabel(frontendDevice).toLowerCase()} thành công. Hãy làm theo hướng dẫn.`, 'success');
         }
     } catch (error) {
         if (deferredPopup && !deferredPopup.closed) {
@@ -2819,6 +2889,35 @@ function bindEvents() {
     const mobileLinkCloseBtn = el('mobileLinkCloseBtn');
     if (mobileLinkCloseBtn) mobileLinkCloseBtn.addEventListener('click', closeMobileLinkModal);
 
+    const mobileOsModal = el('mobileOsModal');
+    if (mobileOsModal) {
+        mobileOsModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeMobileOs === '1') closeMobileOsModal();
+        });
+    }
+
+    const mobileOsCloseBtn = el('mobileOsCloseBtn');
+    if (mobileOsCloseBtn) mobileOsCloseBtn.addEventListener('click', closeMobileOsModal);
+
+    const mobileOsAndroidBtn = el('mobileOsAndroidBtn');
+    if (mobileOsAndroidBtn) {
+        mobileOsAndroidBtn.addEventListener('click', () => {
+            const nextDevice = pendingMobileDeviceType || 'mobile';
+            closeMobileOsModal();
+            generateDeviceLink(nextDevice, 'android');
+        });
+    }
+
+    const mobileOsIosBtn = el('mobileOsIosBtn');
+    if (mobileOsIosBtn) {
+        mobileOsIosBtn.addEventListener('click', () => {
+            const nextDevice = pendingMobileDeviceType || 'mobile';
+            closeMobileOsModal();
+            generateDeviceLink(nextDevice, 'ios');
+        });
+    }
+
     const copyMobileLinkBtn = el('copyMobileLinkBtn');
     if (copyMobileLinkBtn) {
         copyMobileLinkBtn.addEventListener('click', async () => {
@@ -3219,6 +3318,11 @@ function bindEvents() {
         const phoneModal = el('mobileLinkModal');
         if (phoneModal && !phoneModal.classList.contains('hidden')) {
             closeMobileLinkModal();
+            return;
+        }
+        const mobileOsModal = el('mobileOsModal');
+        if (mobileOsModal && !mobileOsModal.classList.contains('hidden')) {
+            closeMobileOsModal();
             return;
         }
         const helpModal = el('supportModal');
