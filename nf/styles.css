@@ -1017,6 +1017,12 @@ body {
     margin-left: 0.32rem;
 }
 
+.pill-ios {
+    background: rgba(34, 197, 94, 0.24);
+    color: #86efac;
+    margin-left: 0.32rem;
+}
+
 .pill-overcap {
     background: rgba(244, 114, 182, 0.24);
     color: #f9a8d4;

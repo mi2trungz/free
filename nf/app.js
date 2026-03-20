@@ -88,7 +88,8 @@ const COOKIE_TAG_DEFS = [
     { key: 'errorTagged', label: 'ERROR', onAction: 'error-on', offAction: 'error-off' },
     { key: 'sbdTagged', label: 'SBD', onAction: 'sbd-on', offAction: 'sbd-off' },
     { key: 'unknownTagged', label: 'UNKNOW', onAction: 'unknown-on', offAction: 'unknown-off' },
-    { key: 'holdTagged', label: 'HOLD', onAction: 'hold-on', offAction: 'hold-off' }
+    { key: 'holdTagged', label: 'HOLD', onAction: 'hold-on', offAction: 'hold-off' },
+    { key: 'iosTagged', label: 'IOS', onAction: 'ios-on', offAction: 'ios-off' }
 ];
 
 function el(id) {
@@ -171,6 +172,7 @@ function getCookieColumnDisplay(cookie = {}, column = '', customerNameMap = new 
         if (cookie.sbdTagged) tags.push('SBD');
         if (cookie.unknownTagged) tags.push('UNKNOW');
         if (cookie.holdTagged) tags.push('HOLD');
+        if (cookie.iosTagged) tags.push('IOS');
         if (cookie.overCapacityTagged) tags.push('QUA TAI');
         return `${cookie.status || 'active'} ${tags.join(' ')}`.trim();
     }
@@ -732,7 +734,8 @@ async function submitTvCodeFlow() {
     try {
         const linkData = await apiRequest('/api/nf-generate-link', 'POST', {
             customerCode: currentLookupCode,
-            device: 'mobile'
+            device: 'mobile',
+            mobileOs: 'android'
         });
         if (!linkData || !linkData.url) throw new Error('Không tạo được link đăng nhập.');
 
@@ -998,7 +1001,8 @@ async function generateDeviceLink(device, mobileOs = 'android') {
     try {
         const data = await apiRequest('/api/nf-generate-link', 'POST', {
             customerCode: currentLookupCode,
-            device: apiDevice
+            device: apiDevice,
+            mobileOs: mobileOs
         });
         if (!data.url) throw new Error('Không tạo được link');
 
@@ -1129,11 +1133,12 @@ function renderCookiesSummary() {
     const deadCount = Number((data && data.deadCount) || 0);
     const unknownCount = Number((data && data.unknownCount) || 0);
     const holdCount = Number((data && data.holdCount) || 0);
+    const iosCount = Number((data && data.iosCount) || 0);
     const overcapCount = Number((data && data.overCapacityCount) || 0);
     const assignedCount = Number((data && data.assignedCount) || 0);
     const sbdCount = 0;
-    const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - overcapCount - assignedCount);
-    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | QUA TAI: ${overcapCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
+    const unassignedCount = Math.max(0, activeCount - sbdCount - unknownCount - holdCount - iosCount - overcapCount - assignedCount);
+    summary.textContent = `Tong: ${total} | Active: ${activeCount} | Disabled: ${disabledCount} | Dead: ${deadCount} | SBD: ${sbdCount} | UNKNOW: ${unknownCount} | HOLD: ${holdCount} | IOS: ${iosCount} | QUA TAI: ${overcapCount} | Dang gan: ${assignedCount} | Chua gan: ${unassignedCount}`;
 }
 
 function renderCookiesTable() {
@@ -1180,6 +1185,7 @@ function renderCookiesTable() {
             ${cookie.sbdTagged ? '<span class="pill pill-sbd">SBD</span>' : ''}
             ${cookie.unknownTagged ? '<span class="pill pill-unknown">UNKNOW</span>' : ''}
             ${cookie.holdTagged ? '<span class="pill pill-hold">HOLD</span>' : ''}
+            ${cookie.iosTagged ? '<span class="pill pill-ios">IOS</span>' : ''}
             ${cookie.overCapacityTagged ? '<span class="pill pill-overcap">QUA TAI</span>' : ''}
         `;
         return `
@@ -1801,6 +1807,16 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
             return;
         }
 
+        if (action === 'ios') {
+            const assignedCookieId = String(customer.assignedCookieId || '').trim();
+            if (!assignedCookieId) {
+                toast('Khach nay chua co cookie de gan IOS.', 'warn');
+                return;
+            }
+            await applyCookieAction('ios-on', [assignedCookieId], triggerButton, { busyLabel: 'Dang xu ly...' });
+            return;
+        }
+
         if (action === 'overload') {
             const assignedCookieId = String(customer.assignedCookieId || '').trim();
             if (!assignedCookieId) {
@@ -2050,6 +2066,7 @@ function shouldRefreshCustomersForCookieAction(action = '') {
         || action === 'sbd-on'
         || action === 'unknown-on'
         || action === 'hold-on'
+        || action === 'ios-on'
         || action === 'overcap-on';
 }
 
@@ -2068,6 +2085,8 @@ function getCookieActionSuccessMessage(action = '', count = 1) {
     if (action === 'unknown-off') return amount > 1 ? `Da go tag UNKNOW cho ${amount} cookie.` : 'Da go tag UNKNOW cho cookie.';
     if (action === 'hold-on') return amount > 1 ? `Da gan tag HOLD cho ${amount} cookie.` : 'Da gan tag HOLD cho cookie.';
     if (action === 'hold-off') return amount > 1 ? `Da go tag HOLD cho ${amount} cookie.` : 'Da go tag HOLD cho cookie.';
+    if (action === 'ios-on') return amount > 1 ? `Da gan tag IOS cho ${amount} cookie.` : 'Da gan tag IOS cho cookie.';
+    if (action === 'ios-off') return amount > 1 ? `Da go tag IOS cho ${amount} cookie.` : 'Da go tag IOS cho cookie.';
     if (action === 'overcap-on') return amount > 1 ? `Da gan tag QUA TAI cho ${amount} cookie trong 1 gio.` : 'Da gan tag QUA TAI cho cookie trong 1 gio.';
     if (action === 'overcap-off') return amount > 1 ? `Da go tag QUA TAI cho ${amount} cookie.` : 'Da go tag QUA TAI cho cookie.';
     if (action === 'save-note') return 'Da cap nhat note cookie.';
@@ -2143,6 +2162,15 @@ function applyOptimisticCookieAction(action = '', cookieIds = [], options = {}) 
                 updatedAt: now
             };
         }
+        if (action === 'ios-on' || action === 'ios-off') {
+            const iosTagged = action === 'ios-on';
+            return {
+                ...cookie,
+                iosTagged,
+                assignedCustomerCode: iosTagged ? '' : cookie.assignedCustomerCode,
+                updatedAt: now
+            };
+        }
         if (action === 'overcap-on' || action === 'overcap-off') {
             const overCapacityTagged = action === 'overcap-on';
             return {
@@ -2181,6 +2209,7 @@ function buildCookieActionRequest(action = '', cookieIds = [], options = {}) {
     if (action === 'sbd-on' || action === 'sbd-off') return { method: 'PUT', body: { ...base, sbdTagged: action === 'sbd-on' } };
     if (action === 'unknown-on' || action === 'unknown-off') return { method: 'PUT', body: { ...base, unknownTagged: action === 'unknown-on' } };
     if (action === 'hold-on' || action === 'hold-off') return { method: 'PUT', body: { ...base, holdTagged: action === 'hold-on' } };
+    if (action === 'ios-on' || action === 'ios-off') return { method: 'PUT', body: { ...base, iosTagged: action === 'ios-on' } };
     if (action === 'overcap-on' || action === 'overcap-off') {
         return {
             method: 'PUT',
@@ -2482,6 +2511,11 @@ async function handleCookieTableAction(event) {
 
         if (action === 'sbd-on' || action === 'sbd-off') {
             await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
+            return;
+        }
+
+        if (action === 'ios-on' || action === 'ios-off') {
+            await applyCookieAction(action, [cookieId], target, { busyLabel: 'Dang xu ly...' });
         }
     } catch (error) {
         toast(error.message || 'Cap nhat cookie that bai.', 'bad');
@@ -2515,6 +2549,7 @@ function getCustomerRowMenuItems(code = '') {
     return [
         { action: 'edit', label: 'Sua' },
         { action: 'error', label: 'ERROR' },
+        { action: 'ios', label: 'IOS' },
         { action: 'overload', label: 'QUA TAI' },
         { action: 'toggle', label: customer.status === 'inactive' ? 'Kich hoat' : 'Khoa' },
         { action: 'delete', label: 'Xoa', danger: true }

@@ -43,6 +43,7 @@ function cookiePublicDto(cookie) {
         sbdTagged: !!cookie.sbdTagged,
         unknownTagged: !!cookie.unknownTagged,
         holdTagged: !!cookie.holdTagged,
+        iosTagged: !!cookie.iosTagged,
         overCapacityTagged: !!cookie.overCapacityTagged,
         overCapacityUntil: cookie.overCapacityUntil || '',
         lastOverCapacityAt: cookie.lastOverCapacityAt || '',
@@ -112,6 +113,7 @@ module.exports = async function (req, res) {
                             assignedCount: 0,
                             unknownCount: 0,
                             holdCount: 0,
+                            iosCount: 0,
                             overCapacityCount: 0
                         },
                         items,
@@ -150,6 +152,7 @@ module.exports = async function (req, res) {
             const hasSbdTagUpdate = body.sbdTagged !== undefined;
             const hasUnknownTagUpdate = body.unknownTagged !== undefined;
             const hasHoldTagUpdate = body.holdTagged !== undefined;
+            const hasIosTagUpdate = body.iosTagged !== undefined;
             const hasOverCapacityTagUpdate = body.overCapacityTagged !== undefined;
             const hasOverCapacityUntilUpdate = body.overCapacityUntil !== undefined;
             const hasLastOverCapacityAtUpdate = body.lastOverCapacityAt !== undefined;
@@ -183,6 +186,7 @@ module.exports = async function (req, res) {
                 const nextSbdTagged = hasSbdTagUpdate ? !!body.sbdTagged : !!current.sbdTagged;
                 const nextUnknownTagged = hasUnknownTagUpdate ? !!body.unknownTagged : !!current.unknownTagged;
                 const nextHoldTagged = hasHoldTagUpdate ? !!body.holdTagged : !!current.holdTagged;
+                const nextIosTagged = hasIosTagUpdate ? !!body.iosTagged : !!current.iosTagged;
                 const nextOverCapacityTagged = hasOverCapacityTagUpdate ? !!body.overCapacityTagged : !!current.overCapacityTagged;
                 let nextOverCapacityUntil = hasOverCapacityUntilUpdate
                     ? String(body.overCapacityUntil || '').trim()
@@ -202,6 +206,7 @@ module.exports = async function (req, res) {
                     || nextSbdTagged
                     || nextUnknownTagged
                     || nextHoldTagged
+                    || nextIosTagged
                     || isOverCapacityActive;
 
                 if (String(current.assignedCustomerCode || '').trim()) {
@@ -221,6 +226,7 @@ module.exports = async function (req, res) {
                         sbdTagged: nextSbdTagged,
                         unknownTagged: nextUnknownTagged,
                         holdTagged: nextHoldTagged,
+                        iosTagged: nextIosTagged,
                         overCapacityTagged: nextOverCapacityTagged,
                         overCapacityUntil: nextOverCapacityUntil,
                         lastOverCapacityAt: nextLastOverCapacityAt,
@@ -241,6 +247,7 @@ module.exports = async function (req, res) {
                     sbdTagged: nextSbdTagged,
                     unknownTagged: nextUnknownTagged,
                     holdTagged: nextHoldTagged,
+                    iosTagged: nextIosTagged,
                     overCapacityTagged: nextOverCapacityTagged,
                     overCapacityUntil: nextOverCapacityUntil,
                     lastOverCapacityAt: nextLastOverCapacityAt,

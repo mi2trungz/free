@@ -317,6 +317,7 @@ function sanitizeCookie(item) {
     const sbdTagged = item && (item.sbdTagged === true || item.sbdTagged === 'true' || item.sbdTagged === 1 || item.sbdTagged === '1');
     const unknownTagged = item && (item.unknownTagged === true || item.unknownTagged === 'true' || item.unknownTagged === 1 || item.unknownTagged === '1');
     const holdTagged = item && (item.holdTagged === true || item.holdTagged === 'true' || item.holdTagged === 1 || item.holdTagged === '1');
+    const iosTagged = item && (item.iosTagged === true || item.iosTagged === 'true' || item.iosTagged === 1 || item.iosTagged === '1');
     const overCapacityTaggedRaw = item && (
         item.overCapacityTagged === true
         || item.overCapacityTagged === 'true'
@@ -325,7 +326,7 @@ function sanitizeCookie(item) {
     );
     const overCapacityUntil = String(item && item.overCapacityUntil ? item.overCapacityUntil : '').trim();
     const overCapacityTagged = overCapacityTaggedRaw && toMillis(overCapacityUntil) > Date.now();
-    const hasBlockingTag = errorTagged || sbdTagged || unknownTagged || holdTagged || overCapacityTagged;
+    const hasBlockingTag = errorTagged || sbdTagged || unknownTagged || holdTagged || iosTagged || overCapacityTagged;
     return {
         id: String(item.id || makeCookieId()),
         netflixId: String(item.netflixId || '').trim(),
@@ -337,6 +338,7 @@ function sanitizeCookie(item) {
         sbdTagged,
         unknownTagged,
         holdTagged,
+        iosTagged,
         overCapacityTagged,
         overCapacityUntil,
         lastOverCapacityAt: String(item && item.lastOverCapacityAt ? item.lastOverCapacityAt : '').trim(),
@@ -375,6 +377,7 @@ function buildCookieDocFields(cookie) {
         sbdTagged: { booleanValue: !!cookie.sbdTagged },
         unknownTagged: { booleanValue: !!cookie.unknownTagged },
         holdTagged: { booleanValue: !!cookie.holdTagged },
+        iosTagged: { booleanValue: !!cookie.iosTagged },
         overCapacityTagged: { booleanValue: !!cookie.overCapacityTagged },
         overCapacityUntil: toStringValue(cookie.overCapacityUntil || ''),
         lastOverCapacityAt: toStringValue(cookie.lastOverCapacityAt || ''),
@@ -420,6 +423,9 @@ function parseCookieFields(fields = {}) {
         ),
         holdTagged: fields.holdTagged && (
             fields.holdTagged.booleanValue === true || fields.holdTagged.booleanValue === 'true'
+        ),
+        iosTagged: fields.iosTagged && (
+            fields.iosTagged.booleanValue === true || fields.iosTagged.booleanValue === 'true'
         ),
         overCapacityTagged: fields.overCapacityTagged && (
             fields.overCapacityTagged.booleanValue === true || fields.overCapacityTagged.booleanValue === 'true'
@@ -468,6 +474,7 @@ async function readMetaStats() {
         assignedCount: parseMetaIntegerField(fields, 'assignedCount'),
         unknownCount: parseMetaIntegerField(fields, 'unknownCount'),
         holdCount: parseMetaIntegerField(fields, 'holdCount'),
+        iosCount: parseMetaIntegerField(fields, 'iosCount'),
         overCapacityCount: parseMetaIntegerField(fields, 'overCapacityCount')
     };
 }
@@ -481,6 +488,7 @@ function emptyCookieCounters() {
         assignedCount: 0,
         unknownCount: 0,
         holdCount: 0,
+        iosCount: 0,
         overCapacityCount: 0
     };
 }
@@ -495,6 +503,7 @@ function addCookieCounters(base = {}, next = {}, scale = 1) {
         assignedCount: Number(base.assignedCount || 0),
         unknownCount: Number(base.unknownCount || 0),
         holdCount: Number(base.holdCount || 0),
+        iosCount: Number(base.iosCount || 0),
         overCapacityCount: Number(base.overCapacityCount || 0)
     };
     output.totalCookies += safeScale * Number(next.totalCookies || 0);
@@ -504,6 +513,7 @@ function addCookieCounters(base = {}, next = {}, scale = 1) {
     output.assignedCount += safeScale * Number(next.assignedCount || 0);
     output.unknownCount += safeScale * Number(next.unknownCount || 0);
     output.holdCount += safeScale * Number(next.holdCount || 0);
+    output.iosCount += safeScale * Number(next.iosCount || 0);
     output.overCapacityCount += safeScale * Number(next.overCapacityCount || 0);
     return output;
 }
@@ -519,6 +529,7 @@ function computeCookieCounters(item) {
         assignedCount: item.assignedCustomerCode ? 1 : 0,
         unknownCount: item.unknownTagged ? 1 : 0,
         holdCount: item.holdTagged ? 1 : 0,
+        iosCount: item.iosTagged ? 1 : 0,
         overCapacityCount: isCookieOverCapacityActive(item) ? 1 : 0
     };
 }
@@ -538,6 +549,7 @@ function applyMetaDelta(metaDoc, delta = {}) {
         assignedCount: clampNonNegative(parseMetaIntegerField(fields, 'assignedCount') + Number(delta.assignedCount || 0)),
         unknownCount: clampNonNegative(parseMetaIntegerField(fields, 'unknownCount') + Number(delta.unknownCount || 0)),
         holdCount: clampNonNegative(parseMetaIntegerField(fields, 'holdCount') + Number(delta.holdCount || 0)),
+        iosCount: clampNonNegative(parseMetaIntegerField(fields, 'iosCount') + Number(delta.iosCount || 0)),
         overCapacityCount: clampNonNegative(parseMetaIntegerField(fields, 'overCapacityCount') + Number(delta.overCapacityCount || 0))
     };
     return {
@@ -551,6 +563,7 @@ function applyMetaDelta(metaDoc, delta = {}) {
             assignedCount: next.assignedCount,
             unknownCount: next.unknownCount,
             holdCount: next.holdCount,
+            iosCount: next.iosCount,
             overCapacityCount: next.overCapacityCount
         }
     };
@@ -577,12 +590,14 @@ function getCookieIndexBucket(cookie) {
     if (cookie.status !== 'active') return '';
     if (cookie.errorTagged || cookie.sbdTagged) return '';
     if (isCookieOverCapacityActive(cookie)) return '';
+    if (cookie.iosTagged) return 'iosIds';
     if (cookie.holdTagged) return 'holdIds';
     if (cookie.unknownTagged) return 'unknownIds';
     return 'normalIds';
 }
 
 function buildCookieIndexFromCookies(cookies = []) {
+    const iosIds = [];
     const normalIds = [];
     const holdIds = [];
     const unknownIds = [];
@@ -592,16 +607,18 @@ function buildCookieIndexFromCookies(cookies = []) {
         if (seen.has(cookie.id)) return;
         seen.add(cookie.id);
         const bucket = getCookieIndexBucket(cookie);
-        if (bucket === 'normalIds') normalIds.push(cookie.id);
+        if (bucket === 'iosIds') iosIds.push(cookie.id);
+        else if (bucket === 'normalIds') normalIds.push(cookie.id);
         else if (bucket === 'holdIds') holdIds.push(cookie.id);
         else if (bucket === 'unknownIds') unknownIds.push(cookie.id);
     });
-    return { normalIds, holdIds, unknownIds };
+    return { iosIds, normalIds, holdIds, unknownIds };
 }
 
 async function persistCookieIndex(indexPayload = {}) {
     const now = new Date().toISOString();
     return patchDoc(DOC_COOKIE_INDEX, {
+        iosIds: toArrayStringValue(indexPayload.iosIds || []),
         normalIds: toArrayStringValue(indexPayload.normalIds || []),
         holdIds: toArrayStringValue(indexPayload.holdIds || []),
         unknownIds: toArrayStringValue(indexPayload.unknownIds || []),
@@ -615,6 +632,7 @@ async function readCookieIndex() {
     const exists = !!doc;
     return {
         exists,
+        iosIds: parseStringArrayField(fields, 'iosIds'),
         normalIds: parseStringArrayField(fields, 'normalIds'),
         holdIds: parseStringArrayField(fields, 'holdIds'),
         unknownIds: parseStringArrayField(fields, 'unknownIds'),
@@ -633,6 +651,7 @@ async function updateCookieIndexDelta(changedCookies = [], deletedIds = []) {
 
     const current = await readCookieIndex();
     const merged = {
+        iosIds: Array.from(new Set(current.iosIds || [])),
         normalIds: Array.from(new Set(current.normalIds || [])),
         holdIds: Array.from(new Set(current.holdIds || [])),
         unknownIds: Array.from(new Set(current.unknownIds || []))
@@ -641,6 +660,7 @@ async function updateCookieIndexDelta(changedCookies = [], deletedIds = []) {
     const changedIdSet = new Set(normalizedChanged.map((item) => item.id));
     const removeIdSet = new Set([...normalizedDeleted, ...changedIdSet]);
     const removeFromBucket = (ids = []) => ids.filter((id) => !removeIdSet.has(id));
+    merged.iosIds = removeFromBucket(merged.iosIds);
     merged.normalIds = removeFromBucket(merged.normalIds);
     merged.holdIds = removeFromBucket(merged.holdIds);
     merged.unknownIds = removeFromBucket(merged.unknownIds);
@@ -649,6 +669,7 @@ async function updateCookieIndexDelta(changedCookies = [], deletedIds = []) {
         if (normalizedDeleted.has(cookie.id)) return;
         const bucket = getCookieIndexBucket(cookie);
         if (!bucket) return;
+        if (bucket === 'iosIds') merged.iosIds.push(cookie.id);
         if (bucket === 'normalIds') merged.normalIds.push(cookie.id);
         if (bucket === 'holdIds') merged.holdIds.push(cookie.id);
         if (bucket === 'unknownIds') merged.unknownIds.push(cookie.id);
@@ -679,6 +700,7 @@ function toCookieSnapshot(cookie = {}) {
         cookie.sbdTagged ? '1' : '0',
         cookie.unknownTagged ? '1' : '0',
         cookie.holdTagged ? '1' : '0',
+        cookie.iosTagged ? '1' : '0',
         cookie.overCapacityTagged ? '1' : '0',
         cookie.overCapacityUntil || '',
         cookie.lastOverCapacityAt || '',
@@ -835,6 +857,7 @@ async function persistMeta(payload = {}) {
         fields.assignedCount = toIntegerValue(payload.cookieSummary.assignedCount || 0);
         fields.unknownCount = toIntegerValue(payload.cookieSummary.unknownCount || 0);
         fields.holdCount = toIntegerValue(payload.cookieSummary.holdCount || 0);
+        fields.iosCount = toIntegerValue(payload.cookieSummary.iosCount || 0);
         fields.overCapacityCount = toIntegerValue(payload.cookieSummary.overCapacityCount || 0);
     }
     if (payload.storageVersion !== undefined) {
@@ -905,8 +928,9 @@ function buildCookieSummary(cookies = []) {
     const assignedCount = cookies.filter((c) => !!c.assignedCustomerCode).length;
     const unknownCount = cookies.filter((c) => !!c.unknownTagged).length;
     const holdCount = cookies.filter((c) => !!c.holdTagged).length;
+    const iosCount = cookies.filter((c) => !!c.iosTagged).length;
     const overCapacityCount = cookies.filter((c) => isCookieOverCapacityActive(c)).length;
-    return { total, activeCount, disabledCount, deadCount, assignedCount, unknownCount, holdCount, overCapacityCount };
+    return { total, activeCount, disabledCount, deadCount, assignedCount, unknownCount, holdCount, iosCount, overCapacityCount };
 }
 
 async function readCustomers() {
@@ -1007,6 +1031,7 @@ async function readCookiesPage(options = {}) {
                 assignedCount: meta.assignedCount || 0,
                 unknownCount: meta.unknownCount || 0,
                 holdCount: meta.holdCount || 0,
+                iosCount: meta.iosCount || 0,
                 overCapacityCount: meta.overCapacityCount || 0
             },
             ...pageMeta
@@ -1025,6 +1050,7 @@ async function readCookiesPage(options = {}) {
                 assignedCount: 0,
                 unknownCount: 0,
                 holdCount: 0,
+                iosCount: 0,
                 overCapacityCount: 0
             },
             ...pageMeta
@@ -1287,6 +1313,7 @@ async function writeDelta(payload = {}) {
         assignedCount: 0,
         unknownCount: 0,
         holdCount: 0,
+        iosCount: 0,
         overCapacityCount: 0
     };
 

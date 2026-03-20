@@ -83,15 +83,23 @@ function invalidateGenerateCaches() {
     invalidateMany(['nf_cookies_get', 'nf_customers_get', 'nf_customer_lookup']);
 }
 
-function buildPrioritizedCookieIdsFromIndex(indexDoc = {}, limit = 220) {
+function buildPrioritizedCookieIdsFromIndex(indexDoc = {}, limit = 220, options = {}) {
     const maxTake = Math.max(limit, Math.min(limit * 4, 1200));
     const ids = [];
     const seen = new Set();
-    const groups = [
-        Array.isArray(indexDoc.normalIds) ? indexDoc.normalIds : [],
-        Array.isArray(indexDoc.holdIds) ? indexDoc.holdIds : [],
-        Array.isArray(indexDoc.unknownIds) ? indexDoc.unknownIds : []
-    ];
+    const preferIos = !!options.preferIos;
+    const groups = preferIos
+        ? [
+            Array.isArray(indexDoc.iosIds) ? indexDoc.iosIds : [],
+            Array.isArray(indexDoc.normalIds) ? indexDoc.normalIds : [],
+            Array.isArray(indexDoc.holdIds) ? indexDoc.holdIds : [],
+            Array.isArray(indexDoc.unknownIds) ? indexDoc.unknownIds : []
+        ]
+        : [
+            Array.isArray(indexDoc.normalIds) ? indexDoc.normalIds : [],
+            Array.isArray(indexDoc.holdIds) ? indexDoc.holdIds : [],
+            Array.isArray(indexDoc.unknownIds) ? indexDoc.unknownIds : []
+        ];
     for (let g = 0; g < groups.length; g += 1) {
         const group = groups[g];
         for (let i = 0; i < group.length; i += 1) {
@@ -139,8 +147,11 @@ module.exports = async function (req, res) {
         const body = parseBody(req.body);
         const customerCode = String(body.customerCode || '').trim().toUpperCase();
         const device = String(body.device || 'desktop').trim().toLowerCase();
+        const mobileOs = String(body.mobileOs || 'android').trim().toLowerCase();
         if (!customerCode) return res.status(400).json({ error: 'Missing customerCode' });
         if (!ALLOWED_DEVICES.has(device)) return res.status(400).json({ error: 'Invalid device' });
+        const isMobileFlow = device === 'mobile';
+        const isIosRequest = isMobileFlow && mobileOs === 'ios';
 
         const customer = await readCustomerByCode(customerCode);
         if (!customer) return res.status(404).json({ error: 'Mã khách hàng không tồn tại.' });
@@ -333,6 +344,8 @@ module.exports = async function (req, res) {
                     || assignedCookie.sbdTagged
                     || assignedCookie.status === 'dead'
                     || isCookieOverCapacityActive(assignedCookie)
+                    || (isIosRequest && !assignedCookie.iosTagged)
+                    || (!isIosRequest && !!assignedCookie.iosTagged)
                 ) {
                     unassignCurrentCustomerCookie();
                 } else {
@@ -353,7 +366,7 @@ module.exports = async function (req, res) {
         let shouldFallbackScan = false;
         try {
             const indexDoc = await readCookieIndex();
-            const candidateIds = buildPrioritizedCookieIdsFromIndex(indexDoc, 220);
+            const candidateIds = buildPrioritizedCookieIdsFromIndex(indexDoc, 220, { preferIos: isIosRequest });
             if (candidateIds.length > 0) {
                 const maxRead = Math.max(220, Math.min(candidateIds.length, 420));
                 candidates = await readCookiesByIds(candidateIds.slice(0, maxRead));
@@ -371,6 +384,7 @@ module.exports = async function (req, res) {
             });
         }
 
+        const iosBucket = [];
         const normalBucket = [];
         const holdBucket = [];
         const unknownBucket = [];
@@ -384,17 +398,26 @@ module.exports = async function (req, res) {
             if (isCookieOverCapacityActive(cookie)) continue;
             if (cookie.assignedCustomerCode && cookie.assignedCustomerCode !== customerNext.code) continue;
             if (cookie.id === assignedCookieId) continue;
+            if (!isIosRequest && cookie.iosTagged) continue;
 
-            if (cookie.holdTagged) holdBucket.push(cookie);
+            if (cookie.iosTagged) iosBucket.push(cookie);
+            else if (cookie.holdTagged) holdBucket.push(cookie);
             else if (cookie.unknownTagged) unknownBucket.push(cookie);
             else normalBucket.push(cookie);
         }
 
-        const prioritizedBuckets = [
-            sortBucketByNewestFirst(normalBucket),
-            sortBucketByNewestFirst(holdBucket),
-            sortBucketByNewestFirst(unknownBucket)
-        ];
+        const prioritizedBuckets = isIosRequest
+            ? [
+                sortBucketByNewestFirst(iosBucket),
+                sortBucketByNewestFirst(normalBucket),
+                sortBucketByNewestFirst(holdBucket),
+                sortBucketByNewestFirst(unknownBucket)
+            ]
+            : [
+                sortBucketByNewestFirst(normalBucket),
+                sortBucketByNewestFirst(holdBucket),
+                sortBucketByNewestFirst(unknownBucket)
+            ];
         for (let b = 0; b < prioritizedBuckets.length; b += 1) {
             const bucket = prioritizedBuckets[b];
             for (let j = 0; j < bucket.length; j += 1) {
