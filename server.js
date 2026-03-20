@@ -158,10 +158,18 @@ const server = http.createServer((req, res) => {
         return invokeServerlessApi(nftokenHandler, req, res);
     }
     if (requestPath === '/api/getlink-shares' || requestPath.startsWith('/api/getlink-shares/')) {
-        return invokeServerlessApi(getlinkSharesHandler, req, res);
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+            error: 'Getlink API is temporarily disabled',
+            code: 'GETLINK_TEMP_DISABLED'
+        }));
     }
     if (requestPath.startsWith('/api/getlink-admin')) {
-        return invokeServerlessApi(getlinkAdminHandler, req, res);
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({
+            error: 'Getlink API is temporarily disabled',
+            code: 'GETLINK_TEMP_DISABLED'
+        }));
     }
 
     if (req.method === 'OPTIONS') {
@@ -217,6 +225,10 @@ const server = http.createServer((req, res) => {
     }
     const extname = String(path.extname(filePath)).toLowerCase();
     const contentType = MIME_TYPES[extname] || 'application/octet-stream';
+    const normalizedFilePath = filePath.replace(/\\/g, '/').toLowerCase();
+    const isNfIndex = normalizedFilePath.endsWith('/nf/index.html');
+    const isNfAsset = normalizedFilePath.endsWith('/nf/app.js')
+        || normalizedFilePath.endsWith('/nf/styles.css');
 
     fs.readFile(filePath, (error, content) => {
         if (error) {
@@ -228,7 +240,13 @@ const server = http.createServer((req, res) => {
                 res.end(`Server Error: ${error.code}`);
             }
         } else {
-            res.writeHead(200, { 'Content-Type': contentType });
+            const headers = { 'Content-Type': contentType };
+            if (isNfIndex) {
+                headers['Cache-Control'] = 'no-cache, max-age=0, must-revalidate';
+            } else if (isNfAsset) {
+                headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+            }
+            res.writeHead(200, headers);
             res.end(content, 'utf-8');
         }
     });
