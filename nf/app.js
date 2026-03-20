@@ -57,6 +57,7 @@ let xlsxModulePromise = null;
 let pendingConfirmDevice = '';
 let deviceConfirmReadyAt = 0;
 let deviceConfirmCountdownTimer = null;
+let cookieExcelImportInProgress = false;
 
 const tableViewState = {
     cookies: {
@@ -1791,6 +1792,11 @@ async function handleCustomerTableAction(event) {
 }
 
 async function importCookies() {
+    if (cookieExcelImportInProgress) {
+        toast('He thong dang import cookie tu Excel. Vui long doi xong.', 'warn');
+        return;
+    }
+
     const input = el('cookieImportInput');
     const state = el('cookieImportState');
     const content = String(input.value || '').trim();
@@ -1882,6 +1888,57 @@ function appendCookieBlocks(cookieBlocks = []) {
     const current = String(input.value || '').trim();
     input.value = current ? `${current}\n\n${incoming}` : incoming;
     return normalizedBlocks.length;
+}
+
+async function importExcelCookiesBatch(cookies = []) {
+    const normalizedCookies = Array.isArray(cookies)
+        ? cookies.map((item) => String(item || '').trim()).filter(Boolean)
+        : [];
+    if (normalizedCookies.length === 0) {
+        throw new Error('Khong tim thay cookie hop le o cot A cua file Excel.');
+    }
+
+    const state = el('cookieImportState');
+    const importBtn = el('importCookiesBtn');
+    const fileInput = el('cookieImportFileInput');
+    const total = normalizedCookies.length;
+
+    cookieExcelImportInProgress = true;
+    setButtonBusy(importBtn, true, 'Dang import...');
+    if (fileInput) fileInput.disabled = true;
+    if (state) {
+        state.textContent = `Dang import... (${total} dong)`;
+        setStateClass(state, 'loading');
+    }
+
+    try {
+        const data = await apiRequest('/api/nf-cookies/import', 'POST', { cookies: normalizedCookies });
+        const addedCount = Number(data?.addedCount || 0);
+        const skippedCount = Number(data?.skippedCount || 0);
+        const invalidCount = Number(data?.invalidCount || 0);
+
+        if (state) {
+            state.textContent = `Them ${addedCount} | Trung ${skippedCount} | Loi ${invalidCount}`;
+            setStateClass(state, invalidCount > 0 ? 'warning' : 'success');
+        }
+        toast(
+            invalidCount > 0
+                ? `Da import xong ${total} dong. Them ${addedCount}, Trung ${skippedCount}, Loi ${invalidCount}.`
+                : `Da import xong ${total} dong cookie.`,
+            invalidCount > 0 ? 'warn' : 'ok'
+        );
+        await loadCookies();
+    } catch (error) {
+        if (state) {
+            state.textContent = error.message || 'Import Excel that bai.';
+            setStateClass(state, 'error');
+        }
+        toast(error.message || 'Import Excel that bai.', 'bad');
+    } finally {
+        cookieExcelImportInProgress = false;
+        setButtonBusy(importBtn, false);
+        if (fileInput) fileInput.disabled = false;
+    }
 }
 
 function summarizeCheckResult(data = {}) {
@@ -3104,16 +3161,16 @@ function bindEvents() {
         fileInput.addEventListener('change', async (event) => {
             const input = event.target;
             if (!(input instanceof HTMLInputElement)) return;
+            if (cookieExcelImportInProgress) {
+                input.value = '';
+                return;
+            }
             const file = input.files && input.files[0];
             if (!file) return;
             try {
                 if (isExcelFile(file)) {
                     const cookies = await readExcelCookiesFromColumnA(file);
-                    const addedCount = appendCookieBlocks(cookies);
-                    if (addedCount <= 0) {
-                        throw new Error('Khong tim thay cookie hop le o cot A cua file Excel.');
-                    }
-                    toast(`Da nap ${addedCount} cookie tu file Excel.`, 'ok');
+                    await importExcelCookiesBatch(cookies);
                     return;
                 }
 

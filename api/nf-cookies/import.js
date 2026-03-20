@@ -21,6 +21,16 @@ function makeImportCookieId() {
     return `nf_ck_${Date.now()}_${seed}`;
 }
 
+function normalizeImportCookiesList(cookies = []) {
+    const normalized = (Array.isArray(cookies) ? cookies : [])
+        .map((item) => String(item || '').trim())
+        .filter(Boolean);
+    if (normalized[0] && normalized[0].toLowerCase() === 'cookie') {
+        normalized.shift();
+    }
+    return normalized;
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -28,10 +38,10 @@ module.exports = async function (req, res) {
 
     try {
         const body = parseBody(req.body);
-        const content = String(body.content || '').trim();
-        if (!content) return res.status(400).json({ error: 'Missing import content' });
-
-        const blocks = splitImportCookieBlocks(content);
+        const listFromBatch = normalizeImportCookiesList(body.cookies);
+        const blocks = listFromBatch.length > 0
+            ? listFromBatch
+            : splitImportCookieBlocks(String(body.content || '').trim());
         if (blocks.length === 0) return res.status(400).json({ error: 'No cookie found in import content' });
 
         const currentPool = await readCookies();
