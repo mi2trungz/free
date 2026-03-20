@@ -292,6 +292,49 @@ body {
     font-size: 0.96rem;
 }
 
+.customer-inline-admin {
+    margin-top: 0.8rem;
+    border-top: 1px solid rgba(174, 185, 213, 0.22);
+    padding-top: 0.7rem;
+}
+
+.customer-inline-admin-head {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #93c5fd;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.customer-inline-edit-grid {
+    margin-top: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+.customer-inline-actions {
+    margin-top: 0.55rem;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.48rem;
+}
+
+.customer-inline-actions .btn,
+.customer-inline-save-row .btn {
+    min-height: 40px;
+}
+
+.customer-inline-save-row {
+    margin-top: 0.55rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.customer-inline-save-row .btn {
+    flex: 1;
+}
+
 .mono {
     font-family: 'JetBrains Mono', monospace;
 }
@@ -1285,7 +1328,9 @@ body {
     }
 
     .device-grid,
-    .customer-grid {
+    .customer-grid,
+    .customer-inline-edit-grid,
+    .customer-inline-actions {
         grid-template-columns: 1fr;
     }
 

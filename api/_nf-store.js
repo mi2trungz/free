@@ -1350,9 +1350,15 @@ async function writeDelta(payload = {}) {
 
 function makeCustomerCode(existingCodes = []) {
     const set = new Set(existingCodes.map((code) => String(code || '').toUpperCase()));
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const alphabetLength = alphabet.length;
     let code = '';
     do {
-        code = `NF${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+        code = '';
+        for (let i = 0; i < 4; i += 1) {
+            const idx = Math.floor(Math.random() * alphabetLength);
+            code += alphabet[idx];
+        }
     } while (set.has(code));
     return code;
 }

@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/nf/styles.css?v=20260320-1">
+    <link rel="stylesheet" href="/nf/styles.css?v=20260320-2">
 </head>
 <body>
     <div class="bg-layer bg-noise"></div>
@@ -38,7 +38,7 @@
 
             <div class="lookup-wrap">
                 <div class="lookup-row">
-                    <input id="customerCodeInput" class="text-input code-input" type="text" placeholder="Ví dụ: NFAB12CD" autocomplete="off">
+                    <input id="customerCodeInput" class="text-input code-input" type="text" placeholder="Ví dụ: A7K2 hoặc mã cũ" autocomplete="off">
                     <button id="lookupBtn" class="btn btn-primary" type="button">Kiểm tra mã</button>
                 </div>
 
@@ -54,6 +54,27 @@
                             <span>Tên khách</span>
                             <strong id="customerNameText">-</strong>
                         </div>
+                    </div>
+                    <div id="customerInlineAdmin" class="customer-inline-admin hidden">
+                        <div class="customer-inline-admin-head">Admin chỉnh nhanh</div>
+                        <div class="customer-inline-edit-grid">
+                            <input id="customerInlineCodeInput" class="text-input mono" type="text" placeholder="Mã khách (4 ký tự)">
+                            <input id="customerInlineNameInput" class="text-input" type="text" placeholder="Tên khách hàng">
+                            <input id="customerInlineWarrantyInput" class="text-input" type="datetime-local">
+                        </div>
+                        <div class="customer-inline-actions">
+                            <button id="customerInlineEditBtn" class="btn btn-ghost" type="button">Sửa</button>
+                            <button id="customerInlineErrorBtn" class="btn btn-ghost" type="button">ERROR</button>
+                            <button id="customerInlineIosBtn" class="btn btn-ghost" type="button">IOS</button>
+                            <button id="customerInlineOverloadBtn" class="btn btn-ghost" type="button">QUA TAI</button>
+                            <button id="customerInlineToggleBtn" class="btn btn-ghost" type="button">Khóa</button>
+                            <button id="customerInlineDeleteBtn" class="btn btn-ghost" type="button">Xóa</button>
+                        </div>
+                        <div class="customer-inline-save-row hidden" id="customerInlineSaveRow">
+                            <button id="customerInlineSaveBtn" class="btn btn-primary" type="button">Lưu</button>
+                            <button id="customerInlineCancelBtn" class="btn btn-ghost" type="button">Hủy</button>
+                        </div>
+                        <div id="customerInlineState" class="state-text state-idle"></div>
                     </div>
                 </div>
 
@@ -309,7 +330,7 @@
                     </div>
                     <form id="customerForm">
                         <div class="form-grid">
-                            <input id="customerCodeEditInput" class="text-input hidden" type="text" placeholder="Mã khách hàng (ví dụ: NFABC123)" autocomplete="off">
+                            <input id="customerCodeEditInput" class="text-input hidden" type="text" placeholder="Mã khách hàng (ví dụ: A7K2 hoặc mã cũ)" autocomplete="off">
                             <input id="customerNameInput" class="text-input" type="text" placeholder="Tên khách hàng" required>
                             <input id="customerWarrantyInput" class="text-input" type="datetime-local" required>
                             <div class="warranty-days-wrap">
@@ -514,7 +535,7 @@
 
     <div id="toast" class="toast hidden"></div>
 
-    <script type="module" src="/nf/app.js?v=20260320-1"></script>
+    <script type="module" src="/nf/app.js?v=20260320-2"></script>
 </body>
 </html>
 

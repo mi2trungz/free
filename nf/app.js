@@ -45,7 +45,11 @@ let lookupDebounceTimer = null;
 let lookupRequestInFlight = false;
 let adminCustomersLoaded = false;
 let adminCookiesLoaded = false;
+let adminSignedIn = false;
+let currentLookupCustomerDetail = null;
+let inlineAdminEditMode = false;
 const ADMIN_PAGE_SIZE = 25;
+const CUSTOMER_CODE_V2_REGEX = /^[A-Z0-9]{4}$/;
 const XLSX_ESM_URL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm';
 const DEVICE_CONFIRM_DELAY_MS = 3000;
 const customersPageState = { page: 1, pageSize: ADMIN_PAGE_SIZE, total: 0, totalPages: 1, hasNext: false, hasPrev: false, search: '' };
@@ -773,11 +777,132 @@ async function submitTvCodeFlow() {
 function resetLookupResult() {
     currentLookupCode = '';
     currentLookupEligible = false;
+    currentLookupCustomerDetail = null;
+    inlineAdminEditMode = false;
     setDeviceButtonsEnabled(false);
     setDeviceSectionVisible(false);
     setExpiredSectionVisible(false);
+    renderLookupInlineAdmin();
     const infoCard = el('customerInfoCard');
     if (infoCard) infoCard.classList.add('hidden');
+}
+
+function setInlineLookupState(text = '', mode = 'idle') {
+    const node = el('customerInlineState');
+    if (!node) return;
+    node.textContent = text || '';
+    setStateClass(node, mode);
+}
+
+function renderLookupInlineAdmin() {
+    const wrap = el('customerInlineAdmin');
+    const saveRow = el('customerInlineSaveRow');
+    const editBtn = el('customerInlineEditBtn');
+    const toggleBtn = el('customerInlineToggleBtn');
+    if (!wrap) return;
+
+    const visible = adminSignedIn && !!currentLookupCode;
+    wrap.classList.toggle('hidden', !visible);
+    if (!visible) return;
+
+    const detail = currentLookupCustomerDetail;
+    const hasDetail = !!(detail && normalizeCode(detail.code) === normalizeCode(currentLookupCode));
+    const disabled = !hasDetail;
+    const inputs = [
+        el('customerInlineCodeInput'),
+        el('customerInlineNameInput'),
+        el('customerInlineWarrantyInput')
+    ];
+    inputs.forEach((input) => {
+        if (input) input.disabled = disabled || !inlineAdminEditMode;
+    });
+    const actionIds = ['customerInlineErrorBtn', 'customerInlineIosBtn', 'customerInlineOverloadBtn', 'customerInlineToggleBtn', 'customerInlineDeleteBtn'];
+    actionIds.forEach((id) => {
+        const btn = el(id);
+        if (btn) btn.disabled = disabled;
+    });
+    if (editBtn) editBtn.disabled = disabled;
+    if (saveRow) saveRow.classList.toggle('hidden', !inlineAdminEditMode);
+    if (editBtn) editBtn.textContent = inlineAdminEditMode ? 'Đang sửa' : 'Sửa';
+    if (toggleBtn && hasDetail) toggleBtn.textContent = detail.status === 'inactive' ? 'Kích hoạt' : 'Khóa';
+
+    if (!hasDetail) {
+        setInlineLookupState('Đang tải chi tiết khách hàng...', 'loading');
+        return;
+    }
+
+    if (!inlineAdminEditMode) {
+        const codeInput = el('customerInlineCodeInput');
+        const nameInput = el('customerInlineNameInput');
+        const warrantyInput = el('customerInlineWarrantyInput');
+        if (codeInput) codeInput.value = detail.code || '';
+        if (nameInput) nameInput.value = detail.name || '';
+        if (warrantyInput) warrantyInput.value = toDatetimeLocalFromIso(detail.warrantyExpiresAt);
+    }
+    setInlineLookupState('', 'idle');
+}
+
+function setLookupCustomerDetail(detail = null) {
+    if (!detail) {
+        currentLookupCustomerDetail = null;
+        renderLookupInlineAdmin();
+        return;
+    }
+    currentLookupCustomerDetail = {
+        code: normalizeCode(detail.code || ''),
+        name: String(detail.name || '').trim(),
+        warrantyExpiresAt: String(detail.warrantyExpiresAt || '').trim(),
+        status: String(detail.status || 'active').trim(),
+        assignedCookieId: String(detail.assignedCookieId || '').trim()
+    };
+    renderLookupInlineAdmin();
+}
+
+async function loadLookupCustomerDetailIfAdmin() {
+    if (!adminSignedIn || !currentLookupCode) {
+        setLookupCustomerDetail(null);
+        return null;
+    }
+    try {
+        const data = await apiRequest(`/api/nf-customers?code=${encodeURIComponent(currentLookupCode)}`, 'GET');
+        const customer = data && data.customer ? data.customer : null;
+        if (!customer) {
+            setLookupCustomerDetail(null);
+            return null;
+        }
+        setLookupCustomerDetail(customer);
+        return customer;
+    } catch (error) {
+        setLookupCustomerDetail(null);
+        setInlineLookupState(error.message || 'Không tải được chi tiết khách hàng.', 'warning');
+        return null;
+    }
+}
+
+function startInlineLookupEditMode() {
+    if (!currentLookupCustomerDetail) return;
+    inlineAdminEditMode = true;
+    renderLookupInlineAdmin();
+}
+
+function stopInlineLookupEditMode() {
+    inlineAdminEditMode = false;
+    renderLookupInlineAdmin();
+}
+
+async function refreshLookupAfterCustomerAction(nextCode = '') {
+    const targetCode = normalizeCode(nextCode || currentLookupCode || '');
+    if (!targetCode) {
+        resetLookupResult();
+        setLookupState('Đã xóa mã khách hàng.', 'warning');
+        return;
+    }
+    const input = el('customerCodeInput');
+    if (input) input.value = targetCode;
+    currentLookupCode = targetCode;
+    await lookupCustomerCode();
+    await loadLookupCustomerDetailIfAdmin();
+    renderLookupInlineAdmin();
 }
 
 function renderLookupResult(payload) {
@@ -791,6 +916,19 @@ function renderLookupResult(payload) {
 
     currentLookupCode = normalizeCode(payload.customer.code || '');
     currentLookupEligible = !!payload.eligible;
+    setLookupCustomerDetail({
+        code: currentLookupCode,
+        name: payload.customer.name || '',
+        warrantyExpiresAt: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.warrantyExpiresAt
+            : '',
+        status: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.status
+            : 'active',
+        assignedCookieId: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.assignedCookieId
+            : ''
+    });
 
     if (codeText) codeText.textContent = currentLookupCode || '-';
     if (nameText) nameText.textContent = payload.customer.name || '-';
@@ -802,9 +940,11 @@ function renderLookupResult(payload) {
 
     if (currentLookupEligible) {
         setLookupState('Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix', 'success');
+        if (adminSignedIn) loadLookupCustomerDetailIfAdmin();
         return;
     } else {
         setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
+        if (adminSignedIn) loadLookupCustomerDetailIfAdmin();
     }
 }
 
@@ -819,6 +959,19 @@ function renderLookupResultV2(payload) {
 
     currentLookupCode = normalizeCode(payload.customer.code || '');
     currentLookupEligible = !!payload.eligible;
+    setLookupCustomerDetail({
+        code: currentLookupCode,
+        name: payload.customer.name || '',
+        warrantyExpiresAt: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.warrantyExpiresAt
+            : '',
+        status: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.status
+            : 'active',
+        assignedCookieId: currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === currentLookupCode
+            ? currentLookupCustomerDetail.assignedCookieId
+            : ''
+    });
 
     if (codeText) codeText.textContent = currentLookupCode || '-';
     if (nameText) nameText.textContent = payload.customer.name || '-';
@@ -831,15 +984,18 @@ function renderLookupResultV2(payload) {
 
     if (currentLookupEligible) {
         setLookupState('Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix', 'success');
+        if (adminSignedIn) loadLookupCustomerDetailIfAdmin();
         return;
     }
 
     if (expired) {
         setLookupState('GÓI NETFLIX CỦA BẠN ĐÃ HẾT HẠN.', 'warning');
+        if (adminSignedIn) loadLookupCustomerDetailIfAdmin();
         return;
     }
 
     setLookupState(payload.message || 'Mã chưa đủ điều kiện sử dụng.', 'warning');
+    if (adminSignedIn) loadLookupCustomerDetailIfAdmin();
 }
 
 async function lookupCustomerCode() {
@@ -1645,6 +1801,7 @@ async function saveCookieNote(cookieId, noteValue, triggerButton = null) {
 
 function renderAdminState(user) {
     const isAdmin = !!(user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    adminSignedIn = isAdmin;
     const fab = el('nfAdminFab');
     const authBox = el('adminAuthBox');
     const workspace = el('adminWorkspace');
@@ -1666,6 +1823,8 @@ function renderAdminState(user) {
     }
 
     if (!isAdmin) {
+        inlineAdminEditMode = false;
+        currentLookupCustomerDetail = null;
         adminCustomersLoaded = false;
         adminCookiesLoaded = false;
         customerSearchLocalQuery = '';
@@ -1691,6 +1850,8 @@ function renderAdminState(user) {
         const searchInput = el('customerSearchInput');
         if (searchInput) searchInput.value = '';
     }
+    renderLookupInlineAdmin();
+    if (isAdmin && currentLookupCode) loadLookupCustomerDetailIfAdmin();
 }
 async function onSubmitCustomerForm(event) {
     event.preventDefault();
@@ -1706,6 +1867,10 @@ async function onSubmitCustomerForm(event) {
     }
     if (editCode && !newCode) {
         toast('Vui long nhap ma khach hang khi sua.', 'warn');
+        return;
+    }
+    if (editCode && newCode !== editCode && !CUSTOMER_CODE_V2_REGEX.test(newCode)) {
+        toast('Ma moi phai dung 4 ky tu [A-Z0-9].', 'warn');
         return;
     }
 
@@ -1762,10 +1927,31 @@ async function onSubmitCustomerForm(event) {
     }
 }
 
-async function runCustomerAction(action = '', code = '', triggerButton = null) {
+function findCustomerForAction(code = '') {
+    const customerCode = normalizeCode(code);
+    if (!customerCode) return null;
+    const fromCache = customersCache.find((item) => item.code === customerCode);
+    if (fromCache) return fromCache;
+    if (currentLookupCustomerDetail && normalizeCode(currentLookupCustomerDetail.code) === customerCode) {
+        return currentLookupCustomerDetail;
+    }
+    return null;
+}
+
+async function refreshAdminTablesAfterCustomerAction(options = {}) {
+    const { customers = true, cookies = false } = options;
+    const jobs = [];
+    if (customers && adminCustomersLoaded) jobs.push(loadCustomers());
+    if (cookies && adminCookiesLoaded) jobs.push(loadCookies());
+    if (jobs.length === 0) return;
+    await Promise.all(jobs);
+}
+
+async function runCustomerAction(action = '', code = '', triggerButton = null, options = {}) {
+    const { refreshLookup = false } = options;
     const customerCode = normalizeCode(code);
     if (!action || !customerCode) return;
-    const customer = customersCache.find((item) => item.code === customerCode);
+    const customer = findCustomerForAction(customerCode);
     if (!customer) return;
     try {
         if (action === 'edit') {
@@ -1793,7 +1979,8 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
                 status: customer.status === 'inactive' ? 'active' : 'inactive'
             });
             toast('Da cap nhat trang thai.', 'ok');
-            await loadCustomers();
+            await refreshAdminTablesAfterCustomerAction({ customers: true, cookies: false });
+            if (refreshLookup) await refreshLookupAfterCustomerAction(customerCode);
             return;
         }
 
@@ -1804,6 +1991,7 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
                 return;
             }
             await applyCookieAction('error-on', [assignedCookieId], triggerButton, { busyLabel: 'Dang xu ly...' });
+            if (refreshLookup) await loadLookupCustomerDetailIfAdmin();
             return;
         }
 
@@ -1814,6 +2002,7 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
                 return;
             }
             await applyCookieAction('ios-on', [assignedCookieId], triggerButton, { busyLabel: 'Dang xu ly...' });
+            if (refreshLookup) await loadLookupCustomerDetailIfAdmin();
             return;
         }
 
@@ -1831,6 +2020,7 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
                 lastOverCapacityAt: nowIso,
                 lastError: `Manual QUA TAI by customer ${customerCode}`
             });
+            if (refreshLookup) await loadLookupCustomerDetailIfAdmin();
             return;
         }
 
@@ -1839,8 +2029,12 @@ async function runCustomerAction(action = '', code = '', triggerButton = null) {
             if (!ok) return;
             await apiRequest('/api/nf-customers', 'DELETE', { code: customerCode });
             toast('Da xoa khach hang.', 'ok');
-            await Promise.all([loadCustomers(), loadCookies()]);
+            await refreshAdminTablesAfterCustomerAction({ customers: true, cookies: true });
+            if (refreshLookup) await refreshLookupAfterCustomerAction('');
+            return;
         }
+
+        if (refreshLookup) await refreshLookupAfterCustomerAction(customerCode);
     } catch (error) {
         toast(error.message || 'Thao tac khach hang that bai.', 'bad');
     }
@@ -1875,6 +2069,80 @@ async function handleCustomerTableAction(event) {
     const code = normalizeCode(target.dataset.code || '');
     if (!action || !code) return;
     await runCustomerAction(action, code, target);
+}
+
+async function saveInlineLookupCustomer() {
+    if (!adminSignedIn || !currentLookupCustomerDetail) return;
+    const codeInput = el('customerInlineCodeInput');
+    const nameInput = el('customerInlineNameInput');
+    const warrantyInput = el('customerInlineWarrantyInput');
+    const saveBtn = el('customerInlineSaveBtn');
+    const originalCode = normalizeCode(currentLookupCustomerDetail.code || '');
+    const newCode = normalizeCode((codeInput && codeInput.value) || '');
+    const name = String((nameInput && nameInput.value) || '').trim();
+    const warrantyLocal = String((warrantyInput && warrantyInput.value) || '').trim();
+    const warrantyIso = toIsoFromDatetimeLocal(warrantyLocal);
+
+    if (!originalCode) return;
+    if (!name || !warrantyIso) {
+        setInlineLookupState('Vui lòng nhập đầy đủ tên và hạn bảo hành.', 'warning');
+        return;
+    }
+    if (!newCode) {
+        setInlineLookupState('Vui lòng nhập mã khách hàng.', 'warning');
+        return;
+    }
+    if (newCode !== originalCode && !CUSTOMER_CODE_V2_REGEX.test(newCode)) {
+        setInlineLookupState('Mã mới phải đúng 4 ký tự [A-Z0-9].', 'warning');
+        return;
+    }
+
+    setButtonBusy(saveBtn, true, 'Đang lưu...');
+    setInlineLookupState('Đang cập nhật khách hàng...', 'loading');
+    try {
+        await apiRequest('/api/nf-customers', 'PUT', {
+            code: originalCode,
+            newCode,
+            name,
+            warrantyExpiresAt: warrantyIso,
+            status: currentLookupCustomerDetail.status || 'active'
+        });
+        inlineAdminEditMode = false;
+        await refreshAdminTablesAfterCustomerAction({ customers: true, cookies: true });
+        await refreshLookupAfterCustomerAction(newCode);
+        setInlineLookupState('Đã cập nhật khách hàng.', 'success');
+        toast('Da cap nhat khach hang.', 'ok');
+    } catch (error) {
+        setInlineLookupState(error.message || 'Cập nhật khách hàng thất bại.', 'error');
+        toast(error.message || 'Cap nhat khach hang that bai.', 'bad');
+    } finally {
+        setButtonBusy(saveBtn, false);
+        renderLookupInlineAdmin();
+    }
+}
+
+async function handleInlineLookupCustomerAction(action = '', triggerButton = null) {
+    if (!adminSignedIn || !currentLookupCode) return;
+    if (action === 'edit') {
+        startInlineLookupEditMode();
+        return;
+    }
+    if (action === 'cancel') {
+        stopInlineLookupEditMode();
+        return;
+    }
+    if (action === 'save') {
+        await saveInlineLookupCustomer();
+        return;
+    }
+    if (action === 'delete') {
+        await runCustomerAction('delete', currentLookupCode, triggerButton, { refreshLookup: true });
+        return;
+    }
+    if (action === 'toggle' || action === 'error' || action === 'ios' || action === 'overload') {
+        await runCustomerAction(action, currentLookupCode, triggerButton, { refreshLookup: true });
+        return;
+    }
 }
 
 async function importCookies() {
@@ -3130,6 +3398,40 @@ function bindEvents() {
 
     const customerForm = el('customerForm');
     if (customerForm) customerForm.addEventListener('submit', onSubmitCustomerForm);
+
+    const inlineCodeInput = el('customerInlineCodeInput');
+    if (inlineCodeInput) {
+        inlineCodeInput.addEventListener('input', () => {
+            const normalized = normalizeCode(inlineCodeInput.value || '').replace(/[^A-Z0-9]/g, '');
+            if (normalized !== inlineCodeInput.value) inlineCodeInput.value = normalized;
+        });
+    }
+
+    const inlineEditBtn = el('customerInlineEditBtn');
+    if (inlineEditBtn) inlineEditBtn.addEventListener('click', () => handleInlineLookupCustomerAction('edit', inlineEditBtn));
+    const inlineSaveBtn = el('customerInlineSaveBtn');
+    if (inlineSaveBtn) inlineSaveBtn.addEventListener('click', () => handleInlineLookupCustomerAction('save', inlineSaveBtn));
+    const inlineCancelBtn = el('customerInlineCancelBtn');
+    if (inlineCancelBtn) inlineCancelBtn.addEventListener('click', () => handleInlineLookupCustomerAction('cancel', inlineCancelBtn));
+    const inlineErrorBtn = el('customerInlineErrorBtn');
+    if (inlineErrorBtn) inlineErrorBtn.addEventListener('click', () => handleInlineLookupCustomerAction('error', inlineErrorBtn));
+    const inlineIosBtn = el('customerInlineIosBtn');
+    if (inlineIosBtn) inlineIosBtn.addEventListener('click', () => handleInlineLookupCustomerAction('ios', inlineIosBtn));
+    const inlineOverloadBtn = el('customerInlineOverloadBtn');
+    if (inlineOverloadBtn) inlineOverloadBtn.addEventListener('click', () => handleInlineLookupCustomerAction('overload', inlineOverloadBtn));
+    const inlineToggleBtn = el('customerInlineToggleBtn');
+    if (inlineToggleBtn) inlineToggleBtn.addEventListener('click', () => handleInlineLookupCustomerAction('toggle', inlineToggleBtn));
+    const inlineDeleteBtn = el('customerInlineDeleteBtn');
+    if (inlineDeleteBtn) inlineDeleteBtn.addEventListener('click', () => handleInlineLookupCustomerAction('delete', inlineDeleteBtn));
+    const inlineWarrantyInput = el('customerInlineWarrantyInput');
+    if (inlineWarrantyInput) {
+        inlineWarrantyInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && inlineAdminEditMode) {
+                event.preventDefault();
+                handleInlineLookupCustomerAction('save', inlineSaveBtn);
+            }
+        });
+    }
 
     const applyWarrantyDaysBtn = el('applyWarrantyDaysBtn');
     if (applyWarrantyDaysBtn) applyWarrantyDaysBtn.addEventListener('click', applyWarrantyDaysQuick);

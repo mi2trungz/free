@@ -16,6 +16,7 @@ const CUSTOMERS_CACHE_NS = 'nf_customers_get';
 const CUSTOMERS_CACHE_TTL_MS = 60 * 1000;
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 25;
+const CUSTOMER_CODE_V2_REGEX = /^[A-Z0-9]{4}$/;
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -30,9 +31,10 @@ function parsePagination(req) {
         const page = Math.max(1, Number(parsed.searchParams.get('page') || DEFAULT_PAGE));
         const pageSize = Math.max(1, Math.min(Number(parsed.searchParams.get('pageSize') || DEFAULT_PAGE_SIZE), 100));
         const search = String(parsed.searchParams.get('search') || '').trim();
-        return { page, pageSize, search };
+        const code = String(parsed.searchParams.get('code') || '').trim().toUpperCase();
+        return { page, pageSize, search, code };
     } catch (e) {
-        return { page: DEFAULT_PAGE, pageSize: DEFAULT_PAGE_SIZE, search: '' };
+        return { page: DEFAULT_PAGE, pageSize: DEFAULT_PAGE_SIZE, search: '', code: '' };
     }
 }
 
@@ -74,7 +76,7 @@ function invalidateCustomerRelatedCaches() {
     invalidateMany(['nf_customers_get', 'nf_cookies_get', 'nf_customer_lookup']);
 }
 
-async function createUniqueCustomerCode(maxAttempts = 24) {
+async function createUniqueCustomerCode(maxAttempts = 120) {
     for (let i = 0; i < maxAttempts; i += 1) {
         const code = makeCustomerCode([]);
         const exists = await readCustomerByCode(code);
@@ -89,7 +91,12 @@ module.exports = async function (req, res) {
 
     try {
         if (req.method === 'GET') {
-            const { page, pageSize, search } = parsePagination(req);
+            const { page, pageSize, search, code } = parsePagination(req);
+            if (code) {
+                const customer = await readCustomerByCode(code);
+                if (!customer) return res.status(404).json({ error: 'Customer not found' });
+                return res.status(200).json({ customer: customerPublicDto(customer) });
+            }
             const normalizedSearch = String(search || '').trim().toLowerCase();
             const cacheKey = `q=${encodeURIComponent(normalizedSearch)}|p=${page}|s=${pageSize}`;
             const { value } = await getOrSet(
@@ -170,6 +177,9 @@ module.exports = async function (req, res) {
             const newCode = String(body.newCode || '').trim().toUpperCase();
             const nextCode = newCode || code;
             if (!nextCode) return res.status(400).json({ error: 'Customer code cannot be empty' });
+            if (nextCode !== code && !CUSTOMER_CODE_V2_REGEX.test(nextCode)) {
+                return res.status(400).json({ error: 'newCode must be 4 chars [A-Z0-9]' });
+            }
             if (nextCode !== code) {
                 const conflict = await readCustomerByCode(nextCode);
                 if (conflict) return res.status(409).json({ error: 'Customer code already exists' });
