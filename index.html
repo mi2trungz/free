@@ -4011,13 +4011,13 @@
                     <div class="ui-card user-facing-soft max-w-3xl mx-auto p-3 sm:p-4 border-blue-100">
                         <div class="w-full overflow-hidden rounded-xl border border-gray-200">
                             <iframe
-                                data-src=""
+                                data-src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fphoto%3Ffbid%3D1578208446768395%26set%3Da.589903662265550&show_text=true&width=500"
                                 loading="lazy"
                                 class="w-full h-[560px] sm:h-[620px] md:h-[680px]" style="border:none;overflow:hidden"
                                 scrolling="no" frameborder="0" allowfullscreen="true"
                                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                         </div>
-                        <a href=""
+                        <a href="https://www.facebook.com/photo?fbid=1578208446768395&set=a.589903662265550"
                             target="_blank" rel="noopener noreferrer"
                             class="mt-3 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-800 transition-colors">
                             Xem bài đăng gốc trên Facebook
@@ -6747,6 +6747,26 @@
             return !!ids.netflixId;
         }
 
+        function getFirstNetflixAccountCookieSource() {
+            const folders = Array.isArray(DATA) ? DATA : [];
+            for (let i = 0; i < folders.length; i++) {
+                const folder = folders[i];
+                if (!isNetflixFolder(folder)) continue;
+                const accounts = Array.isArray(folder.accounts) ? folder.accounts : [];
+                for (let j = 0; j < accounts.length; j++) {
+                    const acc = accounts[j];
+                    const ids = getNetflixCookieIdsForAccount(acc);
+                    if (!ids.netflixId) continue;
+                    return {
+                        netflixId: String(ids.netflixId || '').trim(),
+                        secureNetflixId: String(ids.secureNetflixId || '').trim(),
+                        accountName: String((acc && acc.name) || '').trim()
+                    };
+                }
+            }
+            return null;
+        }
+
         function isProbablyMobileDevice() {
             const ua = navigator.userAgent || '';
             return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
@@ -9302,14 +9322,33 @@
             setNetflixDirectLoginLoading(btnLink, true);
 
             try {
+                const source = getFirstNetflixAccountCookieSource();
+                if (!source || !source.netflixId) {
+                    if (tryOpenNetflixDesktopFallback(popupWindow)) {
+                        return;
+                    }
+                    if (popupWindow && !popupWindow.closed) {
+                        try { popupWindow.close(); } catch (closeErr) { }
+                    }
+                    showAlert(
+                        'Thiếu cookie Netflix',
+                        'Chưa có tài khoản Netflix miễn phí nào có cookie hợp lệ. Vui lòng cập nhật cookie trong Sửa tài khoản.',
+                        'warning'
+                    );
+                    return;
+                }
+
                 const response = await fetch('/api/nftoken', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({
+                        netflixId: source.netflixId,
+                        secureNetflixId: source.secureNetflixId || ''
+                    })
                 });
                 const data = await response.json().catch(() => ({}));
                 if (!response.ok) {
-                    if (response.status === 503 && tryOpenNetflixDesktopFallback(popupWindow)) {
+                    if (tryOpenNetflixDesktopFallback(popupWindow)) {
                         return;
                     }
                     if (popupWindow && !popupWindow.closed) {
@@ -9327,6 +9366,9 @@
                     return;
                 }
                 if (!data.nftoken) {
+                    if (tryOpenNetflixDesktopFallback(popupWindow)) {
+                        return;
+                    }
                     if (popupWindow && !popupWindow.closed) {
                         try { popupWindow.close(); } catch (closeErr) { }
                     }
@@ -9357,6 +9399,9 @@
                     window.location.href = targetUrl;
                 }
             } catch (e) {
+                if (tryOpenNetflixDesktopFallback(popupWindow)) {
+                    return;
+                }
                 if (popupWindow && !popupWindow.closed) {
                     try { popupWindow.close(); } catch (closeErr) { }
                 }
