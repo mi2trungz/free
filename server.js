@@ -11,6 +11,8 @@ const nfSupportOverloadCheckHandler = require('./api/nf-support-overload-check')
 const nfCookieToLinkHandler = require('./api/nf-cookie-to-link');
 const nfTvActivateHandler = require('./api/nf-tv-activate');
 const nftokenHandler = require('./api/nftoken');
+const getlinkSharesHandler = require('./api/getlink-shares');
+const getlinkAdminHandler = require('./api/getlink-admin');
 
 const PORT = 3005;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -154,6 +156,12 @@ const server = http.createServer((req, res) => {
     }
     if (requestPath === '/api/nftoken') {
         return invokeServerlessApi(nftokenHandler, req, res);
+    }
+    if (requestPath === '/api/getlink-shares' || requestPath.startsWith('/api/getlink-shares/')) {
+        return invokeServerlessApi(getlinkSharesHandler, req, res);
+    }
+    if (requestPath.startsWith('/api/getlink-admin')) {
+        return invokeServerlessApi(getlinkAdminHandler, req, res);
     }
 
     if (req.method === 'OPTIONS') {

@@ -1,0 +1,359 @@
+﻿<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Link Netflix</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/nf/styles.css">
+    <style>
+        .cookie-input-wrap {
+            margin-top: 0.7rem;
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .cookie-input {
+            min-height: 140px;
+            resize: vertical;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.45;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .lookup-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .share-box {
+            margin-top: 0.9rem;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .share-box-title {
+            margin: 0;
+            font-size: 0.86rem;
+            color: #d9e4ff;
+            font-weight: 700;
+        }
+
+        .share-box .state-text {
+            margin-top: 0.4rem;
+        }
+
+        .share-row {
+            margin-top: 0.45rem;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .link-output {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            min-height: 42px;
+        }
+
+        .admin-box {
+            border-color: rgba(245, 158, 11, 0.35);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        .admin-auth-grid {
+            margin-top: 0.55rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .admin-workspace {
+            margin-top: 0.65rem;
+            padding-top: 0.65rem;
+            border-top: 1px dashed var(--line);
+        }
+
+        .admin-search-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .admin-result-card {
+            margin-top: 0.65rem;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 0.65rem;
+            background: rgba(0, 0, 0, 0.18);
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .admin-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .admin-result-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .admin-result-actions .btn {
+            min-height: 40px;
+            font-size: 0.82rem;
+        }
+
+        .admin-warning {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #facc15;
+        }
+
+        @media (max-width: 900px) {
+            .admin-auth-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-result-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .lookup-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .share-row {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-search-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-layer bg-noise"></div>
+    <div class="bg-layer bg-vignette"></div>
+    <div class="bg-layer bg-neon"></div>
+
+    <main class="nf-shell">
+        <section class="panel hero">
+            <div id="lookupLoadingOverlay" class="lookup-loading-overlay hidden" aria-hidden="true">
+                <div class="lookup-loading-box">
+                    <span class="lookup-loading-spinner" aria-hidden="true"></span>
+                    <p id="lookupLoadingText">Xin vui long cho trong giay lat</p>
+                </div>
+            </div>
+
+            <h1 class="hero-title">Nhap cookie de tao link Netflix</h1>
+
+            <div class="lookup-wrap">
+                <div class="cookie-input-wrap">
+                    <textarea id="cookieInput" class="text-input cookie-input" placeholder="Dan cookie Netflix vao day...&#10;Vi du: NetflixId=...; SecureNetflixId=...;"></textarea>
+                    <div class="lookup-actions">
+                        <button id="clearCookieBtn" class="btn btn-ghost" type="button">Xoa cookie</button>
+                    </div>
+                </div>
+
+                <div id="lookupState" class="state-text state-idle">Vui long nhap cookie, sau do chon thiet bi.</div>
+
+                <section id="deviceSection">
+                    <h3 class="device-section-title">Hay chon thiet bi ban dang dung de tien hanh su dung Netflix</h3>
+                    <div class="device-grid">
+                        <button class="btn btn-device" type="button" data-device="desktop" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 0 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"></path>
+                            </svg>
+                            <span class="device-title">May tinh</span>
+                        </button>
+                        <button class="btn btn-device" type="button" data-device="mobile" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h8V5H8zm4 15a1.2 1.2 0 1 0 0 .01V20z"></path>
+                            </svg>
+                            <span class="device-title">Dien thoai</span>
+                        </button>
+                        <button class="btn btn-device" type="button" data-device="tv" disabled>
+                            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-5l1.2 2H18a1 1 0 1 1 0 2H6a1 1 0 0 1 0-2h1.8L9 18H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm0 2v9h16V7H4z"></path>
+                            </svg>
+                            <span class="device-title">TV</span>
+                        </button>
+                    </div>
+                    <div class="support-row">
+                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CAN HO TRO / BAO HANH</button>
+                    </div>
+                </section>
+
+                <section id="shareCreatorBox" class="share-box hidden">
+                    <h3 class="share-box-title">Tao link chia se (chi admin)</h3>
+                    <div class="lookup-actions" style="margin-top:0.45rem;">
+                        <button id="generateShareLinkBtn" class="btn btn-ghost" type="button">Tao link ID server (?s)</button>
+                        <button id="generateCookieShareLinkBtn" class="btn btn-ghost" type="button">Tao link cookie (?c)</button>
+                    </div>
+                    <div id="shareState" class="state-text state-idle">Bam 1 trong 2 nut de tao link va he thong se tu sao chep ngay.</div>
+                    <div class="share-row">
+                        <input id="shareLinkOutput" class="text-input link-output" type="text" readonly>
+                        <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chep</button>
+                        <a id="openShareLinkBtn" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">Mo link</a>
+                    </div>
+                </section>
+
+                <section class="share-box admin-box">
+                    <h3 class="share-box-title">Admin quan ly link chia se</h3>
+                    <div id="adminAuthState" class="state-text state-idle">Dang xuat.</div>
+                    <div id="adminAuthBox" class="admin-auth-grid">
+                        <input id="adminEmailInput" class="text-input" type="email" placeholder="Email admin">
+                        <input id="adminPasswordInput" class="text-input" type="password" placeholder="Mat khau">
+                        <button id="adminLoginBtn" class="btn btn-primary" type="button">Dang nhap</button>
+                    </div>
+                    <div id="adminWorkspace" class="admin-workspace hidden">
+                        <div class="admin-search-row">
+                            <input id="adminShareSearchInput" class="text-input" type="text" placeholder="Nhap share ID hoac link /getlink?s=...">
+                            <button id="adminShareSearchBtn" class="btn btn-ghost" type="button">Tim link</button>
+                        </div>
+                        <div id="adminSearchState" class="state-text state-idle">Khong tu dong load. Chi hien thi khi bam tim.</div>
+
+                        <div id="adminShareResult" class="admin-result-card hidden">
+                            <div class="admin-meta-grid">
+                                <input id="adminShareId" class="text-input mono" type="text" readonly>
+                                <input id="adminShareStatus" class="text-input" type="text" readonly>
+                                <input id="adminShareUrl" class="text-input mono" type="text" readonly>
+                                <input id="adminShareUpdatedAt" class="text-input" type="text" readonly>
+                            </div>
+
+                            <textarea id="adminShareCookieInput" class="text-input cookie-input" placeholder="Cookie cua share link..."></textarea>
+
+                            <div class="admin-result-actions">
+                                <button id="adminSaveCookieBtn" class="btn btn-primary" type="button">Luu cookie</button>
+                                <button id="adminRotateIdBtn" class="btn btn-ghost" type="button">Tao ID ngau nhien</button>
+                                <button id="adminCopyUrlBtn" class="btn btn-ghost" type="button">Copy URL</button>
+                                <button id="adminRevokeBtn" class="btn btn-ghost" type="button">Thu hoi link</button>
+                                <button id="adminRestoreBtn" class="btn btn-ghost" type="button">Phuc hoi link</button>
+                                <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Dang xuat</button>
+                            </div>
+
+                            <p class="admin-warning">Luu y: Sau khi doi ID, link cu se khong dung duoc nua.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <section id="supportModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-support="1"></div>
+        <div class="modal-card support-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Ho tro / Bao hanh</span>
+                    <h2>Can ho tro tai khoan Netflix?</h2>
+                </div>
+                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+            </header>
+            <div class="support-body">
+                <p>Vui long nhan tin qua fanpage de duoc ho tro bao hanh nhanh nhat.</p>
+                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cap fanpage</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="mobileLinkModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-mobile-link="1"></div>
+        <div class="modal-card mobile-link-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Dang nhap dien thoai</span>
+                    <h2>Tao link dang nhap thanh cong</h2>
+                </div>
+                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+            </header>
+            <div class="mobile-link-body">
+                <label class="mobile-link-label" for="mobileLinkOutput">Link dang nhap:</label>
+                <input id="mobileLinkOutput" class="text-input mobile-link-output mono" type="text" readonly>
+                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chep link</button>
+
+                <div class="mobile-link-guide">
+                    <h3>Huong dan dang nhap tren dien thoai</h3>
+                    <p><strong>Buoc 0 (Quan trong):</strong> Dong HOAN TOAN App Netflix trong da nhiem</p>
+                    <p>Buoc 1: Sao chep duong link dang nhap phia tren</p>
+                    <p>Buoc 2: Dan vao trinh duyet mac dinh tren dien thoai va truy cap</p>
+                    <div class="mobile-link-guide-row">
+                        <p class="mobile-link-guide-step">Buoc 3: Truy cap tiep trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
+                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chep link</button>
+                    </div>
+                    <p>Buoc 4: Neu co hoi thi bam DONG Y hoac TIEP TUC</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tvGuideModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-tv-guide="1"></div>
+        <div class="modal-card support-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Huong dan TV</span>
+                    <h2>Huong dan cach dang nhap len Tivi</h2>
+                </div>
+                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+            </header>
+            <div class="support-body">
+                <div class="tv-guide-list">
+                    <p><strong>Buoc 1:</strong> Mo tivi roi bam nut dang nhap bang ma code</p>
+                    <p><strong>Buoc 2:</strong> Ghi nho ma code do</p>
+                    <p><strong>Buoc 3:</strong> Bam vao nut ben duoi va nhap ma code do vao</p>
+                </div>
+                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHAP MA TIVI</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="tvCodeModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-tv-code="1"></div>
+        <div class="modal-card mobile-link-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Nhap ma Tivi</span>
+                    <h2>Nhap ma TV (8 so)</h2>
+                </div>
+                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+            </header>
+            <div class="mobile-link-body">
+                <label class="mobile-link-label" for="tvCodeInput">Ma TV:</label>
+                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Vi du: 12345678" autocomplete="off">
+                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xac nhan</button>
+                <div id="tvCodeState" class="state-text state-idle">Nhap dung 8 so roi bam xac nhan. He thong se mo link dang nhap truoc, sau do tu chuyen sang netflix.com/tv8.</div>
+
+                <div class="mobile-link-guide">
+                    <h3>Mo thu cong khi can</h3>
+                    <p>Neu trinh duyet chan popup, hay mo lan luot 2 link sau:</p>
+                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Mo link dang nhap</a>
+                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mo netflix.com/tv8</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/getlink/app.js" defer></script>
+</body>
+</html>
