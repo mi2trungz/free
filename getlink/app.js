@@ -264,6 +264,61 @@ async function apiRequest(path, method = 'GET', body) {
     return data;
 }
 
+function getFirebaseApiKey() {
+    const cfg = typeof window !== 'undefined' && window.NF_FIREBASE_CONFIG && typeof window.NF_FIREBASE_CONFIG === 'object'
+        ? window.NF_FIREBASE_CONFIG
+        : null;
+    return String(cfg && cfg.apiKey ? cfg.apiKey : '').trim();
+}
+
+function getAllowedAdminEmailsFromRuntime() {
+    const list = Array.isArray(window && window.NF_ADMIN_EMAILS) ? window.NF_ADMIN_EMAILS : [];
+    return list.map((item) => String(item || '').trim().toLowerCase()).filter((item) => !!item);
+}
+
+function mapFirebaseSignInError(message = '') {
+    const code = String(message || '').trim().toUpperCase();
+    if (!code) return 'Dang nhap Firebase that bai.';
+    if (code.includes('INVALID_LOGIN_CREDENTIALS') || code.includes('INVALID_PASSWORD') || code.includes('EMAIL_NOT_FOUND')) {
+        return 'Sai email hoac mat khau Firebase.';
+    }
+    if (code.includes('TOO_MANY_ATTEMPTS_TRY_LATER')) {
+        return 'Dang nhap qua nhieu lan. Thu lai sau.';
+    }
+    if (code.includes('USER_DISABLED')) {
+        return 'Tai khoan Firebase da bi vo hieu hoa.';
+    }
+    return `Dang nhap Firebase that bai: ${code}`;
+}
+
+async function signInWithFirebasePassword(email, password) {
+    const apiKey = getFirebaseApiKey();
+    if (!apiKey) {
+        throw new Error('Thieu NF_FIREBASE_CONFIG.apiKey tren /getlink.');
+    }
+    const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(apiKey)}`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: String(email || '').trim(),
+                password: String(password || ''),
+                returnSecureToken: true
+            })
+        }
+    );
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const firebaseError = String(data && data.error && data.error.message ? data.error.message : '').trim();
+        throw new Error(mapFirebaseSignInError(firebaseError));
+    }
+    const idToken = String(data && data.idToken ? data.idToken : '').trim();
+    const loggedEmail = String(data && data.email ? data.email : email).trim().toLowerCase();
+    if (!idToken) throw new Error('Firebase khong tra ve idToken.');
+    return { idToken, email: loggedEmail };
+}
+
 function openDeferredTabAndNavigate() {
     const popupWindow = window.open('about:blank', '_blank');
     if (!popupWindow) return { popupWindow: null, wasBlocked: true };
@@ -866,15 +921,26 @@ async function adminLogin() {
     const btn = el('adminLoginBtn');
     setButtonBusy(btn, true, 'Dang nhap...');
     try {
-        const data = await apiRequest('/api/getlink-admin/login', 'POST', { email, password });
+        const firebaseSession = await signInWithFirebasePassword(email, password);
+        const allowedAdminEmails = getAllowedAdminEmailsFromRuntime();
+        if (allowedAdminEmails.length > 0 && !allowedAdminEmails.includes(firebaseSession.email)) {
+            throw new Error('Email nay khong nam trong NF_ADMIN_EMAILS.');
+        }
+
+        const data = await apiRequest('/api/getlink-admin/login', 'POST', { idToken: firebaseSession.idToken });
         adminAuthenticated = true;
-        const userEmail = String(data.user && data.user.email || email);
+        const userEmail = String(data.user && data.user.email || firebaseSession.email || email);
         setAdminAuthState(`Dang nhap admin: ${userEmail}`, 'success');
         renderAdminWorkspace();
         setAdminSearchState('Khong tu dong load. Nhap ID/link roi bam Tim link.', 'idle');
     } catch (error) {
         adminAuthenticated = false;
-        setAdminAuthState(error.message || 'Dang nhap that bai.', 'error');
+        const msg = String(error && error.message ? error.message : '').trim();
+        if (!msg) {
+            setAdminAuthState('Dang nhap that bai.', 'error');
+        } else {
+            setAdminAuthState(msg, 'error');
+        }
         renderAdminWorkspace();
     } finally {
         setButtonBusy(btn, false);

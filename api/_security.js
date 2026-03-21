@@ -7,7 +7,6 @@ const ADMIN_EMAILS = String(process.env.NF_ADMIN_EMAILS || process.env.ADMIN_EMA
     .split(',')
     .map((item) => item.trim().toLowerCase())
     .filter((item) => !!item);
-const ADMIN_PASSWORD = String(process.env.ADMIN_PASSWORD || '').trim();
 const CORS_ALLOWED_ORIGINS = String(
     process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:3005,http://127.0.0.1:3005'
 )
@@ -184,18 +183,9 @@ function checkRateLimit(key, limit, windowMs) {
     };
 }
 
-function verifyAdminCredentials(email = '', password = '') {
-    const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedPassword = String(password || '');
-    if (!ADMIN_EMAILS.includes(normalizedEmail)) return false;
-    if (!ADMIN_PASSWORD) return false;
-    return normalizedPassword === ADMIN_PASSWORD;
-}
-
 function adminAuthConfig() {
     return {
         hasSessionSecret: !!SESSION_SECRET,
-        hasAdminPassword: !!ADMIN_PASSWORD,
         adminEmails: ADMIN_EMAILS.slice()
     };
 }
@@ -209,6 +199,5 @@ module.exports = {
     applyCors,
     applySecurityHeaders,
     checkRateLimit,
-    verifyAdminCredentials,
     adminAuthConfig
 };

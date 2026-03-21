@@ -1,10 +1,11 @@
-﻿const { parseBody } = require('./_nf-store');
+﻿const https = require('https');
+const { parseBody } = require('./_nf-store');
 const {
     issueAdminSession,
     getSessionUserFromHeaders,
     setAdminSessionCookie,
     clearAdminSessionCookie,
-    verifyAdminCredentials,
+    adminAuthConfig,
     applyCors,
     applySecurityHeaders
 } = require('./_security');
@@ -17,6 +18,75 @@ const {
     rotateShareId,
     sanitizeCookieRaw
 } = require('./_getlink-share-store');
+
+const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
+
+function httpRequest(options, body) {
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                resolve({
+                    statusCode: Number(res.statusCode || 0),
+                    body: data
+                });
+            });
+        });
+        req.on('error', reject);
+        if (body) req.write(body);
+        req.end();
+    });
+}
+
+async function lookupFirebaseUserByIdToken(idToken = '') {
+    const token = String(idToken || '').trim();
+    if (!token) return { ok: false, statusCode: 400, error: 'Missing idToken' };
+    if (!FIREBASE_API_KEY) return { ok: false, statusCode: 500, error: 'Firebase API key is not configured' };
+
+    const payload = JSON.stringify({ idToken: token });
+    const response = await httpRequest({
+        hostname: 'identitytoolkit.googleapis.com',
+        port: 443,
+        path: `/v1/accounts:lookup?key=${encodeURIComponent(FIREBASE_API_KEY)}`,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(payload)
+        }
+    }, payload);
+
+    let parsed = {};
+    try {
+        parsed = JSON.parse(response.body || '{}');
+    } catch (e) {
+        return { ok: false, statusCode: 502, error: 'Firebase verify response parse failed' };
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+        const firebaseMessage = String(parsed && parsed.error && parsed.error.message ? parsed.error.message : '').trim();
+        return {
+            ok: false,
+            statusCode: 401,
+            error: firebaseMessage ? `Firebase token invalid: ${firebaseMessage}` : 'Firebase token invalid'
+        };
+    }
+
+    const users = Array.isArray(parsed.users) ? parsed.users : [];
+    const user = users[0] || null;
+    const email = String(user && user.email ? user.email : '').trim().toLowerCase();
+    if (!email) return { ok: false, statusCode: 401, error: 'Firebase token has no email' };
+    return { ok: true, email };
+}
+
+function isAllowedAdminEmail(email = '') {
+    const normalized = String(email || '').trim().toLowerCase();
+    if (!normalized) return false;
+    const cfg = adminAuthConfig();
+    const adminEmails = Array.isArray(cfg && cfg.adminEmails) ? cfg.adminEmails : [];
+    if (adminEmails.length === 0) return false;
+    return adminEmails.includes(normalized);
+}
 
 function toAdminShareDto(record, req) {
     const host = String((req.headers && req.headers.host) || '').trim();
@@ -60,10 +130,18 @@ module.exports = async function (req, res) {
 
         if (pathname === '/api/getlink-admin/login' && req.method === 'POST') {
             const body = parseBody(req.body);
-            const email = String(body.email || '').trim().toLowerCase();
-            const password = String(body.password || '');
-            if (!email || !password) return res.status(400).json({ error: 'Missing email or password' });
-            if (!verifyAdminCredentials(email, password)) return res.status(401).json({ error: 'Invalid admin credentials' });
+            const idToken = String(body.idToken || '').trim();
+            if (!idToken) return res.status(400).json({ error: 'Missing idToken' });
+
+            const tokenLookup = await lookupFirebaseUserByIdToken(idToken);
+            if (!tokenLookup.ok) {
+                return res.status(tokenLookup.statusCode || 401).json({ error: tokenLookup.error || 'Firebase verify failed' });
+            }
+
+            const email = String(tokenLookup.email || '').trim().toLowerCase();
+            if (!isAllowedAdminEmail(email)) {
+                return res.status(401).json({ error: 'Email is not allowed for /getlink admin' });
+            }
 
             const token = issueAdminSession(email);
             if (!token) return res.status(500).json({ error: 'Admin session is not configured' });
