@@ -79,6 +79,148 @@ function setAdminRuntimeCookieState(text, mode = 'idle') {
     setStateClass(node, mode);
 }
 
+function setAdminCookieInfoState(text, mode = 'idle') {
+    const node = el('adminCookieInfoState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
+function escapeHtml(raw) {
+    return String(raw || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function isNo(value) {
+    return String(value || '').trim().toLowerCase() === 'no';
+}
+
+function renderCookieInfoPlaceholder(text = 'Chua co du lieu cookie info.') {
+    const content = el('adminCookieInfoContent');
+    if (!content) return;
+    content.innerHTML = `<p class="admin-cookie-info-placeholder">${escapeHtml(text)}</p>`;
+}
+
+function renderCookieInfoError(message = 'Khong kiem tra duoc cookie.', meta = {}) {
+    const content = el('adminCookieInfoContent');
+    if (!content) return;
+    const overloadMessage = String(meta.overloadMessage || '').trim();
+    const signal = String(meta.overloadSignal || '').trim();
+    const finalMessage = String(message || 'Khong kiem tra duoc cookie.').trim();
+
+    const extra = overloadMessage
+        ? `<div class="admin-info-grid"><strong>Overload:</strong><span>${escapeHtml(overloadMessage)}</span></div>`
+        : '';
+    const signalHtml = signal
+        ? `<div class="admin-info-grid"><strong>Signal:</strong><span>${escapeHtml(signal)}</span></div>`
+        : '';
+
+    content.innerHTML = `
+        <div class="admin-info-highlight-grid">
+            <div class="admin-info-chip bad">
+                <strong>Trang thai</strong>
+                <span>Khong LIVE / Loi</span>
+            </div>
+        </div>
+        <div class="admin-info-grid">
+            <strong>Chi tiet:</strong>
+            <span>${escapeHtml(finalMessage)}</span>
+        </div>
+        ${extra}
+        ${signalHtml}
+    `;
+    setAdminCookieInfoState('Cookie dang loi hoac khong LIVE, nhung link van duoc tao neu tao link thanh cong.', 'warning');
+}
+
+function renderCookieInfoSuccess(accountInfo, meta = {}) {
+    const content = el('adminCookieInfoContent');
+    if (!content) return;
+    const info = accountInfo && typeof accountInfo === 'object' ? accountInfo : {};
+
+    const statusText = info.ok ? 'Hoat dong' : 'Khong hoat dong';
+    const statusClass = info.ok ? 'good' : 'bad';
+    const paymentHoldText = String(info.on_payment_hold || 'No');
+    const paymentHoldClass = isNo(paymentHoldText) ? 'good' : 'bad';
+
+    const topFields = [
+        { label: 'Trang thai', value: statusText, tone: statusClass },
+        { label: 'Goi cuoc', value: `${String(info.plan || 'Khong ro')} ${info.premium ? '(Premium)' : ''}`.trim() },
+        { label: 'Payment Hold', value: paymentHoldText, tone: paymentHoldClass },
+        { label: 'Quoc gia', value: info.country || 'N/A' },
+        { label: 'Man hinh', value: `${info.max_streams || '?'} man` },
+        { label: 'Chat luong', value: info.video_quality || 'N/A' }
+    ];
+
+    const chipsHtml = topFields.map((item) => `
+        <div class="admin-info-chip ${item.tone ? item.tone : ''}">
+            <strong>${escapeHtml(item.label)}</strong>
+            <span>${escapeHtml(item.value)}</span>
+        </div>
+    `).join('');
+
+    const overloadMessage = String(meta.overloadMessage || '').trim();
+    const overloadSignal = String(meta.overloadSignal || '').trim();
+    const overloadRow = overloadMessage
+        ? `
+            <strong>Overload:</strong><span>${escapeHtml(overloadMessage)}</span>
+            <strong>Signal:</strong><span>${escapeHtml(overloadSignal || '-')}</span>
+        `
+        : '';
+
+    content.innerHTML = `
+        <div class="admin-info-highlight-grid">${chipsHtml}</div>
+        <div class="admin-info-grid">
+            <strong>Gia goi:</strong><span>${escapeHtml(info.plan_price || 'N/A')}</span>
+            <strong>Ngay lap:</strong><span>${escapeHtml(info.member_since || 'N/A')}</span>
+            <strong>Thanh toan:</strong><span>${escapeHtml(info.payment_method || 'N/A')}</span>
+            <strong>Phone:</strong><span>${escapeHtml(info.phone || 'N/A')} (Verified: ${escapeHtml(info.phone_verified || 'No')})</span>
+            <strong>Email:</strong><span>${escapeHtml(String(info.email || 'N/A').replace(/\\x40/g, '@'))} (Verified: ${escapeHtml(info.email_verified || 'No')})</span>
+            <strong>Thanh vien phu:</strong><span>${escapeHtml(info.extra_member || 'No')}</span>
+            <strong>Profiles:</strong><span>${escapeHtml(info.profiles || '?')}</span>
+            <strong>Gia han toi:</strong><span>${escapeHtml(info.next_billing || 'N/A')}</span>
+            ${overloadRow}
+        </div>
+    `;
+
+    if (info.ok) {
+        setAdminCookieInfoState('Cookie LIVE. Da cap nhat bang thong tin ben phai.', 'success');
+    } else {
+        setAdminCookieInfoState('Cookie da duoc check nhung trang thai khong LIVE.', 'warning');
+    }
+}
+
+async function checkCookieForShareInfo(cookie = '') {
+    const cookieStr = normalizeCookie(cookie);
+    if (!cookieStr) {
+        return {
+            ok: false,
+            error: 'Cookie rong, khong the kiem tra.'
+        };
+    }
+    try {
+        const data = await apiRequest('/api/nf-cookie-to-link', 'POST', {
+            cookieStr,
+            device: 'desktop'
+        });
+        return {
+            ok: true,
+            accountInfo: data && data.accountInfo ? data.accountInfo : null,
+            overloadOutcome: String(data && data.overloadOutcome ? data.overloadOutcome : '').trim(),
+            overloadSignal: String(data && data.overloadSignal ? data.overloadSignal : '').trim(),
+            overloadMessage: String(data && data.overloadMessage ? data.overloadMessage : '').trim()
+        };
+    } catch (error) {
+        return {
+            ok: false,
+            error: String(error && error.message ? error.message : 'Khong kiem tra duoc cookie.').trim()
+        };
+    }
+}
+
 function normalizeCookie(value = '') {
     return String(value || '').trim();
 }
@@ -821,11 +963,14 @@ async function generateShareIdLink() {
     if (!cookie) {
         renderShareUrl('');
         setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
+        renderCookieInfoError('Chua co cookie runtime de kiem tra.', {});
         return;
     }
 
     const btn = el('generateShareLinkBtn');
     setButtonBusy(btn, true, 'Dang tao...');
+    setAdminCookieInfoState('Dang kiem tra cookie...', 'loading');
+    const infoPromise = checkCookieForShareInfo(cookie);
     try {
         const data = await apiRequest('/api/getlink-shares', 'POST', { cookieStr: cookie });
         const shareUrl = String(data.shareUrl || '').trim();
@@ -835,6 +980,12 @@ async function generateShareIdLink() {
         renderShareUrl('');
         setShareState(error.message || 'Khong tao duoc link chia se.', 'error');
     } finally {
+        const infoResult = await infoPromise;
+        if (infoResult.ok) {
+            renderCookieInfoSuccess(infoResult.accountInfo || null, infoResult);
+        } else {
+            renderCookieInfoError(infoResult.error || 'Khong kiem tra duoc cookie.', infoResult);
+        }
         setButtonBusy(btn, false);
     }
 }
@@ -846,6 +997,7 @@ async function generateCookieEmbeddedShareLink() {
     if (!cookie) {
         renderShareUrl('');
         setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
+        renderCookieInfoError('Chua co cookie runtime de kiem tra.', {});
         return;
     }
 
@@ -855,6 +1007,8 @@ async function generateCookieEmbeddedShareLink() {
 
     const btn = el('generateCookieShareLinkBtn');
     setButtonBusy(btn, true, 'Dang tao...');
+    setAdminCookieInfoState('Dang kiem tra cookie...', 'loading');
+    const infoPromise = checkCookieForShareInfo(cookie);
     try {
         const encodedCookie = toBase64Url(cookie);
         const shareUrl = `${window.location.origin}/getlink?c=${encodeURIComponent(encodedCookie)}`;
@@ -864,6 +1018,12 @@ async function generateCookieEmbeddedShareLink() {
         renderShareUrl('');
         setShareState(error.message || 'Khong tao duoc link cookie.', 'error');
     } finally {
+        const infoResult = await infoPromise;
+        if (infoResult.ok) {
+            renderCookieInfoSuccess(infoResult.accountInfo || null, infoResult);
+        } else {
+            renderCookieInfoError(infoResult.error || 'Khong kiem tra duoc cookie.', infoResult);
+        }
         setButtonBusy(btn, false);
     }
 }
@@ -925,8 +1085,10 @@ function renderAdminWorkspace() {
     const workspace = el('adminWorkspace');
     const identity = el('adminIdentity');
     const fab = el('nfAdminFab');
+    const inlineLayout = el('adminInlineLayout');
     const inlineCookiePanel = el('adminInlineCookiePanel');
     const shareCreatorBox = el('shareCreatorBox');
+    const cookieInfoPanel = el('adminCookieInfoPanel');
 
     if (fab) {
         fab.classList.toggle('is-admin', adminAuthenticated);
@@ -937,9 +1099,17 @@ function renderAdminWorkspace() {
     if (identity) identity.textContent = adminAuthenticated ? 'Dang nhap admin.' : 'Chua dang nhap admin';
     if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
     if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
+    if (inlineLayout) inlineLayout.classList.toggle('hidden', !adminAuthenticated);
     if (inlineCookiePanel) inlineCookiePanel.classList.toggle('hidden', !adminAuthenticated);
     if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated);
+    if (cookieInfoPanel) cookieInfoPanel.classList.toggle('hidden', !adminAuthenticated);
     if (adminAuthenticated) syncAdminCookieInput();
+    if (adminAuthenticated && !cookieHealthBlocked) {
+        setAdminCookieInfoState('Bam tao link de kiem tra cookie va hien thi thong tin.', 'idle');
+    }
+    if (!adminAuthenticated) {
+        renderCookieInfoPlaceholder('Chua co du lieu cookie info.');
+    }
 }
 
 function renderAdminShare(share = null) {
