@@ -1,4 +1,5 @@
-﻿const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
+﻿
+const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
 const UNSUPPORTED_URL = 'https://www.netflix.com/unsupported';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const TV_REDIRECT_DELAY_MS = 4000;
@@ -7,8 +8,16 @@ let busy = false;
 let mobileGeneratedLink = '';
 let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
-let currentAdminShare = null;
 let adminAuthenticated = false;
+let runtimeCookie = '';
+let currentAdminShare = null;
+let guestGuardActive = true;
+let pendingDeviceConfirm = '';
+let deviceConfirmReadyAt = 0;
+let deviceConfirmTimer = null;
+let pendingMobileOsDevice = '';
+let cookieHealthBlocked = false;
+let cookieHealthReason = '';
 
 function el(id) {
     return document.getElementById(id);
@@ -25,17 +34,17 @@ function setStateClass(target, mode = 'idle') {
 }
 
 function setLookupState(text, mode = 'idle') {
-    const state = el('lookupState');
-    if (!state) return;
-    state.textContent = String(text || '').trim();
-    setStateClass(state, mode);
+    const node = el('lookupState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
 }
 
 function setShareState(text, mode = 'idle') {
-    const state = el('shareState');
-    if (!state) return;
-    state.textContent = String(text || '').trim();
-    setStateClass(state, mode);
+    const node = el('shareState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
 }
 
 function setTvCodeState(text, mode = 'idle') {
@@ -59,8 +68,111 @@ function setAdminSearchState(text, mode = 'idle') {
     setStateClass(node, mode);
 }
 
+function setAdminRuntimeCookieState(text, mode = 'idle') {
+    const node = el('adminRuntimeCookieState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
 function normalizeCookie(value = '') {
     return String(value || '').trim();
+}
+
+function isUnknownPlan(planValue = '') {
+    const text = String(planValue || '').trim().toLowerCase();
+    if (!text) return true;
+    return /unknow|unknown|n\/a/.test(text);
+}
+
+function isPaymentHoldYes(value = '') {
+    const text = String(value || '').trim().toLowerCase();
+    return text === 'yes' || text === 'true' || text === '1';
+}
+
+function parseBlockedReasonFromError(error) {
+    const status = Number(error && error.httpStatus ? error.httpStatus : 0);
+    const text = String(error && error.message ? error.message : '').toLowerCase();
+    if (status === 403 || /sbd|access denied/.test(text)) return 'sbd';
+    if (status === 401 || /dead|het han|expired|invalid|cookie loi|unauthor|forbidden/.test(text)) return 'dead';
+    return 'error';
+}
+
+function applyCookieBlockedState(reason = '', detail = '') {
+    const normalizedReason = String(reason || '').trim() || 'error';
+    const detailText = String(detail || '').trim();
+    cookieHealthBlocked = true;
+    cookieHealthReason = normalizedReason;
+    setDeviceButtonsEnabled(false);
+    setAdminRuntimeCookieState(`Cookie runtime bi chan: ${normalizedReason}.`, 'warning');
+    setLookupState(
+        `Tai khoan da loi, hay lien he admin de duoc bao hanh. ${detailText}`.trim(),
+        'error'
+    );
+}
+
+function clearCookieBlockedState() {
+    cookieHealthBlocked = false;
+    cookieHealthReason = '';
+}
+
+async function checkRuntimeCookieHealth() {
+    const cookie = getRuntimeCookie();
+    if (!cookie) {
+        return {
+            ok: false,
+            blockedReason: 'missing_cookie',
+            detailMessage: 'Khong co cookie hop le.'
+        };
+    }
+
+    try {
+        const data = await apiRequest('/api/nf-cookie-to-link', 'POST', {
+            cookieStr: cookie,
+            device: 'mobile'
+        });
+        const account = data && data.accountInfo ? data.accountInfo : null;
+        if (account && isPaymentHoldYes(account.on_payment_hold)) {
+            return {
+                ok: false,
+                blockedReason: 'hold',
+                detailMessage: 'Tai khoan dang bi HOLD (on_payment_hold=yes).'
+            };
+        }
+        if (account && isUnknownPlan(account.plan)) {
+            return {
+                ok: false,
+                blockedReason: 'unknown',
+                detailMessage: 'Goi cuoc dang UNKNOWN.'
+            };
+        }
+        return {
+            ok: true,
+            blockedReason: '',
+            detailMessage: ''
+        };
+    } catch (error) {
+        const reason = parseBlockedReasonFromError(error);
+        if (reason === 'sbd') {
+            return {
+                ok: false,
+                blockedReason: 'sbd',
+                detailMessage: 'Cookie bi chan SBD.'
+            };
+        }
+        if (reason === 'dead') {
+            return {
+                ok: false,
+                blockedReason: 'dead',
+                detailMessage: 'Cookie da dead hoac het han.'
+            };
+        }
+        return {
+            ok: false,
+            blockedReason: 'error',
+            detailMessage: String(error && error.message ? error.message : 'Khong the kiem tra cookie.')
+        };
+    }
 }
 
 function toBase64Url(value = '') {
@@ -88,10 +200,20 @@ function fromBase64Url(value = '') {
     return new TextDecoder().decode(bytes);
 }
 
+function setGuestGuard(active, text = '') {
+    guestGuardActive = !!active;
+    const guard = el('guestGuard');
+    const guardText = el('guestGuardText');
+    if (guard) guard.classList.toggle('hidden', !guestGuardActive);
+    if (guardText && text) guardText.textContent = String(text).trim();
+    setDeviceButtonsEnabled(!guestGuardActive && !!runtimeCookie);
+}
+
 function setDeviceButtonsEnabled(enabled) {
     const buttons = Array.from(document.querySelectorAll('.btn-device'));
-    buttons.forEach((button) => {
-        button.disabled = !enabled || busy;
+    const finalEnabled = !!enabled && !!runtimeCookie && !busy && !guestGuardActive && !cookieHealthBlocked;
+    buttons.forEach((btn) => {
+        btn.disabled = !finalEnabled;
     });
 }
 
@@ -135,7 +257,9 @@ async function apiRequest(path, method = 'GET', body) {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-        throw new Error(String(data.error || 'Request failed'));
+        const err = new Error(String(data.error || 'Request failed'));
+        err.httpStatus = Number(response.status || 0);
+        throw err;
     }
     return data;
 }
@@ -161,15 +285,58 @@ function openDeferredTabAndNavigate() {
     return { popupWindow, wasBlocked: false };
 }
 
-function getCookieInputValue() {
-    return normalizeCookie(el('cookieInput') && el('cookieInput').value);
+function getRuntimeCookie() {
+    return normalizeCookie(runtimeCookie);
+}
+
+function syncAdminCookieInput() {
+    const input = el('adminRuntimeCookieInput');
+    if (!input) return;
+    const cur = getRuntimeCookie();
+    if (input.value !== cur) input.value = cur;
 }
 
 function updateReadyState() {
-    const cookie = getCookieInputValue();
-    const ready = !!cookie && !busy;
-    setDeviceButtonsEnabled(ready);
-    if (!cookie) setLookupState('Vui long nhap cookie, sau do chon thiet bi.', 'idle');
+    const hasCookie = !!getRuntimeCookie();
+    if (hasCookie && cookieHealthBlocked) {
+        setDeviceButtonsEnabled(false);
+        return;
+    }
+    setDeviceButtonsEnabled(hasCookie && !guestGuardActive);
+    if (!hasCookie) {
+        setLookupState('Vui long mo dung link duoc cap de bat dau su dung.', 'warning');
+    }
+}
+
+function setRuntimeCookie(rawCookie, options = {}) {
+    const next = normalizeCookie(rawCookie);
+    const source = String(options.source || 'unknown').trim();
+    const silent = !!options.silent;
+
+    runtimeCookie = next;
+    clearCookieBlockedState();
+    syncAdminCookieInput();
+
+    if (next) {
+        setGuestGuard(false);
+        if (!silent) {
+            if (source === 'share-id') {
+                setLookupState('Da tai cookie tu share link. Hay chon thiet bi de tiep tuc.', 'success');
+            } else if (source === 'cookie-link') {
+                setLookupState('Da giai ma cookie tu link chia se. Hay chon thiet bi de tiep tuc.', 'success');
+            } else if (source === 'admin') {
+                setLookupState('Admin da ap dung cookie cho phien hien tai.', 'success');
+            }
+        }
+        setAdminRuntimeCookieState(`Cookie runtime da san sang (${next.length} ky tu).`, 'success');
+        updateReadyState();
+        return;
+    }
+
+    setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
+    setAdminRuntimeCookieState('Chua co cookie runtime.', 'warning');
+    setLookupState('Khong co cookie hop le. Chi co the tiep tuc bang link duoc cap.', 'warning');
+    updateReadyState();
 }
 
 async function copyText(text, successText = 'Da sao chep.') {
@@ -197,12 +364,30 @@ function closeSupportModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-function openMobileLinkModal(url) {
+function openMobileLinkModal(url, mobileOs = 'android') {
     const modal = el('mobileLinkModal');
     const output = el('mobileLinkOutput');
+    const step1 = el('mobileGuideStep1');
+    const step2 = el('mobileGuideStep2');
+    const step3 = el('mobileGuideStep3');
+    const step3Row = el('mobileGuideStep3Row');
+
     mobileGeneratedLink = String(url || '').trim();
     if (!modal || !output) return;
     output.value = mobileGeneratedLink;
+
+    if (String(mobileOs).toLowerCase() === 'ios') {
+        if (step1) step1.textContent = 'Buoc 1: Sao chep duong link dang nhap phia tren';
+        if (step2) step2.textContent = 'Buoc 2: Dan vao Safari va truy cap';
+        if (step3) step3.textContent = 'Buoc 3: Truy cap tiep trang netflix.com/unsupported';
+        if (step3Row) step3Row.classList.remove('hidden');
+    } else {
+        if (step1) step1.textContent = 'Buoc 1: Sao chep duong link dang nhap phia tren';
+        if (step2) step2.textContent = 'Buoc 2: Dan vao trinh duyet mac dinh tren dien thoai va truy cap';
+        if (step3) step3.textContent = 'Buoc 3: Truy cap tiep trang netflix.com/unsupported';
+        if (step3Row) step3Row.classList.remove('hidden');
+    }
+
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
 }
@@ -216,7 +401,6 @@ function closeMobileLinkModal() {
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
 }
-
 function openTvGuideModal() {
     const modal = el('tvGuideModal');
     if (!modal) return;
@@ -255,21 +439,122 @@ function closeTvCodeModal() {
     modal.setAttribute('aria-hidden', 'true');
 }
 
-async function generateDeviceLink(device) {
-    const cookie = getCookieInputValue();
+function openDeviceConfirmModal(device = '') {
+    const normalized = String(device || '').trim();
+    if (!normalized) return;
+    pendingDeviceConfirm = normalized;
+    const modal = el('deviceConfirmModal');
+    const title = el('deviceConfirmTitle');
+    const hint = el('deviceConfirmHint');
+    const countdown = el('deviceConfirmCountdown');
+    const okBtn = el('deviceConfirmOkBtn');
+
+    const labels = {
+        desktop: 'May tinh',
+        mobile: 'Dien thoai',
+        tablet: 'May tinh bang',
+        tv: 'TV'
+    };
+    const label = labels[normalized] || normalized;
+
+    if (title) title.textContent = `Ban co chac chan dang dung ${label} khong?`;
+    if (hint) hint.textContent = 'Vui long xac nhan dung thiet bi de tiep tuc.';
+    if (countdown) {
+        countdown.textContent = 'Vui long cho 3 giay de xac nhan.';
+        setStateClass(countdown, 'warning');
+    }
+    if (okBtn) okBtn.disabled = true;
+
+    const waitMs = 3000;
+    deviceConfirmReadyAt = Date.now() + waitMs;
+
+    if (deviceConfirmTimer) {
+        window.clearInterval(deviceConfirmTimer);
+        deviceConfirmTimer = null;
+    }
+
+    deviceConfirmTimer = window.setInterval(() => {
+        const remainMs = Math.max(0, deviceConfirmReadyAt - Date.now());
+        const remainSec = Math.ceil(remainMs / 1000);
+        if (countdown) {
+            if (remainMs > 0) {
+                countdown.textContent = `Vui long cho ${remainSec} giay de xac nhan.`;
+                setStateClass(countdown, 'warning');
+            } else {
+                countdown.textContent = 'Ban co the bam Co de tiep tuc.';
+                setStateClass(countdown, 'success');
+            }
+        }
+        if (okBtn) okBtn.disabled = remainMs > 0;
+        if (remainMs <= 0) {
+            window.clearInterval(deviceConfirmTimer);
+            deviceConfirmTimer = null;
+        }
+    }, 150);
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDeviceConfirmModal() {
+    const modal = el('deviceConfirmModal');
+    if (deviceConfirmTimer) {
+        window.clearInterval(deviceConfirmTimer);
+        deviceConfirmTimer = null;
+    }
+    pendingDeviceConfirm = '';
+    deviceConfirmReadyAt = 0;
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function openMobileOsModal(deviceType = 'mobile') {
+    pendingMobileOsDevice = String(deviceType || 'mobile').trim() || 'mobile';
+    const modal = el('mobileOsModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeMobileOsModal() {
+    const modal = el('mobileOsModal');
+    pendingMobileOsDevice = '';
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+async function generateDeviceLink(device, mobileOs = 'android') {
+    const cookie = getRuntimeCookie();
     if (!cookie) {
-        setLookupState('Vui long nhap cookie truoc.', 'warning');
+        setLookupState('Khong co cookie hop le de tao link.', 'warning');
+        setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
         return;
     }
 
-    const button = document.querySelector(`.btn-device[data-device="${device}"]`);
+    const frontendDevice = String(device || '').trim();
+    if (!frontendDevice) return;
+
+    setLookupState('Dang kiem tra tinh trang cookie...', 'loading');
+    const health = await checkRuntimeCookieHealth();
+    if (!health.ok) {
+        applyCookieBlockedState(health.blockedReason, health.detailMessage);
+        return;
+    }
+    clearCookieBlockedState();
+
+    const apiDevice = frontendDevice === 'desktop' ? 'desktop' : 'mobile';
+    const button = document.querySelector(`.btn-device[data-device="${frontendDevice}"]`);
+
     busy = true;
     setButtonBusy(button, true, 'Dang tao link...');
     setDeviceButtonsEnabled(false);
     setLookupState('Dang kiem tra cookie LIVE va tao link...', 'loading');
     showLookupLoadingOverlay('Xin vui long cho trong giay lat');
 
-    const shouldAutoOpen = device === 'desktop';
+    const shouldAutoOpen = apiDevice === 'desktop';
     let deferredPopup = null;
     if (shouldAutoOpen) {
         const deferred = openDeferredTabAndNavigate();
@@ -280,7 +565,7 @@ async function generateDeviceLink(device) {
     }
 
     try {
-        const data = await apiRequest('/api/nf-cookie-to-link', 'POST', { cookieStr: cookie, device });
+        const data = await apiRequest('/api/nf-cookie-to-link', 'POST', { cookieStr: cookie, device: apiDevice, mobileOs });
         if (!data || !data.url) throw new Error('Khong tao duoc link.');
 
         if (shouldAutoOpen) {
@@ -288,12 +573,13 @@ async function generateDeviceLink(device) {
             else window.location.href = data.url;
             setLookupState('Da tao link thanh cong. Dang mo Netflix...', 'success');
         } else {
-            openMobileLinkModal(data.url);
-            setLookupState('Tao link thanh cong. Hay sao chep link va lam theo huong dan.', 'success');
+            openMobileLinkModal(data.url, mobileOs);
+            const typeLabel = frontendDevice === 'tablet' ? 'tablet' : 'dien thoai';
+            setLookupState(`Tao link ${typeLabel} thanh cong. Hay sao chep link va lam theo huong dan.`, 'success');
         }
     } catch (error) {
         if (deferredPopup && !deferredPopup.closed) {
-            try { deferredPopup.close(); } catch (closeError) { /* ignore */ }
+            try { deferredPopup.close(); } catch (closeError) { }
         }
         setLookupState(error.message || 'Khong tao duoc link.', 'error');
     } finally {
@@ -304,14 +590,39 @@ async function generateDeviceLink(device) {
     }
 }
 
+function handleConfirmedDevice(device) {
+    const normalized = String(device || '').trim();
+    if (!normalized) return;
+
+    if (normalized === 'tv') {
+        openTvGuideModal();
+        return;
+    }
+
+    if (normalized === 'mobile' || normalized === 'tablet') {
+        openMobileOsModal(normalized);
+        return;
+    }
+
+    generateDeviceLink('desktop', 'android');
+}
+
 async function submitTvCodeFlow() {
-    const cookie = getCookieInputValue();
+    const cookie = getRuntimeCookie();
     if (!cookie) {
-        setLookupState('Vui long nhap cookie truoc.', 'warning');
+        setLookupState('Khong co cookie hop le de tao link TV.', 'warning');
         closeTvCodeModal();
         return;
     }
     if (tvFlowBusy) return;
+
+    const health = await checkRuntimeCookieHealth();
+    if (!health.ok) {
+        applyCookieBlockedState(health.blockedReason, health.detailMessage);
+        closeTvCodeModal();
+        return;
+    }
+    clearCookieBlockedState();
 
     const input = el('tvCodeInput');
     const submitBtn = el('tvCodeSubmitBtn');
@@ -383,10 +694,10 @@ async function autoCopyShareLinkOrWarn(url = '') {
 }
 
 async function generateShareIdLink() {
-    const cookie = getCookieInputValue();
+    const cookie = getRuntimeCookie();
     if (!cookie) {
         renderShareUrl('');
-        setShareState('Chua co cookie de tao link chia se.', 'warning');
+        setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
         return;
     }
 
@@ -406,10 +717,10 @@ async function generateShareIdLink() {
 }
 
 async function generateCookieEmbeddedShareLink() {
-    const cookie = getCookieInputValue();
+    const cookie = getRuntimeCookie();
     if (!cookie) {
         renderShareUrl('');
-        setShareState('Chua co cookie de tao link chia se.', 'warning');
+        setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
         return;
     }
 
@@ -428,6 +739,20 @@ async function generateCookieEmbeddedShareLink() {
     }
 }
 
+async function runEntryCookieHealthCheck() {
+    const cookie = getRuntimeCookie();
+    if (!cookie) return;
+    setLookupState('Dang kiem tra tinh trang cookie tu link...', 'loading');
+    const health = await checkRuntimeCookieHealth();
+    if (!health.ok) {
+        applyCookieBlockedState(health.blockedReason, health.detailMessage);
+        return;
+    }
+    clearCookieBlockedState();
+    setLookupState('Cookie hop le. Hay chon thiet bi de tiep tuc.', 'success');
+    updateReadyState();
+}
+
 async function applyCookieFromQuery() {
     const params = new URLSearchParams(window.location.search || '');
     const shareId = String(params.get('s') || '').trim();
@@ -438,67 +763,55 @@ async function applyCookieFromQuery() {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
             if (!cookieStr) {
+                setRuntimeCookie('', { silent: true });
                 setLookupState('Link chia se khong co cookie hop le.', 'warning');
                 return;
             }
-            const input = el('cookieInput');
-            if (input) input.value = cookieStr;
-            setLookupState('Da tu dien cookie tu link chia se. Chon thiet bi de tao link.', 'success');
+            setRuntimeCookie(cookieStr, { source: 'share-id' });
+            await runEntryCookieHealthCheck();
             return;
         } catch (error) {
+            setRuntimeCookie('', { silent: true });
             setLookupState(error.message || 'Khong tai duoc cookie tu link chia se.', 'warning');
             return;
         }
     }
 
-    if (!encodedCookie) return;
-
-    try {
-        const cookieStr = normalizeCookie(fromBase64Url(encodedCookie));
-        if (!cookieStr) {
-            setLookupState('Link cookie khong hop le.', 'warning');
+    if (encodedCookie) {
+        try {
+            const cookieStr = normalizeCookie(fromBase64Url(encodedCookie));
+            if (!cookieStr) {
+                setRuntimeCookie('', { silent: true });
+                setLookupState('Link cookie khong hop le.', 'warning');
+                return;
+            }
+            setRuntimeCookie(cookieStr, { source: 'cookie-link' });
+            await runEntryCookieHealthCheck();
+            return;
+        } catch (error) {
+            setRuntimeCookie('', { silent: true });
+            setLookupState('Khong giai ma duoc cookie trong link chia se.', 'warning');
             return;
         }
-        const input = el('cookieInput');
-        if (input) input.value = cookieStr;
-        setLookupState('Da tu dien cookie tu link chia se cookie. Chon thiet bi de tao link.', 'success');
-    } catch (error) {
-        setLookupState('Khong giai ma duoc cookie trong link chia se.', 'warning');
     }
+
+    setRuntimeCookie('', { silent: true });
 }
-
-function parseShareIdFromQueryText(text = '') {
-    const raw = String(text || '').trim();
-    if (!raw) return '';
-    if (/^[A-Za-z0-9_-]{6,64}$/.test(raw)) return raw;
-
-    try {
-        const url = new URL(raw);
-        const fromParam = String(url.searchParams.get('s') || '').trim();
-        if (/^[A-Za-z0-9_-]{6,64}$/.test(fromParam)) return fromParam;
-    } catch (error) {
-        // ignore
-    }
-
-    const idx = raw.indexOf('?');
-    if (idx >= 0) {
-        const params = new URLSearchParams(raw.slice(idx + 1));
-        const fromParam = String(params.get('s') || '').trim();
-        if (/^[A-Za-z0-9_-]{6,64}$/.test(fromParam)) return fromParam;
-    }
-
-    return '';
-}
-
 function renderAdminWorkspace() {
-    const workspace = el('adminWorkspace');
     const authBox = el('adminAuthBox');
-    const creatorBox = el('shareCreatorBox');
-    if (!workspace || !authBox) return;
+    const workspace = el('adminWorkspace');
+    const identity = el('adminIdentity');
+    const fab = el('nfAdminFab');
 
-    workspace.classList.toggle('hidden', !adminAuthenticated);
-    authBox.classList.toggle('hidden', adminAuthenticated);
-    if (creatorBox) creatorBox.classList.toggle('hidden', !adminAuthenticated);
+    if (fab) {
+        fab.classList.toggle('is-admin', adminAuthenticated);
+        fab.title = adminAuthenticated ? 'Tai khoan admin da dang nhap' : 'Dang nhap admin';
+        fab.setAttribute('aria-label', adminAuthenticated ? 'Tai khoan admin da dang nhap' : 'Dang nhap admin');
+    }
+
+    if (identity) identity.textContent = adminAuthenticated ? 'Dang nhap admin.' : 'Chua dang nhap admin';
+    if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
+    if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
 }
 
 function renderAdminShare(share = null) {
@@ -626,6 +939,8 @@ async function adminSaveCookie() {
     try {
         const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}`, 'PUT', { cookieStr: cookieRaw });
         renderAdminShare(data.share || null);
+        setRuntimeCookie(cookieRaw, { source: 'admin', silent: true });
+        setAdminRuntimeCookieState('Da cap nhat cookie runtime tu share vua luu.', 'success');
         setAdminSearchState('Da cap nhat cookie cho link.', 'success');
     } catch (error) {
         setAdminSearchState(error.message || 'Khong cap nhat duoc cookie.', 'error');
@@ -672,55 +987,21 @@ async function adminSetStatus(action = 'revoke') {
     }
 }
 
+function openAdminModal() {
+    const modal = el('nfAdminModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeAdminModal() {
+    const modal = el('nfAdminModal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
 function bindEvents() {
-    const cookieInput = el('cookieInput');
-    if (cookieInput) cookieInput.addEventListener('input', updateReadyState);
-
-    const clearCookieBtn = el('clearCookieBtn');
-    if (clearCookieBtn) {
-        clearCookieBtn.addEventListener('click', () => {
-            if (cookieInput) cookieInput.value = '';
-            renderShareUrl('');
-            setShareState('Da xoa cookie.', 'idle');
-            updateReadyState();
-        });
-    }
-
-    const generateShareLinkBtn = el('generateShareLinkBtn');
-    if (generateShareLinkBtn) generateShareLinkBtn.addEventListener('click', generateShareIdLink);
-
-    const generateCookieShareLinkBtn = el('generateCookieShareLinkBtn');
-    if (generateCookieShareLinkBtn) generateCookieShareLinkBtn.addEventListener('click', generateCookieEmbeddedShareLink);
-
-    const copyShareLinkBtn = el('copyShareLinkBtn');
-    if (copyShareLinkBtn) {
-        copyShareLinkBtn.addEventListener('click', async () => {
-            const url = String(el('shareLinkOutput') && el('shareLinkOutput').value || '').trim();
-            if (!url) {
-                setShareState('Chua co link chia se de sao chep.', 'warning');
-                return;
-            }
-            try {
-                await navigator.clipboard.writeText(url);
-                setShareState('Da sao chep link chia se.', 'success');
-            } catch (error) {
-                setShareState('Khong copy duoc. Hay copy thu cong.', 'warning');
-            }
-        });
-    }
-
-    const deviceButtons = Array.from(document.querySelectorAll('.btn-device'));
-    deviceButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            const device = String(button.dataset.device || 'desktop').trim();
-            if (device === 'tv') {
-                openTvGuideModal();
-                return;
-            }
-            generateDeviceLink(device);
-        });
-    });
-
     const supportBtn = el('supportWarrantyBtn');
     if (supportBtn) supportBtn.addEventListener('click', openSupportModal);
 
@@ -738,6 +1019,67 @@ function bindEvents() {
 
     const supportLink = el('supportFanpageLink');
     if (supportLink) supportLink.setAttribute('href', SUPPORT_FANPAGE_URL);
+
+    const deviceButtons = Array.from(document.querySelectorAll('.btn-device'));
+    deviceButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const device = String(button.dataset.device || '').trim();
+            if (!device) return;
+            openDeviceConfirmModal(device);
+        });
+    });
+
+    const deviceConfirmModal = el('deviceConfirmModal');
+    if (deviceConfirmModal) {
+        deviceConfirmModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeDeviceConfirm === '1') closeDeviceConfirmModal();
+        });
+    }
+
+    const deviceConfirmCloseBtn = el('deviceConfirmCloseBtn');
+    if (deviceConfirmCloseBtn) deviceConfirmCloseBtn.addEventListener('click', closeDeviceConfirmModal);
+
+    const deviceConfirmCancelBtn = el('deviceConfirmCancelBtn');
+    if (deviceConfirmCancelBtn) deviceConfirmCancelBtn.addEventListener('click', closeDeviceConfirmModal);
+
+    const deviceConfirmOkBtn = el('deviceConfirmOkBtn');
+    if (deviceConfirmOkBtn) {
+        deviceConfirmOkBtn.addEventListener('click', () => {
+            if (Date.now() < deviceConfirmReadyAt) return;
+            const device = pendingDeviceConfirm;
+            closeDeviceConfirmModal();
+            handleConfirmedDevice(device);
+        });
+    }
+    const mobileOsModal = el('mobileOsModal');
+    if (mobileOsModal) {
+        mobileOsModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeMobileOs === '1') closeMobileOsModal();
+        });
+    }
+
+    const mobileOsCloseBtn = el('mobileOsCloseBtn');
+    if (mobileOsCloseBtn) mobileOsCloseBtn.addEventListener('click', closeMobileOsModal);
+
+    const mobileOsAndroidBtn = el('mobileOsAndroidBtn');
+    if (mobileOsAndroidBtn) {
+        mobileOsAndroidBtn.addEventListener('click', () => {
+            const nextDevice = pendingMobileOsDevice || 'mobile';
+            closeMobileOsModal();
+            generateDeviceLink(nextDevice, 'android');
+        });
+    }
+
+    const mobileOsIosBtn = el('mobileOsIosBtn');
+    if (mobileOsIosBtn) {
+        mobileOsIosBtn.addEventListener('click', () => {
+            const nextDevice = pendingMobileOsDevice || 'mobile';
+            closeMobileOsModal();
+            generateDeviceLink(nextDevice, 'ios');
+        });
+    }
 
     const mobileLinkModal = el('mobileLinkModal');
     if (mobileLinkModal) {
@@ -827,11 +1169,70 @@ function bindEvents() {
         tvManualLoginLink.setAttribute('aria-disabled', 'true');
     }
 
+    const adminFab = el('nfAdminFab');
+    if (adminFab) adminFab.addEventListener('click', openAdminModal);
+
+    const closeAdminBtn = el('closeAdminBtn');
+    if (closeAdminBtn) closeAdminBtn.addEventListener('click', closeAdminModal);
+
+    const adminModal = el('nfAdminModal');
+    if (adminModal) {
+        adminModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeAdmin === '1') closeAdminModal();
+        });
+    }
+
     const adminLoginBtn = el('adminLoginBtn');
     if (adminLoginBtn) adminLoginBtn.addEventListener('click', adminLogin);
 
     const adminLogoutBtn = el('adminLogoutBtn');
     if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', adminLogout);
+
+    const adminApplyRuntimeCookieBtn = el('adminApplyRuntimeCookieBtn');
+    if (adminApplyRuntimeCookieBtn) {
+        adminApplyRuntimeCookieBtn.addEventListener('click', () => {
+            const cookieRaw = normalizeCookie(el('adminRuntimeCookieInput') && el('adminRuntimeCookieInput').value || '');
+            if (!cookieRaw) {
+                setAdminRuntimeCookieState('Cookie runtime khong duoc de trong.', 'warning');
+                return;
+            }
+            setRuntimeCookie(cookieRaw, { source: 'admin' });
+            setAdminRuntimeCookieState('Da ap dung cookie runtime cho phien hien tai.', 'success');
+        });
+    }
+
+    const adminClearRuntimeCookieBtn = el('adminClearRuntimeCookieBtn');
+    if (adminClearRuntimeCookieBtn) {
+        adminClearRuntimeCookieBtn.addEventListener('click', () => {
+            setRuntimeCookie('', { source: 'admin', silent: true });
+            setAdminRuntimeCookieState('Da xoa cookie runtime cua phien hien tai.', 'warning');
+            setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
+        });
+    }
+
+    const generateShareLinkBtn = el('generateShareLinkBtn');
+    if (generateShareLinkBtn) generateShareLinkBtn.addEventListener('click', generateShareIdLink);
+
+    const generateCookieShareLinkBtn = el('generateCookieShareLinkBtn');
+    if (generateCookieShareLinkBtn) generateCookieShareLinkBtn.addEventListener('click', generateCookieEmbeddedShareLink);
+
+    const copyShareLinkBtn = el('copyShareLinkBtn');
+    if (copyShareLinkBtn) {
+        copyShareLinkBtn.addEventListener('click', async () => {
+            const url = String(el('shareLinkOutput') && el('shareLinkOutput').value || '').trim();
+            if (!url) {
+                setShareState('Chua co link chia se de sao chep.', 'warning');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(url);
+                setShareState('Da sao chep link chia se.', 'success');
+            } catch (error) {
+                setShareState('Khong copy duoc. Hay copy thu cong.', 'warning');
+            }
+        });
+    }
 
     const adminShareSearchBtn = el('adminShareSearchBtn');
     if (adminShareSearchBtn) adminShareSearchBtn.addEventListener('click', adminSearchShare);
@@ -874,8 +1275,33 @@ function bindEvents() {
     const adminRestoreBtn = el('adminRestoreBtn');
     if (adminRestoreBtn) adminRestoreBtn.addEventListener('click', () => adminSetStatus('restore'));
 
+    const adminUseShareCookieBtn = el('adminUseShareCookieBtn');
+    if (adminUseShareCookieBtn) {
+        adminUseShareCookieBtn.addEventListener('click', () => {
+            const cookieRaw = normalizeCookie(el('adminShareCookieInput') && el('adminShareCookieInput').value || '');
+            if (!cookieRaw) {
+                setAdminSearchState('Khong co cookie de ap dung.', 'warning');
+                return;
+            }
+            setRuntimeCookie(cookieRaw, { source: 'admin' });
+            setAdminRuntimeCookieState('Da ap dung cookie tu share nay vao runtime.', 'success');
+        });
+    }
+
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+
+        const deviceConfirmModalNode = el('deviceConfirmModal');
+        if (deviceConfirmModalNode && !deviceConfirmModalNode.classList.contains('hidden')) {
+            closeDeviceConfirmModal();
+            return;
+        }
+
+        const mobileOsModalNode = el('mobileOsModal');
+        if (mobileOsModalNode && !mobileOsModalNode.classList.contains('hidden')) {
+            closeMobileOsModal();
+            return;
+        }
 
         const tvCodeModalNode = el('tvCodeModal');
         if (tvCodeModalNode && !tvCodeModalNode.classList.contains('hidden')) {
@@ -898,7 +1324,10 @@ function bindEvents() {
         const supportModalNode = el('supportModal');
         if (supportModalNode && !supportModalNode.classList.contains('hidden')) {
             closeSupportModal();
+            return;
         }
+
+        closeAdminModal();
     });
 }
 
@@ -906,6 +1335,10 @@ async function bootstrap() {
     bindEvents();
     renderAdminWorkspace();
     await Promise.all([loadAdminSession(), applyCookieFromQuery()]);
+    syncAdminCookieInput();
+    if (!getRuntimeCookie()) {
+        setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
+    }
     updateReadyState();
     setShareState('Chi admin moi tao link chia se.', 'idle');
 }
