@@ -206,6 +206,34 @@
             font-size: 0.82rem;
         }
 
+        .admin-expiry-box {
+            margin-top: 0.7rem;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 0.7rem;
+            background: rgba(255, 255, 255, 0.02);
+            display: grid;
+            gap: 0.65rem;
+        }
+
+        .admin-expiry-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 0.55rem;
+        }
+
+        .admin-expiry-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .admin-expiry-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
         .admin-warning {
             margin: 0;
             font-size: 0.82rem;
@@ -227,6 +255,49 @@
             letter-spacing: 0;
         }
 
+        .disclaimer-card {
+            max-width: 620px;
+        }
+
+        .disclaimer-body {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .disclaimer-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #ffb4b4;
+            text-align: center;
+            letter-spacing: 0.01em;
+        }
+
+        .disclaimer-list {
+            margin: 0;
+            padding-left: 1.2rem;
+            display: grid;
+            gap: 0.8rem;
+            color: #e8f0ff;
+        }
+
+        .disclaimer-list li {
+            line-height: 1.6;
+        }
+
+        .disclaimer-countdown {
+            text-align: center;
+        }
+
+        .disclaimer-actions {
+            display: flex;
+            justify-content: center;
+        }
+
+        .disclaimer-actions .btn {
+            min-width: 170px;
+        }
+
         @media (max-width: 900px) {
             .admin-inline-layout {
                 grid-template-columns: 1fr;
@@ -237,6 +308,12 @@
             }
 
             .admin-result-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-expiry-grid,
+            .admin-expiry-quick-actions,
+            .admin-expiry-actions {
                 grid-template-columns: 1fr;
             }
         }
@@ -378,6 +455,30 @@
             <div class="support-body">
                 <p>Vui long nhan tin qua fanpage de duoc ho tro bao hanh nhanh nhat.</p>
                 <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cap fanpage</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="disclaimerModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card support-card disclaimer-card" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Luu y truoc khi su dung</span>
+                    <h2 id="disclaimerTitle">Thong bao quan trong</h2>
+                </div>
+            </header>
+            <div class="support-body disclaimer-body">
+                <p class="disclaimer-title">❌ LUU Y PHAI DOC (QUAN TRONG) ❌</p>
+                <ol class="disclaimer-list">
+                    <li>Dang nhap khong gioi han thiet bi, NHUNG chi xem phim cung 1 luc tren 1 THIET BI, xem hon se bi Netflix danh spam va tu choi bao hanh.</li>
+                    <li>Khong chinh lung tung trong phan cai dat.</li>
+                    <li>Neu gap BAT CU VAN DE gi, nhan vao page cu phap 𝗕𝗛𝟮𝟰𝟳 de duoc ho tro va bao hanh!</li>
+                </ol>
+                <div id="disclaimerCountdown" class="state-text state-warning disclaimer-countdown">Vui long cho 2 giay de bo qua popup.</div>
+                <div class="disclaimer-actions">
+                    <button id="disclaimerDismissBtn" class="btn btn-primary" type="button" disabled>Bo qua</button>
+                </div>
             </div>
         </div>
     </section>
@@ -546,6 +647,23 @@
                             <input id="adminShareStatus" class="text-input" type="text" readonly>
                             <input id="adminShareUrl" class="text-input mono-input" type="text" readonly>
                             <input id="adminShareUpdatedAt" class="text-input" type="text" readonly>
+                        </div>
+
+                        <div class="admin-expiry-box">
+                            <div class="admin-expiry-grid">
+                                <input id="adminShareExpiryDisplay" class="text-input" type="text" readonly placeholder="Han hien tai">
+                                <input id="adminShareExpiryInput" class="text-input" type="datetime-local">
+                            </div>
+                            <div class="admin-expiry-quick-actions">
+                                <button class="btn btn-ghost admin-expiry-quick-btn" type="button" data-add-days="1">+1 ngay</button>
+                                <button class="btn btn-ghost admin-expiry-quick-btn" type="button" data-add-days="3">+3 ngay</button>
+                                <button class="btn btn-ghost admin-expiry-quick-btn" type="button" data-add-days="7">+7 ngay</button>
+                                <button class="btn btn-ghost admin-expiry-quick-btn" type="button" data-add-days="30">+30 ngay</button>
+                            </div>
+                            <div class="admin-expiry-actions">
+                                <button id="adminSaveExpiryBtn" class="btn btn-primary" type="button">Luu han</button>
+                                <button id="adminClearExpiryBtn" class="btn btn-ghost" type="button">Lam moi o han</button>
+                            </div>
                         </div>
 
                         <textarea id="adminShareCookieInput" class="text-input runtime-cookie-input" placeholder="Cookie cua share link..."></textarea>

@@ -3,7 +3,8 @@ const {
     createShare,
     readShareById,
     sanitizeCookieRaw,
-    isValidShareId
+    isValidShareId,
+    isShareExpired
 } = require('./_getlink-share-store');
 
 function setCors(res) {
@@ -31,6 +32,7 @@ function shareDto(record, req) {
         createdAt: record.createdAt || '',
         updatedAt: record.updatedAt || '',
         revokedAt: record.revokedAt || '',
+        expiresAt: record.expiresAt || '',
         shareUrl: `${origin}/getlink?s=${encodeURIComponent(record.id)}`
     };
 }
@@ -58,6 +60,9 @@ module.exports = async function (req, res) {
             if (!record) return res.status(404).json({ error: 'Share link not found' });
             if (record.status !== 'active') {
                 return res.status(410).json({ error: 'Share link has been revoked' });
+            }
+            if (isShareExpired(record)) {
+                return res.status(410).json({ error: 'Share link has expired' });
             }
 
             return res.status(200).json({

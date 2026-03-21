@@ -6772,6 +6772,22 @@
             return /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
         }
 
+        function isDesktopDeviceForTvLogin() {
+            const ua = navigator.userAgent || '';
+            const hasTouch = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+            const isSmallViewport = !!(window.matchMedia && window.matchMedia('(max-width: 1024px)').matches);
+            const isMobileOrTabletUA = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua);
+            return !(isMobileOrTabletUA || (isSmallViewport && hasTouch));
+        }
+
+        function showTvDesktopOnlyWarning() {
+            showAlert(
+                'Thông báo',
+                'Chức năng đăng nhập lên tivi chỉ dùng được cho máy tính, nếu không có máy tính thì xin hãy nhờ admin hỗ trợ nhé',
+                'warning'
+            );
+        }
+
         function openDeferredTabAndNavigate(options = {}) {
             const loadingTitle = options.loadingTitle || 'Đang chuẩn bị Netflix...';
             const loadingSubtitle = options.loadingSubtitle || 'Vui lòng chờ trong giây lát.';
@@ -7049,6 +7065,11 @@
             const folder = DATA[currentFolderIndex];
             const acc = folder && folder.accounts ? folder.accounts[currentAccountIndex] : null;
             if (!folder || !acc || !isNetflixFolder(folder)) return;
+
+            if (platform === 'tv' && !isDesktopDeviceForTvLogin()) {
+                showTvDesktopOnlyWarning();
+                return;
+            }
 
             if (platform === 'mobile' || platform === 'tv') {
                 showNetflixProModal();
@@ -9037,6 +9058,10 @@
         }
 
         function openNetflixTvProFromHome() {
+            if (!isDesktopDeviceForTvLogin()) {
+                showTvDesktopOnlyWarning();
+                return;
+            }
             showNetflixProModal();
         }
 

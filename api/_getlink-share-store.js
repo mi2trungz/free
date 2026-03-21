@@ -50,6 +50,7 @@ function mapShareFieldsToRecord(fields = {}) {
         createdAt: parseFirestoreString(fields.createdAt),
         updatedAt: parseFirestoreString(fields.updatedAt),
         revokedAt: parseFirestoreString(fields.revokedAt),
+        expiresAt: parseFirestoreString(fields.expiresAt),
         createdBy: parseFirestoreString(fields.createdBy),
         updatedBy: parseFirestoreString(fields.updatedBy),
         rotatedFrom: parseFirestoreString(fields.rotatedFrom)
@@ -64,10 +65,36 @@ function mapShareRecordToFields(record = {}) {
         createdAt: toStringValue(record.createdAt || ''),
         updatedAt: toStringValue(record.updatedAt || ''),
         revokedAt: toStringValue(record.revokedAt || ''),
+        expiresAt: toStringValue(record.expiresAt || ''),
         createdBy: toStringValue(record.createdBy || ''),
         updatedBy: toStringValue(record.updatedBy || ''),
         rotatedFrom: toStringValue(record.rotatedFrom || '')
     };
+}
+
+function parseIsoMillis(value = '') {
+    const text = String(value || '').trim();
+    if (!text) return 0;
+    const ms = Date.parse(text);
+    return Number.isFinite(ms) ? ms : 0;
+}
+
+function isShareExpired(record = null, nowMs = Date.now()) {
+    const expiresMs = parseIsoMillis(record && record.expiresAt);
+    if (!expiresMs) return false;
+    return expiresMs < nowMs;
+}
+
+function normalizeExpiryInput(expiresAt = '') {
+    const text = String(expiresAt || '').trim();
+    if (!text) return '';
+    const ms = parseIsoMillis(text);
+    if (!ms) {
+        const err = new Error('Invalid expiresAt');
+        err.httpStatus = 400;
+        throw err;
+    }
+    return new Date(ms).toISOString();
 }
 
 async function readDoc(docPath) {
@@ -182,6 +209,7 @@ async function createShare(cookieRaw = '', createdBy = 'guest') {
             createdAt: now,
             updatedAt: now,
             revokedAt: '',
+            expiresAt: '',
             createdBy: String(createdBy || 'guest').trim(),
             updatedBy: String(createdBy || 'guest').trim(),
             rotatedFrom: ''
@@ -313,15 +341,63 @@ async function rotateShareId(shareId = '', actor = 'admin') {
     };
 }
 
+async function setShareExpiry(shareId = '', options = {}, actor = 'admin') {
+    const current = await readShareById(shareId);
+    if (!current) {
+        const err = new Error('Share link not found');
+        err.httpStatus = 404;
+        throw err;
+    }
+
+    const nowMs = Date.now();
+    const addDaysRaw = options && options.addDays !== undefined ? Number(options.addDays) : NaN;
+    let nextExpiresAt = '';
+
+    if (options && options.expiresAt !== undefined) {
+        nextExpiresAt = normalizeExpiryInput(options.expiresAt);
+    } else if (Number.isFinite(addDaysRaw)) {
+        if (addDaysRaw <= 0) {
+            const err = new Error('addDays must be greater than 0');
+            err.httpStatus = 400;
+            throw err;
+        }
+        const currentExpiresMs = parseIsoMillis(current.expiresAt);
+        const baseMs = currentExpiresMs > nowMs ? currentExpiresMs : nowMs;
+        nextExpiresAt = new Date(baseMs + (addDaysRaw * 24 * 60 * 60 * 1000)).toISOString();
+    } else {
+        const err = new Error('Missing expiresAt or addDays');
+        err.httpStatus = 400;
+        throw err;
+    }
+
+    const next = {
+        ...current,
+        expiresAt: nextExpiresAt,
+        updatedAt: new Date().toISOString(),
+        updatedBy: String(actor || 'admin').trim()
+    };
+
+    const ok = await patchDoc(buildShareDocPath(current.id), mapShareRecordToFields(next));
+    if (!ok) {
+        const err = new Error('Failed to update share expiry');
+        err.httpStatus = 500;
+        throw err;
+    }
+    return next;
+}
+
 module.exports = {
     COLL_GETLINK_SHARES,
     isValidShareId,
     extractShareIdFromQuery,
     sanitizeCookieRaw,
     sanitizeShareStatus,
+    normalizeExpiryInput,
+    isShareExpired,
     readShareById,
     createShare,
     updateShareCookie,
     setShareStatus,
-    rotateShareId
+    rotateShareId,
+    setShareExpiry
 };

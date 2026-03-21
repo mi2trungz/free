@@ -15,6 +15,8 @@ let adminRefreshToken = '';
 let adminEmail = '';
 let runtimeCookie = '';
 let currentAdminShare = null;
+let pendingShareIdFromUrl = '';
+let autoLoadedAdminShareId = '';
 let guestGuardActive = true;
 let pendingDeviceConfirm = '';
 let deviceConfirmReadyAt = 0;
@@ -22,6 +24,11 @@ let deviceConfirmTimer = null;
 let pendingMobileOsDevice = '';
 let cookieHealthBlocked = false;
 let cookieHealthReason = '';
+let disclaimerVisible = false;
+let disclaimerDismissed = false;
+let disclaimerReadyAt = 0;
+let disclaimerTimer = null;
+let disclaimerEligibilityResolved = false;
 
 function el(id) {
     return document.getElementById(id);
@@ -53,6 +60,13 @@ function setShareState(text, mode = 'idle') {
 
 function setTvCodeState(text, mode = 'idle') {
     const node = el('tvCodeState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
+function setDisclaimerState(text, mode = 'idle') {
+    const node = el('disclaimerCountdown');
     if (!node) return;
     node.textContent = String(text || '').trim();
     setStateClass(node, mode);
@@ -223,6 +237,39 @@ async function checkCookieForShareInfo(cookie = '') {
 
 function normalizeCookie(value = '') {
     return String(value || '').trim();
+}
+
+function parseDateMs(value = '') {
+    const text = String(value || '').trim();
+    if (!text) return 0;
+    const ms = Date.parse(text);
+    return Number.isFinite(ms) ? ms : 0;
+}
+
+function isShareExpiredClient(share = null) {
+    return parseDateMs(share && share.expiresAt) < Date.now() && !!parseDateMs(share && share.expiresAt);
+}
+
+function formatDateTime(value = '') {
+    const ms = parseDateMs(value);
+    if (!ms) return 'Khong gioi han';
+    return new Date(ms).toLocaleString('vi-VN');
+}
+
+function toDatetimeLocalFromIso(value = '') {
+    const ms = parseDateMs(value);
+    if (!ms) return '';
+    const date = new Date(ms);
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function datetimeLocalToIso(value = '') {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const ms = Date.parse(text);
+    if (!Number.isFinite(ms)) return '';
+    return new Date(ms).toISOString();
 }
 
 function isUnknownPlan(planValue = '') {
@@ -567,6 +614,10 @@ function updateReadyState() {
         setDeviceButtonsEnabled(false);
         return;
     }
+    if (disclaimerVisible) {
+        setDeviceButtonsEnabled(false);
+        return;
+    }
     setDeviceButtonsEnabled(hasCookie && !guestGuardActive);
     if (!hasCookie) {
         setLookupState('Vui long mo dung link duoc cap de bat dau su dung.', 'warning');
@@ -702,6 +753,67 @@ function closeTvCodeModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+}
+
+function openDisclaimerModal() {
+    if (adminAuthenticated || disclaimerDismissed) return;
+
+    disclaimerVisible = true;
+    const modal = el('disclaimerModal');
+    const dismissBtn = el('disclaimerDismissBtn');
+    const waitMs = 2000;
+    disclaimerReadyAt = Date.now() + waitMs;
+
+    if (dismissBtn) dismissBtn.disabled = true;
+    setDisclaimerState('Vui long cho 2 giay de bo qua popup.', 'warning');
+
+    if (disclaimerTimer) {
+        window.clearInterval(disclaimerTimer);
+        disclaimerTimer = null;
+    }
+
+    disclaimerTimer = window.setInterval(() => {
+        const remainMs = Math.max(0, disclaimerReadyAt - Date.now());
+        const remainSec = Math.ceil(remainMs / 1000);
+        if (remainMs > 0) {
+            setDisclaimerState(`Vui long cho ${remainSec} giay de bo qua popup.`, 'warning');
+            if (dismissBtn) dismissBtn.disabled = true;
+            return;
+        }
+
+        if (dismissBtn) dismissBtn.disabled = false;
+        setDisclaimerState('Ban co the bam Bo qua de tiep tuc.', 'success');
+        window.clearInterval(disclaimerTimer);
+        disclaimerTimer = null;
+    }, 150);
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeDisclaimerModal(force = false) {
+    if (!force && Date.now() < disclaimerReadyAt) return false;
+
+    const modal = el('disclaimerModal');
+    const dismissBtn = el('disclaimerDismissBtn');
+
+    if (disclaimerTimer) {
+        window.clearInterval(disclaimerTimer);
+        disclaimerTimer = null;
+    }
+
+    disclaimerVisible = false;
+    disclaimerDismissed = force ? disclaimerDismissed : true;
+    disclaimerReadyAt = 0;
+
+    if (dismissBtn) dismissBtn.disabled = false;
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    return true;
 }
 
 function openDeviceConfirmModal(device = '') {
@@ -1048,6 +1160,7 @@ async function applyCookieFromQuery() {
     const encodedCookie = String(params.get('c') || '').trim();
 
     if (shareId) {
+        pendingShareIdFromUrl = shareId;
         try {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
@@ -1110,6 +1223,13 @@ function renderAdminWorkspace() {
     if (!adminAuthenticated) {
         renderCookieInfoPlaceholder('Chua co du lieu cookie info.');
     }
+    if (adminAuthenticated && disclaimerVisible) {
+        closeDisclaimerModal(true);
+    }
+    if (disclaimerEligibilityResolved && !adminAuthenticated && !disclaimerDismissed) {
+        openDisclaimerModal();
+    }
+    updateReadyState();
 }
 
 function renderAdminShare(share = null) {
@@ -1126,15 +1246,75 @@ function renderAdminShare(share = null) {
     const statusInput = el('adminShareStatus');
     const urlInput = el('adminShareUrl');
     const updatedInput = el('adminShareUpdatedAt');
+    const expiryDisplayInput = el('adminShareExpiryDisplay');
+    const expiryInput = el('adminShareExpiryInput');
     const cookieInput = el('adminShareCookieInput');
+    const expired = !!(share && (share.expired || isShareExpiredClient(share)));
+    const status = String(share.status || 'active');
+    let statusLabel = 'Dang hoat dong';
+    if (status !== 'active') statusLabel = 'Da khoa / Thu hoi';
+    else if (expired) statusLabel = 'Da het han';
 
     if (idInput) idInput.value = String(share.id || '');
-    if (statusInput) statusInput.value = `Trang thai: ${String(share.status || 'active')}`;
+    if (statusInput) statusInput.value = `Trang thai: ${statusLabel}`;
     if (urlInput) urlInput.value = String(share.shareUrl || '');
     if (updatedInput) updatedInput.value = `Cap nhat: ${String(share.updatedAt || '-')}`;
+    if (expiryDisplayInput) expiryDisplayInput.value = `Han hien tai: ${formatDateTime(share.expiresAt)}`;
+    if (expiryInput) expiryInput.value = toDatetimeLocalFromIso(share.expiresAt);
     if (cookieInput) cookieInput.value = String(share.cookieRaw || '');
 
     card.classList.remove('hidden');
+}
+
+async function adminSaveExpiry(payload = null, options = {}) {
+    if (!currentAdminShare || !currentAdminShare.id) return;
+
+    let body = payload;
+    if (!body) {
+        const rawValue = String(el('adminShareExpiryInput') && el('adminShareExpiryInput').value || '').trim();
+        const expiresAt = datetimeLocalToIso(rawValue);
+        if (!expiresAt) {
+            setAdminSearchState('Nhap han hop le truoc khi luu.', 'warning');
+            return;
+        }
+        body = { expiresAt };
+    }
+
+    const btn = options.button || el('adminSaveExpiryBtn');
+    setButtonBusy(btn, true, options.busyLabel || 'Dang luu han...');
+    try {
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}/expiry`, 'PUT', body);
+        renderAdminShare(data.share || null);
+        setAdminSearchState('Da cap nhat han cho link.', 'success');
+    } catch (error) {
+        setAdminSearchState(error.message || 'Khong cap nhat duoc han cho link.', 'error');
+    } finally {
+        setButtonBusy(btn, false);
+    }
+}
+
+async function loadAdminShareFromPendingUrl(options = {}) {
+    const force = !!options.force;
+    const shareId = String(pendingShareIdFromUrl || '').trim();
+    if (!adminAuthenticated || !shareId) return;
+    if (!force && autoLoadedAdminShareId === shareId) return;
+
+    const input = el('adminShareSearchInput');
+    if (input) input.value = shareId;
+
+    openAdminModal();
+    setAdminSearchState(`Dang tu dong nap link ID: ${shareId}...`, 'loading');
+
+    try {
+        const data = await apiRequest('/api/getlink-admin/search', 'POST', { query: shareId });
+        renderAdminShare(data.share || null);
+        autoLoadedAdminShareId = shareId;
+        setAdminSearchState('Da tu dong nap link ID tu URL. Ban co the sua cookie ngay.', 'success');
+    } catch (error) {
+        renderAdminShare(null);
+        autoLoadedAdminShareId = '';
+        setAdminSearchState(error.message || 'Khong tu dong nap duoc link ID tu URL.', 'error');
+    }
 }
 
 async function loadAdminSession() {
@@ -1161,6 +1341,9 @@ async function loadAdminSession() {
         setAdminAuthState('Phien admin het han. Vui long dang nhap lai.', 'warning');
     }
     renderAdminWorkspace();
+    if (adminAuthenticated) {
+        await loadAdminShareFromPendingUrl();
+    }
 }
 
 async function adminLogin() {
@@ -1195,6 +1378,7 @@ async function adminLogin() {
         setAdminAuthState(`Dang nhap admin: ${userEmail}`, 'success');
         renderAdminWorkspace();
         setAdminSearchState('Khong tu dong load. Nhap ID/link roi bam Tim link.', 'idle');
+        await loadAdminShareFromPendingUrl({ force: true });
     } catch (error) {
         clearAdminAuthState();
         const msg = String(error && error.message ? error.message : '').trim();
@@ -1219,6 +1403,7 @@ async function adminLogout() {
     } finally {
         clearAdminAuthState();
         renderAdminShare(null);
+        autoLoadedAdminShareId = '';
         setAdminAuthState('Dang xuat.', 'idle');
         renderAdminWorkspace();
         setButtonBusy(btn, false);
@@ -1333,6 +1518,14 @@ function closeAdminModal() {
 function bindEvents() {
     const supportBtn = el('supportWarrantyBtn');
     if (supportBtn) supportBtn.addEventListener('click', openSupportModal);
+
+    const disclaimerDismissBtn = el('disclaimerDismissBtn');
+    if (disclaimerDismissBtn) {
+        disclaimerDismissBtn.addEventListener('click', () => {
+            if (!closeDisclaimerModal()) return;
+            updateReadyState();
+        });
+    }
 
     const supportCloseBtn = el('supportModalCloseBtn');
     if (supportCloseBtn) supportCloseBtn.addEventListener('click', closeSupportModal);
@@ -1578,6 +1771,30 @@ function bindEvents() {
     const adminSaveCookieBtn = el('adminSaveCookieBtn');
     if (adminSaveCookieBtn) adminSaveCookieBtn.addEventListener('click', adminSaveCookie);
 
+    const adminSaveExpiryBtn = el('adminSaveExpiryBtn');
+    if (adminSaveExpiryBtn) adminSaveExpiryBtn.addEventListener('click', () => adminSaveExpiry());
+
+    const adminClearExpiryBtn = el('adminClearExpiryBtn');
+    if (adminClearExpiryBtn) {
+        adminClearExpiryBtn.addEventListener('click', () => {
+            const input = el('adminShareExpiryInput');
+            if (input) input.value = '';
+            setAdminSearchState('Da lam moi o nhap han. Chua thay doi du lieu tren server.', 'idle');
+        });
+    }
+
+    const expiryQuickButtons = Array.from(document.querySelectorAll('.admin-expiry-quick-btn'));
+    expiryQuickButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const addDays = Number(button.dataset.addDays || 0);
+            if (!addDays || !currentAdminShare || !currentAdminShare.id) {
+                setAdminSearchState('Hay tim 1 link truoc khi them han.', 'warning');
+                return;
+            }
+            adminSaveExpiry({ addDays }, { button, busyLabel: `Dang +${addDays} ngay...` });
+        });
+    });
+
     const adminRotateIdBtn = el('adminRotateIdBtn');
     if (adminRotateIdBtn) adminRotateIdBtn.addEventListener('click', adminRotateId);
 
@@ -1619,6 +1836,15 @@ function bindEvents() {
 
     window.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
+
+        const disclaimerModalNode = el('disclaimerModal');
+        if (disclaimerModalNode && !disclaimerModalNode.classList.contains('hidden')) {
+            if (Date.now() >= disclaimerReadyAt) {
+                closeDisclaimerModal();
+                updateReadyState();
+            }
+            return;
+        }
 
         const deviceConfirmModalNode = el('deviceConfirmModal');
         if (deviceConfirmModalNode && !deviceConfirmModalNode.classList.contains('hidden')) {
@@ -1665,6 +1891,10 @@ async function bootstrap() {
     bindEvents();
     renderAdminWorkspace();
     await Promise.all([loadAdminSession(), applyCookieFromQuery()]);
+    disclaimerEligibilityResolved = true;
+    if (!adminAuthenticated && !disclaimerDismissed) {
+        openDisclaimerModal();
+    }
     syncAdminCookieInput();
     if (!getRuntimeCookie()) {
         setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');

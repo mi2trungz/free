@@ -8,7 +8,9 @@ const {
     updateShareCookie,
     setShareStatus,
     rotateShareId,
-    sanitizeCookieRaw
+    sanitizeCookieRaw,
+    setShareExpiry,
+    isShareExpired
 } = require('./_getlink-share-store');
 
 const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
@@ -113,6 +115,8 @@ function toAdminShareDto(record, req) {
         createdAt: record.createdAt || '',
         updatedAt: record.updatedAt || '',
         revokedAt: record.revokedAt || '',
+        expiresAt: record.expiresAt || '',
+        expired: isShareExpired(record),
         shareUrl: `${origin}/getlink?s=${encodeURIComponent(record.id)}`
     };
 }
@@ -170,6 +174,19 @@ module.exports = async function (req, res) {
             const cookieStr = sanitizeCookieRaw(body.cookieStr || '');
             if (!cookieStr) return res.status(400).json({ error: 'Missing cookieStr' });
             const updated = await updateShareCookie(shareId, cookieStr, adminUser.email);
+            return res.status(200).json({ success: true, share: toAdminShareDto(updated, req) });
+        }
+
+        const expiryMatch = pathname.match(/^\/api\/getlink-admin\/shares\/([^/]+)\/expiry$/);
+        if (expiryMatch && req.method === 'PUT') {
+            const shareId = decodeURIComponent(expiryMatch[1] || '');
+            if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+
+            const body = parseBody(req.body);
+            const updated = await setShareExpiry(shareId, {
+                expiresAt: body.expiresAt,
+                addDays: body.addDays
+            }, adminUser.email);
             return res.status(200).json({ success: true, share: toAdminShareDto(updated, req) });
         }
 
