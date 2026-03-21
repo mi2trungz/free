@@ -9,17 +9,11 @@ const nfCookieToLinkHandler = require('./nf-cookie-to-link');
 const nfTvActivateHandler = require('./nf-tv-activate');
 const nftokenHandler = require('./nftoken');
 const netflixCookieHandler = require('./netflix-cookie');
+const getlinkSharesHandler = require('./getlink-shares');
+const getlinkAdminHandler = require('./getlink-admin');
 
 function getRequestPath(req) {
     return String((req && req.url) || '/').split('?')[0];
-}
-
-function sendTempDisabledGetlink(res) {
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(503).json({
-        error: 'Getlink API is temporarily disabled',
-        code: 'GETLINK_TEMP_DISABLED'
-    });
 }
 
 module.exports = async function (req, res) {
@@ -27,10 +21,10 @@ module.exports = async function (req, res) {
         const requestPath = getRequestPath(req);
 
         if (requestPath === '/api/getlink-shares' || requestPath.startsWith('/api/getlink-shares/')) {
-            return sendTempDisabledGetlink(res);
+            return getlinkSharesHandler(req, res);
         }
         if (requestPath.startsWith('/api/getlink-admin')) {
-            return sendTempDisabledGetlink(res);
+            return getlinkAdminHandler(req, res);
         }
 
         if (requestPath === '/api/nf-cookies/import') {

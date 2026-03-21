@@ -158,18 +158,10 @@ const server = http.createServer((req, res) => {
         return invokeServerlessApi(nftokenHandler, req, res);
     }
     if (requestPath === '/api/getlink-shares' || requestPath.startsWith('/api/getlink-shares/')) {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            error: 'Getlink API is temporarily disabled',
-            code: 'GETLINK_TEMP_DISABLED'
-        }));
+        return invokeServerlessApi(getlinkSharesHandler, req, res);
     }
     if (requestPath.startsWith('/api/getlink-admin')) {
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({
-            error: 'Getlink API is temporarily disabled',
-            code: 'GETLINK_TEMP_DISABLED'
-        }));
+        return invokeServerlessApi(getlinkAdminHandler, req, res);
     }
 
     if (req.method === 'OPTIONS') {
