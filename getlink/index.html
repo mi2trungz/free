@@ -198,6 +198,20 @@
                     <div id="adminRuntimeCookieState" class="state-text state-idle">Cookie phien hien tai lay tu link chia se neu co.</div>
                 </section>
 
+                <section id="shareCreatorBox" class="share-box admin-box hidden">
+                    <h3 class="share-box-title">Tao link chia se (chi admin)</h3>
+                    <div class="lookup-actions" style="margin-top:0.45rem;">
+                        <button id="generateShareLinkBtn" class="btn btn-ghost" type="button">Tao link ID server (?s)</button>
+                        <button id="generateCookieShareLinkBtn" class="btn btn-ghost" type="button">Tao link cookie (?c)</button>
+                    </div>
+                    <div id="shareState" class="state-text state-idle">Bam 1 trong 2 nut de tao link va he thong se tu sao chep ngay.</div>
+                    <div class="share-row">
+                        <input id="shareLinkOutput" class="text-input link-output" type="text" readonly>
+                        <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chep</button>
+                        <a id="openShareLinkBtn" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">Mo link</a>
+                    </div>
+                </section>
+
                 <section id="deviceSection">
                     <h3 class="device-section-title">Hay chon thiet bi ban dang dung de tien hanh su dung Netflix</h3>
                     <div class="device-grid">
@@ -400,20 +414,6 @@
                         <button id="adminLogoutBtn" class="btn btn-ghost" type="button">Dang xuat</button>
                     </div>
                 </div>
-
-                <section id="shareCreatorBox" class="share-box">
-                    <h3 class="share-box-title">Tao link chia se (chi admin)</h3>
-                    <div class="lookup-actions" style="margin-top:0.45rem;">
-                        <button id="generateShareLinkBtn" class="btn btn-ghost" type="button">Tao link ID server (?s)</button>
-                        <button id="generateCookieShareLinkBtn" class="btn btn-ghost" type="button">Tao link cookie (?c)</button>
-                    </div>
-                    <div id="shareState" class="state-text state-idle">Bam 1 trong 2 nut de tao link va he thong se tu sao chep ngay.</div>
-                    <div class="share-row">
-                        <input id="shareLinkOutput" class="text-input link-output" type="text" readonly>
-                        <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chep</button>
-                        <a id="openShareLinkBtn" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">Mo link</a>
-                    </div>
-                </section>
 
                 <section class="share-box admin-box">
                     <h3 class="share-box-title">Quan ly link chia se</h3>

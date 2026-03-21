@@ -926,6 +926,7 @@ function renderAdminWorkspace() {
     const identity = el('adminIdentity');
     const fab = el('nfAdminFab');
     const inlineCookiePanel = el('adminInlineCookiePanel');
+    const shareCreatorBox = el('shareCreatorBox');
 
     if (fab) {
         fab.classList.toggle('is-admin', adminAuthenticated);
@@ -937,6 +938,7 @@ function renderAdminWorkspace() {
     if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
     if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
     if (inlineCookiePanel) inlineCookiePanel.classList.toggle('hidden', !adminAuthenticated);
+    if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated);
     if (adminAuthenticated) syncAdminCookieInput();
 }
 
