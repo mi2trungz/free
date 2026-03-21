@@ -4,7 +4,8 @@ const {
     readShareById,
     sanitizeCookieRaw,
     isValidShareId,
-    isShareExpired
+    isShareExpired,
+    normalizeExpiryInput
 } = require('./_getlink-share-store');
 
 function setCors(res) {
@@ -47,8 +48,9 @@ module.exports = async function (req, res) {
         if (req.method === 'POST' && pathname === '/api/getlink-shares') {
             const body = parseBody(req.body);
             const cookieStr = sanitizeCookieRaw(body.cookieStr || '');
+            const expiresAt = body.expiresAt !== undefined ? normalizeExpiryInput(body.expiresAt) : '';
             if (!cookieStr) return res.status(400).json({ error: 'Missing cookieStr' });
-            const created = await createShare(cookieStr, 'guest');
+            const created = await createShare(cookieStr, 'guest', expiresAt);
             return res.status(200).json({ success: true, ...shareDto(created, req) });
         }
 

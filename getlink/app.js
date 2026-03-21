@@ -100,6 +100,13 @@ function setAdminCookieInfoState(text, mode = 'idle') {
     setStateClass(node, mode);
 }
 
+function setShareCreateExpiryState(text, mode = 'idle') {
+    const node = el('shareCreateExpiryState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
 function escapeHtml(raw) {
     return String(raw || '')
         .replace(/&/g, '&amp;')
@@ -1071,7 +1078,9 @@ async function autoCopyShareLinkOrWarn(url = '') {
 }
 
 async function generateShareIdLink() {
-    const cookie = getRuntimeCookie();
+    const inputCookie = getAdminRuntimeCookieInputValue();
+    const runtimeCookieValue = getRuntimeCookie();
+    const cookie = inputCookie || runtimeCookieValue;
     if (!cookie) {
         renderShareUrl('');
         setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
@@ -1079,18 +1088,45 @@ async function generateShareIdLink() {
         return;
     }
 
+    if (inputCookie && inputCookie !== runtimeCookieValue) {
+        setRuntimeCookie(inputCookie, { source: 'admin', silent: true });
+    }
+
+    const rawExpiryValue = String(el('shareCreateExpiryInput') && el('shareCreateExpiryInput').value || '').trim();
+    const expiresAt = datetimeLocalToIso(rawExpiryValue);
+    if (rawExpiryValue && !expiresAt) {
+        setShareState('Han cua link khong hop le.', 'warning');
+        setShareCreateExpiryState('Han cua link khong hop le. Hay chon lai ngay gio.', 'warning');
+        return;
+    }
+
     const btn = el('generateShareLinkBtn');
     setButtonBusy(btn, true, 'Dang tao...');
     setAdminCookieInfoState('Dang kiem tra cookie...', 'loading');
+    setShareCreateExpiryState(
+        expiresAt ? `Dang tao link ID server co han den ${formatDateTime(expiresAt)}...` : 'Dang tao link ID server khong gioi han...',
+        'loading'
+    );
     const infoPromise = checkCookieForShareInfo(cookie);
     try {
-        const data = await apiRequest('/api/getlink-shares', 'POST', { cookieStr: cookie });
+        const data = await apiRequest('/api/getlink-shares', 'POST', {
+            cookieStr: cookie,
+            expiresAt
+        });
         const shareUrl = String(data.shareUrl || '').trim();
         renderShareUrl(shareUrl);
         await autoCopyShareLinkOrWarn(shareUrl);
+        if (data && data.expiresAt) {
+            setShareState(`Da tao link ID server co han den ${formatDateTime(data.expiresAt)}.`, 'success');
+            setShareCreateExpiryState(`Link moi se het han luc ${formatDateTime(data.expiresAt)}.`, 'success');
+        } else {
+            setShareState('Da tao link ID server khong gioi han.', 'success');
+            setShareCreateExpiryState('Link moi dang o che do khong gioi han.', 'idle');
+        }
     } catch (error) {
         renderShareUrl('');
         setShareState(error.message || 'Khong tao duoc link chia se.', 'error');
+        setShareCreateExpiryState(error.message || 'Khong tao duoc link ID server.', 'error');
     } finally {
         const infoResult = await infoPromise;
         if (infoResult.ok) {
@@ -1901,6 +1937,7 @@ async function bootstrap() {
     }
     updateReadyState();
     setShareState('Chi admin moi tao link chia se.', 'idle');
+    setShareCreateExpiryState('Han cua link ID server: de trong neu muon khong gioi han.', 'idle');
 }
 
 bootstrap();

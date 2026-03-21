@@ -188,13 +188,14 @@ async function readShareById(shareId = '') {
     return mapped;
 }
 
-async function createShare(cookieRaw = '', createdBy = 'guest') {
+async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') {
     const finalCookie = sanitizeCookieRaw(cookieRaw);
     if (!finalCookie) {
         const err = new Error('Missing cookieStr');
         err.httpStatus = 400;
         throw err;
     }
+    const finalExpiresAt = normalizeExpiryInput(expiresAt);
 
     const now = new Date().toISOString();
     for (let i = 0; i < 12; i += 1) {
@@ -209,7 +210,7 @@ async function createShare(cookieRaw = '', createdBy = 'guest') {
             createdAt: now,
             updatedAt: now,
             revokedAt: '',
-            expiresAt: '',
+            expiresAt: finalExpiresAt,
             createdBy: String(createdBy || 'guest').trim(),
             updatedBy: String(createdBy || 'guest').trim(),
             rotatedFrom: ''
