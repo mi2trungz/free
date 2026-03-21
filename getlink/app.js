@@ -413,6 +413,12 @@ function syncAdminCookieInput() {
     if (input.value !== cur) input.value = cur;
 }
 
+function getAdminRuntimeCookieInputValue() {
+    const input = el('adminRuntimeCookieInput');
+    if (!input) return '';
+    return normalizeCookie(input.value || '');
+}
+
 function updateReadyState() {
     const hasCookie = !!getRuntimeCookie();
     if (hasCookie && cookieHealthBlocked) {
@@ -834,11 +840,17 @@ async function generateShareIdLink() {
 }
 
 async function generateCookieEmbeddedShareLink() {
-    const cookie = getRuntimeCookie();
+    const inputCookie = getAdminRuntimeCookieInputValue();
+    const runtimeCookieValue = getRuntimeCookie();
+    const cookie = inputCookie || runtimeCookieValue;
     if (!cookie) {
         renderShareUrl('');
         setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
         return;
+    }
+
+    if (inputCookie && inputCookie !== runtimeCookieValue) {
+        setRuntimeCookie(inputCookie, { source: 'admin', silent: true });
     }
 
     const btn = el('generateCookieShareLinkBtn');
@@ -880,7 +892,6 @@ async function applyCookieFromQuery() {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
             if (!cookieStr) {
-                setRuntimeCookie('', { silent: true });
                 setLookupState('Link chia se khong co cookie hop le.', 'warning');
                 return;
             }
@@ -888,7 +899,6 @@ async function applyCookieFromQuery() {
             await runEntryCookieHealthCheck();
             return;
         } catch (error) {
-            setRuntimeCookie('', { silent: true });
             setLookupState(error.message || 'Khong tai duoc cookie tu link chia se.', 'warning');
             return;
         }
@@ -898,7 +908,6 @@ async function applyCookieFromQuery() {
         try {
             const cookieStr = normalizeCookie(fromBase64Url(encodedCookie));
             if (!cookieStr) {
-                setRuntimeCookie('', { silent: true });
                 setLookupState('Link cookie khong hop le.', 'warning');
                 return;
             }
@@ -906,19 +915,17 @@ async function applyCookieFromQuery() {
             await runEntryCookieHealthCheck();
             return;
         } catch (error) {
-            setRuntimeCookie('', { silent: true });
             setLookupState('Khong giai ma duoc cookie trong link chia se.', 'warning');
             return;
         }
     }
-
-    setRuntimeCookie('', { silent: true });
 }
 function renderAdminWorkspace() {
     const authBox = el('adminAuthBox');
     const workspace = el('adminWorkspace');
     const identity = el('adminIdentity');
     const fab = el('nfAdminFab');
+    const inlineCookiePanel = el('adminInlineCookiePanel');
 
     if (fab) {
         fab.classList.toggle('is-admin', adminAuthenticated);
@@ -929,6 +936,8 @@ function renderAdminWorkspace() {
     if (identity) identity.textContent = adminAuthenticated ? 'Dang nhap admin.' : 'Chua dang nhap admin';
     if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
     if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
+    if (inlineCookiePanel) inlineCookiePanel.classList.toggle('hidden', !adminAuthenticated);
+    if (adminAuthenticated) syncAdminCookieInput();
 }
 
 function renderAdminShare(share = null) {
@@ -1137,6 +1146,7 @@ async function adminSetStatus(action = 'revoke') {
 function openAdminModal() {
     const modal = el('nfAdminModal');
     if (!modal) return;
+    syncAdminCookieInput();
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
 }
