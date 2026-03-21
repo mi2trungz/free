@@ -3,12 +3,16 @@ const TV8_MANUAL_URL = 'https://www.netflix.com/tv8';
 const UNSUPPORTED_URL = 'https://www.netflix.com/unsupported';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const TV_REDIRECT_DELAY_MS = 4000;
+const GETLINK_ADMIN_AUTH_STORAGE_KEY = 'getlink_admin_auth_v1';
 
 let busy = false;
 let mobileGeneratedLink = '';
 let tvGeneratedLoginLink = '';
 let tvFlowBusy = false;
 let adminAuthenticated = false;
+let adminIdToken = '';
+let adminRefreshToken = '';
+let adminEmail = '';
 let runtimeCookie = '';
 let currentAdminShare = null;
 let guestGuardActive = true;
@@ -249,19 +253,76 @@ function hideLookupLoadingOverlay() {
 }
 
 async function apiRequest(path, method = 'GET', body) {
+    const requestPath = String(path || '').trim();
+    const isAdminRoute = /^\/api\/getlink-admin(?:\/|$)/.test(requestPath);
+    const headers = { 'Content-Type': 'application/json' };
+    if (isAdminRoute && adminIdToken) {
+        headers.Authorization = `Bearer ${adminIdToken}`;
+    }
+
     const response = await fetch(path, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'same-origin',
         body: body !== undefined ? JSON.stringify(body) : undefined
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+        if (isAdminRoute && Number(response.status || 0) === 401) {
+            clearAdminAuthState();
+        }
         const err = new Error(String(data.error || 'Request failed'));
         err.httpStatus = Number(response.status || 0);
         throw err;
     }
     return data;
+}
+
+function saveAdminAuthToStorage() {
+    try {
+        const payload = JSON.stringify({
+            idToken: adminIdToken || '',
+            refreshToken: adminRefreshToken || '',
+            email: adminEmail || ''
+        });
+        window.localStorage.setItem(GETLINK_ADMIN_AUTH_STORAGE_KEY, payload);
+    } catch (error) {
+        // ignore storage failures
+    }
+}
+
+function loadAdminAuthFromStorage() {
+    try {
+        const raw = window.localStorage.getItem(GETLINK_ADMIN_AUTH_STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        adminIdToken = String(parsed && parsed.idToken ? parsed.idToken : '').trim();
+        adminRefreshToken = String(parsed && parsed.refreshToken ? parsed.refreshToken : '').trim();
+        adminEmail = String(parsed && parsed.email ? parsed.email : '').trim().toLowerCase();
+    } catch (error) {
+        adminIdToken = '';
+        adminRefreshToken = '';
+        adminEmail = '';
+    }
+}
+
+function clearAdminAuthState() {
+    adminAuthenticated = false;
+    adminIdToken = '';
+    adminRefreshToken = '';
+    adminEmail = '';
+    try {
+        window.localStorage.removeItem(GETLINK_ADMIN_AUTH_STORAGE_KEY);
+    } catch (error) {
+        // ignore storage failures
+    }
+}
+
+function setAdminAuthTokens(idToken = '', refreshToken = '', email = '') {
+    adminIdToken = String(idToken || '').trim();
+    adminRefreshToken = String(refreshToken || '').trim();
+    adminEmail = String(email || '').trim().toLowerCase();
+    saveAdminAuthToStorage();
 }
 
 function getFirebaseApiKey() {
@@ -314,9 +375,10 @@ async function signInWithFirebasePassword(email, password) {
         throw new Error(mapFirebaseSignInError(firebaseError));
     }
     const idToken = String(data && data.idToken ? data.idToken : '').trim();
+    const refreshToken = String(data && data.refreshToken ? data.refreshToken : '').trim();
     const loggedEmail = String(data && data.email ? data.email : email).trim().toLowerCase();
     if (!idToken) throw new Error('Firebase khong tra ve idToken.');
-    return { idToken, email: loggedEmail };
+    return { idToken, refreshToken, email: loggedEmail };
 }
 
 function openDeferredTabAndNavigate() {
@@ -895,17 +957,27 @@ function renderAdminShare(share = null) {
 }
 
 async function loadAdminSession() {
+    if (!adminIdToken) {
+        clearAdminAuthState();
+        setAdminAuthState('Dang xuat.', 'idle');
+        renderAdminWorkspace();
+        return;
+    }
+
     try {
         const data = await apiRequest('/api/getlink-admin/session', 'GET');
         adminAuthenticated = !!(data && data.authenticated);
         if (adminAuthenticated && data.user && data.user.email) {
+            adminEmail = String(data.user.email || '').trim().toLowerCase();
+            saveAdminAuthToStorage();
             setAdminAuthState(`Dang nhap admin: ${data.user.email}`, 'success');
         } else {
+            clearAdminAuthState();
             setAdminAuthState('Dang xuat.', 'idle');
         }
     } catch (error) {
-        adminAuthenticated = false;
-        setAdminAuthState('Khong kiem tra duoc phien admin.', 'warning');
+        clearAdminAuthState();
+        setAdminAuthState('Phien admin het han. Vui long dang nhap lai.', 'warning');
     }
     renderAdminWorkspace();
 }
@@ -927,14 +999,23 @@ async function adminLogin() {
             throw new Error('Email nay khong nam trong NF_ADMIN_EMAILS.');
         }
 
-        const data = await apiRequest('/api/getlink-admin/login', 'POST', { idToken: firebaseSession.idToken });
+        await apiRequest('/api/getlink-admin/login', 'POST', { idToken: firebaseSession.idToken });
+        setAdminAuthTokens(firebaseSession.idToken, firebaseSession.refreshToken, firebaseSession.email);
+
+        const session = await apiRequest('/api/getlink-admin/session', 'GET');
+        if (!session || !session.authenticated) {
+            throw new Error('Khong xac minh duoc phien admin tu backend.');
+        }
+
         adminAuthenticated = true;
-        const userEmail = String(data.user && data.user.email || firebaseSession.email || email);
+        const userEmail = String(session.user && session.user.email || firebaseSession.email || email);
+        adminEmail = String(userEmail || '').trim().toLowerCase();
+        saveAdminAuthToStorage();
         setAdminAuthState(`Dang nhap admin: ${userEmail}`, 'success');
         renderAdminWorkspace();
         setAdminSearchState('Khong tu dong load. Nhap ID/link roi bam Tim link.', 'idle');
     } catch (error) {
-        adminAuthenticated = false;
+        clearAdminAuthState();
         const msg = String(error && error.message ? error.message : '').trim();
         if (!msg) {
             setAdminAuthState('Dang nhap that bai.', 'error');
@@ -955,7 +1036,7 @@ async function adminLogout() {
     } catch (error) {
         // ignore
     } finally {
-        adminAuthenticated = false;
+        clearAdminAuthState();
         renderAdminShare(null);
         setAdminAuthState('Dang xuat.', 'idle');
         renderAdminWorkspace();
@@ -1398,6 +1479,7 @@ function bindEvents() {
 }
 
 async function bootstrap() {
+    loadAdminAuthFromStorage();
     bindEvents();
     renderAdminWorkspace();
     await Promise.all([loadAdminSession(), applyCookieFromQuery()]);

@@ -1,14 +1,6 @@
-﻿const https = require('https');
+const https = require('https');
 const { parseBody } = require('./_nf-store');
-const {
-    issueAdminSession,
-    getSessionUserFromHeaders,
-    setAdminSessionCookie,
-    clearAdminSessionCookie,
-    adminAuthConfig,
-    applyCors,
-    applySecurityHeaders
-} = require('./_security');
+const { adminAuthConfig, applyCors, applySecurityHeaders } = require('./_security');
 const {
     extractShareIdFromQuery,
     isValidShareId,
@@ -26,12 +18,7 @@ function httpRequest(options, body) {
         const req = https.request(options, (res) => {
             let data = '';
             res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => {
-                resolve({
-                    statusCode: Number(res.statusCode || 0),
-                    body: data
-                });
-            });
+            res.on('end', () => resolve({ statusCode: Number(res.statusCode || 0), body: data }));
         });
         req.on('error', reject);
         if (body) req.write(body);
@@ -39,9 +26,16 @@ function httpRequest(options, body) {
     });
 }
 
+function getBearerToken(headers = {}) {
+    const raw = String(headers.authorization || headers.Authorization || '').trim();
+    if (!raw) return '';
+    const match = raw.match(/^Bearer\s+(.+)$/i);
+    return String(match && match[1] ? match[1] : '').trim();
+}
+
 async function lookupFirebaseUserByIdToken(idToken = '') {
     const token = String(idToken || '').trim();
-    if (!token) return { ok: false, statusCode: 400, error: 'Missing idToken' };
+    if (!token) return { ok: false, statusCode: 401, error: 'Missing bearer token' };
     if (!FIREBASE_API_KEY) return { ok: false, statusCode: 500, error: 'Firebase API key is not configured' };
 
     const payload = JSON.stringify({ idToken: token });
@@ -88,6 +82,23 @@ function isAllowedAdminEmail(email = '') {
     return adminEmails.includes(normalized);
 }
 
+async function ensureAdmin(req, res) {
+    const token = getBearerToken(req.headers || {});
+    const lookup = await lookupFirebaseUserByIdToken(token);
+    if (!lookup.ok) {
+        res.status(lookup.statusCode || 401).json({ error: lookup.error || 'Admin authentication required' });
+        return null;
+    }
+    if (!isAllowedAdminEmail(lookup.email)) {
+        res.status(401).json({ error: 'Email is not allowed for /getlink admin' });
+        return null;
+    }
+    return {
+        email: lookup.email,
+        role: 'admin'
+    };
+}
+
 function toAdminShareDto(record, req) {
     const host = String((req.headers && req.headers.host) || '').trim();
     const proto = String((req.headers && (req.headers['x-forwarded-proto'] || req.headers['X-Forwarded-Proto'])) || '').trim();
@@ -106,15 +117,6 @@ function toAdminShareDto(record, req) {
     };
 }
 
-function ensureAdmin(req, res) {
-    const user = getSessionUserFromHeaders(req.headers || {});
-    if (!user) {
-        res.status(401).json({ error: 'Admin authentication required' });
-        return null;
-    }
-    return user;
-}
-
 module.exports = async function (req, res) {
     applyCors(req, res, 'GET,POST,PUT,OPTIONS');
     applySecurityHeaders(res);
@@ -124,37 +126,29 @@ module.exports = async function (req, res) {
         const pathname = String((req.url || '').split('?')[0] || '').trim();
 
         if (pathname === '/api/getlink-admin/session' && req.method === 'GET') {
-            const user = getSessionUserFromHeaders(req.headers || {});
-            return res.status(200).json({ authenticated: !!user, user: user || null });
+            const user = await ensureAdmin(req, res);
+            if (!user) return;
+            return res.status(200).json({ authenticated: true, user });
         }
 
         if (pathname === '/api/getlink-admin/login' && req.method === 'POST') {
             const body = parseBody(req.body);
             const idToken = String(body.idToken || '').trim();
-            if (!idToken) return res.status(400).json({ error: 'Missing idToken' });
-
-            const tokenLookup = await lookupFirebaseUserByIdToken(idToken);
-            if (!tokenLookup.ok) {
-                return res.status(tokenLookup.statusCode || 401).json({ error: tokenLookup.error || 'Firebase verify failed' });
+            const lookup = await lookupFirebaseUserByIdToken(idToken);
+            if (!lookup.ok) {
+                return res.status(lookup.statusCode || 401).json({ error: lookup.error || 'Firebase verify failed' });
             }
-
-            const email = String(tokenLookup.email || '').trim().toLowerCase();
-            if (!isAllowedAdminEmail(email)) {
+            if (!isAllowedAdminEmail(lookup.email)) {
                 return res.status(401).json({ error: 'Email is not allowed for /getlink admin' });
             }
-
-            const token = issueAdminSession(email);
-            if (!token) return res.status(500).json({ error: 'Admin session is not configured' });
-            setAdminSessionCookie(res, token);
-            return res.status(200).json({ success: true, user: { email, role: 'admin' } });
+            return res.status(200).json({ success: true, user: { email: lookup.email, role: 'admin' } });
         }
 
         if (pathname === '/api/getlink-admin/logout' && req.method === 'POST') {
-            clearAdminSessionCookie(res);
             return res.status(200).json({ success: true });
         }
 
-        const adminUser = ensureAdmin(req, res);
+        const adminUser = await ensureAdmin(req, res);
         if (!adminUser) return;
 
         if (pathname === '/api/getlink-admin/search' && req.method === 'POST') {
