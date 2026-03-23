@@ -543,11 +543,12 @@
                         <section id="shareCreatorBox" class="share-box admin-box hidden">
                             <h3 class="share-box-title">Tạo link ID server (chỉ admin)</h3>
                             <div class="share-expiry-wrap">
+                                <input id="shareCreateQuickDaysInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Hạn lẹ: nhập số ngày, ví dụ 7">
                                 <div class="share-create-expiry-grid">
                                     <input id="shareCreateDateInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Ngày: dd/mm hoặc dd/mm/yyyy">
                                     <input id="shareCreateTimeInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Giờ: HH:mm">
                                 </div>
-                                <div id="shareCreateExpiryState" class="state-text state-idle">Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.</div>
+                                <div id="shareCreateExpiryState" class="state-text state-idle">Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.</div>
                             </div>
                             <div class="lookup-actions" style="margin-top:0.45rem;">
                                 <button id="generateShareLinkBtn" class="btn btn-primary" type="button">Tạo link ID server (?s)</button>

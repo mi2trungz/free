@@ -281,13 +281,15 @@ function resetCreatedShareComposer(options = {}) {
     resetCreatedShareCookieSlotStates();
     renderCookieCheckCards([]);
     if (!keepExpiryInputs) {
+        const quickDaysInput = el('shareCreateQuickDaysInput');
         const dateInput = el('shareCreateDateInput');
         const timeInput = el('shareCreateTimeInput');
+        if (quickDaysInput) quickDaysInput.value = '';
         if (dateInput) dateInput.value = '';
         if (timeInput) timeInput.value = '';
     }
     setShareState('Tạo ID server trước, sau đó nhập 3 cookie cho link này.', 'idle');
-    setShareCreateExpiryState('Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
+    setShareCreateExpiryState('Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
     setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
 }
 
@@ -544,6 +546,25 @@ function parseCreateExpiryInput(dateValue = '', timeValue = '') {
         ok: true,
         iso: localDate.toISOString(),
         label
+    };
+}
+
+function parseQuickDaysExpiryInput(daysValue = '') {
+    const raw = String(daysValue || '').trim();
+    if (!raw) return { ok: true, iso: '', label: '', usingQuickDays: false };
+    if (!/^\d+$/.test(raw)) {
+        return { ok: false, error: 'Hạn lẹ phải là số ngày nguyên dương.' };
+    }
+    const days = Number(raw);
+    if (!Number.isInteger(days) || days <= 0) {
+        return { ok: false, error: 'Hạn lẹ phải lớn hơn 0 ngày.' };
+    }
+    const expiresAtMs = Date.now() + days * 24 * 60 * 60 * 1000;
+    return {
+        ok: true,
+        iso: new Date(expiresAtMs).toISOString(),
+        label: `${days} ngày`,
+        usingQuickDays: true
     };
 }
 
@@ -1353,9 +1374,18 @@ async function autoCopyShareLinkOrWarn(url = '') {
 }
 
 async function generateShareIdLink() {
+    const quickDaysValue = String(el('shareCreateQuickDaysInput') && el('shareCreateQuickDaysInput').value || '').trim();
     const rawDateValue = String(el('shareCreateDateInput') && el('shareCreateDateInput').value || '').trim();
     const rawTimeValue = String(el('shareCreateTimeInput') && el('shareCreateTimeInput').value || '').trim();
-    const expiryParse = parseCreateExpiryInput(rawDateValue, rawTimeValue);
+    const quickDaysParse = parseQuickDaysExpiryInput(quickDaysValue);
+    if (!quickDaysParse.ok) {
+        setShareState(quickDaysParse.error || 'Hạn lẹ không hợp lệ.', 'warning');
+        setShareCreateExpiryState(quickDaysParse.error || 'Hạn lẹ không hợp lệ. Hãy nhập lại.', 'warning');
+        return;
+    }
+    const expiryParse = quickDaysParse.usingQuickDays
+        ? quickDaysParse
+        : parseCreateExpiryInput(rawDateValue, rawTimeValue);
     if (!expiryParse.ok) {
         setShareState(expiryParse.error || 'Hạn của link không hợp lệ.', 'warning');
         setShareCreateExpiryState(expiryParse.error || 'Hạn của link không hợp lệ. Hãy nhập lại.', 'warning');
@@ -1367,7 +1397,11 @@ async function generateShareIdLink() {
     setButtonBusy(btn, true, 'Đang tạo...');
     setAdminCookieInfoState('Đang chờ dữ liệu cookie của link ID.', 'idle');
     setShareCreateExpiryState(
-        expiresAt ? `Đang tạo link ID server có hạn đến ${expiryParse.label}...` : 'Đang tạo link ID server không giới hạn...',
+        expiresAt
+            ? (quickDaysParse.usingQuickDays
+                ? `Đang tạo link ID server với hạn lẹ ${expiryParse.label}, hết hạn lúc ${formatDateTime(expiresAt)}...`
+                : `Đang tạo link ID server có hạn đến ${expiryParse.label}...`)
+            : 'Đang tạo link ID server không giới hạn...',
         'loading'
     );
     try {
@@ -1419,17 +1453,22 @@ async function applyCookieFromQuery() {
 
     if (shareId) {
         pendingShareIdFromUrl = shareId;
+        showLookupLoadingOverlay('Đang kiểm tra cookie của link ID, vui lòng chờ...');
+        setLookupState('Đang thử cookie phù hợp từ link ID...', 'loading');
         try {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
             if (!cookieStr) {
+                hideLookupLoadingOverlay();
                 setLookupState('Link chia sẻ không có cookie hợp lệ.', 'warning');
                 return;
             }
             setRuntimeCookie(cookieStr, { source: 'share-id' });
             await runEntryCookieHealthCheck();
+            hideLookupLoadingOverlay();
             return;
         } catch (error) {
+            hideLookupLoadingOverlay();
             setLookupState(error.message || 'Không tải được cookie từ link chia sẻ.', 'warning');
             return;
         }
@@ -1763,7 +1802,14 @@ async function saveCreatedShareCookies() {
             setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
         }
         await runCookieChecksForShare(createdAdminShare.id, cookies, CREATED_SHARE_COOKIE_SLOTS, setCreatedShareCookieSlotState);
-        setShareState('Đã lưu cookie cho link ID mới và check các ô đã nhập.', 'success');
+        const link = String(el('shareLinkOutput') && el('shareLinkOutput').value || createdAdminShare.shareUrl || '').trim();
+        const copied = await autoCopyShareLinkOrWarn(link);
+        setShareState(
+            copied
+                ? 'Đã lưu cookie, auto-check xong và tự động sao chép lại link ID server.'
+                : 'Đã lưu cookie và auto-check xong, nhưng không tự copy lại được. Hãy bấm Sao chép.',
+            copied ? 'success' : 'warning'
+        );
     } catch (error) {
         setShareState(error.message || 'Không lưu được cookie cho link mới.', 'error');
     } finally {
@@ -2145,6 +2191,15 @@ function bindEvents() {
     const generateShareLinkBtn = el('generateShareLinkBtn');
     if (generateShareLinkBtn) generateShareLinkBtn.addEventListener('click', generateShareIdLink);
 
+    const shareCreateQuickDaysInput = el('shareCreateQuickDaysInput');
+    if (shareCreateQuickDaysInput) {
+        shareCreateQuickDaysInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            generateShareIdLink();
+        });
+    }
+
     const shareCreateDateInput = el('shareCreateDateInput');
     if (shareCreateDateInput) {
         shareCreateDateInput.addEventListener('keydown', (event) => {
@@ -2391,7 +2446,7 @@ async function bootstrap() {
     }
     updateReadyState();
     setShareState('Chỉ admin mới tạo link chia sẻ.', 'idle');
-    setShareCreateExpiryState('Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
+    setShareCreateExpiryState('Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
 }
 
 bootstrap();
