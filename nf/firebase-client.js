@@ -203,8 +203,27 @@ function splitImportCookieBlocks(content = '') {
     return blocks;
 }
 
+function normalizeCookieExtractionInput(cookieVal = '') {
+    let raw = String(cookieVal || '').replace(/\r\n?/g, '\n').trim();
+    if (!raw) return '';
+    if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
+        raw = raw.slice(1, -1).trim();
+    }
+    return raw;
+}
+
+function looksLikeRawNetflixId(value = '') {
+    const text = String(value || '').trim();
+    if (!text) return false;
+    if (/[;\n]/.test(text)) return false;
+    if (/^(?:NetflixId|SecureNetflixId)\s*=/i.test(text)) return false;
+    if (/^ct(?:%3D|=)/i.test(text)) return true;
+    if (/^v(?:%3D|=)\d+/i.test(text)) return true;
+    return /^[A-Za-z0-9._~%\-]{80,}$/.test(text);
+}
+
 function extractNetflixIdsFromCookie(cookieVal = '') {
-    const raw = String(cookieVal || '').trim();
+    const raw = normalizeCookieExtractionInput(cookieVal);
     if (!raw) return { netflixId: '', secureNetflixId: '' };
 
     let netflixId = '';
@@ -226,23 +245,34 @@ function extractNetflixIdsFromCookie(cookieVal = '') {
 
     const lines = raw.split('\n');
     for (let i = 0; i < lines.length; i += 1) {
-        const line = lines[i];
+        const line = String(lines[i] || '').trim();
+        if (!line) continue;
+
         const parts = line.split('\t');
         if (parts.length >= 7) {
             const name = String(parts[5] || '').trim();
             const value = String(parts[6] || '').trim();
             if (name === 'NetflixId' && value) netflixId = value;
             if (name === 'SecureNetflixId' && value) secureNetflixId = value;
+            continue;
         }
+
+        const n = line.match(/(?:^|;|\s)NetflixId=([^;\s]+)/i);
+        const s = line.match(/(?:^|;|\s)SecureNetflixId=([^;\s]+)/i);
+        if (n && n[1]) netflixId = String(n[1]).trim();
+        if (s && s[1]) secureNetflixId = String(s[1]).trim();
     }
 
     if (!netflixId) {
-        const m = raw.match(/(?:^|;|\s)NetflixId=([^;\n]+)/i);
-        if (m && m[1]) netflixId = decodeURIComponent(m[1].trim());
+        const m = raw.match(/(?:^|;|\s)NetflixId=([^;\s]+)/i);
+        if (m && m[1]) netflixId = String(m[1]).trim();
     }
     if (!secureNetflixId) {
-        const m = raw.match(/(?:^|;|\s)SecureNetflixId=([^;\n]+)/i);
-        if (m && m[1]) secureNetflixId = decodeURIComponent(m[1].trim());
+        const m = raw.match(/(?:^|;|\s)SecureNetflixId=([^;\s]+)/i);
+        if (m && m[1]) secureNetflixId = String(m[1]).trim();
+    }
+    if (!netflixId && looksLikeRawNetflixId(raw)) {
+        netflixId = raw;
     }
 
     return { netflixId: String(netflixId || '').trim(), secureNetflixId: String(secureNetflixId || '').trim() };

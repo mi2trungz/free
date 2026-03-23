@@ -319,11 +319,11 @@
         .cookie-check-card {
             border: 1px solid var(--line);
             border-radius: 10px;
-            padding: 0.58rem;
+            padding: 0.72rem;
             background: rgba(255, 255, 255, 0.03);
             display: grid;
-            gap: 0.34rem;
-            font-size: 0.75rem;
+            gap: 0.58rem;
+            font-size: 0.9rem;
         }
 
         .cookie-check-card.good {
@@ -338,7 +338,7 @@
 
         .cookie-check-card h4 {
             margin: 0;
-            font-size: 0.78rem;
+            font-size: 1rem;
             color: #e8f0ff;
         }
 
@@ -346,6 +346,63 @@
             margin: 0;
             color: #c8d6f2;
             word-break: break-word;
+        }
+
+        .cookie-check-fields {
+            display: grid;
+            gap: 0.52rem;
+        }
+
+        .cookie-check-field {
+            display: grid;
+            gap: 0.24rem;
+        }
+
+        .cookie-check-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #9cb5e8;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .cookie-check-value,
+        .cookie-check-badge {
+            font-size: 0.98rem;
+            line-height: 1.35;
+            font-weight: 700;
+            color: #eef4ff;
+            word-break: break-word;
+        }
+
+        .cookie-check-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: fit-content;
+            max-width: 100%;
+            min-height: 30px;
+            padding: 0.24rem 0.62rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .cookie-check-badge.good {
+            color: #c8ffdf;
+            border-color: rgba(34, 197, 94, 0.72);
+            background: rgba(34, 197, 94, 0.16);
+        }
+
+        .cookie-check-badge.bad {
+            color: #ffc2c2;
+            border-color: rgba(239, 68, 68, 0.72);
+            background: rgba(239, 68, 68, 0.16);
+        }
+
+        .cookie-check-note {
+            font-size: 0.88rem;
+            line-height: 1.45;
         }
 
         .cookie-editor-actions {
@@ -857,6 +914,7 @@
                     <p><strong>Bước 3:</strong> Vào trang <a href="https://www.netflix.com/tv2" target="_blank" rel="noopener noreferrer">Netflix.com/tv2</a> và nhập mã ở bước 1 vào</p>
                     <p>Nếu không có máy tính, hãy gửi mã để Admin đăng nhập giúp</p>
                 </div>
+                <button id="tvGuideDesktopLoginBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">ĐĂNG NHẬP MÁY TÍNH</button>
                 <a id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" href="https://www.netflix.com/tv2" target="_blank" rel="noopener noreferrer">MỞ NETFLIX.COM/TV2</a>
             </div>
         </div>

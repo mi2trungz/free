@@ -184,20 +184,57 @@ function renderCookieCheckCards(results = []) {
         return;
     }
 
+    const getBadgeTone = (field, value) => {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (field === 'plan' && normalized === 'premium') return 'good';
+        if (field === 'hold') {
+            if (normalized === 'no') return 'good';
+            if (normalized === 'yes') return 'bad';
+        }
+        if (field === 'max_streams') {
+            if (normalized === '4') return 'good';
+            if (normalized) return 'bad';
+        }
+        return '';
+    };
+
     content.innerHTML = `<div class="cookie-check-grid">${
         cards.map((item) => {
             const label = SHARE_COOKIE_SLOTS.find((slot) => slot.key === item.slot)?.label || String(item.slot || '');
             const summary = item.summary || {};
             const statusText = item.ok ? 'PASS' : 'FAIL';
             const errorText = String(item.error || '').trim();
+            const planValue = String(summary.plan || '-').trim() || '-';
+            const holdValue = String(summary.paymentHold || '-').trim() || '-';
+            const maxStreamsValue = String(summary.max_streams || '-').trim() || '-';
+            const countryValue = String(summary.country || '-').trim() || '-';
+            const profilesValue = String(summary.profiles || '-').trim() || '-';
             return `
                 <article class="cookie-check-card ${item.ok ? 'good' : 'bad'}">
                     <h4>${escapeHtml(label)} - ${escapeHtml(statusText)}</h4>
-                    <p>Plan: ${escapeHtml(summary.plan || '-')}</p>
-                    <p>Hold: ${escapeHtml(summary.paymentHold || '-')}</p>
-                    <p>Country: ${escapeHtml(summary.country || '-')}</p>
-                    <p>Profiles: ${escapeHtml(summary.profiles || '-')}</p>
-                    <p>${escapeHtml(errorText || (item.ok ? 'Cookie dùng được.' : 'Cookie không dùng được.'))}</p>
+                    <div class="cookie-check-fields">
+                        <div class="cookie-check-field">
+                            <span class="cookie-check-label">Plan</span>
+                            <span class="cookie-check-badge ${getBadgeTone('plan', planValue)}">${escapeHtml(planValue)}</span>
+                        </div>
+                        <div class="cookie-check-field">
+                            <span class="cookie-check-label">Hold</span>
+                            <span class="cookie-check-badge ${getBadgeTone('hold', holdValue)}">${escapeHtml(holdValue)}</span>
+                        </div>
+                        <div class="cookie-check-field">
+                            <span class="cookie-check-label">Max stream</span>
+                            <span class="cookie-check-badge ${getBadgeTone('max_streams', maxStreamsValue)}">${escapeHtml(maxStreamsValue)}</span>
+                        </div>
+                        <div class="cookie-check-field">
+                            <span class="cookie-check-label">Country</span>
+                            <span class="cookie-check-value">${escapeHtml(countryValue)}</span>
+                        </div>
+                        <div class="cookie-check-field">
+                            <span class="cookie-check-label">Profiles</span>
+                            <span class="cookie-check-value">${escapeHtml(profilesValue)}</span>
+                        </div>
+                    </div>
+                    <p class="cookie-check-note">${escapeHtml(errorText || (item.ok ? 'Cookie dùng được.' : 'Cookie không dùng được.'))}</p>
                 </article>
             `;
         }).join('')
@@ -1820,7 +1857,7 @@ async function adminSaveCookies() {
             setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
         }
         await runCookieChecksForShare((data.share && data.share.id) || currentAdminShare.id, cookies, SHARE_COOKIE_SLOTS, setShareCookieSlotState);
-        setAdminSearchState('Đã cập nhật cookie và check các ô đã nhập.', 'success');
+        setAdminSearchState('Đã cập nhật cookie và tự động check toàn bộ.', 'success');
     } catch (error) {
         setAdminSearchState(error.message || 'Không cập nhật được cookie.', 'error');
     } finally {
@@ -2069,6 +2106,10 @@ function bindEvents() {
         button.addEventListener('click', () => {
             const device = String(button.dataset.device || '').trim();
             if (!device) return;
+            if (device === 'tv') {
+                handleConfirmedDevice(device);
+                return;
+            }
             openDeviceConfirmModal(device);
         });
     });
@@ -2198,6 +2239,13 @@ function bindEvents() {
 
     const tvGuideCloseBtn = el('tvGuideCloseBtn');
     if (tvGuideCloseBtn) tvGuideCloseBtn.addEventListener('click', closeTvGuideModal);
+
+    const tvGuideDesktopLoginBtn = el('tvGuideDesktopLoginBtn');
+    if (tvGuideDesktopLoginBtn) {
+        tvGuideDesktopLoginBtn.addEventListener('click', () => {
+            generateDeviceLink('desktop', 'android');
+        });
+    }
 
     const tvGuideStartBtn = el('tvGuideStartBtn');
     if (tvGuideStartBtn) {
