@@ -6,12 +6,15 @@ const {
     isValidShareId,
     readShareById,
     updateShareCookie,
+    updateShareCookies,
     setShareStatus,
     rotateShareId,
     sanitizeCookieRaw,
+    sanitizeShareCookies,
     setShareExpiry,
     isShareExpired
 } = require('./_getlink-share-store');
+const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
 
 const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
 
@@ -101,23 +104,42 @@ async function ensureAdmin(req, res) {
     };
 }
 
-function toAdminShareDto(record, req) {
+function getOrigin(req) {
     const host = String((req.headers && req.headers.host) || '').trim();
     const proto = String((req.headers && (req.headers['x-forwarded-proto'] || req.headers['X-Forwarded-Proto'])) || '').trim();
-    const origin = proto && host
+    return proto && host
         ? `${proto}://${host}`
         : (host ? `http://${host}` : 'http://localhost:3005');
+}
 
+function toAdminShareDto(record, req) {
+    const origin = getOrigin(req);
+    const cookies = sanitizeShareCookies(record.cookies || {});
     return {
         id: record.id,
         status: record.status,
-        cookieRaw: record.cookieRaw || '',
+        cookieRaw: cookies.primary || '',
+        cookies,
         createdAt: record.createdAt || '',
         updatedAt: record.updatedAt || '',
         revokedAt: record.revokedAt || '',
         expiresAt: record.expiresAt || '',
         expired: isShareExpired(record),
         shareUrl: `${origin}/getlink?s=${encodeURIComponent(record.id)}`
+    };
+}
+
+async function buildCookieCheckResult(slot, cookieRaw) {
+    const result = await evaluateGetlinkCookie(cookieRaw);
+    return {
+        slot,
+        ok: !!result.ok,
+        error: String(result.error || '').trim(),
+        summary: result.summary || {},
+        accountInfo: result.accountInfo || null,
+        overloadOutcome: result.overloadOutcome || '',
+        overloadSignal: result.overloadSignal || '',
+        overloadMessage: result.overloadMessage || ''
     };
 }
 
@@ -171,10 +193,43 @@ module.exports = async function (req, res) {
             if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
 
             const body = parseBody(req.body);
-            const cookieStr = sanitizeCookieRaw(body.cookieStr || '');
-            if (!cookieStr) return res.status(400).json({ error: 'Missing cookieStr' });
-            const updated = await updateShareCookie(shareId, cookieStr, adminUser.email);
+            let updated = null;
+            if (body && typeof body.cookies === 'object') {
+                updated = await updateShareCookies(shareId, sanitizeShareCookies(body.cookies || {}), adminUser.email);
+            } else {
+                const cookieStr = sanitizeCookieRaw(body.cookieStr || '');
+                updated = await updateShareCookie(shareId, cookieStr, adminUser.email);
+            }
             return res.status(200).json({ success: true, share: toAdminShareDto(updated, req) });
+        }
+
+        const checkCookieMatch = pathname.match(/^\/api\/getlink-admin\/shares\/([^/]+)\/check-cookie$/);
+        if (checkCookieMatch && req.method === 'POST') {
+            const shareId = decodeURIComponent(checkCookieMatch[1] || '');
+            if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+            const record = await readShareById(shareId);
+            if (!record) return res.status(404).json({ error: 'Share link not found' });
+            const body = parseBody(req.body);
+            const slot = String(body.slot || '').trim();
+            const cookies = sanitizeShareCookies((body && body.cookies) || record.cookies || {});
+            const cookieRaw = sanitizeCookieRaw(body.cookieStr || cookies[slot] || '');
+            const result = await buildCookieCheckResult(slot, cookieRaw);
+            return res.status(200).json({ success: true, result });
+        }
+
+        const checkAllMatch = pathname.match(/^\/api\/getlink-admin\/shares\/([^/]+)\/check-all$/);
+        if (checkAllMatch && req.method === 'POST') {
+            const shareId = decodeURIComponent(checkAllMatch[1] || '');
+            if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+            const record = await readShareById(shareId);
+            if (!record) return res.status(404).json({ error: 'Share link not found' });
+            const body = parseBody(req.body);
+            const cookies = sanitizeShareCookies((body && body.cookies) || record.cookies || {});
+            const results = [];
+            for (const slot of ['primary', 'backup1', 'backup2']) {
+                results.push(await buildCookieCheckResult(slot, cookies[slot] || ''));
+            }
+            return res.status(200).json({ success: true, results });
         }
 
         const expiryMatch = pathname.match(/^\/api\/getlink-admin\/shares\/([^/]+)\/expiry$/);

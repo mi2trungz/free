@@ -1,12 +1,14 @@
-﻿const { parseBody } = require('./_nf-store');
+const { parseBody } = require('./_nf-store');
 const {
     createShare,
     readShareById,
-    sanitizeCookieRaw,
     isValidShareId,
     isShareExpired,
-    normalizeExpiryInput
+    normalizeExpiryInput,
+    getCookieListFromRecord,
+    promoteShareCookieSlot
 } = require('./_getlink-share-store');
+const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -38,6 +40,45 @@ function shareDto(record, req) {
     };
 }
 
+async function resolveShareCookie(record) {
+    const candidates = getCookieListFromRecord(record);
+    const checks = [];
+
+    for (const candidate of candidates) {
+        if (!candidate.cookieRaw) {
+            checks.push({ slot: candidate.slot, ok: false, error: 'Cookie trong.' });
+            continue;
+        }
+        const result = await evaluateGetlinkCookie(candidate.cookieRaw);
+        checks.push({
+            slot: candidate.slot,
+            ok: !!result.ok,
+            error: String(result.error || '').trim(),
+            summary: result.summary || null
+        });
+        if (!result.ok) continue;
+
+        let promotedShare = record;
+        if (candidate.slot !== 'primary') {
+            promotedShare = await promoteShareCookieSlot(record.id, candidate.slot, 'guest-resolve');
+        }
+
+        return {
+            ok: true,
+            cookieStr: candidate.cookieRaw,
+            slot: candidate.slot,
+            checks,
+            share: promotedShare
+        };
+    }
+
+    return {
+        ok: false,
+        error: 'Het cookie hop le. Vui long lien he admin de duoc bao hanh.',
+        checks
+    };
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -47,10 +88,8 @@ module.exports = async function (req, res) {
 
         if (req.method === 'POST' && pathname === '/api/getlink-shares') {
             const body = parseBody(req.body);
-            const cookieStr = sanitizeCookieRaw(body.cookieStr || '');
             const expiresAt = body.expiresAt !== undefined ? normalizeExpiryInput(body.expiresAt) : '';
-            if (!cookieStr) return res.status(400).json({ error: 'Missing cookieStr' });
-            const created = await createShare(cookieStr, 'guest', expiresAt);
+            const created = await createShare('', 'guest', expiresAt);
             return res.status(200).json({ success: true, ...shareDto(created, req) });
         }
 
@@ -67,10 +106,21 @@ module.exports = async function (req, res) {
                 return res.status(410).json({ error: 'Share link has expired' });
             }
 
+            const resolved = await resolveShareCookie(record);
+            if (!resolved.ok) {
+                return res.status(410).json({
+                    error: resolved.error,
+                    checks: resolved.checks || []
+                });
+            }
+
             return res.status(200).json({
                 success: true,
                 id: record.id,
-                cookieStr: record.cookieRaw || ''
+                cookieStr: resolved.cookieStr,
+                resolvedSlot: resolved.slot,
+                checks: resolved.checks || [],
+                share: shareDto(resolved.share || record, req)
             });
         }
 

@@ -15,6 +15,7 @@ let adminRefreshToken = '';
 let adminEmail = '';
 let runtimeCookie = '';
 let currentAdminShare = null;
+let createdAdminShare = null;
 let pendingShareIdFromUrl = '';
 let autoLoadedAdminShareId = '';
 let guestGuardActive = true;
@@ -29,6 +30,17 @@ let disclaimerDismissed = false;
 let disclaimerReadyAt = 0;
 let disclaimerTimer = null;
 let disclaimerEligibilityResolved = false;
+let isInlineEditMode = false;
+const SHARE_COOKIE_SLOTS = [
+    { key: 'primary', label: 'Cookie chính', viewInputId: 'currentShareCookiePrimaryDisplay', viewStateId: 'currentShareCookiePrimaryState', viewCheckBtnId: 'viewCheckPrimaryCookieBtn', viewUseBtnId: 'viewUsePrimaryCookieBtn' },
+    { key: 'backup1', label: 'Cookie phụ 1', viewInputId: 'currentShareCookieBackup1Display', viewStateId: 'currentShareCookieBackup1State', viewCheckBtnId: 'viewCheckBackup1CookieBtn', viewUseBtnId: 'viewUseBackup1CookieBtn' },
+    { key: 'backup2', label: 'Cookie phụ 2', viewInputId: 'currentShareCookieBackup2Display', viewStateId: 'currentShareCookieBackup2State', viewCheckBtnId: 'viewCheckBackup2CookieBtn', viewUseBtnId: 'viewUseBackup2CookieBtn' }
+];
+const CREATED_SHARE_COOKIE_SLOTS = [
+    { key: 'primary', label: 'Cookie chính', viewInputId: 'creatorShareCookiePrimaryInput', viewStateId: 'creatorShareCookiePrimaryState', viewCheckBtnId: 'creatorCheckPrimaryCookieBtn', viewUseBtnId: 'creatorUsePrimaryCookieBtn' },
+    { key: 'backup1', label: 'Cookie phụ 1', viewInputId: 'creatorShareCookieBackup1Input', viewStateId: 'creatorShareCookieBackup1State', viewCheckBtnId: 'creatorCheckBackup1CookieBtn', viewUseBtnId: 'creatorUseBackup1CookieBtn' },
+    { key: 'backup2', label: 'Cookie phụ 2', viewInputId: 'creatorShareCookieBackup2Input', viewStateId: 'creatorShareCookieBackup2State', viewCheckBtnId: 'creatorCheckBackup2CookieBtn', viewUseBtnId: 'creatorUseBackup2CookieBtn' }
+];
 
 function el(id) {
     return document.getElementById(id);
@@ -105,6 +117,203 @@ function setShareCreateExpiryState(text, mode = 'idle') {
     if (!node) return;
     node.textContent = String(text || '').trim();
     setStateClass(node, mode);
+}
+
+function getCookiesFromSlotInputs(slots = []) {
+    const cookies = {};
+    slots.forEach((slot) => {
+        cookies[slot.key] = normalizeCookie(el(slot.viewInputId) && el(slot.viewInputId).value || '');
+    });
+    return cookies;
+}
+
+function setCookiesToSlotInputs(slots = [], cookies = {}) {
+    const normalized = cookies && typeof cookies === 'object' ? cookies : {};
+    slots.forEach((slot) => {
+        const input = el(slot.viewInputId);
+        if (input) input.value = String(normalized[slot.key] || '').trim();
+    });
+}
+
+function getCurrentShareEditableCookies() {
+    return getCookiesFromSlotInputs(SHARE_COOKIE_SLOTS);
+}
+
+function getCreatedShareEditableCookies() {
+    return getCookiesFromSlotInputs(CREATED_SHARE_COOKIE_SLOTS);
+}
+
+function setShareCookieViewOutputs(cookies = {}) {
+    setCookiesToSlotInputs(SHARE_COOKIE_SLOTS, cookies);
+}
+
+function setCreatedShareCookieOutputs(cookies = {}) {
+    setCookiesToSlotInputs(CREATED_SHARE_COOKIE_SLOTS, cookies);
+}
+
+function setSlotStateForConfig(slotConfigs, slotKey, text = 'Chưa check', ok = null) {
+    const slot = slotConfigs.find((item) => item.key === slotKey);
+    if (!slot) return;
+    const node = el(slot.viewStateId);
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    node.style.color = ok === true ? '#86efac' : (ok === false ? '#fca5a5' : '#9cb5e8');
+}
+
+function setShareCookieSlotState(slotKey, text = 'Chưa check', ok = null) {
+    setSlotStateForConfig(SHARE_COOKIE_SLOTS, slotKey, text, ok);
+}
+
+function setCreatedShareCookieSlotState(slotKey, text = 'Chưa check', ok = null) {
+    setSlotStateForConfig(CREATED_SHARE_COOKIE_SLOTS, slotKey, text, ok);
+}
+
+function resetShareCookieSlotStates() {
+    SHARE_COOKIE_SLOTS.forEach((slot) => setShareCookieSlotState(slot.key, 'Chưa check', null));
+}
+
+function resetCreatedShareCookieSlotStates() {
+    CREATED_SHARE_COOKIE_SLOTS.forEach((slot) => setCreatedShareCookieSlotState(slot.key, 'Chưa check', null));
+}
+
+function renderCookieCheckCards(results = []) {
+    const content = el('adminCookieInfoContent');
+    if (!content) return;
+    const cards = Array.isArray(results) ? results : [];
+    if (cards.length === 0) {
+        content.innerHTML = '<p class="admin-cookie-info-placeholder">Chưa có dữ liệu cookie info.</p>';
+        return;
+    }
+
+    content.innerHTML = `<div class="cookie-check-grid">${
+        cards.map((item) => {
+            const label = SHARE_COOKIE_SLOTS.find((slot) => slot.key === item.slot)?.label || String(item.slot || '');
+            const summary = item.summary || {};
+            const statusText = item.ok ? 'PASS' : 'FAIL';
+            const errorText = String(item.error || '').trim();
+            return `
+                <article class="cookie-check-card ${item.ok ? 'good' : 'bad'}">
+                    <h4>${escapeHtml(label)} - ${escapeHtml(statusText)}</h4>
+                    <p>Plan: ${escapeHtml(summary.plan || '-')}</p>
+                    <p>Hold: ${escapeHtml(summary.paymentHold || '-')}</p>
+                    <p>Country: ${escapeHtml(summary.country || '-')}</p>
+                    <p>Profiles: ${escapeHtml(summary.profiles || '-')}</p>
+                    <p>${escapeHtml(errorText || (item.ok ? 'Cookie dùng được.' : 'Cookie không dùng được.'))}</p>
+                </article>
+            `;
+        }).join('')
+    }</div>`;
+}
+
+function isViewingPendingShare() {
+    return !!String(pendingShareIdFromUrl || '').trim();
+}
+
+function getShareCookiesForCurrentMode() {
+    if (isInlineEditMode) return getCurrentShareEditableCookies();
+    const share = currentAdminShare || {};
+    return share && share.cookies ? share.cookies : { primary: share.cookieRaw || '', backup1: '', backup2: '' };
+}
+
+function setInlineEditMode(nextMode) {
+    isInlineEditMode = !!nextMode;
+    const editBtn = el('editCurrentShareBtn');
+    const viewCheckAllBtn = el('viewCheckAllShareCookiesBtn');
+    const saveBtn = el('saveCurrentShareBtn');
+    const cancelBtn = el('cancelCurrentShareEditBtn');
+    const expiryInput = el('currentShareExpiryInput');
+    if (editBtn) editBtn.classList.toggle('hidden', isInlineEditMode);
+    if (saveBtn) saveBtn.classList.toggle('hidden', !isInlineEditMode);
+    if (cancelBtn) cancelBtn.classList.toggle('hidden', !isInlineEditMode);
+    if (expiryInput) expiryInput.disabled = !isInlineEditMode;
+    SHARE_COOKIE_SLOTS.forEach((slot) => {
+        const input = el(slot.viewInputId);
+        if (input) input.readOnly = !isInlineEditMode;
+    });
+}
+
+function renderCurrentShareSummary(share = null) {
+    const summaryBox = el('currentShareSummaryBox');
+    if (!summaryBox) return;
+    if (!share || !isViewingPendingShare() || !adminAuthenticated) {
+        summaryBox.classList.add('hidden');
+        return;
+    }
+
+    const expired = !!(share && (share.expired || isShareExpiredClient(share)));
+    const status = String(share.status || 'active');
+    let statusLabel = 'Đang hoạt động';
+    if (status !== 'active') statusLabel = 'Đã khóa / Thu hồi';
+    else if (expired) statusLabel = 'Đã hết hạn';
+
+    const cookies = share.cookies || { primary: share.cookieRaw || '', backup1: '', backup2: '' };
+    const idInput = el('currentShareIdDisplay');
+    const statusInput = el('currentShareStatusDisplay');
+    const expiryInput = el('currentShareExpiryInput');
+    const updatedInput = el('currentShareUpdatedDisplay');
+    const urlInput = el('currentShareUrlDisplay');
+    if (idInput) idInput.value = String(share.id || '-');
+    if (statusInput) statusInput.value = statusLabel;
+    if (expiryInput) expiryInput.value = toDatetimeLocalFromIso(share.expiresAt);
+    if (updatedInput) updatedInput.value = formatDateTime(share.updatedAt);
+    if (urlInput) urlInput.value = String(share.shareUrl || '');
+    setShareCookieViewOutputs(cookies);
+    summaryBox.classList.remove('hidden');
+}
+
+function renderCreatedShareEditor(share = null) {
+    const section = el('shareCreateCookieSection');
+    if (!section) return;
+    if (!share || !share.id || !adminAuthenticated || isViewingPendingShare()) {
+        section.classList.add('hidden');
+        return;
+    }
+    setCreatedShareCookieOutputs(share.cookies || { primary: share.cookieRaw || '', backup1: '', backup2: '' });
+    section.classList.remove('hidden');
+}
+
+async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHARE_COOKIE_SLOTS, setSlotState = setShareCookieSlotState) {
+    const normalized = {
+        primary: normalizeCookie(cookies.primary || ''),
+        backup1: normalizeCookie(cookies.backup1 || ''),
+        backup2: normalizeCookie(cookies.backup2 || '')
+    };
+    const results = [];
+
+    for (const slot of slotConfigs) {
+        const cookieStr = normalized[slot.key] || '';
+        if (!cookieStr) {
+            setSlotState(slot.key, 'Để trống', null);
+            continue;
+        }
+        try {
+            const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(shareId)}/check-cookie`, 'POST', {
+                slot: slot.key,
+                cookieStr,
+                cookies: normalized
+            });
+            const result = data.result || { slot: slot.key, ok: false, error: 'Không check được cookie.', summary: {} };
+            results.push(result);
+            setSlotState(slot.key, result.ok ? 'PASS' : 'FAIL', !!result.ok);
+        } catch (error) {
+            const result = {
+                slot: slot.key,
+                ok: false,
+                error: error.message || 'Check cookie thất bại.',
+                summary: {}
+            };
+            results.push(result);
+            setSlotState(slot.key, 'FAIL', false);
+        }
+    }
+
+    renderCookieCheckCards(results);
+    if (results.length === 0) {
+        setAdminCookieInfoState('Chưa có cookie nào để check.', 'idle');
+    } else {
+        setAdminCookieInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
+    }
+    return results;
 }
 
 function escapeHtml(raw) {
@@ -263,6 +472,62 @@ function formatDateTime(value = '') {
     return new Date(ms).toLocaleString('vi-VN');
 }
 
+function parseCreateExpiryInput(dateValue = '', timeValue = '') {
+    const rawDate = String(dateValue || '').trim();
+    const rawTime = String(timeValue || '').trim();
+    if (!rawDate && !rawTime) {
+        return { ok: true, iso: '', label: 'không giới hạn' };
+    }
+    if (!rawDate && rawTime) {
+        return { ok: false, error: 'Bạn cần nhập ngày trước khi nhập giờ.' };
+    }
+
+    const dateMatch = rawDate.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?$/);
+    if (!dateMatch) {
+        return { ok: false, error: 'Ngày phải theo dạng dd/mm hoặc dd/mm/yyyy.' };
+    }
+
+    const day = Number(dateMatch[1]);
+    const month = Number(dateMatch[2]);
+    const year = dateMatch[3] ? Number(dateMatch[3]) : new Date().getFullYear();
+    if (!Number.isInteger(day) || !Number.isInteger(month) || !Number.isInteger(year)) {
+        return { ok: false, error: 'Ngày không hợp lệ.' };
+    }
+
+    let hours = 0;
+    let minutes = 0;
+    if (rawTime) {
+        const timeMatch = rawTime.match(/^(\d{1,2}):(\d{2})$/);
+        if (!timeMatch) {
+            return { ok: false, error: 'Giờ phải theo dạng HH:mm.' };
+        }
+        hours = Number(timeMatch[1]);
+        minutes = Number(timeMatch[2]);
+        if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+            return { ok: false, error: 'Giờ không hợp lệ.' };
+        }
+    }
+
+    const localDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    if (
+        localDate.getFullYear() !== year ||
+        localDate.getMonth() !== month - 1 ||
+        localDate.getDate() !== day ||
+        localDate.getHours() !== hours ||
+        localDate.getMinutes() !== minutes
+    ) {
+        return { ok: false, error: 'Ngày giờ không hợp lệ.' };
+    }
+
+    const pad = (num) => String(num).padStart(2, '0');
+    const label = `${pad(day)}/${pad(month)}/${year} ${pad(hours)}:${pad(minutes)}`;
+    return {
+        ok: true,
+        iso: localDate.toISOString(),
+        label
+    };
+}
+
 function toDatetimeLocalFromIso(value = '') {
     const ms = parseDateMs(value);
     if (!ms) return '';
@@ -304,9 +569,8 @@ function applyCookieBlockedState(reason = '', detail = '') {
     cookieHealthBlocked = true;
     cookieHealthReason = normalizedReason;
     setDeviceButtonsEnabled(false);
-    setAdminRuntimeCookieState(`Cookie runtime bi chan: ${normalizedReason}.`, 'warning');
     setLookupState(
-        `Tai khoan da loi, hay lien he admin de duoc bao hanh. ${detailText}`.trim(),
+        `Tài khoản đã lỗi, hãy liên hệ admin để được bảo hành. ${detailText}`.trim(),
         'error'
     );
 }
@@ -322,7 +586,7 @@ async function checkRuntimeCookieHealth() {
         return {
             ok: false,
             blockedReason: 'missing_cookie',
-            detailMessage: 'Khong co cookie hop le.'
+            detailMessage: 'Không có cookie hợp lệ.'
         };
     }
 
@@ -336,14 +600,14 @@ async function checkRuntimeCookieHealth() {
             return {
                 ok: false,
                 blockedReason: 'hold',
-                detailMessage: 'Tai khoan dang bi HOLD (on_payment_hold=yes).'
+                detailMessage: 'Tài khoản đang bị HOLD (on_payment_hold=yes).'
             };
         }
         if (account && isUnknownPlan(account.plan)) {
             return {
                 ok: false,
                 blockedReason: 'unknown',
-                detailMessage: 'Goi cuoc dang UNKNOWN.'
+                detailMessage: 'Gói cước đang UNKNOWN.'
             };
         }
         return {
@@ -357,20 +621,20 @@ async function checkRuntimeCookieHealth() {
             return {
                 ok: false,
                 blockedReason: 'sbd',
-                detailMessage: 'Cookie bi chan SBD.'
+                detailMessage: 'Cookie bị chặn SBD.'
             };
         }
         if (reason === 'dead') {
             return {
                 ok: false,
                 blockedReason: 'dead',
-                detailMessage: 'Cookie da dead hoac het han.'
+                detailMessage: 'Cookie đã dead hoặc hết hạn.'
             };
         }
         return {
             ok: false,
             blockedReason: 'error',
-            detailMessage: String(error && error.message ? error.message : 'Khong the kiem tra cookie.')
+            detailMessage: String(error && error.message ? error.message : 'Không thể kiểm tra cookie.')
         };
     }
 }
@@ -590,7 +854,7 @@ function openDeferredTabAndNavigate() {
         popupWindow.document.body.style.display = 'flex';
         popupWindow.document.body.style.alignItems = 'center';
         popupWindow.document.body.style.justifyContent = 'center';
-        popupWindow.document.body.innerHTML = '<div>Dang tao link Netflix...</div>';
+        popupWindow.document.body.innerHTML = '<div>Đang tạo link Netflix...</div>';
     } catch (error) {
         // ignore
     }
@@ -603,16 +867,11 @@ function getRuntimeCookie() {
 }
 
 function syncAdminCookieInput() {
-    const input = el('adminRuntimeCookieInput');
-    if (!input) return;
-    const cur = getRuntimeCookie();
-    if (input.value !== cur) input.value = cur;
+    return '';
 }
 
 function getAdminRuntimeCookieInputValue() {
-    const input = el('adminRuntimeCookieInput');
-    if (!input) return '';
-    return normalizeCookie(input.value || '');
+    return '';
 }
 
 function updateReadyState() {
@@ -627,7 +886,7 @@ function updateReadyState() {
     }
     setDeviceButtonsEnabled(hasCookie && !guestGuardActive);
     if (!hasCookie) {
-        setLookupState('Vui long mo dung link duoc cap de bat dau su dung.', 'warning');
+        setLookupState('Vui lòng mở đúng link được cấp để bắt đầu sử dụng.', 'warning');
     }
 }
 
@@ -638,37 +897,34 @@ function setRuntimeCookie(rawCookie, options = {}) {
 
     runtimeCookie = next;
     clearCookieBlockedState();
-    syncAdminCookieInput();
 
     if (next) {
         setGuestGuard(false);
         if (!silent) {
             if (source === 'share-id') {
-                setLookupState('Da tai cookie tu share link. Hay chon thiet bi de tiep tuc.', 'success');
+                setLookupState('Đã tải cookie từ share link. Hãy chọn thiết bị để tiếp tục.', 'success');
             } else if (source === 'cookie-link') {
-                setLookupState('Da giai ma cookie tu link chia se. Hay chon thiet bi de tiep tuc.', 'success');
+                setLookupState('Đã giải mã cookie từ link chia sẻ. Hãy chọn thiết bị để tiếp tục.', 'success');
             } else if (source === 'admin') {
                 setLookupState('Admin da ap dung cookie cho phien hien tai.', 'success');
             }
         }
-        setAdminRuntimeCookieState(`Cookie runtime da san sang (${next.length} ky tu).`, 'success');
         updateReadyState();
         return;
     }
 
-    setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
-    setAdminRuntimeCookieState('Chua co cookie runtime.', 'warning');
-    setLookupState('Khong co cookie hop le. Chi co the tiep tuc bang link duoc cap.', 'warning');
+    setGuestGuard(true, 'Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.');
+    setLookupState('Không có cookie hợp lệ. Chỉ có thể tiếp tục bằng link được cấp.', 'warning');
     updateReadyState();
 }
 
-async function copyText(text, successText = 'Da sao chep.') {
+async function copyText(text, successText = 'Đã sao chép.') {
     try {
         await navigator.clipboard.writeText(String(text || ''));
         setLookupState(successText, 'success');
         return true;
     } catch (error) {
-        setLookupState('Khong copy duoc. Hay copy thu cong.', 'warning');
+        setLookupState('Không copy được. Hãy copy thủ công.', 'warning');
         return false;
     }
 }
@@ -700,14 +956,14 @@ function openMobileLinkModal(url, mobileOs = 'android') {
     output.value = mobileGeneratedLink;
 
     if (String(mobileOs).toLowerCase() === 'ios') {
-        if (step1) step1.textContent = 'Buoc 1: Sao chep duong link dang nhap phia tren';
-        if (step2) step2.textContent = 'Buoc 2: Dan vao Safari va truy cap';
-        if (step3) step3.textContent = 'Buoc 3: Truy cap tiep trang netflix.com/unsupported';
+        if (step1) step1.textContent = 'Bước 1: Sao chép đường link đăng nhập phía trên';
+        if (step2) step2.textContent = 'Bước 2: Dán vào Safari và truy cập';
+        if (step3) step3.textContent = 'Bước 3: Truy cập tiếp trang netflix.com/unsupported';
         if (step3Row) step3Row.classList.remove('hidden');
     } else {
-        if (step1) step1.textContent = 'Buoc 1: Sao chep duong link dang nhap phia tren';
-        if (step2) step2.textContent = 'Buoc 2: Dan vao trinh duyet mac dinh tren dien thoai va truy cap';
-        if (step3) step3.textContent = 'Buoc 3: Truy cap tiep trang netflix.com/unsupported';
+        if (step1) step1.textContent = 'Bước 1: Sao chép đường link đăng nhập phía trên';
+        if (step2) step2.textContent = 'Bước 2: Dán vào trình duyệt mặc định trên điện thoại và truy cập';
+        if (step3) step3.textContent = 'Bước 3: Truy cập tiếp trang netflix.com/unsupported';
         if (step3Row) step3Row.classList.remove('hidden');
     }
 
@@ -744,7 +1000,7 @@ function openTvCodeModal() {
     const manualLoginLink = el('tvManualLoginLink');
     tvFlowBusy = false;
     tvGeneratedLoginLink = '';
-    setTvCodeState('Nhap dung 8 so roi bam xac nhan. He thong se mo link dang nhap truoc, sau do tu chuyen sang netflix.com/tv8.', 'idle');
+    setTvCodeState('Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.', 'idle');
     if (input) input.value = '';
     if (manualLoginLink) {
         manualLoginLink.setAttribute('href', '#');
@@ -772,7 +1028,7 @@ function openDisclaimerModal() {
     disclaimerReadyAt = Date.now() + waitMs;
 
     if (dismissBtn) dismissBtn.disabled = true;
-    setDisclaimerState('Vui long cho 2 giay de bo qua popup.', 'warning');
+    setDisclaimerState('Vui lòng chờ 2 giây để bỏ qua popup.', 'warning');
 
     if (disclaimerTimer) {
         window.clearInterval(disclaimerTimer);
@@ -783,13 +1039,13 @@ function openDisclaimerModal() {
         const remainMs = Math.max(0, disclaimerReadyAt - Date.now());
         const remainSec = Math.ceil(remainMs / 1000);
         if (remainMs > 0) {
-            setDisclaimerState(`Vui long cho ${remainSec} giay de bo qua popup.`, 'warning');
+            setDisclaimerState(`Vui lòng chờ ${remainSec} giây để bỏ qua popup.`, 'warning');
             if (dismissBtn) dismissBtn.disabled = true;
             return;
         }
 
         if (dismissBtn) dismissBtn.disabled = false;
-        setDisclaimerState('Ban co the bam Bo qua de tiep tuc.', 'success');
+        setDisclaimerState('Bạn có thể bấm Bỏ qua để tiếp tục.', 'success');
         window.clearInterval(disclaimerTimer);
         disclaimerTimer = null;
     }, 150);
@@ -834,17 +1090,17 @@ function openDeviceConfirmModal(device = '') {
     const okBtn = el('deviceConfirmOkBtn');
 
     const labels = {
-        desktop: 'May tinh',
-        mobile: 'Dien thoai',
-        tablet: 'May tinh bang',
+        desktop: 'Máy tính',
+        mobile: 'Điện thoại',
+        tablet: 'Máy tính bảng',
         tv: 'TV'
     };
     const label = labels[normalized] || normalized;
 
-    if (title) title.textContent = `Ban co chac chan dang dung ${label} khong?`;
-    if (hint) hint.textContent = 'Vui long xac nhan dung thiet bi de tiep tuc.';
+    if (title) title.textContent = `Bạn có chắc chắn đang dùng ${label} không?`;
+    if (hint) hint.textContent = 'Vui lòng xác nhận đúng thiết bị để tiếp tục.';
     if (countdown) {
-        countdown.textContent = 'Vui long cho 3 giay de xac nhan.';
+        countdown.textContent = 'Vui lòng chờ 3 giây để xác nhận.';
         setStateClass(countdown, 'warning');
     }
     if (okBtn) okBtn.disabled = true;
@@ -862,10 +1118,10 @@ function openDeviceConfirmModal(device = '') {
         const remainSec = Math.ceil(remainMs / 1000);
         if (countdown) {
             if (remainMs > 0) {
-                countdown.textContent = `Vui long cho ${remainSec} giay de xac nhan.`;
+                countdown.textContent = `Vui lòng chờ ${remainSec} giây để xác nhận.`;
                 setStateClass(countdown, 'warning');
             } else {
-                countdown.textContent = 'Ban co the bam Co de tiep tuc.';
+                countdown.textContent = 'Bạn có thể bấm Có để tiếp tục.';
                 setStateClass(countdown, 'success');
             }
         }
@@ -913,15 +1169,15 @@ function closeMobileOsModal() {
 async function generateDeviceLink(device, mobileOs = 'android') {
     const cookie = getRuntimeCookie();
     if (!cookie) {
-        setLookupState('Khong co cookie hop le de tao link.', 'warning');
-        setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
+        setLookupState('Không có cookie hợp lệ để tạo link.', 'warning');
+        setGuestGuard(true, 'Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.');
         return;
     }
 
     const frontendDevice = String(device || '').trim();
     if (!frontendDevice) return;
 
-    setLookupState('Dang kiem tra tinh trang cookie...', 'loading');
+    setLookupState('Đang kiểm tra tình trạng cookie...', 'loading');
     const health = await checkRuntimeCookieHealth();
     if (!health.ok) {
         applyCookieBlockedState(health.blockedReason, health.detailMessage);
@@ -933,10 +1189,10 @@ async function generateDeviceLink(device, mobileOs = 'android') {
     const button = document.querySelector(`.btn-device[data-device="${frontendDevice}"]`);
 
     busy = true;
-    setButtonBusy(button, true, 'Dang tao link...');
+    setButtonBusy(button, true, 'Đang tạo link...');
     setDeviceButtonsEnabled(false);
-    setLookupState('Dang kiem tra cookie LIVE va tao link...', 'loading');
-    showLookupLoadingOverlay('Xin vui long cho trong giay lat');
+    setLookupState('Đang kiểm tra cookie LIVE và tạo link...', 'loading');
+    showLookupLoadingOverlay('Xin vui lòng chờ trong giây lát');
 
     const shouldAutoOpen = apiDevice === 'desktop';
     let deferredPopup = null;
@@ -944,28 +1200,28 @@ async function generateDeviceLink(device, mobileOs = 'android') {
         const deferred = openDeferredTabAndNavigate();
         deferredPopup = deferred.popupWindow;
         if (deferred.wasBlocked) {
-            setLookupState('Trinh duyet chan tab moi, se mo trong tab hien tai.', 'warning');
+            setLookupState('Trình duyệt chặn tab mới, sẽ mở trong tab hiện tại.', 'warning');
         }
     }
 
     try {
         const data = await apiRequest('/api/nf-cookie-to-link', 'POST', { cookieStr: cookie, device: apiDevice, mobileOs });
-        if (!data || !data.url) throw new Error('Khong tao duoc link.');
+        if (!data || !data.url) throw new Error('Không tạo được link.');
 
         if (shouldAutoOpen) {
             if (deferredPopup && !deferredPopup.closed) deferredPopup.location.href = data.url;
             else window.location.href = data.url;
-            setLookupState('Da tao link thanh cong. Dang mo Netflix...', 'success');
+            setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
         } else {
             openMobileLinkModal(data.url, mobileOs);
-            const typeLabel = frontendDevice === 'tablet' ? 'tablet' : 'dien thoai';
-            setLookupState(`Tao link ${typeLabel} thanh cong. Hay sao chep link va lam theo huong dan.`, 'success');
+            const typeLabel = frontendDevice === 'tablet' ? 'tablet' : 'điện thoại';
+            setLookupState(`Tạo link ${typeLabel} thành công. Hãy sao chép link và làm theo hướng dẫn.`, 'success');
         }
     } catch (error) {
         if (deferredPopup && !deferredPopup.closed) {
             try { deferredPopup.close(); } catch (closeError) { }
         }
-        setLookupState(error.message || 'Khong tao duoc link.', 'error');
+        setLookupState(error.message || 'Không tạo được link.', 'error');
     } finally {
         hideLookupLoadingOverlay();
         busy = false;
@@ -994,7 +1250,7 @@ function handleConfirmedDevice(device) {
 async function submitTvCodeFlow() {
     const cookie = getRuntimeCookie();
     if (!cookie) {
-        setLookupState('Khong co cookie hop le de tao link TV.', 'warning');
+        setLookupState('Không có cookie hợp lệ để tạo link TV.', 'warning');
         closeTvCodeModal();
         return;
     }
@@ -1014,19 +1270,19 @@ async function submitTvCodeFlow() {
     const raw = String(input && input.value || '');
     const tvCode = raw.replace(/\D/g, '').slice(0, 8);
     if (!/^\d{8}$/.test(tvCode)) {
-        setTvCodeState('Ma TV phai dung 8 so.', 'warning');
+        setTvCodeState('Mã TV phải đúng 8 số.', 'warning');
         return;
     }
 
     if (input) input.value = tvCode;
     tvFlowBusy = true;
-    setButtonBusy(submitBtn, true, 'Dang tao link...');
-    setTvCodeState('Dang tao link dang nhap TV...', 'loading');
+    setButtonBusy(submitBtn, true, 'Đang tạo link...');
+    setTvCodeState('Đang tạo link đăng nhập TV...', 'loading');
 
     try {
         const linkData = await apiRequest('/api/nf-cookie-to-link', 'POST', { cookieStr: cookie, device: 'mobile' });
         tvGeneratedLoginLink = String(linkData.url || '').trim();
-        if (!tvGeneratedLoginLink) throw new Error('Khong tao duoc link dang nhap.');
+        if (!tvGeneratedLoginLink) throw new Error('Không tạo được link đăng nhập.');
 
         if (manualLoginLink) {
             manualLoginLink.setAttribute('href', tvGeneratedLoginLink);
@@ -1035,21 +1291,21 @@ async function submitTvCodeFlow() {
 
         const popup = window.open('about:blank', '_blank');
         if (!popup) {
-            setTvCodeState('Trinh duyet dang chan popup. Hay bam "Mo link dang nhap" roi bam "Mo netflix.com/tv8".', 'warning');
+            setTvCodeState('Trình duyệt đang chặn popup. Hãy bấm "Mở link đăng nhập" rồi bấm "Mở netflix.com/tv8".', 'warning');
             return;
         }
 
         popup.location.href = tvGeneratedLoginLink;
-        setTvCodeState(`Da mo link dang nhap. Sau ${Math.round(TV_REDIRECT_DELAY_MS / 1000)} giay se tu chuyen sang netflix.com/tv8 de nhap ma TV.`, 'success');
-        setLookupState('Da mo link dang nhap TV. Sap chuyen sang netflix.com/tv8...', 'success');
+        setTvCodeState(`Đã mở link đăng nhập. Sau ${Math.round(TV_REDIRECT_DELAY_MS / 1000)} giây sẽ tự chuyển sang netflix.com/tv8 để nhập mã TV.`, 'success');
+        setLookupState('Đã mở link đăng nhập TV. Sắp chuyển sang netflix.com/tv8...', 'success');
 
         window.setTimeout(() => {
             if (popup.closed) return;
             popup.location.href = `${TV8_MANUAL_URL}?code=${encodeURIComponent(tvCode)}`;
         }, TV_REDIRECT_DELAY_MS);
     } catch (error) {
-        setTvCodeState(error.message || 'Khong tao duoc link TV.', 'error');
-        setLookupState(error.message || 'Khong tao duoc link TV.', 'error');
+        setTvCodeState(error.message || 'Không tạo được link TV.', 'error');
+        setLookupState(error.message || 'Không tạo được link TV.', 'error');
     } finally {
         tvFlowBusy = false;
         setButtonBusy(submitBtn, false);
@@ -1078,115 +1334,64 @@ async function autoCopyShareLinkOrWarn(url = '') {
 }
 
 async function generateShareIdLink() {
-    const inputCookie = getAdminRuntimeCookieInputValue();
-    const runtimeCookieValue = getRuntimeCookie();
-    const cookie = inputCookie || runtimeCookieValue;
-    if (!cookie) {
-        renderShareUrl('');
-        setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
-        renderCookieInfoError('Chua co cookie runtime de kiem tra.', {});
+    const rawDateValue = String(el('shareCreateDateInput') && el('shareCreateDateInput').value || '').trim();
+    const rawTimeValue = String(el('shareCreateTimeInput') && el('shareCreateTimeInput').value || '').trim();
+    const expiryParse = parseCreateExpiryInput(rawDateValue, rawTimeValue);
+    if (!expiryParse.ok) {
+        setShareState(expiryParse.error || 'Hạn của link không hợp lệ.', 'warning');
+        setShareCreateExpiryState(expiryParse.error || 'Hạn của link không hợp lệ. Hãy nhập lại.', 'warning');
         return;
     }
-
-    if (inputCookie && inputCookie !== runtimeCookieValue) {
-        setRuntimeCookie(inputCookie, { source: 'admin', silent: true });
-    }
-
-    const rawExpiryValue = String(el('shareCreateExpiryInput') && el('shareCreateExpiryInput').value || '').trim();
-    const expiresAt = datetimeLocalToIso(rawExpiryValue);
-    if (rawExpiryValue && !expiresAt) {
-        setShareState('Han cua link khong hop le.', 'warning');
-        setShareCreateExpiryState('Han cua link khong hop le. Hay chon lai ngay gio.', 'warning');
-        return;
-    }
+    const expiresAt = expiryParse.iso;
 
     const btn = el('generateShareLinkBtn');
-    setButtonBusy(btn, true, 'Dang tao...');
-    setAdminCookieInfoState('Dang kiem tra cookie...', 'loading');
+    setButtonBusy(btn, true, 'Đang tạo...');
+    setAdminCookieInfoState('Đang chờ dữ liệu cookie của link ID.', 'idle');
     setShareCreateExpiryState(
-        expiresAt ? `Dang tao link ID server co han den ${formatDateTime(expiresAt)}...` : 'Dang tao link ID server khong gioi han...',
+        expiresAt ? `Đang tạo link ID server có hạn đến ${expiryParse.label}...` : 'Đang tạo link ID server không giới hạn...',
         'loading'
     );
-    const infoPromise = checkCookieForShareInfo(cookie);
     try {
         const data = await apiRequest('/api/getlink-shares', 'POST', {
-            cookieStr: cookie,
             expiresAt
         });
         const shareUrl = String(data.shareUrl || '').trim();
+        createdAdminShare = data.share || null;
         renderShareUrl(shareUrl);
         await autoCopyShareLinkOrWarn(shareUrl);
+        renderAdminShare(data.share || null);
+        renderCreatedShareEditor(createdAdminShare);
+        resetShareCookieSlotStates();
+        resetCreatedShareCookieSlotStates();
         if (data && data.expiresAt) {
-            setShareState(`Da tao link ID server co han den ${formatDateTime(data.expiresAt)}.`, 'success');
-            setShareCreateExpiryState(`Link moi se het han luc ${formatDateTime(data.expiresAt)}.`, 'success');
+            setShareState(`Đã tạo link ID server có hạn đến ${formatDateTime(data.expiresAt)}.`, 'success');
+            setShareCreateExpiryState(`Link mới sẽ hết hạn lúc ${formatDateTime(data.expiresAt)}.`, 'success');
         } else {
-            setShareState('Da tao link ID server khong gioi han.', 'success');
-            setShareCreateExpiryState('Link moi dang o che do khong gioi han.', 'idle');
+            setShareState('Đã tạo link ID server không giới hạn.', 'success');
+            setShareCreateExpiryState('Link mới đang ở chế độ không giới hạn.', 'idle');
         }
+        renderCookieCheckCards([]);
     } catch (error) {
+        createdAdminShare = null;
         renderShareUrl('');
-        setShareState(error.message || 'Khong tao duoc link chia se.', 'error');
-        setShareCreateExpiryState(error.message || 'Khong tao duoc link ID server.', 'error');
-    } finally {
-        const infoResult = await infoPromise;
-        if (infoResult.ok) {
-            renderCookieInfoSuccess(infoResult.accountInfo || null, infoResult);
-        } else {
-            renderCookieInfoError(infoResult.error || 'Khong kiem tra duoc cookie.', infoResult);
-        }
-        setButtonBusy(btn, false);
+        renderCreatedShareEditor(null);
+        setShareState(error.message || 'Không tạo được link chia sẻ.', 'error');
+        setShareCreateExpiryState(error.message || 'Không tạo được link ID server.', 'error');
     }
-}
-
-async function generateCookieEmbeddedShareLink() {
-    const inputCookie = getAdminRuntimeCookieInputValue();
-    const runtimeCookieValue = getRuntimeCookie();
-    const cookie = inputCookie || runtimeCookieValue;
-    if (!cookie) {
-        renderShareUrl('');
-        setShareState('Chua co cookie runtime de tao link chia se.', 'warning');
-        renderCookieInfoError('Chua co cookie runtime de kiem tra.', {});
-        return;
-    }
-
-    if (inputCookie && inputCookie !== runtimeCookieValue) {
-        setRuntimeCookie(inputCookie, { source: 'admin', silent: true });
-    }
-
-    const btn = el('generateCookieShareLinkBtn');
-    setButtonBusy(btn, true, 'Dang tao...');
-    setAdminCookieInfoState('Dang kiem tra cookie...', 'loading');
-    const infoPromise = checkCookieForShareInfo(cookie);
-    try {
-        const encodedCookie = toBase64Url(cookie);
-        const shareUrl = `${window.location.origin}/getlink?c=${encodeURIComponent(encodedCookie)}`;
-        renderShareUrl(shareUrl);
-        await autoCopyShareLinkOrWarn(shareUrl);
-    } catch (error) {
-        renderShareUrl('');
-        setShareState(error.message || 'Khong tao duoc link cookie.', 'error');
-    } finally {
-        const infoResult = await infoPromise;
-        if (infoResult.ok) {
-            renderCookieInfoSuccess(infoResult.accountInfo || null, infoResult);
-        } else {
-            renderCookieInfoError(infoResult.error || 'Khong kiem tra duoc cookie.', infoResult);
-        }
-        setButtonBusy(btn, false);
-    }
+    setButtonBusy(btn, false);
 }
 
 async function runEntryCookieHealthCheck() {
     const cookie = getRuntimeCookie();
     if (!cookie) return;
-    setLookupState('Dang kiem tra tinh trang cookie tu link...', 'loading');
+    setLookupState('Đang kiểm tra tình trạng cookie từ link...', 'loading');
     const health = await checkRuntimeCookieHealth();
     if (!health.ok) {
         applyCookieBlockedState(health.blockedReason, health.detailMessage);
         return;
     }
     clearCookieBlockedState();
-    setLookupState('Cookie hop le. Hay chon thiet bi de tiep tuc.', 'success');
+    setLookupState('Cookie hợp lệ. Hãy chọn thiết bị để tiếp tục.', 'success');
     updateReadyState();
 }
 
@@ -1201,14 +1406,14 @@ async function applyCookieFromQuery() {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
             if (!cookieStr) {
-                setLookupState('Link chia se khong co cookie hop le.', 'warning');
+                setLookupState('Link chia sẻ không có cookie hợp lệ.', 'warning');
                 return;
             }
             setRuntimeCookie(cookieStr, { source: 'share-id' });
             await runEntryCookieHealthCheck();
             return;
         } catch (error) {
-            setLookupState(error.message || 'Khong tai duoc cookie tu link chia se.', 'warning');
+            setLookupState(error.message || 'Không tải được cookie từ link chia sẻ.', 'warning');
             return;
         }
     }
@@ -1217,14 +1422,14 @@ async function applyCookieFromQuery() {
         try {
             const cookieStr = normalizeCookie(fromBase64Url(encodedCookie));
             if (!cookieStr) {
-                setLookupState('Link cookie khong hop le.', 'warning');
+                setLookupState('Link cookie không hợp lệ.', 'warning');
                 return;
             }
             setRuntimeCookie(cookieStr, { source: 'cookie-link' });
             await runEntryCookieHealthCheck();
             return;
         } catch (error) {
-            setLookupState('Khong giai ma duoc cookie trong link chia se.', 'warning');
+            setLookupState('Không giải mã được cookie trong link chia sẻ.', 'warning');
             return;
         }
     }
@@ -1235,9 +1440,10 @@ function renderAdminWorkspace() {
     const identity = el('adminIdentity');
     const fab = el('nfAdminFab');
     const inlineLayout = el('adminInlineLayout');
-    const inlineCookiePanel = el('adminInlineCookiePanel');
     const shareCreatorBox = el('shareCreatorBox');
     const cookieInfoPanel = el('adminCookieInfoPanel');
+    const currentShareSummaryBox = el('currentShareSummaryBox');
+    const viewingPendingShare = isViewingPendingShare();
 
     if (fab) {
         fab.classList.toggle('is-admin', adminAuthenticated);
@@ -1249,15 +1455,20 @@ function renderAdminWorkspace() {
     if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
     if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
     if (inlineLayout) inlineLayout.classList.toggle('hidden', !adminAuthenticated);
-    if (inlineCookiePanel) inlineCookiePanel.classList.toggle('hidden', !adminAuthenticated);
-    if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated);
+    if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated || viewingPendingShare);
     if (cookieInfoPanel) cookieInfoPanel.classList.toggle('hidden', !adminAuthenticated);
-    if (adminAuthenticated) syncAdminCookieInput();
+    if (currentShareSummaryBox) currentShareSummaryBox.classList.toggle('hidden', !adminAuthenticated || !viewingPendingShare || !currentAdminShare);
     if (adminAuthenticated && !cookieHealthBlocked) {
-        setAdminCookieInfoState('Bam tao link de kiem tra cookie va hien thi thong tin.', 'idle');
+        setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
     }
     if (!adminAuthenticated) {
-        renderCookieInfoPlaceholder('Chua co du lieu cookie info.');
+        isInlineEditMode = false;
+        createdAdminShare = null;
+        renderCookieCheckCards([]);
+        setShareCookieViewOutputs({ primary: '', backup1: '', backup2: '' });
+        setCreatedShareCookieOutputs({ primary: '', backup1: '', backup2: '' });
+        resetShareCookieSlotStates();
+        resetCreatedShareCookieSlotStates();
     }
     if (adminAuthenticated && disclaimerVisible) {
         closeDisclaimerModal(true);
@@ -1265,16 +1476,24 @@ function renderAdminWorkspace() {
     if (disclaimerEligibilityResolved && !adminAuthenticated && !disclaimerDismissed) {
         openDisclaimerModal();
     }
+    setInlineEditMode(isInlineEditMode && !!currentAdminShare && viewingPendingShare);
+    renderCurrentShareSummary(currentAdminShare);
+    renderCreatedShareEditor(createdAdminShare);
     updateReadyState();
 }
 
 function renderAdminShare(share = null) {
     currentAdminShare = share;
     const card = el('adminShareResult');
+    const summaryBox = el('currentShareSummaryBox');
     if (!card) return;
 
     if (!share) {
         card.classList.add('hidden');
+        if (summaryBox) summaryBox.classList.add('hidden');
+        isInlineEditMode = false;
+        setShareCookieViewOutputs({ primary: '', backup1: '', backup2: '' });
+        resetShareCookieSlotStates();
         return;
     }
 
@@ -1284,7 +1503,6 @@ function renderAdminShare(share = null) {
     const updatedInput = el('adminShareUpdatedAt');
     const expiryDisplayInput = el('adminShareExpiryDisplay');
     const expiryInput = el('adminShareExpiryInput');
-    const cookieInput = el('adminShareCookieInput');
     const expired = !!(share && (share.expired || isShareExpiredClient(share)));
     const status = String(share.status || 'active');
     let statusLabel = 'Dang hoat dong';
@@ -1297,7 +1515,11 @@ function renderAdminShare(share = null) {
     if (updatedInput) updatedInput.value = `Cap nhat: ${String(share.updatedAt || '-')}`;
     if (expiryDisplayInput) expiryDisplayInput.value = `Han hien tai: ${formatDateTime(share.expiresAt)}`;
     if (expiryInput) expiryInput.value = toDatetimeLocalFromIso(share.expiresAt);
-    if (cookieInput) cookieInput.value = String(share.cookieRaw || '');
+    const shareCookies = share.cookies || { primary: share.cookieRaw || '', backup1: '', backup2: '' };
+    setShareCookieViewOutputs(shareCookies);
+    resetShareCookieSlotStates();
+    renderCurrentShareSummary(share);
+    setInlineEditMode(isInlineEditMode && isViewingPendingShare());
 
     card.classList.remove('hidden');
 }
@@ -1439,6 +1661,9 @@ async function adminLogout() {
     } finally {
         clearAdminAuthState();
         renderAdminShare(null);
+        createdAdminShare = null;
+        renderCreatedShareEditor(null);
+        renderShareUrl('');
         autoLoadedAdminShareId = '';
         setAdminAuthState('Dang xuat.', 'idle');
         renderAdminWorkspace();
@@ -1475,27 +1700,182 @@ async function adminSearchShare() {
     }
 }
 
-async function adminSaveCookie() {
+async function adminSaveCookies() {
     if (!currentAdminShare || !currentAdminShare.id) return;
-    const cookieRaw = normalizeCookie(el('adminShareCookieInput') && el('adminShareCookieInput').value || '');
-    if (!cookieRaw) {
-        setAdminSearchState('Cookie khong duoc de trong.', 'warning');
+    const cookies = getCurrentShareEditableCookies();
+    const expiryValue = String(el('currentShareExpiryInput') && el('currentShareExpiryInput').value || '').trim();
+    const expiresAt = datetimeLocalToIso(expiryValue);
+    if (expiryValue && !expiresAt) {
+        setAdminSearchState('Hạn của link không hợp lệ.', 'warning');
         return;
     }
 
-    const btn = el('adminSaveCookieBtn');
-    setButtonBusy(btn, true, 'Dang luu...');
+    const btn = el('saveCurrentShareBtn');
+    setButtonBusy(btn, true, 'Đang lưu...');
     try {
-        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}`, 'PUT', { cookieStr: cookieRaw });
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}`, 'PUT', { cookies });
+        if (expiresAt && expiresAt !== String(currentAdminShare.expiresAt || '').trim()) {
+            const expiryData = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}/expiry`, 'PUT', { expiresAt });
+            data.share = expiryData.share || data.share;
+        }
+        isInlineEditMode = false;
         renderAdminShare(data.share || null);
-        setRuntimeCookie(cookieRaw, { source: 'admin', silent: true });
-        setAdminRuntimeCookieState('Da cap nhat cookie runtime tu share vua luu.', 'success');
-        setAdminSearchState('Da cap nhat cookie cho link.', 'success');
+        if (cookies.primary) {
+            setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
+        }
+        await runCookieChecksForShare((data.share && data.share.id) || currentAdminShare.id, cookies, SHARE_COOKIE_SLOTS, setShareCookieSlotState);
+        setAdminSearchState('Đã cập nhật cookie và check các ô đã nhập.', 'success');
     } catch (error) {
-        setAdminSearchState(error.message || 'Khong cap nhat duoc cookie.', 'error');
+        setAdminSearchState(error.message || 'Không cập nhật được cookie.', 'error');
     } finally {
         setButtonBusy(btn, false);
     }
+}
+
+async function saveCreatedShareCookies() {
+    if (!createdAdminShare || !createdAdminShare.id) {
+        setShareState('Hãy tạo link ID server trước khi lưu cookie.', 'warning');
+        return;
+    }
+    const cookies = getCreatedShareEditableCookies();
+    const btn = el('saveCreatedShareCookiesBtn');
+    setButtonBusy(btn, true, 'Đang lưu...');
+    try {
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(createdAdminShare.id)}`, 'PUT', { cookies });
+        createdAdminShare = data.share || createdAdminShare;
+        renderCreatedShareEditor(createdAdminShare);
+        if (cookies.primary) {
+            setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
+        }
+        await runCookieChecksForShare(createdAdminShare.id, cookies, CREATED_SHARE_COOKIE_SLOTS, setCreatedShareCookieSlotState);
+        setShareState('Đã lưu cookie cho link ID mới và check các ô đã nhập.', 'success');
+    } catch (error) {
+        setShareState(error.message || 'Không lưu được cookie cho link mới.', 'error');
+    } finally {
+        setButtonBusy(btn, false);
+    }
+}
+
+async function adminCheckCookieSlot(slotKey) {
+    if (!currentAdminShare || !currentAdminShare.id) return;
+    const slot = SHARE_COOKIE_SLOTS.find((item) => item.key === slotKey);
+    if (!slot) return;
+    const button = el(slot.viewCheckBtnId);
+    const cookies = getShareCookiesForCurrentMode();
+    if (!cookies[slotKey]) {
+        setShareCookieSlotState(slotKey, 'Để trống', null);
+        renderCookieCheckCards([]);
+        setAdminCookieInfoState('Ô cookie này đang để trống.', 'idle');
+        return;
+    }
+    setButtonBusy(button, true, 'Đang check...');
+    setAdminCookieInfoState(`Đang check ${slot.label.toLowerCase()}...`, 'loading');
+    try {
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(currentAdminShare.id)}/check-cookie`, 'POST', {
+            slot: slotKey,
+            cookieStr: cookies[slotKey] || '',
+            cookies
+        });
+        const result = data.result || {};
+        setShareCookieSlotState(slotKey, result.ok ? 'PASS' : 'FAIL', !!result.ok);
+        renderCookieCheckCards([result]);
+        setAdminCookieInfoState(`Đã check ${slot.label.toLowerCase()}.`, result.ok ? 'success' : 'warning');
+    } catch (error) {
+        setShareCookieSlotState(slotKey, 'FAIL', false);
+        setAdminCookieInfoState(error.message || 'Check cookie thất bại.', 'error');
+    } finally {
+        setButtonBusy(button, false);
+    }
+}
+
+async function adminCheckAllShareCookies() {
+    if (!currentAdminShare || !currentAdminShare.id) return;
+    const btn = el('viewCheckAllShareCookiesBtn');
+    const cookies = getShareCookiesForCurrentMode();
+    setButtonBusy(btn, true, 'Đang check...');
+    setAdminCookieInfoState('Đang check toàn bộ cookie của link...', 'loading');
+    try {
+        await runCookieChecksForShare(currentAdminShare.id, cookies, SHARE_COOKIE_SLOTS, setShareCookieSlotState);
+    } catch (error) {
+        setAdminCookieInfoState(error.message || 'Check toàn bộ cookie thất bại.', 'error');
+    } finally {
+        setButtonBusy(btn, false);
+    }
+}
+
+async function creatorCheckCookieSlot(slotKey) {
+    if (!createdAdminShare || !createdAdminShare.id) {
+        setShareState('Hãy tạo link ID server trước khi check cookie.', 'warning');
+        return;
+    }
+    const slot = CREATED_SHARE_COOKIE_SLOTS.find((item) => item.key === slotKey);
+    if (!slot) return;
+    const button = el(slot.viewCheckBtnId);
+    const cookies = getCreatedShareEditableCookies();
+    if (!cookies[slotKey]) {
+        setCreatedShareCookieSlotState(slotKey, 'Để trống', null);
+        renderCookieCheckCards([]);
+        setAdminCookieInfoState('Ô cookie này đang để trống.', 'idle');
+        return;
+    }
+    setButtonBusy(button, true, 'Đang check...');
+    setAdminCookieInfoState(`Đang check ${slot.label.toLowerCase()}...`, 'loading');
+    try {
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(createdAdminShare.id)}/check-cookie`, 'POST', {
+            slot: slotKey,
+            cookieStr: cookies[slotKey] || '',
+            cookies
+        });
+        const result = data.result || {};
+        setCreatedShareCookieSlotState(slotKey, result.ok ? 'PASS' : 'FAIL', !!result.ok);
+        renderCookieCheckCards([result]);
+        setAdminCookieInfoState(`Đã check ${slot.label.toLowerCase()}.`, result.ok ? 'success' : 'warning');
+    } catch (error) {
+        setCreatedShareCookieSlotState(slotKey, 'FAIL', false);
+        setAdminCookieInfoState(error.message || 'Check cookie thất bại.', 'error');
+    } finally {
+        setButtonBusy(button, false);
+    }
+}
+
+async function creatorCheckAllShareCookies() {
+    if (!createdAdminShare || !createdAdminShare.id) {
+        setShareState('Hãy tạo link ID server trước khi check cookie.', 'warning');
+        return;
+    }
+    const btn = el('creatorCheckAllShareCookiesBtn');
+    const cookies = getCreatedShareEditableCookies();
+    setButtonBusy(btn, true, 'Đang check...');
+    setAdminCookieInfoState('Đang check toàn bộ cookie của link mới...', 'loading');
+    try {
+        await runCookieChecksForShare(createdAdminShare.id, cookies, CREATED_SHARE_COOKIE_SLOTS, setCreatedShareCookieSlotState);
+    } catch (error) {
+        setAdminCookieInfoState(error.message || 'Check toàn bộ cookie thất bại.', 'error');
+    } finally {
+        setButtonBusy(btn, false);
+    }
+}
+
+function useShareCookieSlotForRuntime(slotKey) {
+    const cookies = getShareCookiesForCurrentMode();
+    const cookieRaw = normalizeCookie(cookies[slotKey] || '');
+    if (!cookieRaw) {
+        setAdminSearchState('Không có cookie để áp dụng.', 'warning');
+        return;
+    }
+    setRuntimeCookie(cookieRaw, { source: 'admin' });
+    setAdminSearchState(`Đã áp dụng ${slotKey === 'primary' ? 'cookie chính' : (slotKey === 'backup1' ? 'cookie phụ 1' : 'cookie phụ 2')} vào runtime.`, 'success');
+}
+
+function useCreatedShareCookieSlotForRuntime(slotKey) {
+    const cookies = getCreatedShareEditableCookies();
+    const cookieRaw = normalizeCookie(cookies[slotKey] || '');
+    if (!cookieRaw) {
+        setShareState('Không có cookie để áp dụng.', 'warning');
+        return;
+    }
+    setRuntimeCookie(cookieRaw, { source: 'admin' });
+    setShareState(`Đã áp dụng ${slotKey === 'primary' ? 'cookie chính' : (slotKey === 'backup1' ? 'cookie phụ 1' : 'cookie phụ 2')} vào runtime.`, 'success');
 }
 
 async function adminRotateId() {
@@ -1656,17 +2036,17 @@ function bindEvents() {
         copyMobileLinkBtn.addEventListener('click', async () => {
             const link = String(el('mobileLinkOutput') && el('mobileLinkOutput').value || mobileGeneratedLink || '').trim();
             if (!link) {
-                setLookupState('Chua co link mobile de sao chep.', 'warning');
+                setLookupState('Chưa có link mobile để sao chép.', 'warning');
                 return;
             }
-            await copyText(link, 'Da sao chep link dang nhap mobile.');
+            await copyText(link, 'Đã sao chép link đăng nhập mobile.');
         });
     }
 
     const copyUnsupportedLinkBtn = el('copyUnsupportedLinkBtn');
     if (copyUnsupportedLinkBtn) {
         copyUnsupportedLinkBtn.addEventListener('click', async () => {
-            await copyText(UNSUPPORTED_URL, 'Da sao chep netflix.com/unsupported.');
+            await copyText(UNSUPPORTED_URL, 'Đã sao chép netflix.com/unsupported.');
         });
     }
 
@@ -1747,50 +2127,49 @@ function bindEvents() {
     const adminLogoutBtn = el('adminLogoutBtn');
     if (adminLogoutBtn) adminLogoutBtn.addEventListener('click', adminLogout);
 
-    const adminApplyRuntimeCookieBtn = el('adminApplyRuntimeCookieBtn');
-    if (adminApplyRuntimeCookieBtn) {
-        adminApplyRuntimeCookieBtn.addEventListener('click', () => {
-            const cookieRaw = normalizeCookie(el('adminRuntimeCookieInput') && el('adminRuntimeCookieInput').value || '');
-            if (!cookieRaw) {
-                setAdminRuntimeCookieState('Cookie runtime khong duoc de trong.', 'warning');
-                return;
-            }
-            setRuntimeCookie(cookieRaw, { source: 'admin' });
-            setAdminRuntimeCookieState('Da ap dung cookie runtime cho phien hien tai.', 'success');
-        });
-    }
-
-    const adminClearRuntimeCookieBtn = el('adminClearRuntimeCookieBtn');
-    if (adminClearRuntimeCookieBtn) {
-        adminClearRuntimeCookieBtn.addEventListener('click', () => {
-            setRuntimeCookie('', { source: 'admin', silent: true });
-            setAdminRuntimeCookieState('Da xoa cookie runtime cua phien hien tai.', 'warning');
-            setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
-        });
-    }
-
     const generateShareLinkBtn = el('generateShareLinkBtn');
     if (generateShareLinkBtn) generateShareLinkBtn.addEventListener('click', generateShareIdLink);
 
-    const generateCookieShareLinkBtn = el('generateCookieShareLinkBtn');
-    if (generateCookieShareLinkBtn) generateCookieShareLinkBtn.addEventListener('click', generateCookieEmbeddedShareLink);
+    const shareCreateDateInput = el('shareCreateDateInput');
+    if (shareCreateDateInput) {
+        shareCreateDateInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            generateShareIdLink();
+        });
+    }
+
+    const shareCreateTimeInput = el('shareCreateTimeInput');
+    if (shareCreateTimeInput) {
+        shareCreateTimeInput.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            generateShareIdLink();
+        });
+    }
 
     const copyShareLinkBtn = el('copyShareLinkBtn');
     if (copyShareLinkBtn) {
         copyShareLinkBtn.addEventListener('click', async () => {
             const url = String(el('shareLinkOutput') && el('shareLinkOutput').value || '').trim();
             if (!url) {
-                setShareState('Chua co link chia se de sao chep.', 'warning');
+                setShareState('Chưa có link chia sẻ để sao chép.', 'warning');
                 return;
             }
             try {
                 await navigator.clipboard.writeText(url);
-                setShareState('Da sao chep link chia se.', 'success');
+                setShareState('Đã sao chép link chia sẻ.', 'success');
             } catch (error) {
-                setShareState('Khong copy duoc. Hay copy thu cong.', 'warning');
+                setShareState('Không copy được. Hãy copy thủ công.', 'warning');
             }
         });
     }
+
+    const saveCreatedShareCookiesBtn = el('saveCreatedShareCookiesBtn');
+    if (saveCreatedShareCookiesBtn) saveCreatedShareCookiesBtn.addEventListener('click', saveCreatedShareCookies);
+
+    const creatorCheckAllShareCookiesBtn = el('creatorCheckAllShareCookiesBtn');
+    if (creatorCheckAllShareCookiesBtn) creatorCheckAllShareCookiesBtn.addEventListener('click', creatorCheckAllShareCookies);
 
     const adminShareSearchBtn = el('adminShareSearchBtn');
     if (adminShareSearchBtn) adminShareSearchBtn.addEventListener('click', adminSearchShare);
@@ -1804,8 +2183,53 @@ function bindEvents() {
         });
     }
 
-    const adminSaveCookieBtn = el('adminSaveCookieBtn');
-    if (adminSaveCookieBtn) adminSaveCookieBtn.addEventListener('click', adminSaveCookie);
+    const saveCurrentShareBtn = el('saveCurrentShareBtn');
+    if (saveCurrentShareBtn) saveCurrentShareBtn.addEventListener('click', adminSaveCookies);
+
+    const viewCheckAllShareCookiesBtn = el('viewCheckAllShareCookiesBtn');
+    if (viewCheckAllShareCookiesBtn) viewCheckAllShareCookiesBtn.addEventListener('click', adminCheckAllShareCookies);
+
+    const editCurrentShareBtn = el('editCurrentShareBtn');
+    if (editCurrentShareBtn) {
+        editCurrentShareBtn.addEventListener('click', () => {
+            if (!currentAdminShare) return;
+            isInlineEditMode = true;
+            setShareCookieViewOutputs(currentAdminShare.cookies || { primary: currentAdminShare.cookieRaw || '', backup1: '', backup2: '' });
+            setInlineEditMode(true);
+        });
+    }
+
+    const cancelCurrentShareEditBtn = el('cancelCurrentShareEditBtn');
+    if (cancelCurrentShareEditBtn) {
+        cancelCurrentShareEditBtn.addEventListener('click', async () => {
+            isInlineEditMode = false;
+            if (!currentAdminShare || !currentAdminShare.id) {
+                setInlineEditMode(false);
+                return;
+            }
+            try {
+                const data = await apiRequest('/api/getlink-admin/search', 'POST', { query: currentAdminShare.id });
+                renderAdminShare(data.share || null);
+                setAdminSearchState('Đã hủy chỉnh sửa và nạp lại dữ liệu link.', 'idle');
+            } catch (error) {
+                setAdminSearchState(error.message || 'Không nạp lại được dữ liệu link.', 'error');
+            }
+        });
+    }
+
+    SHARE_COOKIE_SLOTS.forEach((slot) => {
+        const viewCheckBtn = el(slot.viewCheckBtnId);
+        if (viewCheckBtn) viewCheckBtn.addEventListener('click', () => adminCheckCookieSlot(slot.key));
+        const viewUseBtn = el(slot.viewUseBtnId);
+        if (viewUseBtn) viewUseBtn.addEventListener('click', () => useShareCookieSlotForRuntime(slot.key));
+    });
+
+    CREATED_SHARE_COOKIE_SLOTS.forEach((slot) => {
+        const viewCheckBtn = el(slot.viewCheckBtnId);
+        if (viewCheckBtn) viewCheckBtn.addEventListener('click', () => creatorCheckCookieSlot(slot.key));
+        const viewUseBtn = el(slot.viewUseBtnId);
+        if (viewUseBtn) viewUseBtn.addEventListener('click', () => useCreatedShareCookieSlotForRuntime(slot.key));
+    });
 
     const adminSaveExpiryBtn = el('adminSaveExpiryBtn');
     if (adminSaveExpiryBtn) adminSaveExpiryBtn.addEventListener('click', () => adminSaveExpiry());
@@ -1860,13 +2284,13 @@ function bindEvents() {
     const adminUseShareCookieBtn = el('adminUseShareCookieBtn');
     if (adminUseShareCookieBtn) {
         adminUseShareCookieBtn.addEventListener('click', () => {
-            const cookieRaw = normalizeCookie(el('adminShareCookieInput') && el('adminShareCookieInput').value || '');
+            const cookieRaw = normalizeCookie(el('currentShareCookiePrimaryDisplay') && el('currentShareCookiePrimaryDisplay').value || '');
             if (!cookieRaw) {
-                setAdminSearchState('Khong co cookie de ap dung.', 'warning');
+                setAdminSearchState('Không có cookie để áp dụng.', 'warning');
                 return;
             }
             setRuntimeCookie(cookieRaw, { source: 'admin' });
-            setAdminRuntimeCookieState('Da ap dung cookie tu share nay vao runtime.', 'success');
+            setAdminRuntimeCookieState('Đã áp dụng cookie chính của share này vào runtime.', 'success');
         });
     }
 
@@ -1933,11 +2357,11 @@ async function bootstrap() {
     }
     syncAdminCookieInput();
     if (!getRuntimeCookie()) {
-        setGuestGuard(true, 'Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.');
+        setGuestGuard(true, 'Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.');
     }
     updateReadyState();
-    setShareState('Chi admin moi tao link chia se.', 'idle');
-    setShareCreateExpiryState('Han cua link ID server: de trong neu muon khong gioi han.', 'idle');
+    setShareState('Chỉ admin mới tạo link chia sẻ.', 'idle');
+    setShareCreateExpiryState('Hạn của link ID server: để trống nếu muốn không giới hạn.', 'idle');
 }
 
 bootstrap();

@@ -35,8 +35,12 @@
             margin-top: 0.9rem;
             border: 1px solid var(--line);
             border-radius: 12px;
-            padding: 0.75rem;
+            padding: 0.82rem;
             background: rgba(255, 255, 255, 0.03);
+        }
+
+        .nf-shell {
+            width: min(1240px, calc(100% - 1.4rem));
         }
 
         .share-box-title {
@@ -87,8 +91,8 @@
 
         .admin-inline-layout {
             display: grid;
-            grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-            gap: 0.75rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.9rem;
             align-items: start;
             margin-top: 0.9rem;
         }
@@ -250,19 +254,167 @@
             color: #facc15;
         }
 
-        .runtime-cookie-wrap {
-            margin-top: 0.62rem;
+        .cookie-slot-grid {
             display: grid;
+            gap: 0.6rem;
+            margin-top: 0.7rem;
+        }
+
+        .cookie-slot-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 0.56rem 0.6rem;
+            background: rgba(255, 255, 255, 0.03);
+            display: grid;
+            gap: 0.38rem;
+        }
+
+        .cookie-slot-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 0.5rem;
         }
 
-        .runtime-cookie-input {
-            min-height: 100px;
+        .cookie-slot-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #e8f0ff;
+        }
+
+        .cookie-slot-state {
+            font-size: 0.74rem;
+            color: #9cb5e8;
+        }
+
+        .cookie-slot-input {
+            min-height: 72px;
             resize: vertical;
             font-family: 'JetBrains Mono', monospace;
-            line-height: 1.45;
-            text-transform: none;
+            font-size: 0.76rem;
+            line-height: 1.4;
             letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .cookie-slot-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.45rem;
+        }
+
+        .cookie-slot-actions .btn,
+        .share-summary-actions .btn {
+            min-height: 38px;
+            padding: 0.68rem 0.78rem;
+        }
+
+        .cookie-check-grid {
+            margin-top: 0.7rem;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.55rem;
+        }
+
+        .cookie-check-card {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 0.58rem;
+            background: rgba(255, 255, 255, 0.03);
+            display: grid;
+            gap: 0.34rem;
+            font-size: 0.75rem;
+        }
+
+        .cookie-check-card.good {
+            border-color: rgba(34, 197, 94, 0.72);
+            background: rgba(34, 197, 94, 0.12);
+        }
+
+        .cookie-check-card.bad {
+            border-color: rgba(239, 68, 68, 0.72);
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .cookie-check-card h4 {
+            margin: 0;
+            font-size: 0.78rem;
+            color: #e8f0ff;
+        }
+
+        .cookie-check-card p {
+            margin: 0;
+            color: #c8d6f2;
+            word-break: break-word;
+        }
+
+        .cookie-editor-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.7rem;
+        }
+
+        .share-summary-grid {
+            display: grid;
+            gap: 0.55rem;
+        }
+
+        .share-create-cookie-section {
+            margin-top: 0.8rem;
+            display: grid;
+            gap: 0.65rem;
+        }
+
+        .share-create-expiry-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) minmax(120px, 0.8fr);
+            gap: 0.5rem;
+        }
+
+        .share-create-cookie-hint {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #d9e4ff;
+        }
+
+        .share-summary-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.7rem;
+        }
+
+        .share-summary-meta {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .share-summary-meta .text-input {
+            min-height: 40px;
+            padding: 0.52rem 0.64rem;
+            font-size: 0.76rem;
+        }
+
+        .share-summary-meta .mono-input {
+            font-size: 0.74rem;
+        }
+
+        .readonly-cookie-input {
+            height: 40px;
+            min-height: 40px;
+            max-height: 40px;
+            resize: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            line-height: 1.2;
+            letter-spacing: 0;
+            text-transform: none;
+            white-space: pre;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
         }
 
         .disclaimer-card {
@@ -309,6 +461,10 @@
         }
 
         @media (max-width: 900px) {
+            .nf-shell {
+                width: min(980px, calc(100% - 1rem));
+            }
+
             .admin-inline-layout {
                 grid-template-columns: 1fr;
             }
@@ -323,7 +479,11 @@
 
             .admin-expiry-grid,
             .admin-expiry-quick-actions,
-            .admin-expiry-actions {
+            .admin-expiry-actions,
+            .cookie-check-grid,
+            .cookie-editor-actions,
+            .share-summary-meta,
+            .share-summary-actions {
                 grid-template-columns: 1fr;
             }
         }
@@ -364,82 +524,168 @@
             <div id="lookupLoadingOverlay" class="lookup-loading-overlay hidden" aria-hidden="true">
                 <div class="lookup-loading-box">
                     <span class="lookup-loading-spinner" aria-hidden="true"></span>
-                    <p id="lookupLoadingText">Xin vui long cho trong giay lat</p>
+                    <p id="lookupLoadingText">Xin vui lòng chờ trong giây lát</p>
                 </div>
             </div>
 
             <h1 class="hero-title">Get Link Netflix</h1>
 
             <div class="lookup-wrap">
-                <div id="lookupState" class="state-text state-idle">Vui long mo link duoc cap de bat dau su dung.</div>
+                <div id="lookupState" class="state-text state-idle">Vui lòng mở link được cấp để bắt đầu sử dụng.</div>
 
                 <section id="guestGuard" class="guest-guard hidden">
-                    <h3>Khong tim thay link hop le</h3>
-                    <p id="guestGuardText">Hay mo dung link /getlink?s=... hoac /getlink?c=... de tiep tuc.</p>
+                    <h3>Không tìm thấy link hợp lệ</h3>
+                    <p id="guestGuardText">Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.</p>
                 </section>
 
                 <section id="adminInlineLayout" class="admin-inline-layout hidden">
                     <div class="admin-inline-left">
-                        <section id="adminInlineCookiePanel" class="share-box admin-box hidden">
-                            <h3 class="share-box-title">Cookie runtime cho phien hien tai (Admin)</h3>
-                            <div class="runtime-cookie-wrap">
-                                <textarea id="adminRuntimeCookieInput" class="text-input runtime-cookie-input" placeholder="Dan cookie Netflix vao day..."></textarea>
-                                <div class="lookup-actions">
-                                    <button id="adminApplyRuntimeCookieBtn" class="btn btn-primary" type="button">Ap dung cookie</button>
-                                    <button id="adminClearRuntimeCookieBtn" class="btn btn-ghost" type="button">Xoa cookie phien</button>
-                                </div>
-                            </div>
-                            <div id="adminRuntimeCookieState" class="state-text state-idle">Cookie phien hien tai lay tu link chia se neu co.</div>
-                        </section>
-
                         <section id="shareCreatorBox" class="share-box admin-box hidden">
-                            <h3 class="share-box-title">Tao link chia se (chi admin)</h3>
+                            <h3 class="share-box-title">Tạo link ID server (chỉ admin)</h3>
                             <div class="share-expiry-wrap">
-                                <input id="shareCreateExpiryInput" class="text-input share-expiry-input" type="datetime-local">
-                                <div id="shareCreateExpiryState" class="state-text state-idle">Han cua link ID server: de trong neu muon khong gioi han.</div>
+                                <div class="share-create-expiry-grid">
+                                    <input id="shareCreateDateInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Ngày: dd/mm hoặc dd/mm/yyyy">
+                                    <input id="shareCreateTimeInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Giờ: HH:mm">
+                                </div>
+                                <div id="shareCreateExpiryState" class="state-text state-idle">Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.</div>
                             </div>
                             <div class="lookup-actions" style="margin-top:0.45rem;">
-                                <button id="generateShareLinkBtn" class="btn btn-ghost" type="button">Tao link ID server (?s)</button>
-                                <button id="generateCookieShareLinkBtn" class="btn btn-ghost" type="button">Tao link cookie (?c)</button>
+                                <button id="generateShareLinkBtn" class="btn btn-primary" type="button">Tạo link ID server (?s)</button>
                             </div>
-                            <div id="shareState" class="state-text state-idle">Bam 1 trong 2 nut de tao link va he thong se tu sao chep ngay.</div>
+                            <div id="shareState" class="state-text state-idle">Tạo ID server trước, sau đó nhập 3 cookie cho link này.</div>
                             <div class="share-row">
                                 <input id="shareLinkOutput" class="text-input link-output" type="text" readonly>
-                                <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chep</button>
-                                <a id="openShareLinkBtn" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">Mo link</a>
+                                <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chép</button>
+                                <a id="openShareLinkBtn" class="btn btn-ghost" href="#" target="_blank" rel="noopener noreferrer">Mở link</a>
+                            </div>
+                            <div id="shareCreateCookieSection" class="share-create-cookie-section hidden">
+                                <p class="share-create-cookie-hint">Link ID đã tạo xong. Bạn có thể nhập 1, 2 hoặc đủ 3 cookie cho link này.</p>
+                                <div class="cookie-slot-grid">
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie chính</span>
+                                            <span id="creatorShareCookiePrimaryState" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="creatorShareCookiePrimaryInput" class="text-input readonly-cookie-input" rows="1" wrap="off"></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="creatorCheckPrimaryCookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="creatorUsePrimaryCookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie phụ 1</span>
+                                            <span id="creatorShareCookieBackup1State" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="creatorShareCookieBackup1Input" class="text-input readonly-cookie-input" rows="1" wrap="off"></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="creatorCheckBackup1CookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="creatorUseBackup1CookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie phụ 2</span>
+                                            <span id="creatorShareCookieBackup2State" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="creatorShareCookieBackup2Input" class="text-input readonly-cookie-input" rows="1" wrap="off"></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="creatorCheckBackup2CookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="creatorUseBackup2CookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="share-summary-actions">
+                                    <button id="saveCreatedShareCookiesBtn" class="btn btn-primary" type="button">Lưu cookie</button>
+                                    <button id="creatorCheckAllShareCookiesBtn" class="btn btn-ghost" type="button">Check toàn bộ</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="currentShareSummaryBox" class="share-box admin-box hidden">
+                            <h3 class="share-box-title">Thông số link khách hiện tại</h3>
+                            <div class="share-summary-grid">
+                                <div class="share-summary-meta">
+                                    <input id="currentShareIdDisplay" class="text-input mono-input" type="text" title="ID" readonly>
+                                    <input id="currentShareStatusDisplay" class="text-input" type="text" title="Trạng thái" readonly>
+                                    <input id="currentShareExpiryInput" class="text-input" type="datetime-local" title="Hạn" disabled>
+                                    <input id="currentShareUpdatedDisplay" class="text-input" type="text" title="Cập nhật" readonly>
+                                </div>
+                                <input id="currentShareUrlDisplay" class="text-input mono-input" type="text" readonly>
+                                <div class="cookie-slot-grid">
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie chính</span>
+                                            <span id="currentShareCookiePrimaryState" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="currentShareCookiePrimaryDisplay" class="text-input readonly-cookie-input" rows="1" wrap="off" readonly></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="viewCheckPrimaryCookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="viewUsePrimaryCookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie phụ 1</span>
+                                            <span id="currentShareCookieBackup1State" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="currentShareCookieBackup1Display" class="text-input readonly-cookie-input" rows="1" wrap="off" readonly></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="viewCheckBackup1CookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="viewUseBackup1CookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                    <div class="cookie-slot-card">
+                                        <div class="cookie-slot-head">
+                                            <span class="cookie-slot-label">Cookie phụ 2</span>
+                                            <span id="currentShareCookieBackup2State" class="cookie-slot-state">Chưa check</span>
+                                        </div>
+                                        <textarea id="currentShareCookieBackup2Display" class="text-input readonly-cookie-input" rows="1" wrap="off" readonly></textarea>
+                                        <div class="cookie-slot-actions">
+                                            <button id="viewCheckBackup2CookieBtn" class="btn btn-ghost" type="button">Check cookie</button>
+                                            <button id="viewUseBackup2CookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="share-summary-actions">
+                                    <button id="editCurrentShareBtn" class="btn btn-primary" type="button">Sửa</button>
+                                    <button id="viewCheckAllShareCookiesBtn" class="btn btn-ghost" type="button">Check toàn bộ</button>
+                                    <button id="saveCurrentShareBtn" class="btn btn-primary hidden" type="button">Lưu</button>
+                                    <button id="cancelCurrentShareEditBtn" class="btn btn-ghost hidden" type="button">Hủy</button>
+                                </div>
                             </div>
                         </section>
                     </div>
 
                     <section id="adminCookieInfoPanel" class="share-box admin-box admin-cookie-info-panel hidden">
-                        <h3 class="share-box-title">Thong tin cookie (check khi tao link)</h3>
-                        <div id="adminCookieInfoState" class="state-text state-idle">Bam tao link de kiem tra cookie va hien thi thong tin.</div>
+                        <h3 class="share-box-title">Thông tin cookie của link ID</h3>
+                        <div id="adminCookieInfoState" class="state-text state-idle">Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.</div>
                         <div id="adminCookieInfoContent" class="admin-cookie-info-content">
-                            <p class="admin-cookie-info-placeholder">Chua co du lieu cookie info.</p>
+                            <p class="admin-cookie-info-placeholder">Chưa có dữ liệu cookie info.</p>
                         </div>
                     </section>
                 </section>
 
                 <section id="deviceSection">
-                    <h3 class="device-section-title">Hay chon thiet bi ban dang dung de tien hanh su dung Netflix</h3>
+                    <h3 class="device-section-title">Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix</h3>
                     <div class="device-grid">
                         <button class="btn btn-device" type="button" data-device="desktop" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M3 4h18a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-7v2h3a1 1 0 1 1 0 2H7a1 1 0 0 1 0-2h3v-2H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zm1 2v9h16V6H4z"></path>
                             </svg>
-                            <span class="device-title">May tinh</span>
+                            <span class="device-title">Máy tính</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="mobile" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h8V5H8zm4 15a1.2 1.2 0 1 0 0 .01V20z"></path>
                             </svg>
-                            <span class="device-title">Dien thoai</span>
+                            <span class="device-title">Điện thoại</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="tablet" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 3v13h12V5H6zm6 15a1 1 0 1 0 0 .01V20z"></path>
                             </svg>
-                            <span class="device-title">May tinh bang</span>
+                            <span class="device-title">Máy tính bảng</span>
                         </button>
                         <button class="btn btn-device" type="button" data-device="tv" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -449,7 +695,7 @@
                         </button>
                     </div>
                     <div class="support-row">
-                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CAN HO TRO / BAO HANH</button>
+                        <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CẦN HỖ TRỢ / BẢO HÀNH</button>
                     </div>
                 </section>
             </div>
@@ -461,14 +707,14 @@
         <div class="modal-card support-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Ho tro / Bao hanh</span>
-                    <h2>Can ho tro tai khoan Netflix?</h2>
+                    <span class="eyebrow">Hỗ trợ / Bảo hành</span>
+                    <h2>Cần hỗ trợ tài khoản Netflix?</h2>
                 </div>
-                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="supportModalCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
-                <p>Vui long nhan tin qua fanpage de duoc ho tro bao hanh nhanh nhat.</p>
-                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cap fanpage</a>
+                <p>Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
+                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage</a>
             </div>
         </div>
     </section>
@@ -478,20 +724,20 @@
         <div class="modal-card support-card disclaimer-card" role="dialog" aria-modal="true" aria-labelledby="disclaimerTitle">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Luu y truoc khi su dung</span>
-                    <h2 id="disclaimerTitle">Thong bao quan trong</h2>
+                    <span class="eyebrow">Lưu ý trước khi sử dụng</span>
+                    <h2 id="disclaimerTitle">Thông báo quan trọng</h2>
                 </div>
             </header>
             <div class="support-body disclaimer-body">
-                <p class="disclaimer-title">❌ LUU Y PHAI DOC (QUAN TRONG) ❌</p>
+                <p class="disclaimer-title">❌ LƯU Ý PHẢI ĐỌC (QUAN TRỌNG) ❌</p>
                 <ol class="disclaimer-list">
-                    <li>Dang nhap khong gioi han thiet bi, NHUNG chi xem phim cung 1 luc tren 1 THIET BI, xem hon se bi Netflix danh spam va tu choi bao hanh.</li>
-                    <li>Khong chinh lung tung trong phan cai dat.</li>
-                    <li>Neu gap BAT CU VAN DE gi, nhan vao page cu phap 𝗕𝗛𝟮𝟰𝟳 de duoc ho tro va bao hanh!</li>
+                    <li>Đăng nhập không giới hạn thiết bị, NHƯNG chỉ xem phim cùng 1 lúc trên 1 THIẾT BỊ, xem hơn sẽ bị Netflix đánh spam và từ chối bảo hành.</li>
+                    <li>Không chỉnh lung tung trong phần cài đặt.</li>
+                    <li>Nếu gặp BẤT CỨ VẤN ĐỀ gì, nhắn vào page cú pháp 𝗕𝗛𝟮𝟰𝟳 để được hỗ trợ và bảo hành!</li>
                 </ol>
-                <div id="disclaimerCountdown" class="state-text state-warning disclaimer-countdown">Vui long cho 2 giay de bo qua popup.</div>
+                <div id="disclaimerCountdown" class="state-text state-warning disclaimer-countdown">Vui lòng chờ 2 giây để bỏ qua popup.</div>
                 <div class="disclaimer-actions">
-                    <button id="disclaimerDismissBtn" class="btn btn-primary" type="button" disabled>Bo qua</button>
+                    <button id="disclaimerDismissBtn" class="btn btn-primary" type="button" disabled>Bỏ qua</button>
                 </div>
             </div>
         </div>
@@ -502,26 +748,26 @@
         <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Dang nhap dien thoai</span>
-                    <h2>Tao link dang nhap thanh cong</h2>
+                    <span class="eyebrow">Đăng nhập điện thoại</span>
+                    <h2>Tạo link đăng nhập thành công</h2>
                 </div>
-                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="mobileLinkCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="mobile-link-body">
-                <label class="mobile-link-label" for="mobileLinkOutput">Link dang nhap:</label>
+                <label class="mobile-link-label" for="mobileLinkOutput">Link đăng nhập:</label>
                 <input id="mobileLinkOutput" class="text-input mobile-link-output mono" type="text" readonly>
-                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chep link</button>
+                <button id="copyMobileLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chép link</button>
 
                 <div class="mobile-link-guide">
-                    <h3>Huong dan dang nhap tren dien thoai</h3>
-                    <p><strong>Buoc 0 (Quan trong):</strong> Dong HOAN TOAN App Netflix trong da nhiem</p>
-                    <p id="mobileGuideStep1">Buoc 1: Sao chep duong link dang nhap phia tren</p>
-                    <p id="mobileGuideStep2">Buoc 2: Dan vao trinh duyet mac dinh tren dien thoai va truy cap</p>
+                    <h3>Hướng dẫn đăng nhập trên điện thoại</h3>
+                    <p><strong>Bước 0 (Quan trọng):</strong> Đóng HOÀN TOÀN App Netflix trong đa nhiệm</p>
+                    <p id="mobileGuideStep1">Bước 1: Sao chép đường link đăng nhập phía trên</p>
+                    <p id="mobileGuideStep2">Bước 2: Dán vào trình duyệt mặc định trên điện thoại và truy cập</p>
                     <div id="mobileGuideStep3Row" class="mobile-link-guide-row">
-                        <p id="mobileGuideStep3" class="mobile-link-guide-step">Buoc 3: Truy cap tiep trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
-                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chep link</button>
+                        <p id="mobileGuideStep3" class="mobile-link-guide-step">Bước 3: Truy cập tiếp trang <span class="mobile-guide-link-text">netflix.com/unsupported</span></p>
+                        <button id="copyUnsupportedLinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chép link</button>
                     </div>
-                    <p>Buoc 4: Neu co hoi thi bam DONG Y hoac TIEP TUC</p>
+                    <p>Bước 4: Nếu có hỏi thì bấm ĐỒNG Ý hoặc TIẾP TỤC</p>
                 </div>
             </div>
         </div>
@@ -532,18 +778,18 @@
         <div class="modal-card support-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Huong dan TV</span>
-                    <h2>Huong dan cach dang nhap len Tivi</h2>
+                    <span class="eyebrow">Hướng dẫn TV</span>
+                    <h2>Hướng dẫn cách đăng nhập lên Tivi</h2>
                 </div>
-                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
                 <div class="tv-guide-list">
-                    <p><strong>Buoc 1:</strong> Mo tivi roi bam nut dang nhap bang ma code</p>
-                    <p><strong>Buoc 2:</strong> Ghi nho ma code do</p>
-                    <p><strong>Buoc 3:</strong> Bam vao nut ben duoi va nhap ma code do vao</p>
+                    <p><strong>Bước 1:</strong> Mở tivi rồi bấm nút đăng nhập bằng mã code</p>
+                    <p><strong>Bước 2:</strong> Ghi nhớ mã code đó</p>
+                    <p><strong>Bước 3:</strong> Bấm vào nút bên dưới và nhập mã code đó vào</p>
                 </div>
-                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHAP MA TIVI</button>
+                <button id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">NHẬP MÃ TIVI</button>
             </div>
         </div>
     </section>
@@ -553,22 +799,22 @@
         <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Nhap ma Tivi</span>
-                    <h2>Nhap ma TV (8 so)</h2>
+                    <span class="eyebrow">Nhập mã Tivi</span>
+                    <h2>Nhập mã TV (8 số)</h2>
                 </div>
-                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="tvCodeCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="mobile-link-body">
-                <label class="mobile-link-label" for="tvCodeInput">Ma TV:</label>
-                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Vi du: 12345678" autocomplete="off">
-                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xac nhan</button>
-                <div id="tvCodeState" class="state-text state-idle">Nhap dung 8 so roi bam xac nhan. He thong se mo link dang nhap truoc, sau do tu chuyen sang netflix.com/tv8.</div>
+                <label class="mobile-link-label" for="tvCodeInput">Mã TV:</label>
+                <input id="tvCodeInput" class="text-input mono" type="text" inputmode="numeric" maxlength="8" placeholder="Ví dụ: 12345678" autocomplete="off">
+                <button id="tvCodeSubmitBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Xác nhận</button>
+                <div id="tvCodeState" class="state-text state-idle">Nhập đúng 8 số rồi bấm xác nhận. Hệ thống sẽ mở link đăng nhập trước, sau đó tự chuyển sang netflix.com/tv8.</div>
 
                 <div class="mobile-link-guide">
-                    <h3>Mo thu cong khi can</h3>
-                    <p>Neu trinh duyet chan popup, hay mo lan luot 2 link sau:</p>
-                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Mo link dang nhap</a>
-                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mo netflix.com/tv8</a>
+                    <h3>Mở thủ công khi cần</h3>
+                    <p>Nếu trình duyệt chặn popup, hãy mở lần lượt 2 link sau:</p>
+                    <a id="tvManualLoginLink" class="btn btn-ghost support-link-btn" href="#" target="_blank" rel="noopener noreferrer">Mở link đăng nhập</a>
+                    <a id="tvManualLink" class="btn btn-ghost support-link-btn" href="https://www.netflix.com/tv8" target="_blank" rel="noopener noreferrer">Mở netflix.com/tv8</a>
                 </div>
             </div>
         </div>
@@ -579,17 +825,17 @@
         <div class="modal-card support-card device-confirm-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Xac nhan thiet bi</span>
-                    <h2 id="deviceConfirmTitle">Ban co chac chan dang dung thiet bi nay khong?</h2>
+                    <span class="eyebrow">Xác nhận thiết bị</span>
+                    <h2 id="deviceConfirmTitle">Bạn có chắc chắn đang dùng thiết bị này không?</h2>
                 </div>
-                <button id="deviceConfirmCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="deviceConfirmCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
-                <p id="deviceConfirmHint">Vui long xac nhan dung thiet bi de tiep tuc.</p>
-                <div id="deviceConfirmCountdown" class="state-text state-warning">Vui long cho 3 giay de xac nhan.</div>
+                <p id="deviceConfirmHint">Vui lòng xác nhận đúng thiết bị để tiếp tục.</p>
+                <div id="deviceConfirmCountdown" class="state-text state-warning">Vui lòng chờ 3 giây để xác nhận.</div>
                 <div class="device-confirm-actions">
-                    <button id="deviceConfirmOkBtn" class="btn btn-primary" type="button" disabled>Co</button>
-                    <button id="deviceConfirmCancelBtn" class="btn btn-ghost" type="button">Huy</button>
+                    <button id="deviceConfirmOkBtn" class="btn btn-primary" type="button" disabled>Có</button>
+                    <button id="deviceConfirmCancelBtn" class="btn btn-ghost" type="button">Hủy</button>
                 </div>
             </div>
         </div>
@@ -600,13 +846,13 @@
         <div class="modal-card support-card mobile-os-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Dien thoai / Tablet</span>
-                    <h2>Ban dang dung Android hay iOS?</h2>
+                    <span class="eyebrow">Điện thoại / Máy tính bảng</span>
+                    <h2>Bạn đang dùng Android hay iOS?</h2>
                 </div>
-                <button id="mobileOsCloseBtn" class="btn btn-ghost" type="button">Dong</button>
+                <button id="mobileOsCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
             <div class="support-body">
-                <p>Vui long chon dung he dieu hanh de xem huong dan phu hop.</p>
+                <p>Vui lòng chọn đúng hệ điều hành để xem hướng dẫn phù hợp.</p>
                 <div class="mobile-os-actions">
                     <button id="mobileOsAndroidBtn" class="btn btn-primary" type="button">Android</button>
                     <button id="mobileOsIosBtn" class="btn btn-ghost" type="button">iOS</button>
@@ -680,18 +926,15 @@
                             </div>
                         </div>
 
-                        <textarea id="adminShareCookieInput" class="text-input runtime-cookie-input" placeholder="Cookie cua share link..."></textarea>
-
                         <div class="admin-result-actions">
-                            <button id="adminSaveCookieBtn" class="btn btn-primary" type="button">Luu cookie</button>
-                            <button id="adminRotateIdBtn" class="btn btn-ghost" type="button">Tao ID ngau nhien</button>
+                            <button id="adminRotateIdBtn" class="btn btn-ghost" type="button">Tạo ID ngẫu nhiên</button>
                             <button id="adminCopyUrlBtn" class="btn btn-ghost" type="button">Copy URL</button>
-                            <button id="adminRevokeBtn" class="btn btn-ghost" type="button">Thu hoi link</button>
-                            <button id="adminRestoreBtn" class="btn btn-ghost" type="button">Phuc hoi link</button>
-                            <button id="adminUseShareCookieBtn" class="btn btn-ghost" type="button">Dung cookie nay</button>
+                            <button id="adminRevokeBtn" class="btn btn-ghost" type="button">Thu hồi link</button>
+                            <button id="adminRestoreBtn" class="btn btn-ghost" type="button">Phục hồi link</button>
+                            <button id="adminUseShareCookieBtn" class="btn btn-ghost" type="button">Dùng cookie chính</button>
                         </div>
 
-                        <p class="admin-warning">Luu y: Sau khi doi ID, link cu se khong dung duoc nua.</p>
+                        <p class="admin-warning">Lưu ý: Sau khi đổi ID, link cũ sẽ không dùng được nữa.</p>
                     </div>
                 </section>
             </div>

@@ -1,9 +1,10 @@
-﻿const https = require('https');
+const https = require('https');
 const crypto = require('crypto');
 
 const FIREBASE_PROJECT_ID = 'trada3k-c402a';
 const FIREBASE_API_KEY = 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58';
 const COLL_GETLINK_SHARES = 'settings/getlink_shares/items';
+const SHARE_COOKIE_SLOTS = ['primary', 'backup1', 'backup2'];
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -42,10 +43,47 @@ function parseFirestoreString(valueObj = null) {
     return '';
 }
 
+function sanitizeCookieRaw(value = '') {
+    return String(value || '').trim();
+}
+
+function sanitizeShareCookies(input = {}) {
+    const raw = input && typeof input === 'object' ? input : {};
+    return {
+        primary: sanitizeCookieRaw(raw.primary),
+        backup1: sanitizeCookieRaw(raw.backup1),
+        backup2: sanitizeCookieRaw(raw.backup2)
+    };
+}
+
+function normalizeSlotName(slot = '') {
+    const normalized = String(slot || '').trim().toLowerCase();
+    if (normalized === 'primary') return 'primary';
+    if (normalized === 'backup1' || normalized === 'backup_1' || normalized === 'secondary') return 'backup1';
+    if (normalized === 'backup2' || normalized === 'backup_2' || normalized === 'tertiary') return 'backup2';
+    return '';
+}
+
+function getCookieListFromRecord(record = {}) {
+    const cookies = sanitizeShareCookies(record.cookies || {});
+    return [
+        { slot: 'primary', cookieRaw: cookies.primary },
+        { slot: 'backup1', cookieRaw: cookies.backup1 },
+        { slot: 'backup2', cookieRaw: cookies.backup2 }
+    ];
+}
+
 function mapShareFieldsToRecord(fields = {}) {
+    const legacyCookieRaw = sanitizeCookieRaw(parseFirestoreString(fields.cookieRaw));
+    const cookies = sanitizeShareCookies({
+        primary: parseFirestoreString(fields.cookiePrimaryRaw) || legacyCookieRaw,
+        backup1: parseFirestoreString(fields.cookieBackup1Raw),
+        backup2: parseFirestoreString(fields.cookieBackup2Raw)
+    });
     return {
         id: parseFirestoreString(fields.id),
-        cookieRaw: parseFirestoreString(fields.cookieRaw),
+        cookieRaw: cookies.primary,
+        cookies,
         status: sanitizeShareStatus(parseFirestoreString(fields.status)),
         createdAt: parseFirestoreString(fields.createdAt),
         updatedAt: parseFirestoreString(fields.updatedAt),
@@ -58,9 +96,13 @@ function mapShareFieldsToRecord(fields = {}) {
 }
 
 function mapShareRecordToFields(record = {}) {
+    const cookies = sanitizeShareCookies(record.cookies || {});
     return {
         id: toStringValue(record.id || ''),
-        cookieRaw: toStringValue(record.cookieRaw || ''),
+        cookieRaw: toStringValue(cookies.primary || ''),
+        cookiePrimaryRaw: toStringValue(cookies.primary || ''),
+        cookieBackup1Raw: toStringValue(cookies.backup1 || ''),
+        cookieBackup2Raw: toStringValue(cookies.backup2 || ''),
         status: toStringValue(sanitizeShareStatus(record.status)),
         createdAt: toStringValue(record.createdAt || ''),
         updatedAt: toStringValue(record.updatedAt || ''),
@@ -174,10 +216,6 @@ function extractShareIdFromQuery(query = '') {
     return '';
 }
 
-function sanitizeCookieRaw(value = '') {
-    return String(value || '').trim();
-}
-
 async function readShareById(shareId = '') {
     const id = String(shareId || '').trim();
     if (!isValidShareId(id)) return null;
@@ -185,16 +223,28 @@ async function readShareById(shareId = '') {
     if (!doc || !doc.fields) return null;
     const mapped = mapShareFieldsToRecord(doc.fields || {});
     if (!mapped.id) mapped.id = id;
+    mapped.cookies = sanitizeShareCookies(mapped.cookies || {});
+    mapped.cookieRaw = mapped.cookies.primary || '';
     return mapped;
+}
+
+async function saveShareRecord(record = {}) {
+    const next = {
+        ...record,
+        cookies: sanitizeShareCookies(record.cookies || {})
+    };
+    next.cookieRaw = next.cookies.primary || '';
+    const ok = await patchDoc(buildShareDocPath(next.id), mapShareRecordToFields(next));
+    if (!ok) {
+        const err = new Error('Failed to save share');
+        err.httpStatus = 500;
+        throw err;
+    }
+    return next;
 }
 
 async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') {
     const finalCookie = sanitizeCookieRaw(cookieRaw);
-    if (!finalCookie) {
-        const err = new Error('Missing cookieStr');
-        err.httpStatus = 400;
-        throw err;
-    }
     const finalExpiresAt = normalizeExpiryInput(expiresAt);
 
     const now = new Date().toISOString();
@@ -206,6 +256,11 @@ async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') 
         const record = {
             id,
             cookieRaw: finalCookie,
+            cookies: {
+                primary: finalCookie,
+                backup1: '',
+                backup2: ''
+            },
             status: 'active',
             createdAt: now,
             updatedAt: now,
@@ -216,9 +271,7 @@ async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') 
             rotatedFrom: ''
         };
 
-        const ok = await patchDoc(buildShareDocPath(id), mapShareRecordToFields(record));
-        if (!ok) continue;
-        return record;
+        return saveShareRecord(record);
     }
 
     const err = new Error('Failed to allocate share id');
@@ -227,6 +280,11 @@ async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') 
 }
 
 async function updateShareCookie(shareId = '', cookieRaw = '', actor = 'admin') {
+    const nextCookie = sanitizeCookieRaw(cookieRaw);
+    return updateShareCookies(shareId, { primary: nextCookie }, actor);
+}
+
+async function updateShareCookies(shareId = '', cookiesInput = {}, actor = 'admin') {
     const current = await readShareById(shareId);
     if (!current) {
         const err = new Error('Share link not found');
@@ -234,27 +292,60 @@ async function updateShareCookie(shareId = '', cookieRaw = '', actor = 'admin') 
         throw err;
     }
 
-    const nextCookie = sanitizeCookieRaw(cookieRaw);
-    if (!nextCookie) {
-        const err = new Error('Missing cookieStr');
-        err.httpStatus = 400;
-        throw err;
-    }
+    const nextCookies = {
+        ...sanitizeShareCookies(current.cookies || {}),
+        ...sanitizeShareCookies(cookiesInput || {})
+    };
 
     const next = {
         ...current,
-        cookieRaw: nextCookie,
+        cookies: nextCookies,
+        cookieRaw: nextCookies.primary || '',
         updatedAt: new Date().toISOString(),
         updatedBy: String(actor || 'admin').trim()
     };
 
-    const ok = await patchDoc(buildShareDocPath(current.id), mapShareRecordToFields(next));
-    if (!ok) {
-        const err = new Error('Failed to update share cookie');
-        err.httpStatus = 500;
+    return saveShareRecord(next);
+}
+
+async function updateShareCookieSlot(shareId = '', slot = '', cookieRaw = '', actor = 'admin') {
+    const normalizedSlot = normalizeSlotName(slot);
+    if (!normalizedSlot) {
+        const err = new Error('Invalid cookie slot');
+        err.httpStatus = 400;
         throw err;
     }
-    return next;
+    return updateShareCookies(shareId, { [normalizedSlot]: sanitizeCookieRaw(cookieRaw) }, actor);
+}
+
+async function promoteShareCookieSlot(shareId = '', slot = '', actor = 'system') {
+    const current = await readShareById(shareId);
+    if (!current) {
+        const err = new Error('Share link not found');
+        err.httpStatus = 404;
+        throw err;
+    }
+
+    const normalizedSlot = normalizeSlotName(slot);
+    if (!normalizedSlot || normalizedSlot === 'primary') return current;
+
+    const cookies = sanitizeShareCookies(current.cookies || {});
+    if (!cookies[normalizedSlot]) return current;
+
+    const nextCookies = {
+        primary: cookies[normalizedSlot],
+        backup1: normalizedSlot === 'backup1' ? cookies.primary : cookies.backup1,
+        backup2: normalizedSlot === 'backup2' ? cookies.primary : cookies.backup2
+    };
+
+    const next = {
+        ...current,
+        cookies: nextCookies,
+        cookieRaw: nextCookies.primary || '',
+        updatedAt: new Date().toISOString(),
+        updatedBy: String(actor || 'system').trim()
+    };
+    return saveShareRecord(next);
 }
 
 async function setShareStatus(shareId = '', status = 'active', actor = 'admin') {
@@ -275,13 +366,7 @@ async function setShareStatus(shareId = '', status = 'active', actor = 'admin') 
         updatedBy: String(actor || 'admin').trim()
     };
 
-    const ok = await patchDoc(buildShareDocPath(current.id), mapShareRecordToFields(next));
-    if (!ok) {
-        const err = new Error('Failed to update share status');
-        err.httpStatus = 500;
-        throw err;
-    }
-    return next;
+    return saveShareRecord(next);
 }
 
 async function rotateShareId(shareId = '', actor = 'admin') {
@@ -317,22 +402,17 @@ async function rotateShareId(shareId = '', actor = 'admin') {
         rotatedFrom: current.id
     };
 
-    const createOk = await patchDoc(buildShareDocPath(newId), mapShareRecordToFields(next));
-    if (!createOk) {
-        const err = new Error('Failed to create rotated link');
-        err.httpStatus = 500;
-        throw err;
-    }
+    await saveShareRecord(next);
 
     const deleteOldOk = await deleteDoc(buildShareDocPath(current.id));
     if (!deleteOldOk) {
-        await patchDoc(buildShareDocPath(current.id), mapShareRecordToFields({
+        await saveShareRecord({
             ...current,
             status: 'revoked',
             revokedAt: now,
             updatedAt: now,
             updatedBy: String(actor || 'admin').trim()
-        }));
+        });
     }
 
     return {
@@ -378,26 +458,27 @@ async function setShareExpiry(shareId = '', options = {}, actor = 'admin') {
         updatedBy: String(actor || 'admin').trim()
     };
 
-    const ok = await patchDoc(buildShareDocPath(current.id), mapShareRecordToFields(next));
-    if (!ok) {
-        const err = new Error('Failed to update share expiry');
-        err.httpStatus = 500;
-        throw err;
-    }
-    return next;
+    return saveShareRecord(next);
 }
 
 module.exports = {
     COLL_GETLINK_SHARES,
+    SHARE_COOKIE_SLOTS,
     isValidShareId,
     extractShareIdFromQuery,
     sanitizeCookieRaw,
     sanitizeShareStatus,
+    sanitizeShareCookies,
+    normalizeSlotName,
     normalizeExpiryInput,
     isShareExpired,
     readShareById,
     createShare,
+    getCookieListFromRecord,
     updateShareCookie,
+    updateShareCookies,
+    updateShareCookieSlot,
+    promoteShareCookieSlot,
     setShareStatus,
     rotateShareId,
     setShareExpiry
