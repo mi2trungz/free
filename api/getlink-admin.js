@@ -143,6 +143,30 @@ async function buildCookieCheckResult(slot, cookieRaw) {
     };
 }
 
+async function resolveCookiesForCheck(shareId, body = {}) {
+    const directCookie = sanitizeCookieRaw(body.cookieStr || '');
+    if (directCookie) {
+        return {
+            cookies: sanitizeShareCookies(body.cookies || {}),
+            record: null,
+            usedDirectCookie: true
+        };
+    }
+
+    const record = await readShareById(shareId);
+    if (!record) {
+        const error = new Error('Share link not found');
+        error.httpStatus = 404;
+        throw error;
+    }
+
+    return {
+        cookies: sanitizeShareCookies((body && body.cookies) || record.cookies || {}),
+        record,
+        usedDirectCookie: false
+    };
+}
+
 module.exports = async function (req, res) {
     applyCors(req, res, 'GET,POST,PUT,OPTIONS');
     applySecurityHeaders(res);
@@ -207,11 +231,9 @@ module.exports = async function (req, res) {
         if (checkCookieMatch && req.method === 'POST') {
             const shareId = decodeURIComponent(checkCookieMatch[1] || '');
             if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
-            const record = await readShareById(shareId);
-            if (!record) return res.status(404).json({ error: 'Share link not found' });
             const body = parseBody(req.body);
             const slot = String(body.slot || '').trim();
-            const cookies = sanitizeShareCookies((body && body.cookies) || record.cookies || {});
+            const { cookies } = await resolveCookiesForCheck(shareId, body);
             const cookieRaw = sanitizeCookieRaw(body.cookieStr || cookies[slot] || '');
             const result = await buildCookieCheckResult(slot, cookieRaw);
             return res.status(200).json({ success: true, result });
@@ -221,14 +243,11 @@ module.exports = async function (req, res) {
         if (checkAllMatch && req.method === 'POST') {
             const shareId = decodeURIComponent(checkAllMatch[1] || '');
             if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
-            const record = await readShareById(shareId);
-            if (!record) return res.status(404).json({ error: 'Share link not found' });
             const body = parseBody(req.body);
-            const cookies = sanitizeShareCookies((body && body.cookies) || record.cookies || {});
-            const results = [];
-            for (const slot of ['primary', 'backup1', 'backup2']) {
-                results.push(await buildCookieCheckResult(slot, cookies[slot] || ''));
-            }
+            const { cookies } = await resolveCookiesForCheck(shareId, body);
+            const results = await Promise.all(['primary', 'backup1', 'backup2'].map((slot) => {
+                return buildCookieCheckResult(slot, cookies[slot] || '');
+            }));
             return res.status(200).json({ success: true, results });
         }
 

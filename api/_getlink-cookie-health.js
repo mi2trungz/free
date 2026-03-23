@@ -1,6 +1,9 @@
 const { extractNetflixIdsFromCookie } = require('./_nf-store');
 const { requestNetflixToken, detectPlaybackOverCapacity } = require('./_netflix-token-engine');
 
+const COOKIE_CHECK_CACHE_TTL_MS = 45 * 1000;
+const cookieCheckCache = new Map();
+
 function sanitizeCookieRaw(value = '') {
     return String(value || '').trim();
 }
@@ -28,6 +31,35 @@ function summarizeCookieCheck(accountInfo = null) {
     };
 }
 
+function cloneCookieCheckResult(result) {
+    return result ? JSON.parse(JSON.stringify(result)) : result;
+}
+
+function getCookieCheckCacheKey(cookieRaw = '') {
+    return sanitizeCookieRaw(cookieRaw);
+}
+
+function readCachedCookieCheck(cookieRaw = '') {
+    const key = getCookieCheckCacheKey(cookieRaw);
+    if (!key) return null;
+    const cached = cookieCheckCache.get(key);
+    if (!cached) return null;
+    if (cached.expiresAt <= Date.now()) {
+        cookieCheckCache.delete(key);
+        return null;
+    }
+    return cloneCookieCheckResult(cached.result);
+}
+
+function writeCachedCookieCheck(cookieRaw = '', result = null) {
+    const key = getCookieCheckCacheKey(cookieRaw);
+    if (!key || !result) return;
+    cookieCheckCache.set(key, {
+        expiresAt: Date.now() + COOKIE_CHECK_CACHE_TTL_MS,
+        result: cloneCookieCheckResult(result)
+    });
+}
+
 async function evaluateGetlinkCookie(cookieRaw = '') {
     const finalCookie = sanitizeCookieRaw(cookieRaw);
     if (!finalCookie) {
@@ -40,15 +72,20 @@ async function evaluateGetlinkCookie(cookieRaw = '') {
         };
     }
 
+    const cached = readCachedCookieCheck(finalCookie);
+    if (cached) return cached;
+
     const ids = extractNetflixIdsFromCookie(finalCookie);
     if (!ids.netflixId) {
-        return {
+        const result = {
             ok: false,
             reason: 'invalid_cookie',
             error: 'Khong tim thay NetflixId hop le trong cookie.',
             accountInfo: null,
             summary: summarizeCookieCheck(null)
         };
+        writeCachedCookieCheck(finalCookie, result);
+        return result;
     }
 
     const tokenResult = await requestNetflixToken(ids.netflixId, ids.secureNetflixId || '');
@@ -56,47 +93,55 @@ async function evaluateGetlinkCookie(cookieRaw = '') {
     const summary = summarizeCookieCheck(accountInfo);
 
     if (!(tokenResult.outcome === 'ok' && tokenResult.nftoken)) {
-        return {
+        const result = {
             ok: false,
             reason: tokenResult.outcome || 'token_error',
             error: String(tokenResult.error || 'Khong tao duoc link tu cookie.').trim(),
             accountInfo,
             summary
         };
+        writeCachedCookieCheck(finalCookie, result);
+        return result;
     }
 
     if (!accountInfo) {
-        return {
+        const result = {
             ok: false,
             reason: 'missing_account_info',
             error: 'Khong lay duoc thong tin tai khoan tu cookie.',
             accountInfo: null,
             summary
         };
+        writeCachedCookieCheck(finalCookie, result);
+        return result;
     }
 
     if (isPaymentHoldYes(accountInfo.on_payment_hold)) {
-        return {
+        const result = {
             ok: false,
             reason: 'payment_hold',
             error: 'Cookie dang bi payment hold = yes.',
             accountInfo,
             summary
         };
+        writeCachedCookieCheck(finalCookie, result);
+        return result;
     }
 
     if (isUnknownPlan(accountInfo.plan)) {
-        return {
+        const result = {
             ok: false,
             reason: 'unknown_plan',
             error: 'Cookie co plan = unknow/unknown.',
             accountInfo,
             summary
         };
+        writeCachedCookieCheck(finalCookie, result);
+        return result;
     }
 
     const overcap = detectPlaybackOverCapacity(accountInfo);
-    return {
+    const result = {
         ok: true,
         reason: 'ok',
         error: '',
@@ -109,6 +154,8 @@ async function evaluateGetlinkCookie(cookieRaw = '') {
             ? 'Cookie LIVE nhung co dau hieu qua tai nguoi dung.'
             : 'Cookie LIVE va khong co dau hieu qua tai.'
     };
+    writeCachedCookieCheck(finalCookie, result);
+    return result;
 }
 
 module.exports = {

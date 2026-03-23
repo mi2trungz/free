@@ -335,41 +335,59 @@ async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHAR
         backup1: normalizeCookie(cookies.backup1 || ''),
         backup2: normalizeCookie(cookies.backup2 || '')
     };
-    const results = [];
+    const slotMap = new Map(slotConfigs.map((slot) => [slot.key, slot]));
+    const keysToCheck = slotConfigs
+        .map((slot) => slot.key)
+        .filter((key) => normalized[key]);
 
     for (const slot of slotConfigs) {
         const cookieStr = normalized[slot.key] || '';
         if (!cookieStr) {
             setSlotState(slot.key, 'Để trống', null);
-            continue;
-        }
-        try {
-            const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(shareId)}/check-cookie`, 'POST', {
-                slot: slot.key,
-                cookieStr,
-                cookies: normalized
-            });
-            const result = data.result || { slot: slot.key, ok: false, error: 'Không check được cookie.', summary: {} };
-            results.push(result);
-            setSlotState(slot.key, result.ok ? 'PASS' : 'FAIL', !!result.ok);
-        } catch (error) {
-            const result = {
-                slot: slot.key,
-                ok: false,
-                error: error.message || 'Check cookie thất bại.',
-                summary: {}
-            };
-            results.push(result);
-            setSlotState(slot.key, 'FAIL', false);
         }
     }
 
-    renderCookieCheckCards(results);
-    if (results.length === 0) {
+    if (keysToCheck.length === 0) {
+        renderCookieCheckCards([]);
         setAdminCookieInfoState('Chưa có cookie nào để check.', 'idle');
-    } else {
-        setAdminCookieInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
+        return [];
     }
+
+    let results = [];
+    try {
+        const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(shareId)}/check-all`, 'POST', {
+            cookies: normalized
+        });
+        const apiResults = Array.isArray(data.results) ? data.results : [];
+        results = apiResults.filter((item) => slotMap.has(item && item.slot));
+        for (const result of results) {
+            setSlotState(result.slot, result.ok ? 'PASS' : 'FAIL', !!result.ok);
+        }
+    } catch (error) {
+        results = keysToCheck.map((key) => ({
+            slot: key,
+            ok: false,
+            error: error.message || 'Check cookie thất bại.',
+            summary: {}
+        }));
+        for (const key of keysToCheck) {
+            setSlotState(key, 'FAIL', false);
+        }
+    }
+
+    for (const key of keysToCheck) {
+        if (results.some((item) => item.slot === key)) continue;
+        results.push({
+            slot: key,
+            ok: false,
+            error: 'Không check được cookie.',
+            summary: {}
+        });
+        setSlotState(key, 'FAIL', false);
+    }
+
+    renderCookieCheckCards(results);
+    setAdminCookieInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
     return results;
 }
 
