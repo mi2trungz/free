@@ -1434,6 +1434,26 @@ function looksLikeRawNetflixId(value = '') {
     return /^[A-Za-z0-9._~%\-]{80,}$/.test(text);
 }
 
+function parseCookieLine(line = '') {
+    const text = String(line || '').trim();
+    if (!text) return null;
+
+    const tabParts = text.split('\t');
+    if (tabParts.length >= 7) {
+        return {
+            name: String(tabParts[5] || '').trim(),
+            value: String(tabParts[6] || '').trim()
+        };
+    }
+
+    const netscapeLikeMatch = text.match(/^(\S+)\s+(TRUE|FALSE)\s+(\S+)\s+(TRUE|FALSE)\s+(\d+)\s+([^\s]+)\s+(.+)$/i);
+    if (!netscapeLikeMatch) return null;
+    return {
+        name: String(netscapeLikeMatch[6] || '').trim(),
+        value: String(netscapeLikeMatch[7] || '').trim()
+    };
+}
+
 function extractNetflixIdsFromCookie(cookieVal) {
     const raw = normalizeCookieExtractionInput(cookieVal);
     if (!raw) return { netflixId: '', secureNetflixId: '' };
@@ -1460,12 +1480,10 @@ function extractNetflixIdsFromCookie(cookieVal) {
         const line = String(lines[i] || '').trim();
         if (!line) continue;
 
-        const parts = line.split('\t');
-        if (parts.length >= 7) {
-            const name = String(parts[5] || '').trim();
-            const value = String(parts[6] || '').trim();
-            if (name === 'NetflixId' && value) netflixId = value;
-            if (name === 'SecureNetflixId' && value) secureNetflixId = value;
+        const parsedLine = parseCookieLine(line);
+        if (parsedLine) {
+            if (parsedLine.name === 'NetflixId' && parsedLine.value) netflixId = parsedLine.value;
+            if (parsedLine.name === 'SecureNetflixId' && parsedLine.value) secureNetflixId = parsedLine.value;
             continue;
         }
 
@@ -1498,23 +1516,12 @@ function splitImportLines(content = '') {
 }
 
 function parseNetscapeLine(line = '') {
-    const parts = String(line || '').split('\t');
-    if (parts.length < 7) return null;
-    return {
-        name: String(parts[5] || '').trim(),
-        value: String(parts[6] || '').trim()
-    };
+    return parseCookieLine(line);
 }
 
 function splitImportCookieBlocks(content = '') {
     const normalized = String(content || '').replace(/\r/g, '');
     if (!normalized.trim()) return [];
-
-    const chunks = normalized
-        .split(/\n\s*\n+/)
-        .map((chunk) => chunk.trim())
-        .filter((chunk) => !!chunk);
-    if (chunks.length > 1) return chunks;
 
     const lines = normalized
         .split('\n')
@@ -1523,7 +1530,14 @@ function splitImportCookieBlocks(content = '') {
     if (lines.length === 0) return [];
 
     const hasNetscapeRows = lines.some((line) => !!parseNetscapeLine(line));
-    if (!hasNetscapeRows) return lines;
+    if (!hasNetscapeRows) {
+        const chunks = normalized
+            .split(/\n\s*\n+/)
+            .map((chunk) => chunk.trim())
+            .filter((chunk) => !!chunk);
+        if (chunks.length > 1) return chunks;
+        return lines;
+    }
 
     const blocks = [];
     let currentLines = [];
