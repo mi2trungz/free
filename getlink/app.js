@@ -272,6 +272,25 @@ function renderCreatedShareEditor(share = null) {
     section.classList.remove('hidden');
 }
 
+function resetCreatedShareComposer(options = {}) {
+    const keepExpiryInputs = !!options.keepExpiryInputs;
+    createdAdminShare = null;
+    renderCreatedShareEditor(null);
+    renderShareUrl('');
+    setCreatedShareCookieOutputs({ primary: '', backup1: '', backup2: '' });
+    resetCreatedShareCookieSlotStates();
+    renderCookieCheckCards([]);
+    if (!keepExpiryInputs) {
+        const dateInput = el('shareCreateDateInput');
+        const timeInput = el('shareCreateTimeInput');
+        if (dateInput) dateInput.value = '';
+        if (timeInput) timeInput.value = '';
+    }
+    setShareState('Tạo ID server trước, sau đó nhập 3 cookie cho link này.', 'idle');
+    setShareCreateExpiryState('Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
+    setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
+}
+
 async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHARE_COOKIE_SLOTS, setSlotState = setShareCookieSlotState) {
     const normalized = {
         primary: normalizeCookie(cookies.primary || ''),
@@ -1359,7 +1378,7 @@ async function generateShareIdLink() {
         createdAdminShare = data.share || null;
         renderShareUrl(shareUrl);
         await autoCopyShareLinkOrWarn(shareUrl);
-        renderAdminShare(data.share || null);
+        renderAdminShare(null);
         renderCreatedShareEditor(createdAdminShare);
         resetShareCookieSlotStates();
         resetCreatedShareCookieSlotStates();
@@ -1372,9 +1391,7 @@ async function generateShareIdLink() {
         }
         renderCookieCheckCards([]);
     } catch (error) {
-        createdAdminShare = null;
-        renderShareUrl('');
-        renderCreatedShareEditor(null);
+        resetCreatedShareComposer({ keepExpiryInputs: true });
         setShareState(error.message || 'Không tạo được link chia sẻ.', 'error');
         setShareCreateExpiryState(error.message || 'Không tạo được link ID server.', 'error');
     }
@@ -1661,9 +1678,7 @@ async function adminLogout() {
     } finally {
         clearAdminAuthState();
         renderAdminShare(null);
-        createdAdminShare = null;
-        renderCreatedShareEditor(null);
-        renderShareUrl('');
+        resetCreatedShareComposer();
         autoLoadedAdminShareId = '';
         setAdminAuthState('Dang xuat.', 'idle');
         renderAdminWorkspace();
@@ -2171,6 +2186,13 @@ function bindEvents() {
     const creatorCheckAllShareCookiesBtn = el('creatorCheckAllShareCookiesBtn');
     if (creatorCheckAllShareCookiesBtn) creatorCheckAllShareCookiesBtn.addEventListener('click', creatorCheckAllShareCookies);
 
+    const createAnotherShareBtn = el('createAnotherShareBtn');
+    if (createAnotherShareBtn) {
+        createAnotherShareBtn.addEventListener('click', () => {
+            resetCreatedShareComposer();
+        });
+    }
+
     const adminShareSearchBtn = el('adminShareSearchBtn');
     if (adminShareSearchBtn) adminShareSearchBtn.addEventListener('click', adminSearchShare);
 
@@ -2229,6 +2251,14 @@ function bindEvents() {
         if (viewCheckBtn) viewCheckBtn.addEventListener('click', () => creatorCheckCookieSlot(slot.key));
         const viewUseBtn = el(slot.viewUseBtnId);
         if (viewUseBtn) viewUseBtn.addEventListener('click', () => useCreatedShareCookieSlotForRuntime(slot.key));
+        const input = el(slot.viewInputId);
+        if (input) {
+            input.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                saveCreatedShareCookies();
+            });
+        }
     });
 
     const adminSaveExpiryBtn = el('adminSaveExpiryBtn');
@@ -2361,7 +2391,7 @@ async function bootstrap() {
     }
     updateReadyState();
     setShareState('Chỉ admin mới tạo link chia sẻ.', 'idle');
-    setShareCreateExpiryState('Hạn của link ID server: để trống nếu muốn không giới hạn.', 'idle');
+    setShareCreateExpiryState('Để trống cả ngày và giờ nếu muốn không giới hạn. Bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
 }
 
 bootstrap();

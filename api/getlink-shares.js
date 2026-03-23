@@ -90,7 +90,8 @@ module.exports = async function (req, res) {
             const body = parseBody(req.body);
             const expiresAt = body.expiresAt !== undefined ? normalizeExpiryInput(body.expiresAt) : '';
             const created = await createShare('', 'guest', expiresAt);
-            return res.status(200).json({ success: true, ...shareDto(created, req) });
+            const dto = shareDto(created, req);
+            return res.status(200).json({ success: true, ...dto, share: dto });
         }
 
         if (req.method === 'GET' && pathname.startsWith('/api/getlink-shares/')) {
