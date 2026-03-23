@@ -416,6 +416,7 @@
             const downloadBatchBtn = document.getElementById('downloadBatchBtn');
             const batchProgressFill = document.getElementById('batchProgressFill');
             const batchStatusText = document.getElementById('batchStatusText');
+            const generateButtonDefaultText = generateBtn.textContent.trim();
             const importButtonDefaultText = importCookieBtn.textContent;
             let batchRunning = false;
             let batchStopRequested = false;
@@ -659,6 +660,51 @@
                 overloadCheckBox.classList.remove('active');
             }
 
+            function setGenerateLoading(isLoading) {
+                generateBtn.disabled = isLoading;
+                generateBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                generateBtn.lastChild.textContent = isLoading ? ' Dang tao link...' : ` ${generateButtonDefaultText}`;
+            }
+
+            async function copyTextToClipboard(text) {
+                await navigator.clipboard.writeText(text);
+            }
+
+            async function copyGeneratedLink(url, { silent = false } = {}) {
+                if (!url) return false;
+                try {
+                    await copyTextToClipboard(url);
+                    if (!silent) {
+                        const originalText = copyResultBtn.textContent;
+                        copyResultBtn.textContent = 'Da sao chep!';
+                        setTimeout(() => {
+                            copyResultBtn.textContent = originalText;
+                        }, 2000);
+                    }
+                    return true;
+                } catch (error) {
+                    if (!silent) {
+                        alert('Loi sao chep, vui long copy thu cong.');
+                    }
+                    return false;
+                }
+            }
+
+            cookieInput.addEventListener('keydown', (event) => {
+                if (
+                    event.key === 'Enter' &&
+                    !event.shiftKey &&
+                    !event.ctrlKey &&
+                    !event.altKey &&
+                    !event.metaKey
+                ) {
+                    event.preventDefault();
+                    if (!generateBtn.disabled) {
+                        form.requestSubmit(generateBtn);
+                    }
+                }
+            });
+
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 hideAlerts();
@@ -671,7 +717,7 @@
                     return;
                 }
 
-                generateBtn.disabled = true;
+                setGenerateLoading(true);
 
                 try {
                     const res = await fetch('/api/nf-cookie-to-link', {
@@ -685,13 +731,17 @@
 
                     if (data.success && data.url) {
                         showResult(data.url, data.accountInfo);
+                        const copied = await copyGeneratedLink(data.url, { silent: true });
+                        if (!copied) {
+                            showImportState('Da tao link thanh cong, nhung trinh duyet chan tu dong sao chep. Ban hay bam "Sao chep link".');
+                        }
                     } else {
                         showError('Khong the tao link (Loi khong xac dinh).');
                     }
                 } catch (error) {
                     showError(error.message);
                 } finally {
-                    generateBtn.disabled = false;
+                    setGenerateLoading(false);
                 }
             });
 
@@ -819,16 +869,7 @@
             });
 
             copyResultBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(resultLink.value);
-                    const originalText = copyResultBtn.textContent;
-                    copyResultBtn.textContent = 'Da sao chep!';
-                    setTimeout(() => {
-                        copyResultBtn.textContent = originalText;
-                    }, 2000);
-                } catch (err) {
-                    alert('Loi sao chep, vui long copy thu cong.');
-                }
+                await copyGeneratedLink(resultLink.value);
             });
         });
     </script>
