@@ -6,7 +6,8 @@ const {
     isShareExpired,
     normalizeExpiryInput,
     getCookieListFromRecord,
-    promoteShareCookieSlot
+    promoteShareCookieSlot,
+    rotateShareCookies
 } = require('./_getlink-share-store');
 const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
 
@@ -123,6 +124,32 @@ module.exports = async function (req, res) {
                 checks: resolved.checks || [],
                 share: shareDto(resolved.share || record, req)
             });
+        }
+
+        if (req.method === 'POST') {
+            const rotateMatch = pathname.match(/^\/api\/getlink-shares\/([^/]+)\/rotate-cookie$/);
+            if (rotateMatch) {
+                const shareId = decodeURIComponent(rotateMatch[1] || '');
+                if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+
+                const record = await readShareById(shareId);
+                if (!record) return res.status(404).json({ error: 'Share link not found' });
+                if (record.status !== 'active') {
+                    return res.status(410).json({ error: 'Share link has been revoked' });
+                }
+                if (isShareExpired(record)) {
+                    return res.status(410).json({ error: 'Share link has expired' });
+                }
+
+                const rotated = await rotateShareCookies(shareId, 'guest-overload-fix');
+                return res.status(200).json({
+                    success: true,
+                    id: rotated.id,
+                    rotatedToSlot: 'backup1',
+                    cookieStr: rotated.cookieRaw || '',
+                    share: shareDto(rotated, req)
+                });
+            }
         }
 
         return res.status(404).json({ error: 'Not found' });

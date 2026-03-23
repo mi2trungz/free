@@ -460,6 +460,65 @@
             min-width: 170px;
         }
 
+        .support-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.7rem;
+            margin-top: 1rem;
+        }
+
+        .support-row .btn {
+            min-height: 48px;
+        }
+
+        .btn-overload-fix.hidden {
+            display: none;
+        }
+
+        .overload-fix-card,
+        .overload-fix-success-card {
+            max-width: 640px;
+        }
+
+        .overload-fix-body {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .overload-fix-list {
+            margin: 0;
+            padding-left: 1.2rem;
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .overload-fix-list li {
+            line-height: 1.6;
+        }
+
+        .overload-fix-warning {
+            color: #ffdca4;
+            font-weight: 700;
+        }
+
+        .overload-fix-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .overload-fix-actions .btn {
+            min-width: 190px;
+        }
+
+        .overload-fix-success-note {
+            margin: 0;
+            color: #ffdca4;
+            font-weight: 700;
+            line-height: 1.6;
+        }
+
         @media (max-width: 900px) {
             .nf-shell {
                 width: min(980px, calc(100% - 1rem));
@@ -502,6 +561,10 @@
             }
 
             .admin-info-highlight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .support-row {
                 grid-template-columns: 1fr;
             }
         }
@@ -697,6 +760,7 @@
                         </button>
                     </div>
                     <div class="support-row">
+                        <button id="overloadFixBtn" class="btn btn-primary btn-overload-fix hidden" type="button">SỬA LỖI QUÁ TẢI THIẾT BỊ SỬ DỤNG</button>
                         <button id="supportWarrantyBtn" class="btn btn-ghost btn-support" type="button">CẦN HỖ TRỢ / BẢO HÀNH</button>
                     </div>
                 </section>
@@ -858,6 +922,50 @@
                 <div class="mobile-os-actions">
                     <button id="mobileOsAndroidBtn" class="btn btn-primary" type="button">Android</button>
                     <button id="mobileOsIosBtn" class="btn btn-ghost" type="button">iOS</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="overloadFixModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-overload-fix="1"></div>
+        <div class="modal-card support-card overload-fix-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Sửa lỗi quá tải</span>
+                    <h2>SỬA LỖI QUÁ TẢI THIẾT BỊ SỬ DỤNG</h2>
+                </div>
+                <button id="overloadFixCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body overload-fix-body">
+                <ol class="overload-fix-list">
+                    <li>CHỈ sử dụng tính năng này khi tài khoản ĐANG BỊ QUÁ TẢI sử dụng dẫn đến không coi được</li>
+                    <li>Nếu sử dụng khi thật sự KHÔNG BỊ QUÁ TẢI sẽ dẫn đến bị TRỪ ĐI HẠN BẢO HÀNH</li>
+                </ol>
+                <div id="overloadFixCountdown" class="state-text state-warning">Vui lòng chờ 10 giây để xác nhận.</div>
+                <div class="overload-fix-actions">
+                    <button id="overloadFixConfirmBtn" class="btn btn-primary" type="button" disabled>Đồng ý rồi sử dụng</button>
+                    <button id="overloadFixCancelBtn" class="btn btn-ghost" type="button">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="overloadFixSuccessModal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop" data-close-overload-fix-success="1"></div>
+        <div class="modal-card support-card overload-fix-success-card">
+            <header class="modal-head">
+                <div>
+                    <span class="eyebrow">Đã sửa lỗi</span>
+                    <h2>Đã sửa lỗi thành công</h2>
+                </div>
+                <button id="overloadFixSuccessCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
+            </header>
+            <div class="support-body overload-fix-body">
+                <p class="overload-fix-warning">Đã sửa lỗi thành công, hãy chọn lại thiết bị để sử dụng.</p>
+                <p class="overload-fix-success-note">Lưu ý: đối với ĐIỆN THOẠI hay MÁY TÍNH BẢNG, cần xoá đi app và tải lại.</p>
+                <div class="overload-fix-actions">
+                    <button id="overloadFixSuccessOkBtn" class="btn btn-primary" type="button">Đóng và tải lại trang</button>
                 </div>
             </div>
         </div>

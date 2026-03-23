@@ -31,6 +31,9 @@ let disclaimerReadyAt = 0;
 let disclaimerTimer = null;
 let disclaimerEligibilityResolved = false;
 let isInlineEditMode = false;
+let overloadFixReadyAt = 0;
+let overloadFixTimer = null;
+let overloadFixBusy = false;
 const SHARE_COOKIE_SLOTS = [
     { key: 'primary', label: 'Cookie chính', viewInputId: 'currentShareCookiePrimaryDisplay', viewStateId: 'currentShareCookiePrimaryState', viewCheckBtnId: 'viewCheckPrimaryCookieBtn', viewUseBtnId: 'viewUsePrimaryCookieBtn' },
     { key: 'backup1', label: 'Cookie phụ 1', viewInputId: 'currentShareCookieBackup1Display', viewStateId: 'currentShareCookieBackup1State', viewCheckBtnId: 'viewCheckBackup1CookieBtn', viewUseBtnId: 'viewUseBackup1CookieBtn' },
@@ -114,6 +117,13 @@ function setAdminCookieInfoState(text, mode = 'idle') {
 
 function setShareCreateExpiryState(text, mode = 'idle') {
     const node = el('shareCreateExpiryState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
+function setOverloadFixState(text, mode = 'idle') {
+    const node = el('overloadFixCountdown');
     if (!node) return;
     node.textContent = String(text || '').trim();
     setStateClass(node, mode);
@@ -958,6 +968,18 @@ function setRuntimeCookie(rawCookie, options = {}) {
     updateReadyState();
 }
 
+function shouldShowOverloadFix() {
+    return !!String(pendingShareIdFromUrl || '').trim();
+}
+
+function updateOverloadFixVisibility() {
+    const button = el('overloadFixBtn');
+    if (!button) return;
+    const visible = shouldShowOverloadFix();
+    button.classList.toggle('hidden', !visible);
+    button.disabled = !visible || overloadFixBusy;
+}
+
 async function copyText(text, successText = 'Đã sao chép.') {
     try {
         await navigator.clipboard.writeText(String(text || ''));
@@ -1204,6 +1226,125 @@ function closeMobileOsModal() {
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+}
+
+function openOverloadFixModal() {
+    if (!shouldShowOverloadFix() || overloadFixBusy) return;
+    const modal = el('overloadFixModal');
+    const confirmBtn = el('overloadFixConfirmBtn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        setButtonBusy(confirmBtn, false);
+    }
+    overloadFixReadyAt = Date.now() + 10000;
+    setOverloadFixState('Vui lòng chờ 10 giây để xác nhận.', 'warning');
+
+    if (overloadFixTimer) {
+        window.clearInterval(overloadFixTimer);
+        overloadFixTimer = null;
+    }
+
+    overloadFixTimer = window.setInterval(() => {
+        const remainMs = Math.max(0, overloadFixReadyAt - Date.now());
+        const remainSec = Math.ceil(remainMs / 1000);
+        if (remainMs > 0) {
+            setOverloadFixState(`Vui lòng chờ ${remainSec} giây để xác nhận.`, 'warning');
+            if (confirmBtn) confirmBtn.disabled = true;
+            return;
+        }
+
+        setOverloadFixState('Bạn có thể bấm Đồng ý rồi sử dụng.', 'success');
+        if (confirmBtn) confirmBtn.disabled = false;
+        window.clearInterval(overloadFixTimer);
+        overloadFixTimer = null;
+    }, 150);
+
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeOverloadFixModal(force = false) {
+    if (!force && overloadFixBusy) return;
+    const modal = el('overloadFixModal');
+    if (overloadFixTimer) {
+        window.clearInterval(overloadFixTimer);
+        overloadFixTimer = null;
+    }
+    overloadFixReadyAt = 0;
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function openOverloadFixSuccessModal() {
+    const modal = el('overloadFixSuccessModal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeOverloadFixSuccessModal() {
+    const modal = el('overloadFixSuccessModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+    window.location.reload();
+}
+
+function normalizeOverloadFixErrorMessage(error) {
+    const rawMessage = String(error && error.message ? error.message : '').trim();
+    if (!rawMessage) return 'Không thể sửa lỗi quá tải lúc này.';
+
+    const normalized = rawMessage.toLowerCase();
+    if (normalized.includes('het cookie du phong')
+        || normalized.includes('hết cookie dự phòng')
+        || normalized.includes('khong du cookie du phong')
+        || normalized.includes('không đủ cookie dự phòng')) {
+        return 'Link này đã hết cookie dự phòng. Vui lòng bấm CẦN HỖ TRỢ / BẢO HÀNH để được hỗ trợ.';
+    }
+
+    return rawMessage;
+}
+
+async function rotateOverloadShareCookie() {
+    const shareId = String(pendingShareIdFromUrl || '').trim();
+    if (!shareId) {
+        setLookupState('Chỉ dùng được tính năng này khi mở bằng link share hợp lệ.', 'warning');
+        return;
+    }
+    if (overloadFixBusy || Date.now() < overloadFixReadyAt) return;
+
+    const triggerBtn = el('overloadFixBtn');
+    const confirmBtn = el('overloadFixConfirmBtn');
+    overloadFixBusy = true;
+    updateOverloadFixVisibility();
+    setButtonBusy(triggerBtn, true, 'Đang sửa lỗi...');
+    setButtonBusy(confirmBtn, true, 'Đang sửa lỗi...');
+    setOverloadFixState('Đang đổi cookie chính, vui lòng chờ...', 'loading');
+
+    try {
+        const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}/rotate-cookie`, 'POST');
+        const nextCookie = normalizeCookie(data.cookieStr || '');
+        if (nextCookie) {
+            setRuntimeCookie(nextCookie, { source: 'share-id', silent: true });
+        } else {
+            runtimeCookie = '';
+        }
+        closeOverloadFixModal(true);
+        setLookupState('Đã sửa lỗi thành công, hãy chọn lại thiết bị để sử dụng.', 'success');
+        openOverloadFixSuccessModal();
+    } catch (error) {
+        const message = normalizeOverloadFixErrorMessage(error);
+        setLookupState(message, 'error');
+        setOverloadFixState(message, 'error');
+    } finally {
+        overloadFixBusy = false;
+        setButtonBusy(triggerBtn, false);
+        setButtonBusy(confirmBtn, false);
+        updateOverloadFixVisibility();
+    }
 }
 
 async function generateDeviceLink(device, mobileOs = 'android') {
@@ -1536,6 +1677,7 @@ function renderAdminWorkspace() {
     renderCurrentShareSummary(currentAdminShare);
     renderCreatedShareEditor(createdAdminShare);
     updateReadyState();
+    updateOverloadFixVisibility();
 }
 
 function renderAdminShare(share = null) {
@@ -1996,6 +2138,9 @@ function bindEvents() {
     const supportBtn = el('supportWarrantyBtn');
     if (supportBtn) supportBtn.addEventListener('click', openSupportModal);
 
+    const overloadFixBtn = el('overloadFixBtn');
+    if (overloadFixBtn) overloadFixBtn.addEventListener('click', openOverloadFixModal);
+
     const disclaimerDismissBtn = el('disclaimerDismissBtn');
     if (disclaimerDismissBtn) {
         disclaimerDismissBtn.addEventListener('click', () => {
@@ -2061,6 +2206,37 @@ function bindEvents() {
 
     const mobileOsCloseBtn = el('mobileOsCloseBtn');
     if (mobileOsCloseBtn) mobileOsCloseBtn.addEventListener('click', closeMobileOsModal);
+
+    const overloadFixModal = el('overloadFixModal');
+    if (overloadFixModal) {
+        overloadFixModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeOverloadFix === '1') closeOverloadFixModal();
+        });
+    }
+
+    const overloadFixCloseBtn = el('overloadFixCloseBtn');
+    if (overloadFixCloseBtn) overloadFixCloseBtn.addEventListener('click', () => closeOverloadFixModal());
+
+    const overloadFixCancelBtn = el('overloadFixCancelBtn');
+    if (overloadFixCancelBtn) overloadFixCancelBtn.addEventListener('click', () => closeOverloadFixModal());
+
+    const overloadFixConfirmBtn = el('overloadFixConfirmBtn');
+    if (overloadFixConfirmBtn) overloadFixConfirmBtn.addEventListener('click', rotateOverloadShareCookie);
+
+    const overloadFixSuccessModal = el('overloadFixSuccessModal');
+    if (overloadFixSuccessModal) {
+        overloadFixSuccessModal.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.dataset.closeOverloadFixSuccess === '1') closeOverloadFixSuccessModal();
+        });
+    }
+
+    const overloadFixSuccessCloseBtn = el('overloadFixSuccessCloseBtn');
+    if (overloadFixSuccessCloseBtn) overloadFixSuccessCloseBtn.addEventListener('click', closeOverloadFixSuccessModal);
+
+    const overloadFixSuccessOkBtn = el('overloadFixSuccessOkBtn');
+    if (overloadFixSuccessOkBtn) overloadFixSuccessOkBtn.addEventListener('click', closeOverloadFixSuccessModal);
 
     const mobileOsAndroidBtn = el('mobileOsAndroidBtn');
     if (mobileOsAndroidBtn) {
@@ -2403,6 +2579,18 @@ function bindEvents() {
             return;
         }
 
+        const overloadFixModalNode = el('overloadFixModal');
+        if (overloadFixModalNode && !overloadFixModalNode.classList.contains('hidden')) {
+            closeOverloadFixModal();
+            return;
+        }
+
+        const overloadFixSuccessModalNode = el('overloadFixSuccessModal');
+        if (overloadFixSuccessModalNode && !overloadFixSuccessModalNode.classList.contains('hidden')) {
+            closeOverloadFixSuccessModal();
+            return;
+        }
+
         const tvCodeModalNode = el('tvCodeModal');
         if (tvCodeModalNode && !tvCodeModalNode.classList.contains('hidden')) {
             closeTvCodeModal();
@@ -2444,6 +2632,7 @@ async function bootstrap() {
     if (!getRuntimeCookie()) {
         setGuestGuard(true, 'Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.');
     }
+    updateOverloadFixVisibility();
     updateReadyState();
     setShareState('Chỉ admin mới tạo link chia sẻ.', 'idle');
     setShareCreateExpiryState('Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');

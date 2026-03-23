@@ -348,6 +348,44 @@ async function promoteShareCookieSlot(shareId = '', slot = '', actor = 'system')
     return saveShareRecord(next);
 }
 
+async function rotateShareCookies(shareId = '', actor = 'guest-rotate') {
+    const current = await readShareById(shareId);
+    if (!current) {
+        const err = new Error('Share link not found');
+        err.httpStatus = 404;
+        throw err;
+    }
+
+    const cookies = sanitizeShareCookies(current.cookies || {});
+    const ordered = [
+        cookies.primary,
+        cookies.backup1,
+        cookies.backup2
+    ];
+    const usableCount = ordered.filter(Boolean).length;
+    if (usableCount < 2) {
+        const err = new Error('Link này đã hết cookie dự phòng. Vui lòng bấm CẦN HỖ TRỢ / BẢO HÀNH để được hỗ trợ.');
+        err.httpStatus = 400;
+        throw err;
+    }
+
+    const nextCookies = {
+        primary: cookies.backup1 || cookies.primary,
+        backup1: cookies.backup2 || '',
+        backup2: cookies.primary || ''
+    };
+
+    const next = {
+        ...current,
+        cookies: nextCookies,
+        cookieRaw: nextCookies.primary || '',
+        updatedAt: new Date().toISOString(),
+        updatedBy: String(actor || 'guest-rotate').trim()
+    };
+
+    return saveShareRecord(next);
+}
+
 async function setShareStatus(shareId = '', status = 'active', actor = 'admin') {
     const current = await readShareById(shareId);
     if (!current) {
@@ -479,6 +517,7 @@ module.exports = {
     updateShareCookies,
     updateShareCookieSlot,
     promoteShareCookieSlot,
+    rotateShareCookies,
     setShareStatus,
     rotateShareId,
     setShareExpiry
