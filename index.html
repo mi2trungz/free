@@ -5883,7 +5883,7 @@
                                     <span class="netflix-platform-label">Xem trên<br>máy tính</span>
                                 </a>
 
-                                <button type="button" onclick="openNetflixTvProFromHome()"
+                                <button type="button" onclick="openNetflixProModalFromHome()"
                                     class="netflix-platform-tile netflix-platform-pro-mobile">
                                     <span class="netflix-platform-badge netflix-platform-badge-pro">GÓI VIP</span>
                                     <span class="netflix-platform-icon">
@@ -5895,7 +5895,7 @@
                                 </button>
 
                                 <button type="button" id="btnNetflixTvPro"
-                                    class="netflix-platform-tile netflix-platform-pro-tv" onclick="openNetflixTvProFromHome()">
+                                    class="netflix-platform-tile netflix-platform-pro-tv" onclick="openNetflixProModalFromHome()">
                                     <span class="netflix-platform-badge netflix-platform-badge-pro">GÓI VIP</span>
                                     <span class="netflix-platform-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -9057,11 +9057,7 @@
             }
         }
 
-        function openNetflixTvProFromHome() {
-            if (!isDesktopDeviceForTvLogin()) {
-                showTvDesktopOnlyWarning();
-                return;
-            }
+        function openNetflixProModalFromHome() {
             showNetflixProModal();
         }
 

@@ -6,6 +6,7 @@ const nfCustomerLookupHandler = require('./nf-customer-lookup');
 const nfGenerateLinkHandler = require('./nf-generate-link');
 const nfSupportOverloadCheckHandler = require('./nf-support-overload-check');
 const nfCookieToLinkHandler = require('./nf-cookie-to-link');
+const nfLanguageChangeTestHandler = require('./nf-language-change-test');
 const nfTvActivateHandler = require('./nf-tv-activate');
 const nftokenHandler = require('./nftoken');
 const netflixCookieHandler = require('./netflix-cookie');
@@ -50,6 +51,9 @@ module.exports = async function (req, res) {
         }
         if (requestPath === '/api/nf-cookie-to-link') {
             return nfCookieToLinkHandler(req, res);
+        }
+        if (requestPath === '/api/nf-language-change-test') {
+            return nfLanguageChangeTestHandler(req, res);
         }
         if (requestPath === '/api/nf-tv-activate') {
             return nfTvActivateHandler(req, res);

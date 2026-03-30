@@ -332,6 +332,9 @@
                         <div class="action-row-single">
                             <button type="button" id="checkOverloadBtn" class="btn btn-ghost">CHECK QUA TAI</button>
                         </div>
+                        <div class="action-row-single">
+                            <button type="button" id="testLanguageBtn" class="btn btn-primary">TEST DOI NGON NGU -> TIENG VIET</button>
+                        </div>
                     </form>
 
                     <div id="resultBox" class="result-box">
@@ -351,6 +354,11 @@
                     <div id="overloadCheckBox" class="result-box info">
                         <span class="result-label">Ket qua check qua tai:</span>
                         <p id="overloadCheckText" style="margin: 0; font-size: 0.92rem; color: var(--text-base);"></p>
+                    </div>
+
+                    <div id="languageTestBox" class="result-box info">
+                        <span class="result-label">Ket qua auto doi ngon ngu:</span>
+                        <p id="languageTestText" style="margin: 0; font-size: 0.92rem; color: var(--text-base);"></p>
                     </div>
 
                     <div class="batch-box">
@@ -398,6 +406,7 @@
             const generateBtn = document.getElementById('generateBtn');
             const importCookieBtn = document.getElementById('importCookieBtn');
             const checkOverloadBtn = document.getElementById('checkOverloadBtn');
+            const testLanguageBtn = document.getElementById('testLanguageBtn');
             const resultBox = document.getElementById('resultBox');
             const resultLink = document.getElementById('resultLink');
             const copyResultBtn = document.getElementById('copyResultBtn');
@@ -410,6 +419,8 @@
             const accountInfoContent = document.getElementById('accountInfoContent');
             const overloadCheckBox = document.getElementById('overloadCheckBox');
             const overloadCheckText = document.getElementById('overloadCheckText');
+            const languageTestBox = document.getElementById('languageTestBox');
+            const languageTestText = document.getElementById('languageTestText');
             const batchExcelInput = document.getElementById('batchExcelInput');
             const startBatchBtn = document.getElementById('startBatchBtn');
             const stopBatchBtn = document.getElementById('stopBatchBtn');
@@ -418,6 +429,7 @@
             const batchStatusText = document.getElementById('batchStatusText');
             const generateButtonDefaultText = generateBtn.textContent.trim();
             const importButtonDefaultText = importCookieBtn.textContent;
+            const testLanguageButtonDefaultText = testLanguageBtn.textContent.trim();
             let batchRunning = false;
             let batchStopRequested = false;
             let batchWorkbook = null;
@@ -522,6 +534,28 @@
                 }
 
                 overloadCheckText.textContent = signal ? `${msg} (signal: ${signal})` : msg;
+            }
+
+            function showLanguageTestState(payload = {}, mode = 'info') {
+                languageTestBox.classList.remove('error', 'warning', 'info');
+                if (mode === 'error') languageTestBox.classList.add('error');
+                else if (mode === 'warning') languageTestBox.classList.add('warning');
+                else languageTestBox.classList.add('info');
+                languageTestBox.classList.add('active');
+
+                const outcome = String(payload.outcome || '').trim();
+                const stage = String(payload.stage || '').trim();
+                const message = String(payload.message || '').trim();
+                const finalUrl = String(payload.finalUrl || '').trim();
+                const selectedLanguage = String(payload.selectedLanguage || '').trim();
+
+                const lines = [];
+                if (message) lines.push(message);
+                if (outcome) lines.push(`Outcome: ${outcome}`);
+                if (stage) lines.push(`Stage: ${stage}`);
+                if (selectedLanguage) lines.push(`Selected: ${selectedLanguage}`);
+                if (finalUrl) lines.push(`Final URL: ${finalUrl}`);
+                languageTestText.textContent = lines.join(' | ');
             }
 
             function sleep(ms) {
@@ -658,6 +692,7 @@
                 accountInfoBox.classList.remove('active');
                 importStateBox.classList.remove('active');
                 overloadCheckBox.classList.remove('active');
+                languageTestBox.classList.remove('active');
             }
 
             function setGenerateLoading(isLoading) {
@@ -688,6 +723,12 @@
                     }
                     return false;
                 }
+            }
+
+            function setTestLanguageLoading(isLoading) {
+                testLanguageBtn.disabled = isLoading;
+                testLanguageBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                testLanguageBtn.textContent = isLoading ? 'DANG AUTO DOI NGON NGU...' : testLanguageButtonDefaultText;
             }
 
             cookieInput.addEventListener('keydown', (event) => {
@@ -804,6 +845,70 @@
                     });
                 } finally {
                     checkOverloadBtn.disabled = false;
+                }
+            });
+
+            testLanguageBtn.addEventListener('click', async () => {
+                hideAlerts();
+
+                const cookieStr = cookieInput.value.trim();
+                if (!cookieStr) {
+                    showError('Vui long nhap cookie de test doi ngon ngu.');
+                    return;
+                }
+
+                setTestLanguageLoading(true);
+                showLanguageTestState({
+                    message: 'Dang tao link dang nhap desktop...',
+                    stage: 'create_link',
+                    outcome: 'running'
+                }, 'info');
+
+                try {
+                    const createLinkRes = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr, device: 'desktop' })
+                    });
+                    const createLinkData = await createLinkRes.json().catch(() => ({}));
+                    if (!createLinkRes.ok || !createLinkData.success || !createLinkData.url) {
+                        throw new Error(createLinkData.error || 'Khong tao duoc login link desktop.');
+                    }
+
+                    showResult(createLinkData.url, createLinkData.accountInfo || null);
+                    showLanguageTestState({
+                        message: 'Da tao login link, dang goi worker auto doi ngon ngu...',
+                        stage: 'login_url',
+                        outcome: 'running',
+                        finalUrl: createLinkData.url
+                    }, 'info');
+
+                    const languageRes = await fetch('/api/nf-language-change-test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            cookieStr,
+                            loginUrl: createLinkData.url,
+                            targetLanguage: 'Tiếng Việt'
+                        })
+                    });
+                    const languageData = await languageRes.json().catch(() => ({}));
+
+                    if (languageData.success) {
+                        showLanguageTestState(languageData, 'info');
+                    } else if (languageData.outcome === 'manual_required' || languageData.outcome === 'layout_changed') {
+                        showLanguageTestState(languageData, 'warning');
+                    } else {
+                        showLanguageTestState(languageData, 'error');
+                    }
+                } catch (error) {
+                    showLanguageTestState({
+                        message: error.message || 'Khong the chay test doi ngon ngu luc nay.',
+                        outcome: 'failed',
+                        stage: 'create_link'
+                    }, 'error');
+                } finally {
+                    setTestLanguageLoading(false);
                 }
             });
 

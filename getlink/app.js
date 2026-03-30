@@ -118,6 +118,10 @@ function setOverloadFixState(text, mode = 'idle') {
     setStateClass(node, mode);
 }
 
+function isAdminImmediate() {
+    return !!adminAuthenticated;
+}
+
 function getCookiesFromSlotInputs(slots = []) {
     const cookies = {};
     slots.forEach((slot) => {
@@ -1181,38 +1185,46 @@ function openDeviceConfirmModal(device = '') {
 
     if (title) title.textContent = `Bạn có chắc chắn đang dùng ${label} không?`;
     if (hint) hint.textContent = 'Vui lòng xác nhận đúng thiết bị để tiếp tục.';
-    if (countdown) {
-        countdown.textContent = 'Vui lòng chờ 3 giây để xác nhận.';
-        setStateClass(countdown, 'warning');
-    }
-    if (okBtn) okBtn.disabled = true;
-
-    const waitMs = 3000;
-    deviceConfirmReadyAt = Date.now() + waitMs;
-
     if (deviceConfirmTimer) {
         window.clearInterval(deviceConfirmTimer);
         deviceConfirmTimer = null;
     }
 
-    deviceConfirmTimer = window.setInterval(() => {
-        const remainMs = Math.max(0, deviceConfirmReadyAt - Date.now());
-        const remainSec = Math.ceil(remainMs / 1000);
+    const waitMs = isAdminImmediate() ? 0 : 3000;
+    deviceConfirmReadyAt = Date.now() + waitMs;
+
+    if (waitMs <= 0) {
         if (countdown) {
-            if (remainMs > 0) {
-                countdown.textContent = `Vui lòng chờ ${remainSec} giây để xác nhận.`;
-                setStateClass(countdown, 'warning');
-            } else {
-                countdown.textContent = 'Bạn có thể bấm Có để tiếp tục.';
-                setStateClass(countdown, 'success');
+            countdown.textContent = 'Bạn có thể bấm Có để tiếp tục.';
+            setStateClass(countdown, 'success');
+        }
+        if (okBtn) okBtn.disabled = false;
+    } else {
+        if (countdown) {
+            countdown.textContent = 'Vui lòng chờ 3 giây để xác nhận.';
+            setStateClass(countdown, 'warning');
+        }
+        if (okBtn) okBtn.disabled = true;
+
+        deviceConfirmTimer = window.setInterval(() => {
+            const remainMs = Math.max(0, deviceConfirmReadyAt - Date.now());
+            const remainSec = Math.ceil(remainMs / 1000);
+            if (countdown) {
+                if (remainMs > 0) {
+                    countdown.textContent = `Vui lòng chờ ${remainSec} giây để xác nhận.`;
+                    setStateClass(countdown, 'warning');
+                } else {
+                    countdown.textContent = 'Bạn có thể bấm Có để tiếp tục.';
+                    setStateClass(countdown, 'success');
+                }
             }
-        }
-        if (okBtn) okBtn.disabled = remainMs > 0;
-        if (remainMs <= 0) {
-            window.clearInterval(deviceConfirmTimer);
-            deviceConfirmTimer = null;
-        }
-    }, 150);
+            if (okBtn) okBtn.disabled = remainMs > 0;
+            if (remainMs <= 0) {
+                window.clearInterval(deviceConfirmTimer);
+                deviceConfirmTimer = null;
+            }
+        }, 150);
+    }
 
     if (!modal) return;
     modal.classList.remove('hidden');
@@ -1252,32 +1264,39 @@ function openOverloadFixModal() {
     if (!shouldShowOverloadFix() || overloadFixBusy) return;
     const modal = el('overloadFixModal');
     const confirmBtn = el('overloadFixConfirmBtn');
-    if (confirmBtn) {
-        confirmBtn.disabled = true;
-        setButtonBusy(confirmBtn, false);
-    }
-    overloadFixReadyAt = Date.now() + 10000;
-    setOverloadFixState('Vui lòng chờ 10 giây để xác nhận.', 'warning');
-
     if (overloadFixTimer) {
         window.clearInterval(overloadFixTimer);
         overloadFixTimer = null;
     }
+    if (confirmBtn) {
+        setButtonBusy(confirmBtn, false);
+    }
 
-    overloadFixTimer = window.setInterval(() => {
-        const remainMs = Math.max(0, overloadFixReadyAt - Date.now());
-        const remainSec = Math.ceil(remainMs / 1000);
-        if (remainMs > 0) {
-            setOverloadFixState(`Vui lòng chờ ${remainSec} giây để xác nhận.`, 'warning');
-            if (confirmBtn) confirmBtn.disabled = true;
-            return;
-        }
+    const waitMs = isAdminImmediate() ? 0 : 10000;
+    overloadFixReadyAt = Date.now() + waitMs;
 
+    if (waitMs <= 0) {
         setOverloadFixState('Bạn có thể bấm Đồng ý rồi sử dụng.', 'success');
         if (confirmBtn) confirmBtn.disabled = false;
-        window.clearInterval(overloadFixTimer);
-        overloadFixTimer = null;
-    }, 150);
+    } else {
+        setOverloadFixState('Vui lòng chờ 10 giây để xác nhận.', 'warning');
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        overloadFixTimer = window.setInterval(() => {
+            const remainMs = Math.max(0, overloadFixReadyAt - Date.now());
+            const remainSec = Math.ceil(remainMs / 1000);
+            if (remainMs > 0) {
+                setOverloadFixState(`Vui lòng chờ ${remainSec} giây để xác nhận.`, 'warning');
+                if (confirmBtn) confirmBtn.disabled = true;
+                return;
+            }
+
+            setOverloadFixState('Bạn có thể bấm Đồng ý rồi sử dụng.', 'success');
+            if (confirmBtn) confirmBtn.disabled = false;
+            window.clearInterval(overloadFixTimer);
+            overloadFixTimer = null;
+        }, 150);
+    }
 
     if (!modal) return;
     modal.classList.remove('hidden');
@@ -1311,6 +1330,18 @@ function closeOverloadFixSuccessModal() {
         modal.setAttribute('aria-hidden', 'true');
     }
     window.location.reload();
+}
+
+function syncAdminImmediateModals() {
+    const deviceConfirmModal = el('deviceConfirmModal');
+    if (deviceConfirmModal && !deviceConfirmModal.classList.contains('hidden') && pendingDeviceConfirm) {
+        openDeviceConfirmModal(pendingDeviceConfirm);
+    }
+
+    const overloadFixModal = el('overloadFixModal');
+    if (overloadFixModal && !overloadFixModal.classList.contains('hidden') && shouldShowOverloadFix()) {
+        openOverloadFixModal();
+    }
 }
 
 function normalizeOverloadFixErrorMessage(error) {
@@ -1628,6 +1659,7 @@ function renderAdminWorkspace() {
     if (disclaimerEligibilityResolved && !adminAuthenticated && !disclaimerDismissed) {
         openDisclaimerModal();
     }
+    syncAdminImmediateModals();
     setInlineEditMode(isInlineEditMode && !!currentAdminShare && viewingPendingShare);
     renderCurrentShareSummary(currentAdminShare);
     renderCreatedShareEditor(createdAdminShare);
