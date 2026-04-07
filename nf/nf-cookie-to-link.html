@@ -1,0 +1,867 @@
+﻿<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tao Link Dang Nhap Netflix tu Cookie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/nf/styles.css">
+    <style>
+        .tool-container {
+            max-width: 1160px;
+            margin: 40px auto;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-base);
+            text-align: center;
+        }
+
+        .tool-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .tool-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .left-panel,
+        .right-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .cookie-textarea {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .cookie-input-wrap {
+            position: relative;
+        }
+
+        .cookie-input-wrap .cookie-textarea {
+            padding-top: 52px;
+        }
+
+        .cookie-clear-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            min-width: 32px;
+            height: 32px;
+            padding: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.92);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .cookie-clear-btn:hover,
+        .cookie-clear-btn:focus-visible {
+            border-color: rgba(255, 255, 255, 0.28);
+            background: rgba(30, 41, 59, 0.96);
+            color: var(--text-base);
+            outline: none;
+        }
+
+        .inline-error {
+            display: none;
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1px solid rgba(239, 68, 68, 0.32);
+            border-radius: var(--radius-base);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ffb4b4;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .inline-error.active {
+            display: block;
+        }
+
+        .device-select {
+            padding: 12px;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            color: var(--text-base);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+
+        .device-select:focus {
+            border-color: var(--primary);
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .result-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: var(--radius-base);
+            display: none;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .result-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--text-base);
+        }
+
+        .result-link {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            color: var(--text-base);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .right-panel .result-label {
+            color: var(--info);
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .info-chip {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .info-chip strong {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .info-chip span {
+            font-weight: 700;
+            color: var(--text-base);
+            word-break: break-word;
+        }
+
+        .info-chip.bad {
+            border-color: rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.14);
+        }
+
+        .info-chip.bad span {
+            color: #ffb4b4;
+        }
+
+        .info-chip.good {
+            border-color: rgba(34, 197, 94, 0.75);
+            background: rgba(34, 197, 94, 0.14);
+        }
+
+        .info-chip.good span {
+            color: #b7ffd5;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-grid strong {
+            color: var(--text-muted);
+        }
+
+        .info-grid span {
+            color: var(--text-base);
+            word-break: break-word;
+        }
+
+        .batch-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .batch-title {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+            color: var(--text-base);
+        }
+
+        .batch-hint {
+            margin: 0 0 8px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .batch-file-input {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .batch-progress-wrap {
+            margin-top: 8px;
+        }
+
+        .batch-progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .batch-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            transition: width 0.2s ease;
+        }
+
+        .batch-status-text {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+            display: none;
+        }
+
+        .btn:disabled .loading-spinner {
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .tool-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .highlight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-layer bg-noise"></div>
+    <div class="bg-layer bg-vignette"></div>
+    <div class="bg-layer bg-neon"></div>
+
+    <main class="nf-shell">
+        <div class="tool-container">
+            <h1 class="tool-title">Tao Link Dang Nhap Truc Tiep</h1>
+            <p class="tool-desc">Dan chuoi cookie (hoac chi phan <code>NetflixId=...</code>) vao o ben trai de tao link va co the import vao Cookie tong.</p>
+
+            <div class="tool-layout">
+                <section class="left-panel">
+                    <form id="linkGeneratorForm">
+                        <div class="input-group">
+                            <div class="cookie-input-wrap">
+                                <button type="button" id="clearCookieBtn" class="cookie-clear-btn" aria-label="Xoa nhanh noi dung cookie">Xoa</button>
+                                <textarea id="cookieInput" class="text-input cookie-textarea" placeholder="Dan cookie Netflix vao day...&#10;Vi du: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;" required></textarea>
+                            </div>
+                            <div id="inlineError" class="inline-error" role="alert" aria-live="polite"></div>
+
+                            <select id="deviceSelect" class="device-select">
+                                <option value="desktop">May tinh (Desktop / Web)</option>
+                                <option value="mobile">Dien thoai (Mobile App)</option>
+                                <option value="tv">Tivi (Smart TV)</option>
+                            </select>
+                        </div>
+
+                        <div class="action-row">
+                            <button type="submit" id="generateBtn" class="btn btn-primary">
+                                <span class="loading-spinner"></span>
+                                Tao Link Dang Nhap
+                            </button>
+                            <div></div>
+                        </div>
+                    </form>
+
+                    <div id="resultBox" class="result-box">
+                        <span class="result-label">Link Dang Nhap Cua Ban:</span>
+                        <input type="text" id="resultLink" class="result-link" readonly>
+                        <div class="action-row">
+                            <button type="button" id="copyResultBtn" class="btn btn-primary">Sao chep link</button>
+                            <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost" style="text-align:center;">Mo thu</a>
+                        </div>
+                    </div>
+
+                    <div class="batch-box">
+                        <h3 class="batch-title">Lay thong tin hang loat tu Excel</h3>
+                        <p class="batch-hint">Nhap file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
+                        <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                        <div class="action-row">
+                            <button type="button" id="startBatchBtn" class="btn btn-primary">Bat dau check hang loat</button>
+                            <button type="button" id="stopBatchBtn" class="btn btn-ghost" disabled>Dung</button>
+                        </div>
+                        <div class="action-row">
+                            <button type="button" id="downloadBatchBtn" class="btn btn-ghost" disabled>Tai ket qua (.xlsx)</button>
+                            <div></div>
+                        </div>
+                        <div class="batch-progress-wrap">
+                            <div class="batch-progress-bar">
+                                <div id="batchProgressFill" class="batch-progress-fill"></div>
+                            </div>
+                            <div id="batchStatusText" class="batch-status-text">Chua chay batch.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="right-panel">
+                    <div id="accountInfoBox" class="result-box" style="margin-top: 0; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                        <span class="result-label">Thong Tin Tai Khoan:</span>
+                        <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('linkGeneratorForm');
+            const cookieInput = document.getElementById('cookieInput');
+            const clearCookieBtn = document.getElementById('clearCookieBtn');
+            const inlineError = document.getElementById('inlineError');
+            const deviceSelect = document.getElementById('deviceSelect');
+            const generateBtn = document.getElementById('generateBtn');
+            const resultBox = document.getElementById('resultBox');
+            const resultLink = document.getElementById('resultLink');
+            const copyResultBtn = document.getElementById('copyResultBtn');
+            const openResultBtn = document.getElementById('openResultBtn');
+            const accountInfoBox = document.getElementById('accountInfoBox');
+            const accountInfoContent = document.getElementById('accountInfoContent');
+            const batchExcelInput = document.getElementById('batchExcelInput');
+            const startBatchBtn = document.getElementById('startBatchBtn');
+            const stopBatchBtn = document.getElementById('stopBatchBtn');
+            const downloadBatchBtn = document.getElementById('downloadBatchBtn');
+            const batchProgressFill = document.getElementById('batchProgressFill');
+            const batchStatusText = document.getElementById('batchStatusText');
+            const generateButtonDefaultText = generateBtn.textContent.trim();
+            let audioContext = null;
+            let batchRunning = false;
+            let batchStopRequested = false;
+            let batchWorkbook = null;
+            let batchOutputFilename = '';
+
+            function isNo(value) {
+                return String(value || '').trim().toLowerCase() === 'no';
+            }
+
+            function escapeHtml(raw) {
+                return String(raw || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function showResult(url, accountInfo) {
+                resultBox.classList.add('active');
+                hideInlineError();
+                resultLink.value = url;
+                openResultBtn.href = url;
+
+                if (accountInfo) {
+                    accountInfoBox.classList.add('active');
+
+                    const statusText = accountInfo.ok ? 'Hoat dong' : 'Khong hoat dong';
+                    const statusClass = accountInfo.ok ? 'good' : 'bad';
+                    const paymentHoldText = String(accountInfo.on_payment_hold || 'No');
+                    const paymentHoldClass = isNo(paymentHoldText) ? 'good' : 'bad';
+
+                    const topFields = [
+                        { label: 'Trang thai', value: statusText, tone: statusClass },
+                        { label: 'Goi cuoc', value: `${accountInfo.plan || 'Khong ro'} ${accountInfo.premium ? '(Premium)' : ''}`.trim() },
+                        { label: 'Payment Hold', value: paymentHoldText, tone: paymentHoldClass },
+                        { label: 'Quoc gia', value: accountInfo.country || 'N/A' },
+                        { label: 'Man hinh', value: `${accountInfo.max_streams || '?'} man` },
+                        { label: 'Chat luong video', value: accountInfo.video_quality || 'N/A' }
+                    ];
+
+                    const chipHtml = topFields.map((item) => `
+                        <div class="info-chip ${item.tone ? item.tone : ''}">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span>${escapeHtml(item.value)}</span>
+                        </div>
+                    `).join('');
+
+                    accountInfoContent.innerHTML = `
+                        <div class="highlight-grid">${chipHtml}</div>
+                        <div class="info-grid">
+                            <strong>Gia goi:</strong> <span>${escapeHtml(accountInfo.plan_price || 'N/A')}</span>
+                            <strong>Ngay lap:</strong> <span>${escapeHtml(accountInfo.member_since || 'N/A')}</span>
+                            <strong>Thanh toan:</strong> <span>${escapeHtml(accountInfo.payment_method || 'N/A')}</span>
+                            <strong>Phone:</strong> <span>${escapeHtml(accountInfo.phone || 'N/A')} (Verified: ${escapeHtml(accountInfo.phone_verified || 'No')})</span>
+                            <strong>Email:</strong> <span>${escapeHtml(String(accountInfo.email || 'N/A').replace(/\\x40/g, '@'))} (Verified: ${escapeHtml(accountInfo.email_verified || 'No')})</span>
+                            <strong>Thanh vien phu:</strong> <span>${escapeHtml(accountInfo.extra_member || 'No')}</span>
+                            <strong>Profiles:</strong> <span>${escapeHtml(accountInfo.profiles || '?')}</span>
+                            <strong>Gia han toi:</strong> <span>${escapeHtml(accountInfo.next_billing || 'N/A')}</span>
+                        </div>
+                    `;
+                } else {
+                    accountInfoBox.classList.remove('active');
+                }
+            }
+
+            function showError(msg) {
+                resultBox.classList.remove('active');
+                accountInfoBox.classList.remove('active');
+                inlineError.textContent = msg;
+                inlineError.classList.add('active');
+            }
+
+            function sleep(ms) {
+                return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            function toDisplayValue(value, fallback = 'N/A') {
+                const text = String(value === undefined || value === null ? '' : value).trim();
+                return text || fallback;
+            }
+
+            function formatBatchFileName(date = new Date()) {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                return `nf_batch_result_${yyyy}-${mm}-${dd}_${hh}-${min}.xlsx`;
+            }
+
+            function setBatchRunningState(running) {
+                batchRunning = running;
+                startBatchBtn.disabled = running;
+                stopBatchBtn.disabled = !running;
+                batchExcelInput.disabled = running;
+            }
+
+            function updateBatchProgress(current, total) {
+                const safeTotal = total <= 0 ? 1 : total;
+                const percent = Math.max(0, Math.min(100, Math.round((current / safeTotal) * 100)));
+                batchProgressFill.style.width = `${percent}%`;
+                batchStatusText.textContent = `Dang xu ly ${current}/${total} (${percent}%)`;
+            }
+
+            function readCookiesFromSheet(workbook) {
+                const firstSheetName = workbook.SheetNames[0];
+                if (!firstSheetName) return [];
+                const sheet = workbook.Sheets[firstSheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+                const values = [];
+                for (let i = 0; i < rows.length; i += 1) {
+                    const cellValue = rows[i] && rows[i][0] !== undefined ? String(rows[i][0]) : '';
+                    const cookie = cellValue.trim();
+                    if (!cookie) continue;
+                    values.push(cookie);
+                }
+                if (values.length > 0 && values[0].toLowerCase() === 'cookie') {
+                    values.shift();
+                }
+                return values;
+            }
+
+            function buildBatchWorkbook(successRows, failedRows) {
+                const successHeader = [[
+                    'Cookie',
+                    'Trang thai',
+                    'Goi cuoc',
+                    'Quoc gia',
+                    'Man hinh',
+                    'Chat luong',
+                    'Payment Hold',
+                    'Gia goi',
+                    'Ngay lap',
+                    'Thanh toan'
+                ]];
+                const failedHeader = [['Cookie', 'Error', 'HTTP Status']];
+
+                const wb = XLSX.utils.book_new();
+                const successSheet = XLSX.utils.aoa_to_sheet([...successHeader, ...successRows]);
+                const failedSheet = XLSX.utils.aoa_to_sheet([...failedHeader, ...failedRows]);
+                XLSX.utils.book_append_sheet(wb, successSheet, 'SUCCESS');
+                XLSX.utils.book_append_sheet(wb, failedSheet, 'FAILED');
+                return wb;
+            }
+
+            async function processBatchCookies(cookies) {
+                const successRows = [];
+                const failedRows = [];
+                const total = cookies.length;
+                updateBatchProgress(0, total);
+
+                for (let i = 0; i < cookies.length; i += 1) {
+                    if (batchStopRequested) break;
+                    const cookieStr = cookies[i];
+                    try {
+                        const res = await fetch('/api/nf-cookie-to-link', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ cookieStr, device: 'desktop' })
+                        });
+                        const data = await res.json();
+
+                        if (res.ok && data.success) {
+                            const account = data.accountInfo || {};
+                            successRows.push([
+                                cookieStr,
+                                account.ok ? 'Hoat dong' : 'Khong hoat dong',
+                                toDisplayValue(`${toDisplayValue(account.plan, '')} ${account.premium ? '(Premium)' : ''}`.trim()),
+                                toDisplayValue(account.country),
+                                toDisplayValue(account.max_streams, '?'),
+                                toDisplayValue(account.video_quality),
+                                toDisplayValue(account.on_payment_hold, 'No'),
+                                toDisplayValue(account.plan_price),
+                                toDisplayValue(account.member_since),
+                                toDisplayValue(account.payment_method)
+                            ]);
+                        } else {
+                            failedRows.push([
+                                cookieStr,
+                                toDisplayValue(data.error, 'Request failed'),
+                                String(res.status || '')
+                            ]);
+                        }
+                    } catch (error) {
+                        failedRows.push([
+                            cookieStr,
+                            toDisplayValue(error && error.message, 'Network error'),
+                            ''
+                        ]);
+                    }
+
+                    updateBatchProgress(i + 1, total);
+                    if (i < cookies.length - 1) {
+                        await sleep(300);
+                    }
+                }
+
+                return { successRows, failedRows };
+            }
+
+            function hideAlerts() {
+                resultBox.classList.remove('active');
+                accountInfoBox.classList.remove('active');
+                hideInlineError();
+            }
+
+            function hideInlineError() {
+                inlineError.textContent = '';
+                inlineError.classList.remove('active');
+            }
+
+            function resetFormFeedback() {
+                hideAlerts();
+                resultLink.value = '';
+                openResultBtn.href = '#';
+            }
+
+            function setGenerateLoading(isLoading) {
+                generateBtn.disabled = isLoading;
+                generateBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                generateBtn.lastChild.textContent = isLoading ? ' Dang tao link...' : ` ${generateButtonDefaultText}`;
+            }
+
+            function getAudioContext() {
+                const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextCtor) return null;
+                if (!audioContext) {
+                    audioContext = new AudioContextCtor();
+                }
+                return audioContext;
+            }
+
+            async function playToneSequence(tones = []) {
+                const ctx = getAudioContext();
+                if (!ctx || !Array.isArray(tones) || tones.length === 0) return;
+
+                try {
+                    if (ctx.state === 'suspended') {
+                        await ctx.resume();
+                    }
+
+                    let startAt = ctx.currentTime + 0.01;
+                    tones.forEach((tone) => {
+                        const duration = Math.max(0.04, Number(tone.duration) || 0.08);
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.type = tone.type || 'sine';
+                        oscillator.frequency.setValueAtTime(Number(tone.frequency) || 440, startAt);
+
+                        gainNode.gain.setValueAtTime(0.0001, startAt);
+                        gainNode.gain.linearRampToValueAtTime(Number(tone.volume) || 0.12, startAt + 0.015);
+                        gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        oscillator.start(startAt);
+                        oscillator.stop(startAt + duration + 0.02);
+
+                        startAt += duration + (Number(tone.gap) || 0.03);
+                    });
+                } catch (error) {
+                    // Ignore audio failures so submit flow keeps working.
+                }
+            }
+
+            function playSuccessSound() {
+                return playToneSequence([
+                    { frequency: 880, duration: 0.07, volume: 0.09, type: 'sine', gap: 0.015 },
+                    { frequency: 1320, duration: 0.11, volume: 0.12, type: 'triangle', gap: 0.02 }
+                ]);
+            }
+
+            function playErrorSound() {
+                return playToneSequence([
+                    { frequency: 300, duration: 0.08, volume: 0.12, type: 'square', gap: 0.035 },
+                    { frequency: 220, duration: 0.14, volume: 0.13, type: 'sawtooth', gap: 0.02 }
+                ]);
+            }
+
+            async function copyTextToClipboard(text) {
+                await navigator.clipboard.writeText(text);
+            }
+
+            async function copyGeneratedLink(url, { silent = false } = {}) {
+                if (!url) return false;
+                try {
+                    await copyTextToClipboard(url);
+                    if (!silent) {
+                        const originalText = copyResultBtn.textContent;
+                        copyResultBtn.textContent = 'Da sao chep!';
+                        setTimeout(() => {
+                            copyResultBtn.textContent = originalText;
+                        }, 2000);
+                    }
+                    return true;
+                } catch (error) {
+                    if (!silent) {
+                        alert('Loi sao chep, vui long copy thu cong.');
+                    }
+                    return false;
+                }
+            }
+
+            cookieInput.addEventListener('keydown', (event) => {
+                if (
+                    event.key === 'Enter' &&
+                    !event.shiftKey &&
+                    !event.ctrlKey &&
+                    !event.altKey &&
+                    !event.metaKey
+                ) {
+                    event.preventDefault();
+                    if (!generateBtn.disabled) {
+                        form.requestSubmit(generateBtn);
+                    }
+                }
+            });
+
+            cookieInput.addEventListener('input', () => {
+                if (inlineError.classList.contains('active')) {
+                    hideInlineError();
+                }
+            });
+
+            clearCookieBtn.addEventListener('click', () => {
+                cookieInput.value = '';
+                resetFormFeedback();
+                cookieInput.focus();
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                resetFormFeedback();
+
+                const cookieStr = cookieInput.value.trim();
+                const device = deviceSelect.value;
+
+                if (!cookieStr) {
+                    showError('Vui long nhap cookie.');
+                    playErrorSound();
+                    return;
+                }
+
+                setGenerateLoading(true);
+
+                try {
+                    const res = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr, device })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Server error');
+
+                    if (data.success && data.url) {
+                        showResult(data.url, data.accountInfo);
+                        playSuccessSound();
+                        await copyGeneratedLink(data.url, { silent: true });
+                    } else {
+                        showError('Khong the tao link (Loi khong xac dinh).');
+                        playErrorSound();
+                    }
+                } catch (error) {
+                    showError(error.message);
+                    playErrorSound();
+                } finally {
+                    setGenerateLoading(false);
+                }
+            });
+
+            startBatchBtn.addEventListener('click', async () => {
+                if (batchRunning) return;
+                if (typeof XLSX === 'undefined') {
+                    batchStatusText.textContent = 'Khong tai duoc thu vien Excel (SheetJS).';
+                    return;
+                }
+
+                const file = batchExcelInput.files && batchExcelInput.files[0];
+                if (!file) {
+                    batchStatusText.textContent = 'Vui long chon file .xlsx truoc.';
+                    return;
+                }
+
+                batchWorkbook = null;
+                batchOutputFilename = '';
+                downloadBatchBtn.disabled = true;
+                batchStopRequested = false;
+                setBatchRunningState(true);
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const cookies = readCookiesFromSheet(workbook);
+                    if (cookies.length === 0) {
+                        batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A.';
+                        setBatchRunningState(false);
+                        return;
+                    }
+
+                    batchStatusText.textContent = `Dang bat dau check ${cookies.length} cookie...`;
+                    const result = await processBatchCookies(cookies);
+                    batchWorkbook = buildBatchWorkbook(result.successRows, result.failedRows);
+                    batchOutputFilename = formatBatchFileName(new Date());
+                    downloadBatchBtn.disabled = false;
+
+                    if (batchStopRequested) {
+                        batchStatusText.textContent = `Da dung batch. Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                    } else {
+                        batchStatusText.textContent = `Hoan tat. Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                    }
+                } catch (error) {
+                    batchStatusText.textContent = `Batch loi: ${error.message || 'Unknown error'}`;
+                } finally {
+                    setBatchRunningState(false);
+                }
+            });
+
+            stopBatchBtn.addEventListener('click', () => {
+                if (!batchRunning) return;
+                batchStopRequested = true;
+                batchStatusText.textContent = 'Dang dung batch...';
+            });
+
+            downloadBatchBtn.addEventListener('click', () => {
+                if (!batchWorkbook) {
+                    batchStatusText.textContent = 'Chua co ket qua de tai.';
+                    return;
+                }
+                XLSX.writeFile(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date()));
+            });
+
+            copyResultBtn.addEventListener('click', async () => {
+                await copyGeneratedLink(resultLink.value);
+            });
+        });
+    </script>
+</body>
+
+</html>
+

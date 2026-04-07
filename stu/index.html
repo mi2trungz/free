@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tải file Studocu | Trada3k.Store</title>
+    <meta name="description" content="Công cụ tải file Studocu miễn phí, giao diện đồng bộ với Trada3k.Store, xử lý nhanh và dễ dùng cho sinh viên.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+    <div id="app-wrapper">
+        <main class="stu-shell">
+            <section class="hero-card hero-card-compact">
+                <div class="hero-bg">
+                    <span class="hero-orb hero-orb-left"></span>
+                    <span class="hero-orb hero-orb-right"></span>
+                </div>
+
+                <div class="hero-badge">
+                    <span class="hero-badge-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </span>
+                    <span>Tải file Studocu miễn phí</span>
+                </div>
+
+                <h1>Tải tài liệu Studocu <span>nhanh trên Trada3k.Store</span></h1>
+                <p class="hero-copy">
+                    Dán liên kết Studocu, hệ thống sẽ tự chuẩn hóa link, xếp hàng xử lý và xuất PDF rõ nét cho bạn.
+                </p>
+
+                <div class="hero-proofs">
+                    <span class="proof-chip proof-chip-green">Miễn phí</span>
+                    <span class="proof-chip proof-chip-cyan">Tự đổi sang https</span>
+                    <span class="proof-chip proof-chip-orange">Lưu PDF dễ in</span>
+                </div>
+            </section>
+
+            <section class="tool-card">
+                <div class="section-head">
+                    <div>
+                        <div class="section-chip">Công cụ Studocu</div>
+                        <h2>Tải file từ liên kết Studocu</h2>
+                        <p>Dán link tài liệu, hệ thống sẽ tự sửa về dạng hợp lệ rồi bắt đầu xử lý.</p>
+                    </div>
+                </div>
+
+                <form id="fetchForm" class="tool-form" onsubmit="return false">
+                    <label for="url">Liên kết tài liệu</label>
+                    <div class="input-group">
+                        <input type="text" id="url" name="url" placeholder="Ví dụ: studocu.vn/... hoặc http://studocu.vn/..." autocomplete="off" inputmode="url" required>
+                        <button type="submit" id="fetchBtn" class="btn-primary">
+                            <span>Tải file ngay</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="status-box status-neutral" id="status" style="display:none;">
+                    <div class="spinner"></div>
+                    <span id="statusText">Đang chuẩn bị tải tài liệu...</span>
+                </div>
+
+                <div class="status-box status-queue" id="queueStatus" style="display:none;">
+                    <div class="status-topline">
+                        <span class="status-kicker">Hàng đợi xử lý</span>
+                        <span id="queueText">Đang chờ đến lượt...</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill queue-bar-fill" id="queueBar" style="width:0%"></div>
+                    </div>
+                    <div class="status-detail" id="queueDetail"></div>
+                </div>
+
+                <div class="status-box status-success" id="progressInfo" style="display:none;">
+                    <div class="status-topline">
+                        <span class="status-kicker">Tiến độ tải file</span>
+                        <span id="progressLabel">0 / 0 trang</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+                    </div>
+                    <div class="status-detail">
+                        <span>Hệ thống đang tải và ghép tài liệu</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="benefits-grid">
+                <article class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path>
+                        </svg>
+                    </div>
+                    <h3>Xử lý nhanh</h3>
+                    <p>Tự động tải từng trang tài liệu để bạn không phải thao tác thủ công nhiều lần.</p>
+                </article>
+
+                <article class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                            <path d="M8 11V8a4 4 0 118 0v3"></path>
+                        </svg>
+                    </div>
+                    <h3>Tự sửa liên kết</h3>
+                    <p>Nhập thiếu giao thức hoặc nhập http, ô liên kết sẽ tự đổi về dạng https trước khi gửi đi.</p>
+                </article>
+
+                <article class="benefit-card">
+                    <div class="benefit-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"></path>
+                        </svg>
+                    </div>
+                    <h3>PDF dễ lưu</h3>
+                    <p>Sau khi tải xong, bạn có thể xem tài liệu và in hoặc lưu PDF trực tiếp ngay trên trình duyệt.</p>
+                </article>
+            </section>
+        </main>
+    </div>
+
+    <div class="error-overlay" id="errorOverlay">
+        <div class="error-popup" id="errorPopup">
+            <div class="error-popup-icon" id="errorIcon">!</div>
+            <h2 id="errorTitle">Đã xảy ra lỗi</h2>
+            <div class="err-msg" id="errorMsg"></div>
+            <p class="err-hint" id="errorHint">Bạn hãy thử lại sau ít phút.</p>
+            <button class="btn-primary btn-modal" id="errorCloseBtn">Đã hiểu</button>
+        </div>
+    </div>
+
+    <div id="viewerWrap" style="display:none;"></div>
+
+    <script src="./main.js"></script>
+</body>
+</html>
