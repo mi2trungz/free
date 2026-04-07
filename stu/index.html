@@ -48,12 +48,11 @@
                     <div>
                         <div class="section-chip">Công cụ Studocu</div>
                         <h2>Tải file từ liên kết Studocu</h2>
-                        <p>Dán link tài liệu, hệ thống sẽ tự sửa về dạng hợp lệ rồi bắt đầu xử lý.</p>
                     </div>
                 </div>
 
                 <form id="fetchForm" class="tool-form" onsubmit="return false">
-                    <label for="url">Liên kết tài liệu</label>
+                    <label for="url">Hãy dán đường link studocu vào ô bên dưới</label>
                     <div class="input-group">
                         <input type="text" id="url" name="url" placeholder="Ví dụ: studocu.vn/... hoặc http://studocu.vn/..." autocomplete="off" inputmode="url" required>
                         <button type="submit" id="fetchBtn" class="btn-primary">
@@ -65,6 +64,15 @@
                         </button>
                     </div>
                 </form>
+
+                <section class="guide-box" aria-labelledby="guideTitle">
+                    <h3 id="guideTitle">Hướng dẫn sử dụng</h3>
+                    <ol class="guide-list">
+                        <li>Bước 1: Dán đúng link tài liệu Studocu vào ô bên trên.</li>
+                        <li>Bước 2: Bấm &quot;Tải file ngay&quot; để hệ thống bắt đầu xử lý.</li>
+                        <li>Bước 3: Chờ tải xong rồi mở tài liệu hoặc tải lại từ lịch sử bên dưới.</li>
+                    </ol>
+                </section>
 
                 <div class="status-box status-neutral" id="status" style="display:none;">
                     <div class="spinner"></div>

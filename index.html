@@ -66,7 +66,6 @@
             --brand-700: #047857;
             --teal-500: #0d9488;
             --hero-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 5%, rgba(236, 253, 245, 0.82) 54%, rgba(236, 254, 255, 0.9) 100%);
-            --hero-chip: linear-gradient(135deg, #059669 0%, #0d9488 62%, #0891b2 100%);
             --hero-cta: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
             --hero-cta-hover: linear-gradient(135deg, #059669 0%, #0f766e 100%);
             --shadow-soft: 0 10px 30px rgba(5, 150, 105, 0.16);
@@ -321,19 +320,6 @@
             right: 8%;
             bottom: -84px;
             background: radial-gradient(circle, rgba(13, 148, 136, 0.26) 0%, rgba(13, 148, 136, 0) 72%);
-        }
-
-        .hero-chip {
-            background: var(--hero-chip);
-            border: 1px solid rgba(255, 255, 255, 0.24);
-            box-shadow: 0 8px 20px rgba(5, 150, 105, 0.32);
-            letter-spacing: 0.04em;
-            transition: transform var(--ease-fast), box-shadow var(--ease-fast);
-        }
-
-        .hero-chip:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(5, 150, 105, 0.44);
         }
 
         .hero-title-accent {
@@ -601,32 +587,42 @@
             margin-bottom: 0.9rem;
         }
 
+        .view-studocu-inline #folderPageTitleWrap h1 {
+            margin-top: 0.2rem;
+            font-size: clamp(1.65rem, 3.4vw, 2.55rem);
+            letter-spacing: -0.04em;
+        }
+
+        .view-studocu-inline #folderPageTitleWrap>div:last-child {
+            margin-top: 0.3rem;
+        }
+
         .studocu-inline-shell {
-            max-width: 1420px;
-            margin: 0 auto 2rem;
-            padding: 0 1rem;
+            max-width: 1240px;
+            margin: 0 auto 1.45rem;
+            padding: 0 0.85rem;
         }
 
         .studocu-inline-card {
             position: relative;
             overflow: hidden;
-            border-radius: 1.75rem;
+            border-radius: 1.4rem;
             border: 1px solid rgba(16, 185, 129, 0.22);
             background:
-                radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 28%),
-                radial-gradient(circle at left center, rgba(16, 185, 129, 0.12), transparent 30%),
+                radial-gradient(circle at top right, rgba(20, 184, 166, 0.08), transparent 24%),
+                radial-gradient(circle at left center, rgba(16, 185, 129, 0.08), transparent 26%),
                 rgba(255, 255, 255, 0.96);
-            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
-            padding: 1.8rem;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+            padding: 1.25rem;
         }
 
         .studocu-inline-label {
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.58rem 1rem;
+            padding: 0.48rem 0.88rem;
             border-radius: 999px;
-            font-size: 0.72rem;
+            font-size: 0.67rem;
             font-weight: 900;
             letter-spacing: 0.08em;
             text-transform: uppercase;
@@ -636,49 +632,77 @@
         }
 
         .studocu-inline-title {
-            margin-top: 1rem;
-            font-size: clamp(2rem, 4vw, 3.8rem);
-            line-height: 1.02;
+            margin-top: 0.8rem;
+            font-size: clamp(1.6rem, 3vw, 2.95rem);
+            line-height: 1.05;
             letter-spacing: -0.05em;
             font-weight: 900;
             color: #0f172a;
         }
 
         .studocu-inline-subtitle {
-            margin-top: 0.9rem;
-            max-width: 56rem;
+            margin-top: 0.62rem;
+            max-width: 48rem;
             color: #64748b;
-            font-size: 1rem;
+            font-size: 0.94rem;
             font-weight: 600;
-            line-height: 1.7;
+            line-height: 1.55;
         }
 
         .studocu-inline-kicker {
-            margin-top: 1.3rem;
-            margin-bottom: 0.8rem;
+            margin-top: 1rem;
+            margin-bottom: 0.58rem;
             color: #047857;
-            font-size: 0.82rem;
+            font-size: 0.77rem;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
 
+        .studocu-inline-guide {
+            margin-top: 0.95rem;
+            padding: 1rem 1.05rem;
+            border-radius: 1.1rem;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(16, 185, 129, 0.16);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+        }
+
+        .studocu-inline-guide-title {
+            color: #0f172a;
+            font-size: 0.98rem;
+            font-weight: 900;
+        }
+
+        .studocu-inline-guide-list {
+            margin: 0.7rem 0 0;
+            padding-left: 1.2rem;
+            color: #64748b;
+            font-size: 0.92rem;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .studocu-inline-guide-list li+li {
+            margin-top: 0.42rem;
+        }
+
         .studocu-inline-form-row {
             display: flex;
-            gap: 1rem;
+            gap: 0.8rem;
             align-items: center;
         }
 
         .studocu-inline-input {
             flex: 1;
             min-width: 0;
-            height: 4.8rem;
-            padding: 0 1.5rem;
-            border-radius: 1.4rem;
+            height: 4rem;
+            padding: 0 1.15rem;
+            border-radius: 1.15rem;
             border: 1px solid rgba(203, 213, 225, 0.9);
             background: rgba(255, 255, 255, 0.98);
             color: #0f172a;
-            font-size: 1.02rem;
+            font-size: 0.96rem;
             font-weight: 600;
             outline: none;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
@@ -695,17 +719,17 @@
             align-items: center;
             justify-content: center;
             gap: 0.7rem;
-            min-width: 13.5rem;
-            height: 4.6rem;
-            padding: 0 1.6rem;
+            min-width: 12.4rem;
+            height: 3.9rem;
+            padding: 0 1.35rem;
             border: 0;
             border-radius: 999px;
             background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
             color: #fff;
-            font-size: 0.98rem;
+            font-size: 0.93rem;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 14px 28px rgba(16, 185, 129, 0.26);
+            box-shadow: 0 10px 22px rgba(16, 185, 129, 0.22);
             transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
         }
 
@@ -721,8 +745,8 @@
         }
 
         .studocu-inline-status {
-            margin-top: 1rem;
-            padding: 1rem 1.05rem;
+            margin-top: 0.82rem;
+            padding: 0.85rem 0.95rem;
             border-radius: 1rem;
             border: 1px solid transparent;
             display: none;
@@ -755,14 +779,14 @@
         }
 
         .studocu-inline-status-topline {
-            font-size: 0.9rem;
+            font-size: 0.84rem;
             font-weight: 800;
             color: #0f172a;
         }
 
         .studocu-inline-status-detail {
-            margin-top: 0.6rem;
-            font-size: 0.85rem;
+            margin-top: 0.48rem;
+            font-size: 0.79rem;
             color: #64748b;
         }
 
@@ -775,8 +799,8 @@
         }
 
         .studocu-inline-progress-track {
-            margin-top: 0.8rem;
-            height: 0.62rem;
+            margin-top: 0.65rem;
+            height: 0.5rem;
             border-radius: 999px;
             overflow: hidden;
             background: rgba(226, 232, 240, 0.95);
@@ -804,13 +828,214 @@
             flex-shrink: 0;
         }
 
-        .studocu-inline-viewer {
-            margin-top: 1.35rem;
+        .studocu-inline-ready {
+            margin-top: 0.82rem;
+            padding: 0.88rem 0.95rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(16, 185, 129, 0.24);
+            background: rgba(236, 253, 245, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .studocu-inline-ready-copy {
+            min-width: 0;
+        }
+
+        .studocu-inline-ready-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .studocu-inline-ready-title {
+            font-size: 0.96rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .studocu-inline-ready-meta {
+            margin-top: 0.22rem;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .studocu-inline-history {
+            margin-top: 1rem;
+            border-radius: 1.2rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            background: rgba(255, 255, 255, 0.94);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
             overflow: hidden;
-            border-radius: 1.35rem;
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            background: rgba(248, 250, 252, 0.96);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+        }
+
+        .studocu-inline-history-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.95rem 1rem 0.7rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.82);
+        }
+
+        .studocu-inline-history-title {
+            font-size: 0.96rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .studocu-inline-history-subtitle {
+            margin-top: 0.22rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .studocu-inline-history-list {
+            display: grid;
+            gap: 0.8rem;
+            padding: 0.95rem 1rem 1rem;
+        }
+
+        .studocu-inline-history-empty {
+            padding: 1rem;
+            border: 1px dashed rgba(148, 163, 184, 0.28);
+            border-radius: 1rem;
+            background: rgba(248, 250, 252, 0.7);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .studocu-inline-history-item {
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 1rem;
+            background: #fff;
+            padding: 0.9rem 0.95rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .studocu-inline-history-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .studocu-inline-history-item-title {
+            font-size: 0.93rem;
+            font-weight: 900;
+            color: #0f172a;
+            line-height: 1.35;
+        }
+
+        .studocu-inline-history-item-meta {
+            margin-top: 0.35rem;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .studocu-inline-history-link {
+            margin-top: 0.48rem;
+            font-size: 0.76rem;
+            color: #0f766e;
+            word-break: break-all;
+            line-height: 1.45;
+        }
+
+        .studocu-inline-history-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .studocu-inline-history-btn {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.68rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .studocu-inline-history-btn-primary {
+            background: rgba(16, 185, 129, 0.14);
+            color: #047857;
+        }
+
+        .studocu-inline-history-btn-secondary {
+            background: rgba(254, 242, 242, 0.98);
+            border: 1px solid rgba(252, 165, 165, 0.35);
+            color: #b91c1c;
+        }
+
+        .studocu-inline-ready-open {
+            border: 0;
+            border-radius: 999px;
+            padding: 0.72rem 1.08rem;
+            background: rgba(16, 185, 129, 0.14);
+            color: #047857;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .studocu-inline-ready-new {
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 999px;
+            padding: 0.72rem 1.08rem;
+            background: rgba(255, 255, 255, 0.96);
+            color: #0f172a;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .studocu-inline-modal-open {
+            overflow: hidden;
+        }
+
+        .studocu-inline-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.1rem;
+            background: rgba(15, 23, 42, 0.58);
+            backdrop-filter: blur(8px);
+        }
+
+        .studocu-inline-modal.is-open {
+            display: flex;
+        }
+
+        .studocu-inline-modal-dialog {
+            width: min(1180px, 100%);
+            height: min(88vh, 900px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 1.45rem;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            background: rgba(248, 250, 252, 0.98);
+            box-shadow: 0 28px 64px rgba(15, 23, 42, 0.28);
         }
 
         .studocu-inline-viewer-head {
@@ -818,24 +1043,58 @@
             align-items: center;
             justify-content: space-between;
             gap: 1rem;
-            padding: 1rem 1.1rem;
+            padding: 1rem 1.1rem 0.95rem;
             border-bottom: 1px solid rgba(148, 163, 184, 0.18);
             background: rgba(255, 255, 255, 0.88);
+        }
+
+        .studocu-inline-viewer-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .studocu-inline-viewer-print {
             border: 0;
             border-radius: 999px;
-            padding: 0.8rem 1.15rem;
+            padding: 0.78rem 1.1rem;
             background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
             color: #fff;
             font-weight: 800;
             cursor: pointer;
         }
 
+        .studocu-inline-viewer-reset {
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            border-radius: 999px;
+            padding: 0.78rem 1.1rem;
+            background: rgba(255, 255, 255, 0.96);
+            color: #0f172a;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .studocu-inline-modal-close {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 999px;
+            background: rgba(241, 245, 249, 0.95);
+            color: #475569;
+            cursor: pointer;
+            font-size: 1.25rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
         .studocu-inline-frame {
             width: 100%;
-            min-height: 72vh;
+            flex: 1;
             border: 0;
             background: transparent;
         }
@@ -852,16 +1111,20 @@
             }
 
             .studocu-inline-card {
-                padding: 1rem;
+                padding: 0.95rem;
                 border-radius: 1.35rem;
             }
 
             .studocu-inline-title {
-                font-size: clamp(1.55rem, 8vw, 2.45rem);
+                font-size: clamp(1.42rem, 7vw, 2.05rem);
             }
 
             .studocu-inline-subtitle {
-                font-size: 0.94rem;
+                font-size: 0.88rem;
+            }
+
+            .studocu-inline-guide {
+                padding: 0.9rem;
             }
 
             .studocu-inline-form-row,
@@ -874,12 +1137,38 @@
 
             .studocu-inline-input,
             .studocu-inline-cta,
-            .studocu-inline-viewer-print {
+            .studocu-inline-viewer-print,
+            .studocu-inline-viewer-reset,
+            .studocu-inline-ready-open,
+            .studocu-inline-ready-new {
                 width: 100%;
             }
 
-            .studocu-inline-frame {
-                min-height: 62vh;
+            .studocu-inline-ready {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .studocu-inline-ready-actions,
+            .studocu-inline-viewer-actions,
+            .studocu-inline-history-actions {
+                width: 100%;
+            }
+
+            .studocu-inline-history-head,
+            .studocu-inline-history-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .studocu-inline-modal {
+                padding: 0.65rem;
+            }
+
+            .studocu-inline-modal-dialog {
+                width: 100%;
+                height: min(94vh, 100%);
+                border-radius: 1.15rem;
             }
         }
 
@@ -2089,7 +2378,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg></button>
             <div class="p-5 text-center sm:p-6">
-                <div class="mx-auto inline-flex h-12 items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-indigo-700 shadow-sm">
+                <div id="passwordModalBadge" class="mx-auto inline-flex h-12 items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-indigo-700 shadow-sm">
                     <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -2097,10 +2386,10 @@
                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </span>
-                    Bảo mật truy cập
+                    <span id="passwordModalBadgeText">Bảo mật truy cập</span>
                 </div>
-                <h3 class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.75rem]">Yêu cầu bảo mật</h3>
-                <p class="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-500 sm:text-sm">Nhập mật mã 4 số để mở danh mục này.</p>
+                <h3 id="passwordModalTitle" class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.75rem]">Yêu cầu bảo mật</h3>
+                <p id="passwordModalSubtitle" class="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-500 sm:text-sm">Nhập mật mã 4 số để mở danh mục này.</p>
                 <div class="mt-5 space-y-3">
                     <input type="password" id="modalPasswordInput"
                         class="w-full rounded-[1.1rem] border border-slate-300 bg-white px-4 py-3 text-center text-[1.4rem] font-black tracking-[0.34em] text-slate-800 shadow-[inset_0_1px_3px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:tracking-[0.34em] placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
@@ -2205,21 +2494,21 @@
                             d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg></div>
                 <h3 class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.7rem]">Hướng dẫn lấy mã</h3>
-                <div class="mt-4 space-y-3 text-[15px] font-medium leading-relaxed text-slate-600">
-                    <p>Để nhận mật mã truy cập vào hệ thống, bạn vui lòng thực hiện các bước sau:</p>
-                    <ol class="list-decimal space-y-1.5 pl-5 marker:font-black marker:text-indigo-600">
-                        <li>Nhắn tin vào Fanpage <strong>TRÀ ĐÁ 3K</strong>. (Link bên dưới)</li>
-                        <li>Nhắn chính xác cú pháp: <strong class="text-indigo-700">LAYMA</strong></li>
-                        <li>Lấy mã và truy cập hệ thống.</li>
+                <div class="mt-4 space-y-3 text-[15px] font-semibold leading-[1.75] text-slate-700">
+                    <p>Để nhận <strong class="font-extrabold text-emerald-700">mật mã truy cập</strong> vào hệ thống, bạn vui lòng thực hiện các bước sau:</p>
+                    <ol class="list-decimal space-y-2 pl-5 marker:font-black marker:text-indigo-600">
+                        <li>Nhắn tin vào <strong class="font-extrabold text-indigo-700">Fanpage TRÀ ĐÁ 3K</strong>. <span class="font-semibold text-slate-600">(Link bên dưới)</span></li>
+                        <li>Nhắn chính xác cú pháp: <strong class="font-extrabold text-violet-700">LAYMA</strong></li>
+                        <li>Lấy <strong class="font-extrabold text-emerald-700">mật mã truy cập</strong> và vào hệ thống.</li>
                     </ol>
                     <div
-                        class="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50/90 px-3.5 py-2.5 text-[13px] font-semibold text-red-600 shadow-sm">
+                        class="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50/95 px-3.5 py-2.5 text-[13px] font-bold leading-relaxed text-red-700 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 shrink-0" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span>Lưu ý: Mã sẽ được thay đổi mỗi ngày.</span>
+                        <span><strong class="font-extrabold text-red-700">Lưu ý:</strong> Mã sẽ được thay đổi <strong class="font-extrabold text-orange-600">mỗi ngày</strong>.</span>
                     </div>
                     <a href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer"
                         class="instruction-fanpage-cta group mt-4 block rounded-2xl border border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-100 px-4 py-4 text-center decoration-0 transition-all">
@@ -2233,7 +2522,7 @@
                             </svg>
                             <span class="leading-none">TRÀ ĐÁ 3K</span>
                         </div>
-                        <p class="mt-2 text-[11px] font-medium text-slate-500">Click để mở Fanpage và nhắn "LAYMA"</p>
+                        <p class="mt-2 text-[11px] font-semibold text-slate-600">Click để mở <strong class="font-extrabold text-indigo-700">Fanpage TRÀ ĐÁ 3K</strong> và nhắn <strong class="font-extrabold text-violet-700">"LAYMA"</strong></p>
                     </a>
                 </div>
                 <button onclick="closeInstructions()"
@@ -2956,13 +3245,13 @@
                     <!-- Icon sẽ được thay đổi động -->
                 </div>
                 <h3 id="alertTitle" class="text-xl font-bold text-gray-800 mb-2">Thông báo</h3>
-                <p id="alertMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></p>
+                <div id="alertMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></div>
                 <div class="space-y-3">
                     <a id="alertActionBtn" href="#" target="_blank" rel="noopener noreferrer"
                         class="hidden w-full items-center justify-center bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl">
                         Báo lỗi
                     </a>
-                    <button onclick="closeAlertModal()"
+                    <button id="alertConfirmBtn" onclick="closeAlertModal(true)"
                         class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
                         Đã hiểu
                     </button>
@@ -3950,16 +4239,7 @@
                         <div class="hero-orb hero-orb-right"></div>
                     </div>
                     <div class="relative z-10">
-                        <div
-                            class="hero-chip inline-flex items-center gap-2 text-white text-[11px] sm:text-xs font-extrabold px-5 py-2 rounded-full mb-5 cursor-default select-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 opacity-80 flex-shrink-0"
-                                fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z" />
-                            </svg>
-                            <span>TRADA<span class="text-amber-300">3K</span>.STORE</span>
-                        </div>
-
-                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2 leading-[1.08] uppercase">
+                        <h2 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-3 leading-[1.08] uppercase">
                             Đời sinh viên khó,<br>
                             <span class="text-gray-900">để </span><span class="hero-title-accent hero-brand-bounce">TRÀ ĐÁ 3K</span><span class="text-gray-900"> lo</span>
                         </h2>
@@ -4289,7 +4569,7 @@
                 </div>
 
                 <!-- MỌI NGƯỜI NÓI GÌ VỀ TRADA3K.STORE -->
-                <div id="feedbackSection" class="mt-8 md:mt-12 lg:mt-14 mb-6">
+                <div id="feedbackSection" class="hidden mt-8 md:mt-12 lg:mt-14 mb-6">
                     <div class="text-center mb-5 md:mb-6">
                         <h2 class="ui-title text-xl md:text-2xl tracking-tight uppercase">
                             Mọi người nói gì về <span
@@ -4385,6 +4665,7 @@
         let editingAccountIndex = -1;
         let currentAdminFolderIndex = -1;
         let confirmCallback = null;
+        let alertConfirmCallback = null;
         let editingPricingProductIndex = -1;
         let currentView = 'home';
         let currentPricingCategoryFilter = 'all';
@@ -4441,9 +4722,18 @@
             const titleEl = document.getElementById('alertTitle');
             const messageEl = document.getElementById('alertMessage');
             const actionBtn = document.getElementById('alertActionBtn');
+            const confirmBtn = document.getElementById('alertConfirmBtn');
 
             titleEl.textContent = title;
-            messageEl.textContent = message;
+            messageEl.className = 'text-sm text-gray-600 mb-6 whitespace-pre-line';
+            if (options && options.allowHtml) {
+                messageEl.innerHTML = message;
+                messageEl.classList.remove('whitespace-pre-line');
+                messageEl.classList.add('text-left', 'leading-6');
+            } else {
+                messageEl.textContent = message;
+            }
+            alertConfirmCallback = options && typeof options.onConfirm === 'function' ? options.onConfirm : null;
 
             // Set icon based on type
             iconDiv.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4';
@@ -4476,14 +4766,25 @@
                 }
             }
 
+            if (confirmBtn) {
+                confirmBtn.textContent = options && options.confirmLabel ? options.confirmLabel : 'Đã hiểu';
+            }
+
             modal.classList.remove('hidden');
             modal.classList.add('flex');
         }
 
-        function closeAlertModal() {
+        function closeAlertModal(confirmed = false) {
             const modal = document.getElementById('alertModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            if (confirmed && typeof alertConfirmCallback === 'function') {
+                const callback = alertConfirmCallback;
+                alertConfirmCallback = null;
+                callback();
+                return;
+            }
+            alertConfirmCallback = null;
         }
 
         // Custom Confirm Modal
@@ -5226,6 +5527,9 @@
         const lastUpdateLabel = document.getElementById('lastUpdateLabel');
         const introSection = document.getElementById('introSection');
         const passwordModal = document.getElementById('passwordModal');
+        const passwordModalBadgeText = document.getElementById('passwordModalBadgeText');
+        const passwordModalTitle = document.getElementById('passwordModalTitle');
+        const passwordModalSubtitle = document.getElementById('passwordModalSubtitle');
         const modalPasswordInput = document.getElementById('modalPasswordInput');
         const modalLoginError = document.getElementById('modalLoginError');
 
@@ -5266,6 +5570,7 @@
                             if (firestoreData.data && Array.isArray(firestoreData.data)) {
                                 console.log('✅ Data updated from Firestore:', firestoreData.data.length, 'folders');
                                 DATA = firestoreData.data;
+                                patchStudocuEntryPoints();
                                 // Ensure showOtp property exists for all accounts
                                 DATA.forEach(folder => {
                                     if (folder.accounts) {
@@ -5534,8 +5839,24 @@
             }
         }
 
+        function configurePasswordModalContent(context = '') {
+            const isStudocuPrint = context === 'studocu_print';
+            if (passwordModalBadgeText) {
+                passwordModalBadgeText.textContent = isStudocuPrint ? 'Bảo mật tải file' : 'Bảo mật truy cập';
+            }
+            if (passwordModalTitle) {
+                passwordModalTitle.textContent = isStudocuPrint ? 'Yêu cầu bảo mật để tải file' : 'Yêu cầu bảo mật';
+            }
+            if (passwordModalSubtitle) {
+                passwordModalSubtitle.textContent = isStudocuPrint
+                    ? 'Nhập mật mã 4 số để tiếp tục lưu hoặc in PDF.'
+                    : 'Nhập mật mã 4 số để mở danh mục này.';
+            }
+        }
+
         function openPasswordModal(index) {
             pendingFolderIndex = index;
+            configurePasswordModalContent(pendingProtectedAction);
             modalLoginError.classList.add('hidden');
             modalPasswordInput.value = '';
             modalPasswordInput.classList.remove('border-red-500', 'shake');
@@ -5555,16 +5876,26 @@
             modalPasswordInput.classList.remove('border-red-500', 'shake');
             const hasPendingFolder = pendingFolderIndex >= 0 && pendingFolderIndex < DATA.length;
             const isPendingNetflixFreePackage = pendingProtectedAction === 'netflix_free_package';
-            if (hasPendingFolder || isPendingNetflixFreePackage) {
+            const isPendingStudocuPrint = pendingProtectedAction === 'studocu_print';
+            if (hasPendingFolder || isPendingNetflixFreePackage || isPendingStudocuPrint) {
                 const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
                 if (val === correctPassword) {
                     const unlockedFolderIndex = pendingFolderIndex;
+                    const wasStudocuPrint = isPendingStudocuPrint;
                     passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
-                    showAlert('Chúc mừng', 'Bạn đã nhập đúng mã bảo mật!', 'success');
+                    pendingProtectedAction = '';
+                    pendingFolderIndex = -1;
+                    if (wasStudocuPrint) {
+                        showStudocuPrintGuideAndPrint();
+                    } else {
+                        showAlert('Chúc mừng', 'Bạn đã nhập đúng mã bảo mật!', 'success');
+                    }
                     if (isPendingNetflixFreePackage) {
                         pendingProtectedAction = '';
                         pendingFolderIndex = -1;
                         showNetflixPage();
+                    } else if (wasStudocuPrint) {
+                        return;
                     } else if (shouldOpenNetflixPackageSelector(unlockedFolderIndex)) {
                         pendingFolderIndex = -1;
                         showNetflixPackageSelectorModal();
@@ -5581,16 +5912,26 @@
             const val = modalPasswordInput.value;
             const hasPendingFolder = pendingFolderIndex >= 0 && pendingFolderIndex < DATA.length;
             const isPendingNetflixFreePackage = pendingProtectedAction === 'netflix_free_package';
-            if (hasPendingFolder || isPendingNetflixFreePackage) {
+            const isPendingStudocuPrint = pendingProtectedAction === 'studocu_print';
+            if (hasPendingFolder || isPendingNetflixFreePackage || isPendingStudocuPrint) {
                 const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
                 if (val === correctPassword) {
                     const unlockedFolderIndex = pendingFolderIndex;
+                    const wasStudocuPrint = isPendingStudocuPrint;
                     passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
-                    showAlert('Chúc mừng', 'Bạn đã nhập đúng mã bảo mật!', 'success');
+                    pendingProtectedAction = '';
+                    pendingFolderIndex = -1;
+                    if (wasStudocuPrint) {
+                        showStudocuPrintGuideAndPrint();
+                    } else {
+                        showAlert('Chúc mừng', 'Bạn đã nhập đúng mã bảo mật!', 'success');
+                    }
                     if (isPendingNetflixFreePackage) {
                         pendingProtectedAction = '';
                         pendingFolderIndex = -1;
                         showNetflixPage();
+                    } else if (wasStudocuPrint) {
+                        return;
                     } else if (shouldOpenNetflixPackageSelector(unlockedFolderIndex)) {
                         pendingFolderIndex = -1;
                         showNetflixPackageSelectorModal();
@@ -5610,8 +5951,7 @@
                 'premiumCategoriesSection',
                 'accountCategoriesSection',
                 'popupCategoriesSection',
-                'whyChooseUsSection',
-                'feedbackSection'
+                'whyChooseUsSection'
             ];
 
             sectionIds.forEach(id => {
@@ -6211,8 +6551,14 @@
             queueId: null,
             queueInterval: null,
             viewerTitle: '',
-            viewerPages: 0
+            viewerPages: 0,
+            viewerDocUrl: '',
+            viewerHtml: '',
+            viewerReady: false,
+            escapeBound: false
         };
+        const STUDOCU_INLINE_HISTORY_KEY = 'trada_studocu_history_v1';
+        const STUDOCU_INLINE_HISTORY_LIMIT = 10;
 
         function cleanupStudocuInlineState() {
             if (STUDOCU_INLINE_STATE.queueInterval) {
@@ -6220,6 +6566,66 @@
                 STUDOCU_INLINE_STATE.queueInterval = null;
             }
             STUDOCU_INLINE_STATE.queueId = null;
+            document.body.classList.remove('studocu-inline-modal-open');
+            const modal = document.getElementById('studocuInlineViewerModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function escapeStudocuInlineAttr(value = '') {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function loadStudocuInlineHistory() {
+            try {
+                const raw = localStorage.getItem(STUDOCU_INLINE_HISTORY_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function saveStudocuInlineHistory(items) {
+            const normalized = Array.isArray(items) ? items.slice(0, STUDOCU_INLINE_HISTORY_LIMIT) : [];
+            try {
+                localStorage.setItem(STUDOCU_INLINE_HISTORY_KEY, JSON.stringify(normalized));
+                return normalized;
+            } catch (error) {
+                const fallback = normalized.map((item) => ({
+                    key: item.key,
+                    title: item.title,
+                    pages: item.pages,
+                    url: item.url,
+                    createdAt: item.createdAt
+                }));
+                try {
+                    localStorage.setItem(STUDOCU_INLINE_HISTORY_KEY, JSON.stringify(fallback));
+                    return fallback;
+                } catch (fallbackError) {
+                    return loadStudocuInlineHistory();
+                }
+            }
+        }
+
+        function formatStudocuInlineHistoryTime(ts) {
+            const date = new Date(ts || Date.now());
+            if (Number.isNaN(date.getTime())) return 'Vừa tạo';
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
         }
 
         function buildStudocuInlineMarkup() {
@@ -6228,9 +6634,8 @@
                     <div class="studocu-inline-card">
                         <div class="studocu-inline-label">CÔNG CỤ STUDOCU</div>
                         <h3 class="studocu-inline-title">Tải file từ liên kết Studocu</h3>
-                        <p class="studocu-inline-subtitle">Dán link tài liệu, hệ thống sẽ tự sửa về dạng hợp lệ rồi bắt đầu xử lý.</p>
 
-                        <div class="studocu-inline-kicker">Liên kết tài liệu</div>
+                        <div class="studocu-inline-kicker">Hãy dán đường link studocu vào ô bên dưới</div>
                         <form id="studocuInlineForm" onsubmit="return false;">
                             <div class="studocu-inline-form-row">
                                 <input type="text" id="studocuInlineUrl" class="studocu-inline-input" placeholder="https://www.studocu.com/... hoặc studocu.vn/..." autocomplete="off" inputmode="url" required>
@@ -6243,7 +6648,6 @@
                                 </button>
                             </div>
                         </form>
-
                         <div id="studocuInlineStatus" class="studocu-inline-status studocu-inline-status-neutral">
                             <div class="studocu-inline-spinner"></div>
                             <span id="studocuInlineStatusText">Đang chuẩn bị tải tài liệu...</span>
@@ -6274,15 +6678,42 @@
                             </div>
                         </div>
 
-                        <div id="studocuInlineViewer" class="studocu-inline-viewer hidden">
+                        <div id="studocuInlineReady" class="studocu-inline-ready">
+                            <div class="studocu-inline-ready-copy">
+                                <div class="studocu-inline-ready-title" id="studocuInlineReadyTitle">Tài liệu đã sẵn sàng</div>
+                                <div class="studocu-inline-ready-meta" id="studocuInlineReadyMeta">Bạn có thể mở popup để xem, in hoặc tạo file mới.</div>
+                            </div>
+                            <div class="studocu-inline-ready-actions">
+                                <button type="button" id="studocuInlineNewFileInlineBtn" class="studocu-inline-ready-new">Tải file mới</button>
+                                <button type="button" id="studocuInlineOpenViewerBtn" class="studocu-inline-ready-open">Mở tài liệu</button>
+                            </div>
+                        </div>
+
+                        <div id="studocuInlineViewerModal" class="studocu-inline-modal hidden" aria-hidden="true">
+                            <div class="studocu-inline-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="studocuInlineViewerTitle">
                             <div class="studocu-inline-viewer-head">
                                 <div>
                                     <div id="studocuInlineViewerTitle" class="text-sm font-extrabold text-slate-900">Tài liệu Studocu</div>
                                     <div id="studocuInlineViewerMeta" class="mt-1 text-xs font-semibold text-slate-500">0 trang tài liệu</div>
                                 </div>
-                                <button type="button" id="studocuInlinePrintBtn" class="studocu-inline-viewer-print">Lưu hoặc in PDF</button>
+                                    <div class="studocu-inline-viewer-actions">
+                                        <button type="button" id="studocuInlineNewFileBtn" class="studocu-inline-viewer-reset">Tạo file mới</button>
+                                        <button type="button" id="studocuInlinePrintBtn" class="studocu-inline-viewer-print">Lưu hoặc in PDF</button>
+                                        <button type="button" id="studocuInlineCloseViewerBtn" class="studocu-inline-modal-close" aria-label="Đóng popup xem tài liệu">×</button>
+                                    </div>
+                                </div>
+                                <iframe id="studocuInlineFrame" class="studocu-inline-frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
                             </div>
-                            <iframe id="studocuInlineFrame" class="studocu-inline-frame" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+                        </div>
+
+                        <div class="studocu-inline-history">
+                            <div class="studocu-inline-history-head">
+                                <div>
+                                    <div class="studocu-inline-history-title">Lịch sử file đã tạo</div>
+                                    <div class="studocu-inline-history-subtitle">Lưu ngay trên trình duyệt này để bạn mở lại nhanh hơn.</div>
+                                </div>
+                            </div>
+                            <div id="studocuInlineHistoryList" class="studocu-inline-history-list"></div>
                         </div>
                     </div>
                 </div>
@@ -6304,12 +6735,148 @@
                 progressBar: document.getElementById('studocuInlineProgressBar'),
                 progressLabel: document.getElementById('studocuInlineProgressLabel'),
                 progressPct: document.getElementById('studocuInlineProgressPct'),
-                viewer: document.getElementById('studocuInlineViewer'),
+                ready: document.getElementById('studocuInlineReady'),
+                readyTitle: document.getElementById('studocuInlineReadyTitle'),
+                readyMeta: document.getElementById('studocuInlineReadyMeta'),
+                newFileInlineBtn: document.getElementById('studocuInlineNewFileInlineBtn'),
+                openViewerBtn: document.getElementById('studocuInlineOpenViewerBtn'),
+                historyList: document.getElementById('studocuInlineHistoryList'),
+                viewerModal: document.getElementById('studocuInlineViewerModal'),
                 viewerFrame: document.getElementById('studocuInlineFrame'),
                 viewerTitle: document.getElementById('studocuInlineViewerTitle'),
                 viewerMeta: document.getElementById('studocuInlineViewerMeta'),
-                printBtn: document.getElementById('studocuInlinePrintBtn')
+                printBtn: document.getElementById('studocuInlinePrintBtn'),
+                newFileBtn: document.getElementById('studocuInlineNewFileBtn'),
+                closeViewerBtn: document.getElementById('studocuInlineCloseViewerBtn')
             };
+        }
+
+        function renderStudocuInlineHistory() {
+            const els = getStudocuInlineEls();
+            if (!els.historyList) return;
+
+            const historyItems = loadStudocuInlineHistory();
+            if (!historyItems.length) {
+                els.historyList.innerHTML = '<div class="studocu-inline-history-empty">Bạn chưa tạo file nào trên trình duyệt này.</div>';
+                return;
+            }
+
+            els.historyList.innerHTML = historyItems.map((item) => {
+                const title = escapeStudocuInlineHtml(item.title || 'Tài liệu Studocu');
+                const url = escapeStudocuInlineHtml(item.url || '');
+                const attrKey = escapeStudocuInlineAttr(item.key || '');
+                const pageLabel = Number(item.pages || 0) > 0 ? `${Number(item.pages)} trang` : 'Không rõ số trang';
+                return `
+                    <div class="studocu-inline-history-item">
+                        <div class="studocu-inline-history-copy">
+                            <div class="studocu-inline-history-item-title">${title}</div>
+                            <div class="studocu-inline-history-item-meta">
+                                <span>${escapeStudocuInlineHtml(pageLabel)}</span>
+                                <span>•</span>
+                                <span>${escapeStudocuInlineHtml(formatStudocuInlineHistoryTime(item.createdAt))}</span>
+                            </div>
+                            <div class="studocu-inline-history-link">${url}</div>
+                        </div>
+                        <div class="studocu-inline-history-actions">
+                            <button type="button" class="studocu-inline-history-btn studocu-inline-history-btn-secondary" data-studocu-history-delete="${attrKey}">Xoá file</button>
+                            <button type="button" class="studocu-inline-history-btn studocu-inline-history-btn-primary" data-studocu-history-open="${attrKey}">Mở tài liệu</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveStudocuInlineHistoryItem(item) {
+            const key = String(item && item.url ? item.url : item && item.title ? item.title : '').trim().toLowerCase();
+            if (!key) return;
+
+            const historyItems = loadStudocuInlineHistory().filter((entry) =>
+                String(entry && entry.key ? entry.key : '').trim().toLowerCase() !== key
+            );
+
+            historyItems.unshift({
+                key,
+                title: String(item.title || 'Tài liệu Studocu'),
+                pages: Number(item.pages || 0),
+                url: String(item.url || ''),
+                createdAt: item.createdAt || new Date().toISOString(),
+                viewerHtml: typeof item.viewerHtml === 'string' ? item.viewerHtml : ''
+            });
+
+            saveStudocuInlineHistory(historyItems);
+            renderStudocuInlineHistory();
+        }
+
+        function openStudocuInlineHistoryItem(key) {
+            const historyItems = loadStudocuInlineHistory();
+            const item = historyItems.find((entry) => String(entry && entry.key ? entry.key : '') === String(key || ''));
+            if (!item) {
+                showAlert('Không tìm thấy lịch sử', 'File này không còn trong cache của trình duyệt.', 'warning');
+                return;
+            }
+
+            const els = getStudocuInlineEls();
+            if (els.urlInput && item.url) {
+                els.urlInput.value = item.url;
+            }
+
+            if (!item.viewerHtml) {
+                showAlert('Bản xem trước không còn', 'Cache bản xem trước đã hết dung lượng. Bạn có thể dán lại link để tạo file mới.', 'warning');
+                return;
+            }
+
+            showStudocuInlineViewer(item.viewerHtml, item.title, item.pages, item.url);
+        }
+
+        function deleteStudocuInlineHistoryItem(key) {
+            const normalizedKey = String(key || '');
+            if (!normalizedKey) return;
+            const historyItems = loadStudocuInlineHistory().filter((entry) =>
+                String(entry && entry.key ? entry.key : '') !== normalizedKey
+            );
+            saveStudocuInlineHistory(historyItems);
+            renderStudocuInlineHistory();
+        }
+
+        function showStudocuPrintGuideAndPrint() {
+            const els = getStudocuInlineEls();
+            showAlert(
+                'Mẹo lưu PDF rõ hơn',
+                `
+                    <div class="space-y-4">
+                        <p class="text-[15px] text-slate-600">Làm theo các bước sau để file PDF rõ và nét hơn:</p>
+                        <ol class="space-y-3 text-[15px] text-slate-700">
+                            <li><span class="font-black text-slate-900">1.</span> Khi hộp thoại in xuất hiện, mở <span class="font-black text-emerald-700">Cài đặt khác (More Settings)</span>.</li>
+                            <li><span class="font-black text-slate-900">2.</span> Tìm mục <span class="font-black text-cyan-700">Tỷ lệ (Scale)</span>.</li>
+                            <li><span class="font-black text-slate-900">3.</span> Chọn <span class="font-black text-violet-700">Tuỳ chỉnh (Custom)</span>.</li>
+                            <li><span class="font-black text-slate-900">4.</span> Nhập <span class="font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded-lg">200</span> để file PDF rõ nét hơn.</li>
+                        </ol>
+                        <div class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                            <span class="font-black">Quan trọng:</span> nếu muốn file nét hơn, hãy đặt <span class="font-black text-amber-700">200</span> ở mục <span class="font-black text-violet-700">Tuỳ chỉnh (Custom)</span>.
+                        </div>
+                    </div>
+                `,
+                'info',
+                {
+                    allowHtml: true,
+                    confirmLabel: 'Đã hiểu',
+                    onConfirm: () => {
+                        if (els.viewerFrame && els.viewerFrame.contentWindow) {
+                            els.viewerFrame.contentWindow.postMessage('print', '*');
+                        }
+                    }
+                }
+            );
+        }
+
+        function requestStudocuPrintAccess() {
+            if (isAdmin() || !GLOBAL_ACCESS_PASSWORD || !GLOBAL_ACCESS_PASSWORD.trim()) {
+                showStudocuPrintGuideAndPrint();
+                return;
+            }
+
+            pendingProtectedAction = 'studocu_print';
+            openPasswordModal(-1);
         }
 
         function normalizeStudocuInlineInput(rawValue = '') {
@@ -6414,21 +6981,64 @@
             );
         }
 
-        function resetStudocuInlineUi() {
+        function setStudocuInlineModalOpen(isOpen) {
+            const els = getStudocuInlineEls();
+            if (!els.viewerModal) return;
+            els.viewerModal.classList.toggle('hidden', !isOpen);
+            els.viewerModal.classList.toggle('is-open', !!isOpen);
+            els.viewerModal.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+            document.body.classList.toggle('studocu-inline-modal-open', !!isOpen);
+        }
+
+        function closeStudocuInlineViewerModal() {
+            setStudocuInlineModalOpen(false);
+        }
+
+        function openStudocuInlineViewerModal() {
+            if (!STUDOCU_INLINE_STATE.viewerReady) return;
+            setStudocuInlineModalOpen(true);
+        }
+
+        function startStudocuInlineNewFileFlow() {
+            resetStudocuInlineUi({ clearInput: true });
+            scrollToStudocuInlineTool();
+            setTimeout(() => {
+                const nextEls = getStudocuInlineEls();
+                if (nextEls.urlInput) nextEls.urlInput.focus();
+            }, 120);
+        }
+
+        function resetStudocuInlineUi(options = {}) {
+            const { clearInput = false } = options;
             cleanupStudocuInlineState();
             const els = getStudocuInlineEls();
             if (!els.fetchBtn) return;
+            STUDOCU_INLINE_STATE.viewerTitle = '';
+            STUDOCU_INLINE_STATE.viewerPages = 0;
+            STUDOCU_INLINE_STATE.viewerDocUrl = '';
+            STUDOCU_INLINE_STATE.viewerHtml = '';
+            STUDOCU_INLINE_STATE.viewerReady = false;
+            closeStudocuInlineViewerModal();
             els.fetchBtn.disabled = false;
             const label = els.fetchBtn.querySelector('span');
             if (label) label.textContent = 'Tải file ngay';
             if (els.status) els.status.style.display = 'none';
             if (els.queueStatus) els.queueStatus.style.display = 'none';
             if (els.progressInfo) els.progressInfo.style.display = 'none';
+            if (els.ready) els.ready.style.display = 'none';
             if (els.progressBar) els.progressBar.style.width = '0%';
             if (els.progressLabel) els.progressLabel.textContent = '0 / 0 trang';
             if (els.progressPct) els.progressPct.textContent = '0%';
             if (els.queueBar) els.queueBar.style.width = '0%';
             if (els.queueDetail) els.queueDetail.textContent = '';
+            if (els.viewerFrame) els.viewerFrame.srcdoc = '';
+            if (els.viewerTitle) els.viewerTitle.textContent = 'Tài liệu Studocu';
+            if (els.viewerMeta) els.viewerMeta.textContent = '0 trang tài liệu';
+            if (els.readyTitle) els.readyTitle.textContent = 'Tài liệu đã sẵn sàng';
+            if (els.readyMeta) els.readyMeta.textContent = 'Bạn có thể mở popup để xem, in hoặc tạo file mới.';
+            if (clearInput && els.urlInput) {
+                els.urlInput.value = '';
+            }
         }
 
         function updateStudocuInlineStatus(message) {
@@ -6492,34 +7102,35 @@
             return div.innerHTML;
         }
 
-        function showStudocuInlineViewer(viewerHtml, title, totalPages) {
+        function showStudocuInlineViewer(viewerHtml, title, totalPages, docUrl = '') {
             const els = getStudocuInlineEls();
-            if (!els.viewer || !els.viewerFrame) return;
+            if (!els.viewerFrame) return;
 
             STUDOCU_INLINE_STATE.viewerTitle = title || 'Tài liệu Studocu';
             STUDOCU_INLINE_STATE.viewerPages = Number(totalPages || 0);
+            STUDOCU_INLINE_STATE.viewerDocUrl = String(docUrl || STUDOCU_INLINE_STATE.viewerDocUrl || '');
+            STUDOCU_INLINE_STATE.viewerHtml = String(viewerHtml || '');
+            STUDOCU_INLINE_STATE.viewerReady = true;
 
-            els.viewer.classList.remove('hidden');
+            if (els.status) els.status.style.display = 'none';
+            if (els.queueStatus) els.queueStatus.style.display = 'none';
+            if (els.progressInfo) els.progressInfo.style.display = 'none';
             if (els.viewerTitle) els.viewerTitle.textContent = STUDOCU_INLINE_STATE.viewerTitle;
             if (els.viewerMeta) els.viewerMeta.textContent = `${STUDOCU_INLINE_STATE.viewerPages} trang tài liệu`;
+            if (els.readyTitle) els.readyTitle.textContent = 'Tài liệu đã xử lý xong';
+            if (els.readyMeta) els.readyMeta.textContent = `${STUDOCU_INLINE_STATE.viewerTitle} • ${STUDOCU_INLINE_STATE.viewerPages} trang`;
+            if (els.ready) els.ready.style.display = 'flex';
             els.viewerFrame.srcdoc = viewerHtml;
 
             if (els.printBtn && !els.printBtn.dataset.bound) {
                 els.printBtn.addEventListener('click', () => {
-                    showAlert(
-                        'Mẹo lưu PDF rõ hơn',
-                        'Khi hộp thoại in xuất hiện, bạn nên mở Cài đặt khác, đổi Tỷ lệ sang Tùy chỉnh và nhập 200 để file PDF sắc nét hơn.',
-                        'info'
-                    );
-                    if (els.viewerFrame && els.viewerFrame.contentWindow) {
-                        els.viewerFrame.contentWindow.postMessage('print', '*');
-                    }
+                    requestStudocuPrintAccess();
                 });
                 els.printBtn.dataset.bound = '1';
             }
 
             setTimeout(() => {
-                els.viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                openStudocuInlineViewerModal();
             }, 120);
         }
 
@@ -6554,7 +7165,14 @@
                     'window.addEventListener("message",function(e){if(e.data==="print"){window.print();}});' +
                     '<\/scr' + 'ipt></body></html>';
 
-                showStudocuInlineViewer(viewerHtml, title, totalPages);
+                showStudocuInlineViewer(viewerHtml, title, totalPages, STUDOCU_INLINE_STATE.viewerDocUrl);
+                saveStudocuInlineHistoryItem({
+                    title,
+                    pages: totalPages,
+                    url: STUDOCU_INLINE_STATE.viewerDocUrl,
+                    createdAt: new Date().toISOString(),
+                    viewerHtml
+                });
             }, 450);
         }
 
@@ -6642,6 +7260,8 @@
 
         function startStudocuInlineQueuedFetch(docUrl) {
             STUDOCU_INLINE_STATE.queueId = `q_${Math.random().toString(36).slice(2, 14)}_${Date.now()}`;
+            STUDOCU_INLINE_STATE.viewerDocUrl = String(docUrl || '');
+            STUDOCU_INLINE_STATE.viewerHtml = '';
             updateStudocuInlineStatus('Đang tham gia hàng đợi xử lý...');
 
             fetchStudocuInlineJson('/api/queue/join', {
@@ -6719,10 +7339,66 @@
                 els.fetchBtn.disabled = true;
                 const label = els.fetchBtn.querySelector('span');
                 if (label) label.textContent = 'Đang xử lý...';
-                if (els.viewer) els.viewer.classList.add('hidden');
-                if (els.viewerFrame) els.viewerFrame.srcdoc = '';
+                resetStudocuInlineUi();
+                els.fetchBtn.disabled = true;
+                if (label) label.textContent = 'Đang xử lý...';
                 startStudocuInlineQueuedFetch(result.value);
             });
+
+            if (els.openViewerBtn) {
+                els.openViewerBtn.addEventListener('click', () => {
+                    openStudocuInlineViewerModal();
+                });
+            }
+
+            if (els.newFileInlineBtn) {
+                els.newFileInlineBtn.addEventListener('click', () => {
+                    startStudocuInlineNewFileFlow();
+                });
+            }
+
+            if (els.closeViewerBtn) {
+                els.closeViewerBtn.addEventListener('click', () => {
+                    closeStudocuInlineViewerModal();
+                });
+            }
+
+            if (els.newFileBtn) {
+                els.newFileBtn.addEventListener('click', () => {
+                    startStudocuInlineNewFileFlow();
+                });
+            }
+
+            if (els.viewerModal) {
+                els.viewerModal.addEventListener('click', (event) => {
+                    if (event.target === els.viewerModal) {
+                        closeStudocuInlineViewerModal();
+                    }
+                });
+            }
+
+            if (els.historyList) {
+                els.historyList.addEventListener('click', (event) => {
+                    const openBtn = event.target.closest('[data-studocu-history-open]');
+                    if (openBtn) {
+                        openStudocuInlineHistoryItem(openBtn.getAttribute('data-studocu-history-open'));
+                        return;
+                    }
+                    const deleteBtn = event.target.closest('[data-studocu-history-delete]');
+                    if (deleteBtn) {
+                        deleteStudocuInlineHistoryItem(deleteBtn.getAttribute('data-studocu-history-delete'));
+                    }
+                });
+            }
+
+            if (!STUDOCU_INLINE_STATE.escapeBound) {
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        closeStudocuInlineViewerModal();
+                    }
+                });
+                STUDOCU_INLINE_STATE.escapeBound = true;
+            }
 
             els.form.dataset.bound = '1';
         }
@@ -6787,6 +7463,7 @@
 
             bindStudocuInlineHandlers();
             resetStudocuInlineUi();
+            renderStudocuInlineHistory();
             scrollToStudocuInlineTool();
             window.dispatchEvent(new Event('scroll'));
         }
@@ -7062,8 +7739,6 @@
             // Restore Why Choose Us section visibility on home screen
             const whyChooseUsSection = document.getElementById('whyChooseUsSection');
             if (whyChooseUsSection) whyChooseUsSection.classList.remove('hidden');
-            const feedbackSection = document.getElementById('feedbackSection');
-            if (feedbackSection) feedbackSection.classList.remove('hidden');
             renderPricingPage();
             if (syncHash) {
                 clearPricingRouteHash();
@@ -7083,8 +7758,17 @@
                     return;
                 }
 
+                const rawFolder = folder;
+                const rawTaiFileStuId = String(rawFolder && rawFolder.id ? rawFolder.id : '').trim().toUpperCase();
+                const rawTaiFileStuName = String(rawFolder && rawFolder.name ? rawFolder.name : '').trim().toUpperCase();
+                const isTaiFileStuCard = rawTaiFileStuId === 'TAIFILESTU'
+                    || rawTaiFileStuName === 'TẢI FILE STUDOCU'
+                    || rawTaiFileStuName === 'TAI FILE STUDOCU';
+                if (isTaiFileStuCard) {
+                    folder = normalizeTaiFileStuFolder(rawFolder);
+                }
+
                 const btn = document.createElement('button');
-                const isTaiFileStuCard = String(folder && folder.id ? folder.id : '').trim().toUpperCase() === 'TAIFILESTU';
 
                 // Different card styles for premium vs other types
                 if (folder.type === 'premium') {
@@ -7240,7 +7924,11 @@
                     }
                 }
 
-                if (folder.maintenance && !isAdmin()) {
+                if (isTaiFileStuCard) {
+                    btn.onclick = () => showStudocuInlinePage();
+                    hasAccountCategories = true;
+                }
+                else if (folder.maintenance && !isAdmin()) {
                     btn.onclick = () => showAlert("Thông báo", "Đang bảo trì nha người đẹp, người đẹp quay lại sau nhé!", 'warning');
                     btn.classList.add('opacity-60');
                 }
@@ -7254,12 +7942,8 @@
                     hasPremiumCategories = true;
                 }
                 else if (folder.type === 'link') {
-                    if (isTaiFileStuCard) {
-                        btn.onclick = () => showStudocuInlinePage();
-                    } else {
-                        btn.onclick = () => window.open(folder.url, '_blank');
-                        btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50');
-                    }
+                    btn.onclick = () => window.open(folder.url, '_blank');
+                    btn.classList.add('bg-gradient-to-br', 'from-indigo-50', 'to-purple-50');
                     hasAccountCategories = true;
                 }
                 else {

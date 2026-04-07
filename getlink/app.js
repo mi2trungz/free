@@ -9,6 +9,7 @@ let adminAuthenticated = false;
 let adminIdToken = '';
 let adminRefreshToken = '';
 let adminEmail = '';
+let adminSessionResolved = false;
 let runtimeCookie = '';
 let currentAdminShare = null;
 let createdAdminShare = null;
@@ -98,6 +99,7 @@ function renderSupportModalContent(payload = null) {
 }
 
 function showEntryAlertPopup(payload = {}) {
+    if (!canShowPromotionalPopups()) return;
     openSupportModal({
         eyebrow: 'Thông báo / Hỗ trợ',
         title: String(payload.title || 'Cần hỗ trợ tài khoản Netflix?').trim(),
@@ -169,6 +171,14 @@ function setOverloadFixState(text, mode = 'idle') {
 
 function isAdminImmediate() {
     return !!adminAuthenticated;
+}
+
+function shouldBypassPromotionalPopups() {
+    return !!adminAuthenticated;
+}
+
+function canShowPromotionalPopups() {
+    return adminSessionResolved && !shouldBypassPromotionalPopups();
 }
 
 function getCookiesFromSlotInputs(slots = []) {
@@ -1265,7 +1275,7 @@ function closeTvGuideModal() {
 }
 
 function openDisclaimerModal() {
-    if (adminAuthenticated || disclaimerDismissed) return;
+    if (!canShowPromotionalPopups() || disclaimerDismissed) return;
 
     disclaimerVisible = true;
     const modal = el('disclaimerModal');
@@ -1856,10 +1866,13 @@ function renderAdminWorkspace() {
         resetShareCookieSlotStates();
         resetCreatedShareCookieSlotStates();
     }
-    if (adminAuthenticated && disclaimerVisible) {
+    if (shouldBypassPromotionalPopups()) {
+        closeSupportModal();
+    }
+    if (shouldBypassPromotionalPopups() && disclaimerVisible) {
         closeDisclaimerModal(true);
     }
-    if (disclaimerEligibilityResolved && !adminAuthenticated && !disclaimerDismissed) {
+    if (disclaimerEligibilityResolved && canShowPromotionalPopups() && !disclaimerDismissed) {
         openDisclaimerModal();
     }
     syncAdminImmediateModals();
@@ -1967,6 +1980,7 @@ async function loadAdminSession() {
     if (!adminIdToken) {
         clearAdminAuthState();
         setAdminAuthState('Dang xuat.', 'idle');
+        adminSessionResolved = true;
         renderAdminWorkspace();
         return;
     }
@@ -1986,6 +2000,7 @@ async function loadAdminSession() {
         clearAdminAuthState();
         setAdminAuthState('Phien admin het han. Vui long dang nhap lai.', 'warning');
     }
+    adminSessionResolved = true;
     renderAdminWorkspace();
     if (adminAuthenticated) {
         await loadAdminShareFromPendingUrl();
@@ -2017,6 +2032,7 @@ async function adminLogin() {
             throw new Error('Khong xac minh duoc phien admin tu backend.');
         }
 
+        adminSessionResolved = true;
         adminAuthenticated = true;
         const userEmail = String(session.user && session.user.email || firebaseSession.email || email);
         adminEmail = String(userEmail || '').trim().toLowerCase();
@@ -2048,6 +2064,7 @@ async function adminLogout() {
         // ignore
     } finally {
         clearAdminAuthState();
+        adminSessionResolved = true;
         renderAdminShare(null);
         resetCreatedShareComposer();
         autoLoadedAdminShareId = '';
@@ -2780,9 +2797,10 @@ async function bootstrap() {
     loadAdminAuthFromStorage();
     bindEvents();
     renderAdminWorkspace();
-    await Promise.all([loadAdminSession(), applyCookieFromQuery()]);
+    await loadAdminSession();
+    await applyCookieFromQuery();
     disclaimerEligibilityResolved = true;
-    if (!adminAuthenticated && !disclaimerDismissed) {
+    if (canShowPromotionalPopups() && !disclaimerDismissed) {
         openDisclaimerModal();
     }
     syncAdminCookieInput();
