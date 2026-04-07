@@ -1051,7 +1051,7 @@
         .studocu-inline-viewer-actions {
             display: flex;
             align-items: center;
-            gap: 0.7rem;
+            gap: 0.55rem;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
@@ -1062,16 +1062,6 @@
             padding: 0.78rem 1.1rem;
             background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
             color: #fff;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        .studocu-inline-viewer-reset {
-            border: 1px solid rgba(148, 163, 184, 0.28);
-            border-radius: 999px;
-            padding: 0.78rem 1.1rem;
-            background: rgba(255, 255, 255, 0.96);
-            color: #0f172a;
             font-weight: 800;
             cursor: pointer;
         }
@@ -1106,6 +1096,15 @@
         }
 
         @media (max-width: 767px) {
+            .view-studocu-inline #navBar {
+                margin-bottom: 0.4rem;
+            }
+
+            .view-studocu-inline #folderPageTitleWrap {
+                display: none !important;
+                margin: 0 !important;
+            }
+
             .studocu-inline-shell {
                 padding: 0 0.75rem;
             }
@@ -1138,7 +1137,6 @@
             .studocu-inline-input,
             .studocu-inline-cta,
             .studocu-inline-viewer-print,
-            .studocu-inline-viewer-reset,
             .studocu-inline-ready-open,
             .studocu-inline-ready-new {
                 width: 100%;
@@ -1162,13 +1160,272 @@
             }
 
             .studocu-inline-modal {
-                padding: 0.65rem;
+                align-items: stretch;
+                justify-content: stretch;
+                padding: 0;
+                background: rgba(15, 23, 42, 0.7);
             }
 
             .studocu-inline-modal-dialog {
                 width: 100%;
-                height: min(94vh, 100%);
-                border-radius: 1.15rem;
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0;
+                border: 0;
+                box-shadow: none;
+            }
+
+            .view-studocu-inline .studocu-inline-shell {
+                margin: 0 auto 0.85rem;
+                padding: 0 0.55rem;
+            }
+
+            .view-studocu-inline .studocu-inline-card {
+                padding: 0.8rem 0.78rem 0.85rem;
+                border-radius: 1.05rem;
+                box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
+            }
+
+            .view-studocu-inline .studocu-inline-label {
+                padding: 0.34rem 0.68rem;
+                font-size: 0.61rem;
+                letter-spacing: 0.07em;
+            }
+
+            .view-studocu-inline .studocu-inline-title {
+                margin-top: 0.58rem;
+                font-size: clamp(1.02rem, 7.3vw, 1.42rem);
+                line-height: 1.1;
+                letter-spacing: -0.03em;
+            }
+
+            .view-studocu-inline .studocu-inline-kicker {
+                margin-top: 0.62rem;
+                margin-bottom: 0.4rem;
+                font-size: 0.66rem;
+                letter-spacing: 0.06em;
+                line-height: 1.3;
+            }
+
+            .view-studocu-inline .studocu-inline-form-row {
+                gap: 0.42rem;
+            }
+
+            .view-studocu-inline .studocu-inline-input {
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+                height: 50px;
+                border-radius: 0.92rem;
+                padding: 0 1.06rem;
+                border-color: rgba(148, 163, 184, 0.52);
+                font-size: 16px;
+                font-weight: 700;
+                line-height: 1.25;
+                letter-spacing: -0.01em;
+            }
+
+            .view-studocu-inline .studocu-inline-input::placeholder {
+                color: #94a3b8;
+                font-weight: 600;
+            }
+
+            .view-studocu-inline .studocu-inline-input:focus {
+                border-color: rgba(16, 185, 129, 0.62);
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+            }
+
+            .view-studocu-inline .studocu-inline-cta {
+                min-height: 48px;
+                height: 48px;
+                border-radius: 999px;
+                font-size: 0.92rem;
+                font-weight: 900;
+                gap: 0.46rem;
+                box-shadow: 0 6px 14px rgba(16, 185, 129, 0.18);
+            }
+
+            .view-studocu-inline .studocu-inline-status {
+                margin-top: 0.62rem;
+                padding: 0.68rem 0.76rem;
+                border-radius: 0.82rem;
+            }
+
+            .view-studocu-inline .studocu-inline-status-topline {
+                font-size: 0.76rem;
+            }
+
+            .view-studocu-inline .studocu-inline-status-kicker {
+                font-size: 0.64rem;
+                letter-spacing: 0.06em;
+            }
+
+            .view-studocu-inline .studocu-inline-status-detail {
+                margin-top: 0.35rem;
+                font-size: 0.72rem;
+            }
+
+            .view-studocu-inline .studocu-inline-ready {
+                margin-top: 0.68rem;
+                padding: 0.68rem 0.74rem;
+                border-radius: 0.85rem;
+                gap: 0.62rem;
+            }
+
+            .view-studocu-inline .studocu-inline-ready-title {
+                font-size: 0.82rem;
+                line-height: 1.25;
+            }
+
+            .view-studocu-inline .studocu-inline-ready-meta {
+                font-size: 0.72rem;
+                margin-top: 0.12rem;
+                line-height: 1.35;
+            }
+
+            .view-studocu-inline .studocu-inline-ready-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.42rem;
+            }
+
+            .view-studocu-inline .studocu-inline-ready-open,
+            .view-studocu-inline .studocu-inline-ready-new {
+                padding: 0.56rem 0.62rem;
+                font-size: 0.76rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history {
+                margin-top: 0.72rem;
+                border-radius: 0.92rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-head {
+                padding: 0.62rem 0.74rem 0.5rem;
+                gap: 0.45rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-title {
+                font-size: 0.86rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-subtitle {
+                margin-top: 0.15rem;
+                font-size: 0.72rem;
+                line-height: 1.35;
+            }
+
+            .view-studocu-inline .studocu-inline-history-list {
+                gap: 0.55rem;
+                padding: 0.58rem 0.74rem 0.74rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-empty {
+                padding: 0.72rem;
+                border-radius: 0.75rem;
+                font-size: 0.76rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-item {
+                padding: 0.62rem 0.66rem;
+                border-radius: 0.8rem;
+                gap: 0.6rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-item-title {
+                font-size: 0.82rem;
+                line-height: 1.28;
+            }
+
+            .view-studocu-inline .studocu-inline-history-item-meta {
+                margin-top: 0.2rem;
+                gap: 0.35rem;
+                font-size: 0.7rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-link {
+                margin-top: 0.32rem;
+                font-size: 0.7rem;
+                line-height: 1.35;
+            }
+
+            .view-studocu-inline .studocu-inline-history-actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.42rem;
+            }
+
+            .view-studocu-inline .studocu-inline-history-btn {
+                width: 100%;
+                padding: 0.54rem 0.6rem;
+                font-size: 0.74rem;
+            }
+
+            .view-studocu-inline .studocu-inline-viewer-head {
+                position: sticky;
+                top: 0;
+                z-index: 4;
+                gap: 0.65rem;
+                padding: 0.85rem 0.75rem 0.72rem;
+                padding-right: 3.5rem;
+                background: rgba(255, 255, 255, 0.97);
+                border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            }
+
+            .view-studocu-inline .studocu-inline-viewer-head>div:first-child {
+                width: 100%;
+            }
+
+            .view-studocu-inline #studocuInlineViewerTitle {
+                font-size: 1.02rem;
+                line-height: 1.25;
+            }
+
+            .view-studocu-inline #studocuInlineViewerMeta {
+                margin-top: 0.18rem;
+                font-size: 0.78rem;
+                line-height: 1.35;
+            }
+
+            .view-studocu-inline .studocu-inline-viewer-actions {
+                width: 100%;
+                justify-content: stretch;
+                gap: 0.5rem;
+            }
+
+            .view-studocu-inline .studocu-inline-viewer-print {
+                width: 100%;
+                min-height: 2.95rem;
+                border-radius: 999px;
+                padding: 0.62rem 1rem;
+                font-size: 0.95rem;
+            }
+
+            .view-studocu-inline .studocu-inline-modal-close {
+                position: absolute;
+                top: 0.62rem;
+                right: 0.62rem;
+                width: 2.25rem;
+                height: 2.25rem;
+                font-size: 1.1rem;
+                z-index: 5;
+            }
+
+            .view-studocu-inline .studocu-inline-frame {
+                min-height: 0;
+                height: 100%;
+                background: #fff;
+            }
+
+            .view-studocu-inline #homeFooter {
+                padding-top: 0.75rem;
+                margin-top: 0.55rem;
+            }
+
+            .view-studocu-inline #homeFooter p.text-center {
+                margin-top: 0.25rem;
+                font-size: 0.68rem;
+                line-height: 1.35;
             }
         }
 
@@ -4649,6 +4906,9 @@
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
         let POPUP_AD_IMAGE_URL = 'popupqc.png'; // Link banner popup lúc mới vào
+        const WELCOME_AD_LAST_SHOWN_KEY = 'trada_welcome_ad_last_shown_at';
+        const WELCOME_AD_COOLDOWN_MS = 10 * 60 * 1000;
+        const WELCOME_AD_SKIP_SECONDS = 4;
         let NETFLIX_DESKTOP_FALLBACK_ENABLED = true; // Bật fallback link desktop khi API nftoken trả 503
         let NETFLIX_DESKTOP_FALLBACK_URL = ''; // Link fallback desktop do admin cấu hình
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
@@ -4670,6 +4930,15 @@
                 if (['false', '0', 'no', 'off', ''].includes(normalized)) return false;
             }
             return !!value;
+        }
+        function getWelcomeAdLastShownAt() {
+            const rawValue = localStorage.getItem(WELCOME_AD_LAST_SHOWN_KEY);
+            const timestamp = rawValue ? Number(rawValue) : 0;
+            return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : 0;
+        }
+        function shouldShowWelcomeAd() {
+            const lastShownAt = getWelcomeAdLastShownAt();
+            return !lastShownAt || (Date.now() - lastShownAt) >= WELCOME_AD_COOLDOWN_MS;
         }
         let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
@@ -5187,6 +5456,7 @@
                     if (
                         typeof hasShownWelcomeAdThisSession !== 'undefined' &&
                         !hasShownWelcomeAdThisSession &&
+                        shouldShowWelcomeAd() &&
                         !IS_PRICING_ROUTE
                     ) {
                         hasShownWelcomeAdThisSession = true;
@@ -6792,7 +7062,6 @@
                                     <div id="studocuInlineViewerMeta" class="mt-1 text-xs font-semibold text-slate-500">0 trang tài liệu</div>
                                 </div>
                                     <div class="studocu-inline-viewer-actions">
-                                        <button type="button" id="studocuInlineNewFileBtn" class="studocu-inline-viewer-reset">Tạo file mới</button>
                                         <button type="button" id="studocuInlinePrintBtn" class="studocu-inline-viewer-print">Lưu hoặc in PDF</button>
                                         <button type="button" id="studocuInlineCloseViewerBtn" class="studocu-inline-modal-close" aria-label="Đóng popup xem tài liệu">×</button>
                                     </div>
@@ -6841,7 +7110,6 @@
                 viewerTitle: document.getElementById('studocuInlineViewerTitle'),
                 viewerMeta: document.getElementById('studocuInlineViewerMeta'),
                 printBtn: document.getElementById('studocuInlinePrintBtn'),
-                newFileBtn: document.getElementById('studocuInlineNewFileBtn'),
                 closeViewerBtn: document.getElementById('studocuInlineCloseViewerBtn')
             };
         }
@@ -7248,16 +7516,26 @@
                     `<title>${escapeStudocuInlineHtml(title)}</title>` +
                     `<style>${String(docCss || '').replace(/<\//gi, '<\\/')}</style>` +
                     '<style>' +
-                    'html,body{margin:0;padding:0;background:#f3f4f6;}' +
+                    'html,body{margin:0;padding:0;background:#f3f4f6;overflow-x:hidden;}' +
                     'body{font-family:"Be Vietnam Pro",sans-serif;color:#111827;min-height:100vh;}' +
-                    '.p2hv #page-container{position:relative;padding:24px 0 52px;width:100%;display:flex;flex-direction:column;align-items:center;}' +
+                    '.p2hv #page-container{position:relative;padding:24px 0 52px;width:100%;display:flex;flex-direction:column;align-items:center;overflow-x:hidden;box-sizing:border-box;}' +
                     '.p2hv .pf{margin:20px auto!important;box-shadow:0 16px 36px rgba(15,23,42,.12);overflow:hidden!important;border-radius:14px;background:#fff;position:relative;}' +
                     '.page-num{position:absolute;top:12px;right:12px;background:rgba(16,185,129,.92);color:#fff;font:700 12px/1 "Be Vietnam Pro",sans-serif;padding:7px 12px;border-radius:999px;z-index:10;pointer-events:none;}' +
+                    '@media (max-width:767px){html,body{background:#e5e7eb;}.p2hv #page-container{padding:10px 0 26px;}.p2hv .pf{margin:8px auto 12px!important;border-radius:10px;box-shadow:0 8px 20px rgba(15,23,42,.12);}.page-num{top:8px;right:8px;font-size:11px;padding:5px 10px;}}' +
                     '@media print{html,body{background:#fff!important;margin:0;padding:0;}.page-num{display:none!important}.p2hv #page-container{padding:0}.p2hv .pf{margin:0!important;box-shadow:none!important;border:none!important;border-radius:0!important;page-break-after:always;}}' +
                     '</style></head><body>' +
                     `<div class="p2hv"><div id="page-container">${pagesHtml}</div></div>` +
                     '<scr' + 'ipt>' +
-                    'window.addEventListener("message",function(e){if(e.data==="print"){window.print();}});' +
+                    'var fitTimer=null;' +
+                    'function storeBaseSize(page){if(!page.dataset.baseWidth){page.dataset.baseWidth=String(page.scrollWidth||page.offsetWidth||0);}if(!page.dataset.baseHeight){page.dataset.baseHeight=String(page.scrollHeight||page.offsetHeight||0);}}' +
+                    'function resetPageFit(page){page.style.zoom="";page.style.transform="";page.style.transformOrigin="top center";if(page.dataset.baseHeight){page.style.height=page.dataset.baseHeight+"px";}else{page.style.height="";}}' +
+                    'function autoFitPages(){var container=document.getElementById("page-container");if(!container)return;var pages=container.querySelectorAll(".pf");if(!pages.length)return;var viewport=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0);var sideSpace=viewport<=420?14:24;var maxWidth=Math.max(220,viewport-sideSpace);for(var i=0;i<pages.length;i+=1){var page=pages[i];storeBaseSize(page);resetPageFit(page);var baseWidth=Number(page.dataset.baseWidth||0);if(!baseWidth)continue;var scale=Math.min(1,maxWidth/baseWidth);if(scale<0.999){if("zoom" in page.style){page.style.zoom=String(scale);}else{var baseHeight=Number(page.dataset.baseHeight||page.scrollHeight||page.offsetHeight||0);page.style.transform="scale("+scale+")";if(baseHeight){page.style.height=Math.max(120,Math.round(baseHeight*scale))+"px";}}}}}' +
+                    'function requestFit(){if(fitTimer){clearTimeout(fitTimer);}fitTimer=setTimeout(autoFitPages,80);}' +
+                    'window.addEventListener("resize",requestFit,{passive:true});' +
+                    'window.addEventListener("orientationchange",requestFit);' +
+                    'window.addEventListener("load",requestFit);' +
+                    'requestFit();setTimeout(requestFit,280);' +
+                    'window.addEventListener("message",function(e){if(e.data==="print"){var pages=document.querySelectorAll(".pf");for(var i=0;i<pages.length;i+=1){resetPageFit(pages[i]);}window.print();requestFit();}});' +
                     '<\/scr' + 'ipt></body></html>';
 
                 showStudocuInlineViewer(viewerHtml, title, totalPages, STUDOCU_INLINE_STATE.viewerDocUrl);
@@ -7455,12 +7733,6 @@
             if (els.closeViewerBtn) {
                 els.closeViewerBtn.addEventListener('click', () => {
                     closeStudocuInlineViewerModal();
-                });
-            }
-
-            if (els.newFileBtn) {
-                els.newFileBtn.addEventListener('click', () => {
-                    startStudocuInlineNewFileFlow();
                 });
             }
 
@@ -11183,12 +11455,13 @@
         let hasShownWelcomeAdThisSession = false;
 
         function showWelcomeAd() {
-            const hasSeenAd = localStorage.getItem('hasSeenWelcomeAd');
-            const skipTime = hasSeenAd ? 2 : 4;
-
             const modal = document.getElementById('welcomeAdModal');
             const skipBtn = document.getElementById('welcomeAdSkipBtn');
             const welcomeAdImage = document.getElementById('welcomeAdImage');
+
+            if (!modal || !skipBtn) return;
+
+            localStorage.setItem(WELCOME_AD_LAST_SHOWN_KEY, String(Date.now()));
 
             if (welcomeAdImage) {
                 let imgUrl = POPUP_AD_IMAGE_URL || 'popupqc.png';
@@ -11206,7 +11479,7 @@
 
             modal.classList.remove('hidden');
 
-            let timeLeft = skipTime;
+            let timeLeft = WELCOME_AD_SKIP_SECONDS;
             skipBtn.innerText = `BỎ QUA (${timeLeft}s)`;
             skipBtn.disabled = true;
             skipBtn.classList.add('cursor-not-allowed', 'bg-gray-200', 'text-gray-500');
@@ -11228,7 +11501,6 @@
 
         function closeWelcomeAd() {
             document.getElementById('welcomeAdModal').classList.add('hidden');
-            localStorage.setItem('hasSeenWelcomeAd', 'true');
         }
 
         function initApp() {
