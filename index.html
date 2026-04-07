@@ -3134,6 +3134,10 @@
                         <label for="folderMaintenanceInput" class="text-sm text-gray-700">Đang bảo trì</label>
                     </div>
                     <div class="flex items-center gap-2">
+                        <input type="checkbox" id="folderIsNewInput" class="w-4 h-4 text-rose-600 rounded">
+                        <label for="folderIsNewInput" class="text-sm text-gray-700">Gắn nhãn MỚI</label>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <input type="checkbox" id="folderHiddenInput" class="w-4 h-4 text-orange-600 rounded">
                         <label for="folderHiddenInput" class="text-sm text-gray-700">Tạm ẩn danh mục</label>
                     </div>
@@ -3232,7 +3236,7 @@
     <!-- MODAL THÔNG BÁO -->
     <div id="alertModal"
         class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        <div id="alertDialog" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
             <button onclick="closeAlertModal()"
                 class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
@@ -3240,13 +3244,13 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-6 text-center">
+            <div id="alertDialogBody" class="p-6 text-center">
                 <div id="alertIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <!-- Icon sẽ được thay đổi động -->
                 </div>
                 <h3 id="alertTitle" class="text-xl font-bold text-gray-800 mb-2">Thông báo</h3>
                 <div id="alertMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></div>
-                <div class="space-y-3">
+                <div id="alertActionsWrap" class="space-y-3">
                     <a id="alertActionBtn" href="#" target="_blank" rel="noopener noreferrer"
                         class="hidden w-full items-center justify-center bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl">
                         Báo lỗi
@@ -4240,7 +4244,7 @@
                     </div>
                     <div class="relative z-10">
                         <h2 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-3 leading-[1.08] uppercase">
-                            Đời sinh viên khó,<br>
+                            Đời sinh viên khó<br>
                             <span class="text-gray-900">để </span><span class="hero-title-accent hero-brand-bounce">TRÀ ĐÁ 3K</span><span class="text-gray-900"> lo</span>
                         </h2>
 
@@ -4410,6 +4414,13 @@
                     </p>
                     <div id="premiumListContainer"
                         class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 fade-in">
+                    </div>
+                    <div class="mt-5 sm:mt-6 flex justify-center">
+                        <button type="button" onclick="openPremiumMorePricingModal()"
+                            class="ui-cta inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-2xl border border-orange-300 bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-md transition-all hover:from-orange-600 hover:to-amber-600 hover:shadow-lg">
+                            <span>XEM THÊM GIÁ CỦA SẢN PHẨM KHÁC</span>
+                            <span class="text-lg leading-none">→</span>
+                        </button>
                     </div>
                 </div>
 
@@ -4718,14 +4729,57 @@
         // Custom Alert Modal
         function showAlert(title, message, type = 'info', options = {}) {
             const modal = document.getElementById('alertModal');
+            const dialogEl = document.getElementById('alertDialog');
+            const dialogBodyEl = document.getElementById('alertDialogBody');
             const iconDiv = document.getElementById('alertIcon');
             const titleEl = document.getElementById('alertTitle');
             const messageEl = document.getElementById('alertMessage');
+            const actionsWrap = document.getElementById('alertActionsWrap');
             const actionBtn = document.getElementById('alertActionBtn');
             const confirmBtn = document.getElementById('alertConfirmBtn');
 
             titleEl.textContent = title;
             messageEl.className = 'text-sm text-gray-600 mb-6 whitespace-pre-line';
+            titleEl.className = 'text-xl font-bold text-gray-800 mb-2';
+            if (dialogEl) {
+                dialogEl.className = 'bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative';
+            }
+            if (dialogBodyEl) {
+                dialogBodyEl.className = 'p-6 text-center';
+            }
+            if (actionsWrap) {
+                actionsWrap.className = 'space-y-3';
+            }
+            if (actionBtn) {
+                actionBtn.className = 'hidden w-full items-center justify-center bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl';
+            }
+            if (confirmBtn) {
+                confirmBtn.className = 'w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl';
+                confirmBtn.classList.remove('hidden');
+            }
+            if (iconDiv) {
+                iconDiv.classList.remove('hidden');
+            }
+
+            if (options && options.dialogClassName && dialogEl) {
+                dialogEl.classList.add(...options.dialogClassName.split(/\s+/).filter(Boolean));
+            }
+            if (options && options.dialogBodyClassName && dialogBodyEl) {
+                dialogBodyEl.classList.add(...options.dialogBodyClassName.split(/\s+/).filter(Boolean));
+            }
+            if (options && options.titleClassName) {
+                titleEl.classList.add(...options.titleClassName.split(/\s+/).filter(Boolean));
+            }
+            if (options && options.messageClassName) {
+                messageEl.classList.add(...options.messageClassName.split(/\s+/).filter(Boolean));
+            }
+            if (options && options.actionClassName && actionBtn) {
+                actionBtn.classList.add(...options.actionClassName.split(/\s+/).filter(Boolean));
+            }
+            if (options && options.confirmClassName && confirmBtn) {
+                confirmBtn.classList.add(...options.confirmClassName.split(/\s+/).filter(Boolean));
+            }
+
             if (options && options.allowHtml) {
                 messageEl.innerHTML = message;
                 messageEl.classList.remove('whitespace-pre-line');
@@ -4750,6 +4804,9 @@
                 iconDiv.classList.add('bg-blue-100');
                 iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             }
+            if (options && options.hideIcon) {
+                iconDiv.classList.add('hidden');
+            }
 
             if (actionBtn) {
                 const hasAction = options && options.actionLabel && options.actionUrl;
@@ -4768,6 +4825,9 @@
 
             if (confirmBtn) {
                 confirmBtn.textContent = options && options.confirmLabel ? options.confirmLabel : 'Đã hiểu';
+                if (options && options.hideConfirm) {
+                    confirmBtn.classList.add('hidden');
+                }
             }
 
             modal.classList.remove('hidden');
@@ -4785,6 +4845,41 @@
                 return;
             }
             alertConfirmCallback = null;
+        }
+
+        function openPremiumMorePricingModal() {
+            showAlert(
+                '',
+                `
+                    <div class="flex flex-col items-center text-center">
+                        <div class="text-[1.05rem] sm:text-[1.12rem] font-semibold leading-7 text-slate-600">
+                            <span class="font-black text-orange-600">Nhắn tin ngay</span> vào
+                        </div>
+                        <a href="${FANPAGE_URL}" target="_blank" rel="noopener noreferrer" class="mt-2 text-[1.45rem] sm:text-[1.85rem] font-black tracking-tight text-blue-700 underline decoration-transparent transition hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded-lg">
+                            FANPAGE TRÀ ĐÁ 3K
+                        </a>
+                        <div class="mt-3 text-[1.02rem] sm:text-[1.08rem] font-semibold leading-7 text-slate-700">
+                            để xem <span class="font-black text-amber-600">toàn bộ bảng giá mới nhất</span>
+                        </div>
+                        <div class="mt-4 text-sm font-medium text-slate-500">
+                            Cập nhật nhanh, báo giá đầy đủ, tư vấn trực tiếp
+                        </div>
+                    </div>
+                `,
+                'info',
+                {
+                    allowHtml: true,
+                    hideIcon: true,
+                    hideConfirm: true,
+                    actionLabel: 'Truy cập fanpage TRÀ ĐÁ 3K',
+                    actionUrl: FANPAGE_URL,
+                    dialogClassName: 'max-w-lg rounded-[2rem] border border-white/70 shadow-[0_24px_80px_rgba(15,23,42,0.18)]',
+                    dialogBodyClassName: 'p-8 sm:p-9 text-center',
+                    titleClassName: 'hidden',
+                    messageClassName: 'mb-0 text-center',
+                    actionClassName: 'mt-7 py-4 text-[15px] font-black rounded-[1.15rem] shadow-[0_16px_32px_rgba(249,115,22,0.28)]'
+                }
+            );
         }
 
         // Custom Confirm Modal
@@ -7800,6 +7895,7 @@
 
                     btn.innerHTML = `
                         <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">PRO</span>
+                        ${folder.isNew ? '<span class="absolute top-1.5 left-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">MỚI</span>' : ''}
                         <div class="p-3 flex flex-col items-center text-center h-full justify-between">
                             <div class="flex flex-col items-center">
                                 <div class="${iconBg} ${iconColor} rounded-full flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 mb-2 flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow-md ring-2 ring-white">
@@ -7839,8 +7935,10 @@
 
                         const iconBg = iconBgs[index % iconBgs.length];
                         const iconColor = iconColors[index % iconColors.length];
+                        const newBadge = folder.isNew ? '<span class="absolute top-1.5 left-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">MỚI</span>' : '';
 
                         btn.innerHTML = `
+                            ${newBadge}
                             <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-violet-500 to-indigo-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold tracking-wider uppercase shadow-sm z-10">FREE</span>
                             <div class="p-3 flex flex-col items-center text-center h-full justify-between">
                                 <div class="flex flex-col items-center">
@@ -7882,8 +7980,10 @@
                         const ctaClass = folder.maintenance
                             ? 'bg-gray-300 text-gray-600'
                             : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white';
+                        const newBadge = folder.isNew ? '<span class="absolute top-1.5 left-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase shadow-sm z-10">MỚI</span>' : '';
 
                         btn.innerHTML = `
+                            ${newBadge}
                             <span class="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black tracking-wider uppercase shadow-sm z-10">FREE</span>
                             <div class="p-3.5 flex flex-col items-center text-center h-full justify-between">
                                 <div class="flex flex-col items-center">
@@ -7908,14 +8008,17 @@
                                 (folder.type === 'link' && !isTaiFileStuCard ? "Truy cập ngay" : ""));
                         let iconBgClass = "w-10 h-10 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-emerald-500/10 to-teal-500/10 border border-emerald-200 flex-shrink-0";
 
-                        let badge = `<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-sm tracking-wide badge-animate">FREE</span>`;
+                        let badges = [`<span class="bg-gradient-to-r from-green-400 to-emerald-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-sm tracking-wide badge-animate">FREE</span>`];
+                        if (folder.isNew) {
+                            badges.push(`<span class="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-sm tracking-wide uppercase">MỚI</span>`);
+                        }
 
                         btn.innerHTML = `
                             <div class="${iconBgClass}">${folder.icon}</div>
                             <div class="flex-1 min-w-0 mr-2">
                                 <div class="flex items-center gap-2 mb-0.5">
                                     <div class="font-extrabold text-gray-800 text-sm group-hover:text-emerald-700 break-words leading-tight">${folder.name}</div>
-                                    ${badge}
+                                    ${badges.join('')}
                                 </div>
                                 ${subtitle ? `<div class="text-[10px] text-gray-600 font-semibold break-words">${subtitle}</div>` : ''}
                             </div>
@@ -9222,6 +9325,7 @@
                                 ${folder.type === 'popup' ? '<span class="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popup</span>' : ''}
                                 ${folder.type === 'premium' ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Premium</span>' : ''}
                                 ${!folder.type || folder.type === 'accounts' ? '<span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">Accounts</span>' : ''}
+                                ${folder.isNew ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">MỚI</span>' : ''}
                                 ${folder.hidden ? '<span class="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">Đã ẩn</span>' : ''}
                             </div>
                             <div class="text-xs text-gray-500 font-mono mt-0.5">
@@ -9824,6 +9928,7 @@
             document.getElementById('folderPopupContentInput').innerHTML = '';
             document.getElementById('folderSkipDisclaimerInput').checked = false;
             document.getElementById('folderMaintenanceInput').checked = false;
+            document.getElementById('folderIsNewInput').checked = false;
             document.getElementById('folderHiddenInput').checked = false;
             document.getElementById('folderNotesInput').value = '';
             document.getElementById('folderCategoryNotesInput').value = '';
@@ -9903,6 +10008,7 @@
 
             document.getElementById('folderSkipDisclaimerInput').checked = folder.skipDisclaimer || false;
             document.getElementById('folderMaintenanceInput').checked = folder.maintenance || false;
+            document.getElementById('folderIsNewInput').checked = folder.isNew || false;
             document.getElementById('folderHiddenInput').checked = folder.hidden || false;
             // Load notes vào textarea (mỗi note là một dòng)
             const notesText = (folder.notes || []).join('\n');
@@ -9957,6 +10063,7 @@
             const popupContent = document.getElementById('folderPopupContentInput').innerHTML.trim();
             const skipDisclaimer = document.getElementById('folderSkipDisclaimerInput').checked;
             const maintenance = document.getElementById('folderMaintenanceInput').checked;
+            const isNew = document.getElementById('folderIsNewInput').checked;
             const hidden = document.getElementById('folderHiddenInput').checked;
             const notesText = document.getElementById('folderNotesInput').value.trim();
             const categoryNotesText = document.getElementById('folderCategoryNotesInput').value.trim();
@@ -10046,6 +10153,7 @@
                     type: folderType,
                     skipDisclaimer: skipDisclaimer,
                     maintenance: maintenance,
+                    isNew: isNew,
                     hidden: hidden,
                     notes: notes,
                     categoryNotes: categoryNotes,
@@ -10077,6 +10185,7 @@
                 DATA[editingFolderIndex].type = folderType;
                 DATA[editingFolderIndex].skipDisclaimer = skipDisclaimer;
                 DATA[editingFolderIndex].maintenance = maintenance;
+                DATA[editingFolderIndex].isNew = isNew;
                 DATA[editingFolderIndex].hidden = hidden;
                 DATA[editingFolderIndex].notes = notes;
                 DATA[editingFolderIndex].categoryNotes = categoryNotes;
