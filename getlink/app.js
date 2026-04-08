@@ -10,6 +10,9 @@ let adminIdToken = '';
 let adminRefreshToken = '';
 let adminEmail = '';
 let adminSessionResolved = false;
+let adminTokenRefreshPromise = null;
+let adminActiveTab = 'search';
+let adminTabManuallySelected = false;
 let runtimeCookie = '';
 let currentAdminShare = null;
 let createdAdminShare = null;
@@ -60,7 +63,9 @@ function setStateClass(target, mode = 'idle') {
 function setLookupState(text, mode = 'idle') {
     const node = el('lookupState');
     if (!node) return;
-    node.textContent = String(text || '').trim();
+    const normalized = String(text || '').trim();
+    node.textContent = normalized;
+    node.classList.toggle('hidden', !normalized);
     setStateClass(node, mode);
 }
 
@@ -116,7 +121,9 @@ function hideEntryAlertPopup() {
 function setShareState(text, mode = 'idle') {
     const node = el('shareState');
     if (!node) return;
-    node.textContent = String(text || '').trim();
+    const normalized = String(text || '').trim();
+    node.textContent = normalized;
+    node.classList.toggle('hidden', !normalized);
     setStateClass(node, mode);
 }
 
@@ -155,10 +162,19 @@ function setAdminCookieInfoState(text, mode = 'idle') {
     setStateClass(node, mode);
 }
 
+function setCreatorCookieInfoState(text, mode = 'idle') {
+    const node = el('creatorCookieInfoState') || el('adminCookieInfoState');
+    if (!node) return;
+    node.textContent = String(text || '').trim();
+    setStateClass(node, mode);
+}
+
 function setShareCreateExpiryState(text, mode = 'idle') {
     const node = el('shareCreateExpiryState');
     if (!node) return;
-    node.textContent = String(text || '').trim();
+    const normalized = String(text || '').trim();
+    node.textContent = normalized;
+    node.classList.toggle('hidden', !normalized);
     setStateClass(node, mode);
 }
 
@@ -238,8 +254,8 @@ function resetCreatedShareCookieSlotStates() {
     CREATED_SHARE_COOKIE_SLOTS.forEach((slot) => setCreatedShareCookieSlotState(slot.key, 'Chưa check', null));
 }
 
-function renderCookieCheckCards(results = []) {
-    const content = el('adminCookieInfoContent');
+function renderCookieCheckCardsTo(contentId, results = [], slotConfigs = SHARE_COOKIE_SLOTS) {
+    const content = el(contentId);
     if (!content) return;
     const cards = Array.isArray(results) ? results : [];
     if (cards.length === 0) {
@@ -263,7 +279,7 @@ function renderCookieCheckCards(results = []) {
 
     content.innerHTML = `<div class="cookie-check-grid">${
         cards.map((item) => {
-            const label = SHARE_COOKIE_SLOTS.find((slot) => slot.key === item.slot)?.label || String(item.slot || '');
+            const label = slotConfigs.find((slot) => slot.key === item.slot)?.label || String(item.slot || '');
             const summary = item.summary || {};
             const statusText = item.ok ? 'PASS' : 'FAIL';
             const errorText = String(item.error || '').trim();
@@ -304,8 +320,39 @@ function renderCookieCheckCards(results = []) {
     }</div>`;
 }
 
+function renderCookieCheckCards(results = []) {
+    renderCookieCheckCardsTo('adminCookieInfoContent', results, SHARE_COOKIE_SLOTS);
+}
+
+function renderCreatorCookieCheckCards(results = []) {
+    renderCookieCheckCardsTo('creatorCookieInfoContent', results, CREATED_SHARE_COOKIE_SLOTS);
+    renderCookieCheckCardsTo('adminCookieInfoContent', results, CREATED_SHARE_COOKIE_SLOTS);
+}
+
 function isViewingPendingShare() {
     return !!String(pendingShareIdFromUrl || '').trim();
+}
+
+function normalizeAdminTab(value = '') {
+    return String(value || '').trim().toLowerCase() === 'create' ? 'create' : 'search';
+}
+
+function getAdminTabFromContext() {
+    if (isViewingPendingShare() || (currentAdminShare && currentAdminShare.id)) return 'search';
+    return 'create';
+}
+
+function ensureAdminTabFromContext(options = {}) {
+    const force = !!options.force;
+    if (!force && adminTabManuallySelected) return;
+    adminActiveTab = normalizeAdminTab(getAdminTabFromContext());
+}
+
+function setAdminTab(tab, options = {}) {
+    adminActiveTab = normalizeAdminTab(tab);
+    if (options && options.manual) adminTabManuallySelected = true;
+    if (options && options.resetManual) adminTabManuallySelected = false;
+    if (!options || options.render !== false) renderAdminWorkspace();
 }
 
 function getShareCookiesForCurrentMode() {
@@ -378,7 +425,7 @@ function resetCreatedShareComposer(options = {}) {
     renderShareUrl('');
     setCreatedShareCookieOutputs({ primary: '', backup1: '', backup2: '' });
     resetCreatedShareCookieSlotStates();
-    renderCookieCheckCards([]);
+    renderCreatorCookieCheckCards([]);
     if (!keepExpiryInputs) {
         const quickDaysInput = el('shareCreateQuickDaysInput');
         const dateInput = el('shareCreateDateInput');
@@ -387,12 +434,20 @@ function resetCreatedShareComposer(options = {}) {
         if (dateInput) dateInput.value = '';
         if (timeInput) timeInput.value = '';
     }
-    setShareState('Tạo ID server trước, sau đó nhập 3 cookie cho link này.', 'idle');
-    setShareCreateExpiryState('Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
-    setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
+    setShareState('', 'idle');
+    setShareCreateExpiryState('', 'idle');
+    setCreatorCookieInfoState('Tạo hoặc cập nhật cookie rồi bấm check để xem kết quả ngay tại đây.', 'idle');
 }
 
-async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHARE_COOKIE_SLOTS, setSlotState = setShareCookieSlotState) {
+async function runCookieChecksForShare(
+    shareId,
+    cookies = {},
+    slotConfigs = SHARE_COOKIE_SLOTS,
+    setSlotState = setShareCookieSlotState,
+    options = {}
+) {
+    const renderCards = typeof options.renderCards === 'function' ? options.renderCards : renderCookieCheckCards;
+    const setInfoState = typeof options.setInfoState === 'function' ? options.setInfoState : setAdminCookieInfoState;
     const normalized = {
         primary: normalizeCookie(cookies.primary || ''),
         backup1: normalizeCookie(cookies.backup1 || ''),
@@ -411,8 +466,8 @@ async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHAR
     }
 
     if (keysToCheck.length === 0) {
-        renderCookieCheckCards([]);
-        setAdminCookieInfoState('Chưa có cookie nào để check.', 'idle');
+        renderCards([]);
+        setInfoState('Chưa có cookie nào để check.', 'idle');
         return [];
     }
 
@@ -449,8 +504,8 @@ async function runCookieChecksForShare(shareId, cookies = {}, slotConfigs = SHAR
         setSlotState(key, 'FAIL', false);
     }
 
-    renderCookieCheckCards(results);
-    setAdminCookieInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
+    renderCards(results);
+    setInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
     return results;
 }
 
@@ -889,27 +944,42 @@ function hideLookupLoadingOverlay() {
 async function apiRequest(path, method = 'GET', body) {
     const requestPath = String(path || '').trim();
     const isAdminRoute = /^\/api\/getlink-admin(?:\/|$)/.test(requestPath);
-    const headers = { 'Content-Type': 'application/json' };
-    if (isAdminRoute && adminIdToken) {
-        headers.Authorization = `Bearer ${adminIdToken}`;
+    async function sendRequest() {
+        const headers = { 'Content-Type': 'application/json' };
+        if (isAdminRoute && adminIdToken) {
+            headers.Authorization = `Bearer ${adminIdToken}`;
+        }
+        const response = await fetch(path, {
+            method,
+            headers,
+            credentials: 'same-origin',
+            body: body !== undefined ? JSON.stringify(body) : undefined
+        });
+        const data = await response.json().catch(() => ({}));
+        return { response, data };
     }
 
-    const response = await fetch(path, {
-        method,
-        headers,
-        credentials: 'same-origin',
-        body: body !== undefined ? JSON.stringify(body) : undefined
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-        if (isAdminRoute && Number(response.status || 0) === 401) {
-            clearAdminAuthState();
+    let result = await sendRequest();
+    let sessionExpiredHandled = false;
+    if (!result.response.ok && isAdminRoute && Number(result.response.status || 0) === 401) {
+        const refreshed = await refreshAdminIdToken().catch(() => false);
+        if (refreshed) {
+            result = await sendRequest();
+        } else {
+            handleAdminSessionExpired();
+            sessionExpiredHandled = true;
         }
-        const err = new Error(String(data.error || 'Request failed'));
-        err.httpStatus = Number(response.status || 0);
+    }
+
+    if (!result.response.ok) {
+        if (isAdminRoute && Number(result.response.status || 0) === 401 && !sessionExpiredHandled) {
+            handleAdminSessionExpired();
+        }
+        const err = new Error(String(result.data.error || 'Request failed'));
+        err.httpStatus = Number(result.response.status || 0);
         throw err;
     }
-    return data;
+    return result.data;
 }
 
 function saveAdminAuthToStorage() {
@@ -986,6 +1056,62 @@ function mapFirebaseSignInError(message = '') {
     return `Dang nhap Firebase that bai: ${code}`;
 }
 
+function mapFirebaseRefreshError(message = '') {
+    const code = String(message || '').trim().toUpperCase();
+    if (!code) return 'Gia han phien admin that bai.';
+    if (code.includes('TOKEN_EXPIRED') || code.includes('INVALID_REFRESH_TOKEN') || code.includes('USER_DISABLED') || code.includes('USER_NOT_FOUND')) {
+        return 'Phien admin het han. Vui long dang nhap lai.';
+    }
+    return `Gia han phien admin that bai: ${code}`;
+}
+
+function handleAdminSessionExpired(message = 'Phien admin het han. Vui long dang nhap lai.') {
+    clearAdminAuthState();
+    adminSessionResolved = true;
+    renderAdminShare(null);
+    resetCreatedShareComposer();
+    autoLoadedAdminShareId = '';
+    setAdminAuthState(message, 'warning');
+    setAdminSearchState('Vui long dang nhap lai de tiep tuc.', 'warning');
+    renderAdminWorkspace();
+}
+
+async function refreshAdminIdToken() {
+    if (!adminRefreshToken) return false;
+    if (adminTokenRefreshPromise) return adminTokenRefreshPromise;
+
+    adminTokenRefreshPromise = (async () => {
+        const apiKey = getFirebaseApiKey();
+        if (!apiKey) throw new Error('Thieu NF_FIREBASE_CONFIG.apiKey tren /getlink.');
+
+        const response = await fetch(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(apiKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(adminRefreshToken)}`
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            const firebaseError = String(data && data.error && data.error.message ? data.error.message : '').trim();
+            throw new Error(mapFirebaseRefreshError(firebaseError));
+        }
+
+        const nextIdToken = String(data && data.id_token ? data.id_token : '').trim();
+        const nextRefreshToken = String(data && data.refresh_token ? data.refresh_token : adminRefreshToken).trim();
+        if (!nextIdToken) throw new Error('Firebase khong tra ve id_token khi gia han phien.');
+
+        adminIdToken = nextIdToken;
+        adminRefreshToken = nextRefreshToken;
+        saveAdminAuthToStorage();
+        return true;
+    })();
+
+    try {
+        return await adminTokenRefreshPromise;
+    } finally {
+        adminTokenRefreshPromise = null;
+    }
+}
+
 async function signInWithFirebasePassword(email, password) {
     const apiKey = getFirebaseApiKey();
     if (!apiKey) {
@@ -1060,7 +1186,7 @@ function updateReadyState() {
     }
     setDeviceButtonsEnabled(hasCookie && !guestGuardActive);
     if (!hasCookie && !entryAlertState && !pendingShareIdFromUrl) {
-        setLookupState('Vui lòng mở đúng link được cấp để bắt đầu sử dụng.', 'warning');
+        setLookupState('', 'idle');
     }
 }
 
@@ -1692,7 +1818,7 @@ async function generateShareIdLink() {
 
     const btn = el('generateShareLinkBtn');
     setButtonBusy(btn, true, 'Đang tạo...');
-    setAdminCookieInfoState('Đang chờ dữ liệu cookie của link ID.', 'idle');
+    setCreatorCookieInfoState('Đang chờ dữ liệu cookie của link ID.', 'idle');
     setShareCreateExpiryState(
         expiresAt
             ? (quickDaysParse.usingQuickDays
@@ -1710,17 +1836,19 @@ async function generateShareIdLink() {
         renderShareUrl(shareUrl);
         await autoCopyShareLinkOrWarn(shareUrl);
         renderAdminShare(null);
+        setAdminTab('create', { resetManual: true });
         renderCreatedShareEditor(createdAdminShare);
         resetShareCookieSlotStates();
         resetCreatedShareCookieSlotStates();
         if (data && data.expiresAt) {
             setShareState(`Đã tạo link ID server có hạn đến ${formatDateTime(data.expiresAt)}.`, 'success');
-            setShareCreateExpiryState(`Link mới sẽ hết hạn lúc ${formatDateTime(data.expiresAt)}.`, 'success');
+            setShareCreateExpiryState('', 'idle');
         } else {
             setShareState('Đã tạo link ID server không giới hạn.', 'success');
-            setShareCreateExpiryState('Link mới đang ở chế độ không giới hạn.', 'idle');
+            setShareCreateExpiryState('', 'idle');
         }
-        renderCookieCheckCards([]);
+        renderCreatorCookieCheckCards([]);
+        setCreatorCookieInfoState('Tạo hoặc cập nhật cookie rồi bấm check để xem kết quả ngay tại đây.', 'idle');
     } catch (error) {
         resetCreatedShareComposer({ keepExpiryInputs: true });
         setShareState(error.message || 'Không tạo được link chia sẻ.', 'error');
@@ -1836,10 +1964,15 @@ function renderAdminWorkspace() {
     const identity = el('adminIdentity');
     const fab = el('nfAdminFab');
     const inlineLayout = el('adminInlineLayout');
+    const adminTabBar = el('adminTabBar');
+    const adminTabSearchBtn = el('adminTabSearchBtn');
+    const adminTabCreateBtn = el('adminTabCreateBtn');
     const shareCreatorBox = el('shareCreatorBox');
     const cookieInfoPanel = el('adminCookieInfoPanel');
+    const cookieInfoTitle = el('adminCookieInfoTitle');
     const currentShareSummaryBox = el('currentShareSummaryBox');
-    const viewingPendingShare = isViewingPendingShare();
+    ensureAdminTabFromContext();
+    const activeTab = normalizeAdminTab(adminActiveTab);
 
     if (fab) {
         fab.classList.toggle('is-admin', adminAuthenticated);
@@ -1851,16 +1984,35 @@ function renderAdminWorkspace() {
     if (authBox) authBox.classList.toggle('hidden', adminAuthenticated);
     if (workspace) workspace.classList.toggle('hidden', !adminAuthenticated);
     if (inlineLayout) inlineLayout.classList.toggle('hidden', !adminAuthenticated);
-    if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated || viewingPendingShare);
+    if (adminTabBar) adminTabBar.classList.toggle('hidden', !adminAuthenticated);
+    if (adminTabSearchBtn) {
+        adminTabSearchBtn.classList.toggle('is-active', adminAuthenticated && activeTab === 'search');
+        adminTabSearchBtn.setAttribute('aria-selected', adminAuthenticated && activeTab === 'search' ? 'true' : 'false');
+    }
+    if (adminTabCreateBtn) {
+        adminTabCreateBtn.classList.toggle('is-active', adminAuthenticated && activeTab === 'create');
+        adminTabCreateBtn.setAttribute('aria-selected', adminAuthenticated && activeTab === 'create' ? 'true' : 'false');
+    }
+    if (inlineLayout) inlineLayout.classList.toggle('admin-tab-create', adminAuthenticated && activeTab === 'create');
+    if (shareCreatorBox) shareCreatorBox.classList.toggle('hidden', !adminAuthenticated || activeTab !== 'create');
     if (cookieInfoPanel) cookieInfoPanel.classList.toggle('hidden', !adminAuthenticated);
-    if (currentShareSummaryBox) currentShareSummaryBox.classList.toggle('hidden', !adminAuthenticated || !viewingPendingShare || !currentAdminShare);
+    if (currentShareSummaryBox) currentShareSummaryBox.classList.toggle('hidden', !adminAuthenticated || activeTab !== 'search' || !currentAdminShare);
+    if (cookieInfoTitle) cookieInfoTitle.textContent = activeTab === 'create' ? 'Kết quả check cookie link mới' : 'Thông tin cookie của link ID';
     if (adminAuthenticated && !cookieHealthBlocked) {
-        setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
+        if (activeTab === 'create') {
+            setCreatorCookieInfoState('Tạo hoặc cập nhật cookie rồi bấm check để xem kết quả ngay tại đây.', 'idle');
+        } else {
+            setAdminCookieInfoState('Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.', 'idle');
+        }
     }
     if (!adminAuthenticated) {
+        adminActiveTab = 'search';
+        adminTabManuallySelected = false;
         isInlineEditMode = false;
         createdAdminShare = null;
         renderCookieCheckCards([]);
+        renderCreatorCookieCheckCards([]);
+        setCreatorCookieInfoState('Tạo hoặc cập nhật cookie rồi bấm check để xem kết quả ngay tại đây.', 'idle');
         setShareCookieViewOutputs({ primary: '', backup1: '', backup2: '' });
         setCreatedShareCookieOutputs({ primary: '', backup1: '', backup2: '' });
         resetShareCookieSlotStates();
@@ -1876,7 +2028,7 @@ function renderAdminWorkspace() {
         openDisclaimerModal();
     }
     syncAdminImmediateModals();
-    setInlineEditMode(isInlineEditMode && !!currentAdminShare && viewingPendingShare);
+    setInlineEditMode(isInlineEditMode && !!currentAdminShare && activeTab === 'search');
     renderCurrentShareSummary(currentAdminShare);
     renderCreatedShareEditor(createdAdminShare);
     updateReadyState();
@@ -1897,6 +2049,9 @@ function renderAdminShare(share = null) {
         resetShareCookieSlotStates();
         return;
     }
+
+    adminActiveTab = 'search';
+    adminTabManuallySelected = false;
 
     const idInput = el('adminShareId');
     const statusInput = el('adminShareStatus');
@@ -1967,6 +2122,7 @@ async function loadAdminShareFromPendingUrl(options = {}) {
     try {
         const data = await apiRequest('/api/getlink-admin/search', 'POST', { query: shareId });
         renderAdminShare(data.share || null);
+        setAdminTab('search', { resetManual: true });
         autoLoadedAdminShareId = shareId;
         setAdminSearchState('Da tu dong nap link ID tu URL. Ban co the sua cookie ngay.', 'success');
     } catch (error) {
@@ -2094,6 +2250,7 @@ async function adminSearchShare() {
     try {
         const data = await apiRequest('/api/getlink-admin/search', 'POST', { query });
         renderAdminShare(data.share || null);
+        setAdminTab('search', { resetManual: true });
         setAdminSearchState('Da tim thay link. Ban co the sua/thu hoi/phuc hoi/doi ID.', 'success');
     } catch (error) {
         renderAdminShare(null);
@@ -2126,7 +2283,13 @@ async function adminSaveCookies() {
         if (cookies.primary) {
             setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
         }
-        await runCookieChecksForShare((data.share && data.share.id) || currentAdminShare.id, cookies, SHARE_COOKIE_SLOTS, setShareCookieSlotState);
+        await runCookieChecksForShare(
+            (data.share && data.share.id) || currentAdminShare.id,
+            cookies,
+            SHARE_COOKIE_SLOTS,
+            setShareCookieSlotState,
+            { renderCards: renderCookieCheckCards, setInfoState: setAdminCookieInfoState }
+        );
         setAdminSearchState('Đã cập nhật cookie và tự động check toàn bộ.', 'success');
     } catch (error) {
         setAdminSearchState(error.message || 'Không cập nhật được cookie.', 'error');
@@ -2150,7 +2313,13 @@ async function saveCreatedShareCookies() {
         if (cookies.primary) {
             setRuntimeCookie(cookies.primary, { source: 'admin', silent: true });
         }
-        await runCookieChecksForShare(createdAdminShare.id, cookies, CREATED_SHARE_COOKIE_SLOTS, setCreatedShareCookieSlotState);
+        await runCookieChecksForShare(
+            createdAdminShare.id,
+            cookies,
+            CREATED_SHARE_COOKIE_SLOTS,
+            setCreatedShareCookieSlotState,
+            { renderCards: renderCreatorCookieCheckCards, setInfoState: setCreatorCookieInfoState }
+        );
         const link = String(el('shareLinkOutput') && el('shareLinkOutput').value || createdAdminShare.shareUrl || '').trim();
         const copied = await autoCopyShareLinkOrWarn(link);
         setShareState(
@@ -2224,12 +2393,12 @@ async function creatorCheckCookieSlot(slotKey) {
     const cookies = getCreatedShareEditableCookies();
     if (!cookies[slotKey]) {
         setCreatedShareCookieSlotState(slotKey, 'Để trống', null);
-        renderCookieCheckCards([]);
-        setAdminCookieInfoState('Ô cookie này đang để trống.', 'idle');
+        renderCreatorCookieCheckCards([]);
+        setCreatorCookieInfoState('Ô cookie này đang để trống.', 'idle');
         return;
     }
     setButtonBusy(button, true, 'Đang check...');
-    setAdminCookieInfoState(`Đang check ${slot.label.toLowerCase()}...`, 'loading');
+    setCreatorCookieInfoState(`Đang check ${slot.label.toLowerCase()}...`, 'loading');
     try {
         const data = await apiRequest(`/api/getlink-admin/shares/${encodeURIComponent(createdAdminShare.id)}/check-cookie`, 'POST', {
             slot: slotKey,
@@ -2238,11 +2407,11 @@ async function creatorCheckCookieSlot(slotKey) {
         });
         const result = data.result || {};
         setCreatedShareCookieSlotState(slotKey, result.ok ? 'PASS' : 'FAIL', !!result.ok);
-        renderCookieCheckCards([result]);
-        setAdminCookieInfoState(`Đã check ${slot.label.toLowerCase()}.`, result.ok ? 'success' : 'warning');
+        renderCreatorCookieCheckCards([result]);
+        setCreatorCookieInfoState(`Đã check ${slot.label.toLowerCase()}.`, result.ok ? 'success' : 'warning');
     } catch (error) {
         setCreatedShareCookieSlotState(slotKey, 'FAIL', false);
-        setAdminCookieInfoState(error.message || 'Check cookie thất bại.', 'error');
+        setCreatorCookieInfoState(error.message || 'Check cookie thất bại.', 'error');
     } finally {
         setButtonBusy(button, false);
     }
@@ -2256,11 +2425,17 @@ async function creatorCheckAllShareCookies() {
     const btn = el('creatorCheckAllShareCookiesBtn');
     const cookies = getCreatedShareEditableCookies();
     setButtonBusy(btn, true, 'Đang check...');
-    setAdminCookieInfoState('Đang check toàn bộ cookie của link mới...', 'loading');
+    setCreatorCookieInfoState('Đang check toàn bộ cookie của link mới...', 'loading');
     try {
-        await runCookieChecksForShare(createdAdminShare.id, cookies, CREATED_SHARE_COOKIE_SLOTS, setCreatedShareCookieSlotState);
+        await runCookieChecksForShare(
+            createdAdminShare.id,
+            cookies,
+            CREATED_SHARE_COOKIE_SLOTS,
+            setCreatedShareCookieSlotState,
+            { renderCards: renderCreatorCookieCheckCards, setInfoState: setCreatorCookieInfoState }
+        );
     } catch (error) {
-        setAdminCookieInfoState(error.message || 'Check toàn bộ cookie thất bại.', 'error');
+        setCreatorCookieInfoState(error.message || 'Check toàn bộ cookie thất bại.', 'error');
     } finally {
         setButtonBusy(btn, false);
     }
@@ -2342,6 +2517,14 @@ function closeAdminModal() {
 }
 
 function bindEvents() {
+    const adminTabButtons = Array.from(document.querySelectorAll('[data-admin-tab]'));
+    adminTabButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextTab = normalizeAdminTab(button.dataset.adminTab || 'search');
+            setAdminTab(nextTab, { manual: true });
+        });
+    });
+
     const supportBtn = el('supportWarrantyBtn');
     if (supportBtn) supportBtn.addEventListener('click', () => openSupportModal(getDefaultSupportModalContent()));
 
@@ -2601,6 +2784,8 @@ function bindEvents() {
     if (createAnotherShareBtn) {
         createAnotherShareBtn.addEventListener('click', () => {
             resetCreatedShareComposer();
+            setAdminTab('create', { manual: true, render: false });
+            renderAdminWorkspace();
         });
     }
 
@@ -2799,6 +2984,9 @@ async function bootstrap() {
     renderAdminWorkspace();
     await loadAdminSession();
     await applyCookieFromQuery();
+    if (adminAuthenticated) {
+        await loadAdminShareFromPendingUrl();
+    }
     disclaimerEligibilityResolved = true;
     if (canShowPromotionalPopups() && !disclaimerDismissed) {
         openDisclaimerModal();
@@ -2812,8 +3000,8 @@ async function bootstrap() {
     }
     updateOverloadFixVisibility();
     updateReadyState();
-    setShareState('Chỉ admin mới tạo link chia sẻ.', 'idle');
-    setShareCreateExpiryState('Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.', 'idle');
+    setShareState('', 'idle');
+    setShareCreateExpiryState('', 'idle');
 }
 
 bootstrap();

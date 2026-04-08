@@ -9,13 +9,112 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/nf/styles.css">
     <style>
+        :root {
+            --accent: #ef233c;
+            --accent-2: #b90f2a;
+            --line: rgba(148, 163, 184, 0.28);
+            --glass: rgba(15, 23, 42, 0.66);
+            --glass-strong: rgba(10, 16, 32, 0.84);
+            --text-main: #f8fbff;
+            --text-soft: #d2ddf5;
+            --shadow-lg: 0 20px 55px rgba(0, 0, 0, 0.5);
+            --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.36);
+            --radius-xl: 20px;
+            --radius-lg: 14px;
+        }
+
+        body {
+            color: var(--text-main);
+            background: radial-gradient(120% 120% at 85% -10%, rgba(239, 35, 60, 0.2), transparent 52%),
+                radial-gradient(120% 140% at 10% 120%, rgba(56, 189, 248, 0.14), transparent 54%),
+                linear-gradient(160deg, #05070f 0%, #0b1220 45%, #111827 100%);
+        }
+
+        .bg-layer {
+            pointer-events: none;
+        }
+
+        .bg-noise {
+            opacity: 0.075;
+            mix-blend-mode: soft-light;
+        }
+
+        .bg-vignette {
+            background: radial-gradient(120% 120% at 50% 40%, transparent 35%, rgba(2, 4, 10, 0.86) 100%);
+        }
+
+        .bg-neon {
+            opacity: 0.9;
+            background:
+                radial-gradient(42% 35% at 18% 22%, rgba(15, 118, 110, 0.18), transparent 75%),
+                radial-gradient(36% 32% at 88% 18%, rgba(239, 35, 60, 0.24), transparent 75%);
+        }
+
+        .nf-shell {
+            width: min(1260px, calc(100% - 2.2rem));
+            margin-top: 1.4rem;
+        }
+
+        .panel.hero {
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background:
+                linear-gradient(165deg, rgba(13, 20, 38, 0.92), rgba(8, 13, 26, 0.88)),
+                radial-gradient(120% 130% at 95% 0%, rgba(239, 35, 60, 0.1), transparent 60%);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(6px);
+            overflow: hidden;
+        }
+
+        .hero-title {
+            font-size: clamp(1.7rem, 3.4vw, 2.6rem);
+            letter-spacing: -0.02em;
+            color: #ffffff;
+            text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .lookup-wrap {
+            margin-top: 1rem;
+            display: grid;
+            gap: 0.8rem;
+        }
+
+        .state-text {
+            border: 1px solid rgba(148, 163, 184, 0.34);
+            border-radius: var(--radius-lg);
+            background: rgba(15, 23, 42, 0.5);
+            padding: 0.68rem 0.8rem;
+            margin-top: 0;
+            font-size: 0.88rem;
+            color: var(--text-soft);
+        }
+
+        .state-text.state-success {
+            border-color: rgba(34, 197, 94, 0.55);
+            background: rgba(34, 197, 94, 0.14);
+            color: #d7ffe8;
+        }
+
+        .state-text.state-warning {
+            border-color: rgba(245, 158, 11, 0.56);
+            background: rgba(245, 158, 11, 0.14);
+            color: #ffe7bf;
+        }
+
+        .state-text.state-error {
+            border-color: rgba(239, 68, 68, 0.56);
+            background: rgba(239, 68, 68, 0.14);
+            color: #ffd1d1;
+        }
+
         .guest-guard {
-            margin-top: 0.8rem;
-            border: 1px solid rgba(245, 158, 11, 0.38);
-            border-radius: 12px;
-            background: rgba(245, 158, 11, 0.12);
-            padding: 0.9rem;
+            margin-top: 0;
+            border: 1px solid rgba(245, 158, 11, 0.46);
+            border-radius: var(--radius-lg);
+            background: linear-gradient(145deg, rgba(245, 158, 11, 0.18), rgba(251, 191, 36, 0.08));
+            padding: 0.92rem 0.96rem;
             color: #ffebb8;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
         }
 
         .guest-guard h3 {
@@ -32,22 +131,20 @@
         }
 
         .share-box {
-            margin-top: 0.9rem;
+            margin-top: 0.95rem;
             border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 0.82rem;
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .nf-shell {
-            width: min(1240px, calc(100% - 1.4rem));
+            border-radius: var(--radius-lg);
+            padding: 0.92rem;
+            background: linear-gradient(160deg, rgba(15, 23, 42, 0.66), rgba(15, 23, 42, 0.42));
+            box-shadow: var(--shadow-md);
         }
 
         .share-box-title {
             margin: 0;
-            font-size: 0.86rem;
-            color: #d9e4ff;
-            font-weight: 700;
+            font-size: 0.9rem;
+            color: #eaf1ff;
+            font-weight: 800;
+            letter-spacing: 0.01em;
         }
 
         .share-box .state-text {
@@ -92,14 +189,46 @@
         .admin-inline-layout {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.9rem;
+            gap: 0.62rem;
             align-items: start;
-            margin-top: 0.9rem;
+            margin-top: 0.62rem;
+        }
+
+        .admin-tabbar {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 0.08rem;
+        }
+
+        .admin-tab-btn {
+            min-height: 36px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(148, 163, 184, 0.12);
+            color: #dce8ff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            box-shadow: none;
+        }
+
+        .admin-tab-btn:hover:not(:disabled) {
+            background: rgba(148, 163, 184, 0.2);
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+
+        .admin-tab-btn.is-active {
+            border-color: rgba(239, 35, 60, 0.7);
+            background: linear-gradient(135deg, rgba(239, 35, 60, 0.28), rgba(185, 15, 42, 0.2));
+            color: #fff6f7;
+            box-shadow: 0 8px 18px rgba(239, 35, 60, 0.24);
         }
 
         .admin-inline-left {
             display: grid;
-            gap: 0.75rem;
+            gap: 0.58rem;
         }
 
         .admin-inline-left .share-box,
@@ -107,20 +236,53 @@
             margin-top: 0;
         }
 
+        #adminInlineLayout .share-box {
+            padding: 0.66rem 0.7rem;
+            border-radius: 12px;
+        }
+
+        #adminInlineLayout .share-box-title {
+            font-size: 0.83rem;
+            font-weight: 800;
+        }
+
+        #adminInlineLayout .text-input {
+            min-height: 38px;
+            padding: 0.52rem 0.62rem;
+            font-size: 0.78rem;
+        }
+
+        #adminInlineLayout .btn {
+            min-height: 36px;
+            padding: 0.56rem 0.65rem;
+            font-size: 0.78rem;
+        }
+
         .admin-cookie-info-panel .state-text {
-            margin-top: 0.5rem;
+            margin-top: 0.38rem;
+            font-size: 0.82rem;
         }
 
         .admin-cookie-info-content {
-            margin-top: 0.6rem;
+            margin-top: 0.45rem;
             display: grid;
-            gap: 0.6rem;
+            gap: 0.45rem;
         }
 
         .admin-cookie-info-placeholder {
             margin: 0;
-            font-size: 0.86rem;
-            color: #9cb5e8;
+            font-size: 0.82rem;
+            color: #c2d5fb;
+        }
+
+        .creator-cookie-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: start;
+        }
+
+        .current-cookie-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: start;
         }
 
         .admin-info-highlight-grid {
@@ -256,17 +418,17 @@
 
         .cookie-slot-grid {
             display: grid;
-            gap: 0.6rem;
-            margin-top: 0.7rem;
+            gap: 0.45rem;
+            margin-top: 0.48rem;
         }
 
         .cookie-slot-card {
             border: 1px solid var(--line);
             border-radius: 10px;
-            padding: 0.56rem 0.6rem;
+            padding: 0.42rem 0.46rem;
             background: rgba(255, 255, 255, 0.03);
             display: grid;
-            gap: 0.38rem;
+            gap: 0.32rem;
         }
 
         .cookie-slot-head {
@@ -277,14 +439,14 @@
         }
 
         .cookie-slot-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 700;
-            color: #e8f0ff;
+            color: #eef4ff;
         }
 
         .cookie-slot-state {
-            font-size: 0.74rem;
-            color: #9cb5e8;
+            font-size: 0.7rem;
+            color: #c2d5fb;
         }
 
         .cookie-slot-input {
@@ -305,8 +467,8 @@
 
         .cookie-slot-actions .btn,
         .share-summary-actions .btn {
-            min-height: 38px;
-            padding: 0.68rem 0.78rem;
+            min-height: 34px;
+            padding: 0.5rem 0.6rem;
         }
 
         .cookie-check-grid {
@@ -438,8 +600,8 @@
         .share-summary-actions {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.5rem;
-            margin-top: 0.7rem;
+            gap: 0.42rem;
+            margin-top: 0.52rem;
         }
 
         .share-summary-meta {
@@ -449,9 +611,9 @@
         }
 
         .share-summary-meta .text-input {
-            min-height: 40px;
-            padding: 0.52rem 0.64rem;
-            font-size: 0.76rem;
+            min-height: 34px;
+            padding: 0.45rem 0.54rem;
+            font-size: 0.74rem;
         }
 
         .share-summary-meta .mono-input {
@@ -459,12 +621,12 @@
         }
 
         .readonly-cookie-input {
-            height: 40px;
-            min-height: 40px;
-            max-height: 40px;
+            height: 34px;
+            min-height: 34px;
+            max-height: 34px;
             resize: none;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.74rem;
+            font-size: 0.7rem;
             line-height: 1.2;
             letter-spacing: 0;
             text-transform: none;
@@ -525,7 +687,140 @@
         }
 
         .support-row .btn {
-            min-height: 48px;
+            min-height: 50px;
+        }
+
+        .btn {
+            border-radius: 12px;
+            min-height: 42px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, filter 170ms ease, background-color 170ms ease;
+        }
+
+        .btn:focus-visible,
+        .text-input:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(248, 250, 252, 0.17), 0 0 0 6px rgba(239, 35, 60, 0.24);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ef233c 0%, #d90429 55%, #9d0208 100%);
+            box-shadow: 0 12px 24px rgba(239, 35, 60, 0.34);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            filter: brightness(1.07);
+            box-shadow: 0 16px 30px rgba(239, 35, 60, 0.36);
+        }
+
+        .btn-ghost {
+            background: rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: #e6eefc;
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: rgba(148, 163, 184, 0.18);
+            border-color: rgba(191, 219, 254, 0.5);
+        }
+
+        .text-input {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.58);
+            color: #eef4ff;
+            border-radius: 12px;
+        }
+
+        .text-input::placeholder {
+            color: rgba(196, 210, 236, 0.72);
+        }
+
+        .device-section-title {
+            margin-top: 1.25rem;
+            margin-bottom: 0.8rem;
+            font-size: clamp(1.05rem, 2vw, 1.2rem);
+            font-weight: 800;
+            letter-spacing: 0.01em;
+            text-transform: uppercase;
+            color: #f8fbff;
+        }
+
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.78rem;
+        }
+
+        .btn-device {
+            min-height: 84px;
+            border-radius: 14px;
+            padding: 0.9rem 0.95rem;
+            border: 1px solid rgba(148, 163, 184, 0.42);
+            background:
+                linear-gradient(150deg, rgba(31, 41, 55, 0.72), rgba(15, 23, 42, 0.62)),
+                radial-gradient(140% 90% at 100% 0%, rgba(239, 35, 60, 0.13), transparent 70%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 10px 20px rgba(0, 0, 0, 0.22);
+            gap: 0.72rem;
+        }
+
+        .btn-device:hover:not(:disabled) {
+            border-color: rgba(248, 113, 113, 0.72);
+            transform: translateY(-2px);
+            box-shadow: 0 18px 28px rgba(5, 8, 20, 0.48);
+            filter: brightness(1.04);
+        }
+
+        .btn-device:disabled {
+            opacity: 0.82;
+        }
+
+        .device-icon {
+            width: 24px;
+            height: 24px;
+            flex-basis: 24px;
+            color: #c7dcff;
+        }
+
+        .device-title {
+            font-size: 0.94rem;
+            font-weight: 700;
+            color: #f4f8ff;
+        }
+
+        .lookup-loading-box {
+            background: rgba(10, 15, 29, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.36);
+            border-radius: 14px;
+            box-shadow: 0 20px 38px rgba(0, 0, 0, 0.45);
+        }
+
+        .modal-backdrop {
+            background: rgba(3, 6, 14, 0.72);
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-card {
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background:
+                linear-gradient(160deg, rgba(14, 22, 39, 0.95), rgba(8, 13, 26, 0.95));
+            border-radius: 16px;
+            box-shadow: 0 24px 52px rgba(0, 0, 0, 0.52);
+        }
+
+        .modal-head {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+            background: linear-gradient(180deg, rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0));
+        }
+
+        .modal-head h2 {
+            color: #f6f9ff;
+            letter-spacing: -0.01em;
+        }
+
+        .support-body p {
+            color: #d7e2f9;
         }
 
         .support-body.dynamic-support-body {
@@ -598,10 +893,14 @@
 
         @media (max-width: 900px) {
             .nf-shell {
-                width: min(980px, calc(100% - 1rem));
+                width: min(980px, calc(100% - 1.1rem));
             }
 
             .admin-inline-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .admin-tabbar {
                 grid-template-columns: 1fr;
             }
 
@@ -622,9 +921,35 @@
             .share-summary-actions {
                 grid-template-columns: 1fr;
             }
+
+            .creator-cookie-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .current-cookie-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .device-grid {
+                gap: 0.62rem;
+            }
+
+            .btn-device {
+                min-height: 76px;
+                padding: 0.78rem 0.8rem;
+            }
         }
 
         @media (max-width: 760px) {
+            .nf-shell {
+                width: calc(100% - 0.88rem);
+                margin-top: 0.72rem;
+            }
+
+            .hero-title {
+                font-size: clamp(1.5rem, 7vw, 1.9rem);
+            }
+
             .lookup-actions {
                 grid-template-columns: 1fr;
             }
@@ -642,6 +967,26 @@
             }
 
             .support-row {
+                grid-template-columns: 1fr;
+            }
+
+            .device-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .device-title {
+                font-size: 0.88rem;
+            }
+
+            .btn-device {
+                min-height: 72px;
+            }
+
+            .creator-cookie-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .current-cookie-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -671,14 +1016,13 @@
             <h1 class="hero-title">Get Link Netflix</h1>
 
             <div class="lookup-wrap">
-                <div id="lookupState" class="state-text state-idle">Vui lòng mở link được cấp để bắt đầu sử dụng.</div>
-
-                <section id="guestGuard" class="guest-guard hidden">
-                    <h3>Không tìm thấy link hợp lệ</h3>
-                    <p id="guestGuardText">Hãy mở đúng link /getlink?s=... hoặc /getlink?c=... để tiếp tục.</p>
-                </section>
+                <div id="lookupState" class="state-text state-idle hidden"></div>
 
                 <section id="adminInlineLayout" class="admin-inline-layout hidden">
+                    <div id="adminTabBar" class="admin-tabbar" role="tablist" aria-label="Che do admin">
+                        <button id="adminTabSearchBtn" class="btn admin-tab-btn" type="button" data-admin-tab="search" role="tab" aria-selected="true">Tìm/Sửa link</button>
+                        <button id="adminTabCreateBtn" class="btn admin-tab-btn" type="button" data-admin-tab="create" role="tab" aria-selected="false">Tạo link</button>
+                    </div>
                     <div class="admin-inline-left">
                         <section id="shareCreatorBox" class="share-box admin-box hidden">
                             <h3 class="share-box-title">Tạo link ID server (chỉ admin)</h3>
@@ -688,12 +1032,12 @@
                                     <input id="shareCreateDateInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Ngày: dd/mm hoặc dd/mm/yyyy">
                                     <input id="shareCreateTimeInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Giờ: HH:mm">
                                 </div>
-                                <div id="shareCreateExpiryState" class="state-text state-idle">Nếu nhập hạn lẹ thì sẽ ưu tiên cộng số ngày từ hiện tại. Nếu để trống hạn lẹ, hệ thống sẽ dùng ngày + giờ; bỏ năm sẽ tự lấy năm hiện tại, bỏ giờ sẽ hiểu là 00:00.</div>
+                                <div id="shareCreateExpiryState" class="state-text state-idle hidden"></div>
                             </div>
                             <div class="lookup-actions" style="margin-top:0.45rem;">
                                 <button id="generateShareLinkBtn" class="btn btn-primary" type="button">Tạo link ID server (?s)</button>
                             </div>
-                            <div id="shareState" class="state-text state-idle">Tạo ID server trước, sau đó nhập 3 cookie cho link này.</div>
+                            <div id="shareState" class="state-text state-idle hidden"></div>
                             <div class="share-row">
                                 <input id="shareLinkOutput" class="text-input link-output" type="text" readonly>
                                 <button id="copyShareLinkBtn" class="btn btn-primary" type="button">Sao chép</button>
@@ -701,7 +1045,7 @@
                             </div>
                             <div id="shareCreateCookieSection" class="share-create-cookie-section hidden">
                                 <p class="share-create-cookie-hint">Link ID đã tạo xong. Bạn có thể nhập 1, 2 hoặc đủ 3 cookie cho link này.</p>
-                                <div class="cookie-slot-grid">
+                                <div class="cookie-slot-grid creator-cookie-grid">
                                     <div class="cookie-slot-card">
                                         <div class="cookie-slot-head">
                                             <span class="cookie-slot-label">Cookie chính</span>
@@ -754,7 +1098,7 @@
                                     <input id="currentShareUpdatedDisplay" class="text-input" type="text" title="Cập nhật" readonly>
                                 </div>
                                 <input id="currentShareUrlDisplay" class="text-input mono-input" type="text" readonly>
-                                <div class="cookie-slot-grid">
+                                <div class="cookie-slot-grid current-cookie-grid">
                                     <div class="cookie-slot-card">
                                         <div class="cookie-slot-head">
                                             <span class="cookie-slot-label">Cookie chính</span>
@@ -800,7 +1144,7 @@
                     </div>
 
                     <section id="adminCookieInfoPanel" class="share-box admin-box admin-cookie-info-panel hidden">
-                        <h3 class="share-box-title">Thông tin cookie của link ID</h3>
+                        <h3 id="adminCookieInfoTitle" class="share-box-title">Thông tin cookie của link ID</h3>
                         <div id="adminCookieInfoState" class="state-text state-idle">Tạo hoặc tìm link ID rồi check từng cookie hay check toàn bộ.</div>
                         <div id="adminCookieInfoContent" class="admin-cookie-info-content">
                             <p class="admin-cookie-info-placeholder">Chưa có dữ liệu cookie info.</p>
