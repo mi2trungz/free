@@ -1851,7 +1851,17 @@ function renderAdminState(user) {
         if (searchInput) searchInput.value = '';
     }
     renderLookupInlineAdmin();
+    setPageLockState(!isAdmin);
     if (isAdmin && currentLookupCode) loadLookupCustomerDetailIfAdmin();
+}
+
+function setPageLockState(locked) {
+    const lockScreen = el('nfLockScreen');
+    if (lockScreen) {
+        lockScreen.classList.toggle('hidden', !locked);
+        lockScreen.setAttribute('aria-hidden', locked ? 'false' : 'true');
+    }
+    document.body.classList.toggle('nf-locked', !!locked);
 }
 async function onSubmitCustomerForm(event) {
     event.preventDefault();
@@ -3315,6 +3325,9 @@ function bindEvents() {
     const adminFab = el('nfAdminFab');
     if (adminFab) adminFab.addEventListener('click', openAdminModal);
 
+    const lockLoginBtn = el('nfLockLoginBtn');
+    if (lockLoginBtn) lockLoginBtn.addEventListener('click', openAdminModal);
+
     const closeAdminBtn = el('closeAdminBtn');
     if (closeAdminBtn) closeAdminBtn.addEventListener('click', closeAdminModal);
 
@@ -3693,6 +3706,7 @@ function bootstrap() {
     renderCustomersPager();
     renderCookiesPager();
     applyRuntimeGuard();
+    setPageLockState(true);
 
     onAuthStateChanged(auth, (user) => {
         renderAdminState(user);
