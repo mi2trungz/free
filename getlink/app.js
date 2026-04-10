@@ -2116,7 +2116,6 @@ async function loadAdminShareFromPendingUrl(options = {}) {
     const input = el('adminShareSearchInput');
     if (input) input.value = shareId;
 
-    openAdminModal();
     setAdminSearchState(`Dang tu dong nap link ID: ${shareId}...`, 'loading');
 
     try {
