@@ -259,6 +259,11 @@
             margin-bottom: 8px;
         }
 
+        .batch-mode-select {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
         .batch-progress-wrap {
             margin-top: 8px;
         }
@@ -371,6 +376,10 @@
                     <div class="batch-box">
                         <h3 class="batch-title">Lay thong tin hang loat tu Excel</h3>
                         <p class="batch-hint">Nhap file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
+                        <select id="batchModeSelect" class="device-select batch-mode-select">
+                            <option value="plan-only">Check Goi cuoc</option>
+                            <option value="legacy">Mode cu: Tach SUCCESS / FAILED</option>
+                        </select>
                         <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
                         <div class="action-row">
                             <button type="button" id="startBatchBtn" class="btn btn-primary">Bat dau check hang loat</button>
@@ -400,8 +409,11 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const BATCH_MODE_PLAN_ONLY = 'plan-only';
+            const BATCH_MODE_LEGACY = 'legacy';
             const form = document.getElementById('linkGeneratorForm');
             const cookieInput = document.getElementById('cookieInput');
             const clearCookieBtn = document.getElementById('clearCookieBtn');
@@ -415,6 +427,7 @@
             const accountInfoBox = document.getElementById('accountInfoBox');
             const accountInfoContent = document.getElementById('accountInfoContent');
             const batchExcelInput = document.getElementById('batchExcelInput');
+            const batchModeSelect = document.getElementById('batchModeSelect');
             const startBatchBtn = document.getElementById('startBatchBtn');
             const stopBatchBtn = document.getElementById('stopBatchBtn');
             const downloadBatchBtn = document.getElementById('downloadBatchBtn');
@@ -426,6 +439,7 @@
             let batchStopRequested = false;
             let batchWorkbook = null;
             let batchOutputFilename = '';
+            let batchDownloadKind = '';
 
             function isNo(value) {
                 return String(value || '').trim().toLowerCase() === 'no';
@@ -504,13 +518,18 @@
                 return text || fallback;
             }
 
-            function formatBatchFileName(date = new Date()) {
+            function getBatchMode() {
+                return batchModeSelect ? batchModeSelect.value : BATCH_MODE_PLAN_ONLY;
+            }
+
+            function formatBatchFileName(date = new Date(), mode = getBatchMode()) {
                 const yyyy = date.getFullYear();
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
                 const hh = String(date.getHours()).padStart(2, '0');
                 const min = String(date.getMinutes()).padStart(2, '0');
-                return `nf_batch_result_${yyyy}-${mm}-${dd}_${hh}-${min}.xlsx`;
+                const prefix = mode === BATCH_MODE_PLAN_ONLY ? 'nf_batch_goicuoc' : 'nf_batch_result';
+                return `${prefix}_${yyyy}-${mm}-${dd}_${hh}-${min}.xlsx`;
             }
 
             function setBatchRunningState(running) {
@@ -518,6 +537,7 @@
                 startBatchBtn.disabled = running;
                 stopBatchBtn.disabled = !running;
                 batchExcelInput.disabled = running;
+                if (batchModeSelect) batchModeSelect.disabled = running;
             }
 
             function updateBatchProgress(current, total) {
@@ -543,6 +563,73 @@
                     values.shift();
                 }
                 return values;
+            }
+
+            function normalizeCellText(value) {
+                if (value === undefined || value === null) return '';
+                if (typeof value === 'object') {
+                    if (Array.isArray(value.richText)) {
+                        return value.richText.map((item) => String(item && item.text ? item.text : '')).join('');
+                    }
+                    if (value.text !== undefined) return String(value.text);
+                    if (value.result !== undefined) return String(value.result);
+                    if (value.formula !== undefined && value.result === undefined) return '';
+                    if (value.hyperlink !== undefined && value.text !== undefined) return String(value.text);
+                }
+                return String(value);
+            }
+
+            function clonePlainObject(value) {
+                if (value === undefined) return undefined;
+                if (value === null) return null;
+                return JSON.parse(JSON.stringify(value));
+            }
+
+            function copyCellStyle(sourceCell, targetCell) {
+                targetCell.style = clonePlainObject(sourceCell.style || {}) || {};
+            }
+
+            function getBatchPlanLabel(account = {}) {
+                const planName = toDisplayValue(account.plan, 'Khong ro');
+                return `${planName} ${account.premium ? '(Premium)' : ''}`.trim();
+            }
+
+            function toBatchErrorMessage(raw, fallback = 'Request failed') {
+                const text = String(raw || '').trim();
+                if (!text) return fallback;
+                return text.length > 120 ? `${text.slice(0, 117)}...` : text;
+            }
+
+            async function fetchBatchCookieInfo(cookieStr) {
+                const normalizedCookie = String(cookieStr || '').trim();
+                if (!normalizedCookie) {
+                    return { ok: false, error: 'Cookie khong hop le' };
+                }
+
+                try {
+                    const res = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr: normalizedCookie, device: 'desktop' })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok && data.success) {
+                        return { ok: true, account: data.accountInfo || {} };
+                    }
+
+                    return {
+                        ok: false,
+                        error: toBatchErrorMessage(data && data.error, 'Request failed'),
+                        status: String(res.status || '')
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: toBatchErrorMessage(error && error.message, 'Network error'),
+                        status: ''
+                    };
+                }
             }
 
             function buildBatchWorkbook(successRows, failedRows) {
@@ -577,40 +664,27 @@
                 for (let i = 0; i < cookies.length; i += 1) {
                     if (batchStopRequested) break;
                     const cookieStr = cookies[i];
-                    try {
-                        const res = await fetch('/api/nf-cookie-to-link', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ cookieStr, device: 'desktop' })
-                        });
-                        const data = await res.json();
+                    const result = await fetchBatchCookieInfo(cookieStr);
 
-                        if (res.ok && data.success) {
-                            const account = data.accountInfo || {};
-                            successRows.push([
-                                cookieStr,
-                                account.ok ? 'Hoat dong' : 'Khong hoat dong',
-                                toDisplayValue(`${toDisplayValue(account.plan, '')} ${account.premium ? '(Premium)' : ''}`.trim()),
-                                toDisplayValue(account.country),
-                                toDisplayValue(account.max_streams, '?'),
-                                toDisplayValue(account.video_quality),
-                                toDisplayValue(account.on_payment_hold, 'No'),
-                                toDisplayValue(account.plan_price),
-                                toDisplayValue(account.member_since),
-                                toDisplayValue(account.payment_method)
-                            ]);
-                        } else {
-                            failedRows.push([
-                                cookieStr,
-                                toDisplayValue(data.error, 'Request failed'),
-                                String(res.status || '')
-                            ]);
-                        }
-                    } catch (error) {
+                    if (result.ok) {
+                        const account = result.account || {};
+                        successRows.push([
+                            cookieStr,
+                            account.ok ? 'Hoat dong' : 'Khong hoat dong',
+                            getBatchPlanLabel(account),
+                            toDisplayValue(account.country),
+                            toDisplayValue(account.max_streams, '?'),
+                            toDisplayValue(account.video_quality),
+                            toDisplayValue(account.on_payment_hold, 'No'),
+                            toDisplayValue(account.plan_price),
+                            toDisplayValue(account.member_since),
+                            toDisplayValue(account.payment_method)
+                        ]);
+                    } else {
                         failedRows.push([
                             cookieStr,
-                            toDisplayValue(error && error.message, 'Network error'),
-                            ''
+                            toDisplayValue(result.error, 'Request failed'),
+                            String(result.status || '')
                         ]);
                     }
 
@@ -621,6 +695,116 @@
                 }
 
                 return { successRows, failedRows };
+            }
+
+            function getPlanOnlyBatchEntries(worksheet) {
+                const totalRows = Math.max(worksheet.rowCount || 0, worksheet.actualRowCount || 0);
+                const firstValue = normalizeCellText(worksheet.getCell('A1').value).trim();
+                const hasHeader = firstValue.toLowerCase() === 'cookie';
+                const startRow = hasHeader ? 2 : 1;
+                const entries = [];
+                let validCookieCount = 0;
+
+                for (let rowNumber = startRow; rowNumber <= totalRows; rowNumber += 1) {
+                    const cookie = normalizeCellText(worksheet.getCell(`A${rowNumber}`).value).trim();
+                    if (cookie) validCookieCount += 1;
+                    entries.push({ rowNumber, cookie });
+                }
+
+                return { entries, hasHeader, validCookieCount };
+            }
+
+            function getWorksheetLastColumnNumber(worksheet) {
+                let lastColumnNumber = Math.max(worksheet.columnCount || 0, worksheet.actualColumnCount || 0);
+                if (lastColumnNumber > 0) return lastColumnNumber;
+
+                worksheet.eachRow({ includeEmpty: true }, (row) => {
+                    const cellCount = Math.max(row.cellCount || 0, row.actualCellCount || 0);
+                    if (cellCount > lastColumnNumber) lastColumnNumber = cellCount;
+                });
+                return Math.max(lastColumnNumber, 1);
+            }
+
+            function preparePlanOnlyWorksheet(worksheet, hasHeader) {
+                const lastColumnNumber = getWorksheetLastColumnNumber(worksheet);
+                const appendedColumnNumber = lastColumnNumber + 1;
+                const appendedColumn = worksheet.getColumn(appendedColumnNumber);
+                const sourceColumn = worksheet.getColumn(lastColumnNumber);
+                const fallbackColumn = worksheet.getColumn(1);
+                appendedColumn.width = sourceColumn.width || fallbackColumn.width || 20;
+
+                if (hasHeader) {
+                    const headerCell = worksheet.getCell(1, appendedColumnNumber);
+                    const styleSourceCell = worksheet.getCell(1, lastColumnNumber);
+                    copyCellStyle(styleSourceCell, headerCell);
+                    headerCell.value = 'Goi cuoc';
+                }
+
+                return { appendedColumnNumber };
+            }
+
+            async function processPlanOnlyBatchWorkbook(workbook) {
+                const worksheet = workbook.worksheets && workbook.worksheets[0];
+                if (!worksheet) {
+                    throw new Error('File Excel khong co sheet du lieu.');
+                }
+
+                const { entries, hasHeader, validCookieCount } = getPlanOnlyBatchEntries(worksheet);
+                if (validCookieCount === 0) {
+                    throw new Error('Khong tim thay cookie hop le o cot A.');
+                }
+
+                const { appendedColumnNumber } = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const successRows = [];
+                const failedRows = [];
+                const total = entries.length;
+                updateBatchProgress(0, total);
+
+                for (let i = 0; i < entries.length; i += 1) {
+                    if (batchStopRequested) break;
+
+                    const entry = entries[i];
+                    const sourceCell = worksheet.getCell(entry.rowNumber, 1);
+                    const targetCell = worksheet.getCell(entry.rowNumber, appendedColumnNumber);
+                    copyCellStyle(sourceCell, targetCell);
+
+                    if (!entry.cookie) {
+                        targetCell.value = 'Cookie khong hop le';
+                        failedRows.push([`Dong ${entry.rowNumber}`, 'Cookie khong hop le', '']);
+                    } else {
+                        const result = await fetchBatchCookieInfo(entry.cookie);
+                        if (result.ok) {
+                            targetCell.value = getBatchPlanLabel(result.account || {});
+                            successRows.push(entry.rowNumber);
+                        } else {
+                            targetCell.value = `Loi: ${toDisplayValue(result.error, 'Request failed')}`;
+                            failedRows.push([entry.cookie, toDisplayValue(result.error, 'Request failed'), String(result.status || '')]);
+                        }
+                    }
+
+                    updateBatchProgress(i + 1, total);
+                    if (i < entries.length - 1) {
+                        await sleep(300);
+                    }
+                }
+
+                return { workbook, successRows, failedRows };
+            }
+
+            async function downloadExcelJsWorkbook(workbook, filename) {
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob(
+                    [buffer],
+                    { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+                );
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
             }
 
             function hideAlerts() {
@@ -797,8 +981,14 @@
 
             startBatchBtn.addEventListener('click', async () => {
                 if (batchRunning) return;
+                const mode = getBatchMode();
+
                 if (typeof XLSX === 'undefined') {
                     batchStatusText.textContent = 'Khong tai duoc thu vien Excel (SheetJS).';
+                    return;
+                }
+                if (mode === BATCH_MODE_PLAN_ONLY && typeof ExcelJS === 'undefined') {
+                    batchStatusText.textContent = 'Khong tai duoc thu vien Excel giu dinh dang.';
                     return;
                 }
 
@@ -810,24 +1000,39 @@
 
                 batchWorkbook = null;
                 batchOutputFilename = '';
+                batchDownloadKind = '';
                 downloadBatchBtn.disabled = true;
                 batchStopRequested = false;
                 setBatchRunningState(true);
 
                 try {
                     const arrayBuffer = await file.arrayBuffer();
-                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                    const cookies = readCookiesFromSheet(workbook);
-                    if (cookies.length === 0) {
-                        batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A.';
-                        setBatchRunningState(false);
-                        return;
+                    let result;
+
+                    if (mode === BATCH_MODE_PLAN_ONLY) {
+                        const workbook = new ExcelJS.Workbook();
+                        await workbook.xlsx.load(arrayBuffer);
+                        const worksheet = workbook.worksheets && workbook.worksheets[0];
+                        const preview = worksheet ? getPlanOnlyBatchEntries(worksheet) : { entries: [] };
+                        batchStatusText.textContent = `Dang bat dau check ${preview.entries.length} dong...`;
+                        result = await processPlanOnlyBatchWorkbook(workbook);
+                        batchWorkbook = result.workbook;
+                        batchDownloadKind = 'exceljs';
+                    } else {
+                        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                        const cookies = readCookiesFromSheet(workbook);
+                        if (cookies.length === 0) {
+                            batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A.';
+                            return;
+                        }
+
+                        batchStatusText.textContent = `Dang bat dau check ${cookies.length} cookie...`;
+                        result = await processBatchCookies(cookies);
+                        batchWorkbook = buildBatchWorkbook(result.successRows, result.failedRows);
+                        batchDownloadKind = 'xlsx';
                     }
 
-                    batchStatusText.textContent = `Dang bat dau check ${cookies.length} cookie...`;
-                    const result = await processBatchCookies(cookies);
-                    batchWorkbook = buildBatchWorkbook(result.successRows, result.failedRows);
-                    batchOutputFilename = formatBatchFileName(new Date());
+                    batchOutputFilename = formatBatchFileName(new Date(), mode);
                     downloadBatchBtn.disabled = false;
 
                     if (batchStopRequested) {
@@ -848,12 +1053,16 @@
                 batchStatusText.textContent = 'Dang dung batch...';
             });
 
-            downloadBatchBtn.addEventListener('click', () => {
+            downloadBatchBtn.addEventListener('click', async () => {
                 if (!batchWorkbook) {
                     batchStatusText.textContent = 'Chua co ket qua de tai.';
                     return;
                 }
-                XLSX.writeFile(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date()));
+                if (batchDownloadKind === 'exceljs') {
+                    await downloadExcelJsWorkbook(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date(), BATCH_MODE_PLAN_ONLY));
+                    return;
+                }
+                XLSX.writeFile(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date(), BATCH_MODE_LEGACY));
             });
 
             copyResultBtn.addEventListener('click', async () => {
