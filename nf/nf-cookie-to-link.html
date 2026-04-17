@@ -377,7 +377,7 @@
                         <h3 class="batch-title">Lay thong tin hang loat tu Excel</h3>
                         <p class="batch-hint">Nhap file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
                         <select id="batchModeSelect" class="device-select batch-mode-select">
-                            <option value="plan-only">Check Goi cuoc</option>
+                            <option value="plan-only">Check Goi cuoc + Payment Hold</option>
                             <option value="legacy">Mode cu: Tach SUCCESS / FAILED</option>
                         </select>
                         <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
@@ -727,20 +727,27 @@
 
             function preparePlanOnlyWorksheet(worksheet, hasHeader) {
                 const lastColumnNumber = getWorksheetLastColumnNumber(worksheet);
-                const appendedColumnNumber = lastColumnNumber + 1;
-                const appendedColumn = worksheet.getColumn(appendedColumnNumber);
+                const planColumnNumber = lastColumnNumber + 1;
+                const paymentHoldColumnNumber = lastColumnNumber + 2;
+                const appendedPlanColumn = worksheet.getColumn(planColumnNumber);
+                const appendedPaymentHoldColumn = worksheet.getColumn(paymentHoldColumnNumber);
                 const sourceColumn = worksheet.getColumn(lastColumnNumber);
                 const fallbackColumn = worksheet.getColumn(1);
-                appendedColumn.width = sourceColumn.width || fallbackColumn.width || 20;
+                const appendedWidth = sourceColumn.width || fallbackColumn.width || 20;
+                appendedPlanColumn.width = appendedWidth;
+                appendedPaymentHoldColumn.width = appendedWidth;
 
                 if (hasHeader) {
-                    const headerCell = worksheet.getCell(1, appendedColumnNumber);
+                    const headerCell = worksheet.getCell(1, planColumnNumber);
+                    const paymentHoldHeaderCell = worksheet.getCell(1, paymentHoldColumnNumber);
                     const styleSourceCell = worksheet.getCell(1, lastColumnNumber);
                     copyCellStyle(styleSourceCell, headerCell);
+                    copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
                     headerCell.value = 'Goi cuoc';
+                    paymentHoldHeaderCell.value = 'Payment Hold';
                 }
 
-                return { appendedColumnNumber };
+                return { planColumnNumber, paymentHoldColumnNumber };
             }
 
             async function processPlanOnlyBatchWorkbook(workbook) {
@@ -754,7 +761,7 @@
                     throw new Error('Khong tim thay cookie hop le o cot A.');
                 }
 
-                const { appendedColumnNumber } = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const { planColumnNumber, paymentHoldColumnNumber } = preparePlanOnlyWorksheet(worksheet, hasHeader);
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
@@ -765,19 +772,25 @@
 
                     const entry = entries[i];
                     const sourceCell = worksheet.getCell(entry.rowNumber, 1);
-                    const targetCell = worksheet.getCell(entry.rowNumber, appendedColumnNumber);
-                    copyCellStyle(sourceCell, targetCell);
+                    const planCell = worksheet.getCell(entry.rowNumber, planColumnNumber);
+                    const paymentHoldCell = worksheet.getCell(entry.rowNumber, paymentHoldColumnNumber);
+                    copyCellStyle(sourceCell, planCell);
+                    copyCellStyle(sourceCell, paymentHoldCell);
 
                     if (!entry.cookie) {
-                        targetCell.value = 'Cookie khong hop le';
+                        planCell.value = 'Cookie khong hop le';
+                        paymentHoldCell.value = '';
                         failedRows.push([`Dong ${entry.rowNumber}`, 'Cookie khong hop le', '']);
                     } else {
                         const result = await fetchBatchCookieInfo(entry.cookie);
                         if (result.ok) {
-                            targetCell.value = getBatchPlanLabel(result.account || {});
+                            const account = result.account || {};
+                            planCell.value = getBatchPlanLabel(account);
+                            paymentHoldCell.value = toDisplayValue(account.on_payment_hold, 'No');
                             successRows.push(entry.rowNumber);
                         } else {
-                            targetCell.value = `Loi: ${toDisplayValue(result.error, 'Request failed')}`;
+                            planCell.value = `Loi: ${toDisplayValue(result.error, 'Request failed')}`;
+                            paymentHoldCell.value = '';
                             failedRows.push([entry.cookie, toDisplayValue(result.error, 'Request failed'), String(result.status || '')]);
                         }
                     }
