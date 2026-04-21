@@ -289,6 +289,41 @@
             font-size: 0.85rem;
         }
 
+        .batch-download-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .batch-download-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .batch-download-meta {
+            min-width: 0;
+        }
+
+        .batch-download-name {
+            color: var(--text-base);
+            font-size: 0.9rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .batch-download-summary {
+            margin-top: 2px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            word-break: break-word;
+        }
+
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -375,20 +410,25 @@
 
                     <div class="batch-box">
                         <h3 class="batch-title">Lay thong tin hang loat tu Excel</h3>
-                        <p class="batch-hint">Nhap file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
+                        <p class="batch-hint">Nhap mot hoac nhieu file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
                         <select id="batchModeSelect" class="device-select batch-mode-select">
                             <option value="plan-only">Check Goi cuoc + Payment Hold</option>
                             <option value="legacy">Mode cu: Tach SUCCESS / FAILED</option>
                         </select>
-                        <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                        <select id="batchOutputSelect" class="device-select batch-mode-select">
+                            <option value="separate">Tach tung file ket qua</option>
+                            <option value="combined">Gop 1 file ket qua</option>
+                        </select>
+                        <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>
                         <div class="action-row">
                             <button type="button" id="startBatchBtn" class="btn btn-primary">Bat dau check hang loat</button>
                             <button type="button" id="stopBatchBtn" class="btn btn-ghost" disabled>Dung</button>
                         </div>
                         <div class="action-row">
-                            <button type="button" id="downloadBatchBtn" class="btn btn-ghost" disabled>Tai ket qua (.xlsx)</button>
+                            <button type="button" id="downloadBatchBtn" class="btn btn-ghost" disabled hidden>Tai file tong (.xlsx)</button>
                             <div></div>
                         </div>
+                        <div id="batchDownloadList" class="batch-download-list"></div>
                         <div class="batch-progress-wrap">
                             <div class="batch-progress-bar">
                                 <div id="batchProgressFill" class="batch-progress-fill"></div>
@@ -414,6 +454,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             const BATCH_MODE_PLAN_ONLY = 'plan-only';
             const BATCH_MODE_LEGACY = 'legacy';
+            const BATCH_OUTPUT_SEPARATE = 'separate';
+            const BATCH_OUTPUT_COMBINED = 'combined';
             const form = document.getElementById('linkGeneratorForm');
             const cookieInput = document.getElementById('cookieInput');
             const clearCookieBtn = document.getElementById('clearCookieBtn');
@@ -428,18 +470,19 @@
             const accountInfoContent = document.getElementById('accountInfoContent');
             const batchExcelInput = document.getElementById('batchExcelInput');
             const batchModeSelect = document.getElementById('batchModeSelect');
+            const batchOutputSelect = document.getElementById('batchOutputSelect');
             const startBatchBtn = document.getElementById('startBatchBtn');
             const stopBatchBtn = document.getElementById('stopBatchBtn');
             const downloadBatchBtn = document.getElementById('downloadBatchBtn');
+            const batchDownloadList = document.getElementById('batchDownloadList');
             const batchProgressFill = document.getElementById('batchProgressFill');
             const batchStatusText = document.getElementById('batchStatusText');
             const generateButtonDefaultText = generateBtn.textContent.trim();
             let audioContext = null;
             let batchRunning = false;
             let batchStopRequested = false;
-            let batchWorkbook = null;
-            let batchOutputFilename = '';
-            let batchDownloadKind = '';
+            let batchCombinedDownload = null;
+            let batchDownloadItems = [];
 
             function isNo(value) {
                 return String(value || '').trim().toLowerCase() === 'no';
@@ -522,14 +565,85 @@
                 return batchModeSelect ? batchModeSelect.value : BATCH_MODE_PLAN_ONLY;
             }
 
-            function formatBatchFileName(date = new Date(), mode = getBatchMode()) {
+            function getBatchOutputMode() {
+                return batchOutputSelect ? batchOutputSelect.value : BATCH_OUTPUT_SEPARATE;
+            }
+
+            function formatBatchFileName(date = new Date(), mode = getBatchMode(), suffix = '') {
                 const yyyy = date.getFullYear();
                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                 const dd = String(date.getDate()).padStart(2, '0');
                 const hh = String(date.getHours()).padStart(2, '0');
                 const min = String(date.getMinutes()).padStart(2, '0');
                 const prefix = mode === BATCH_MODE_PLAN_ONLY ? 'nf_batch_goicuoc' : 'nf_batch_result';
-                return `${prefix}_${yyyy}-${mm}-${dd}_${hh}-${min}.xlsx`;
+                return `${prefix}_${yyyy}-${mm}-${dd}_${hh}-${min}${suffix ? `_${suffix}` : ''}.xlsx`;
+            }
+
+            function sanitizeFileBaseName(filename, fallback = 'file') {
+                const raw = String(filename || '').replace(/\.[^.]+$/, '').trim();
+                const normalized = raw.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').replace(/\s+/g, '_').replace(/_+/g, '_');
+                return normalized.replace(/^_+|_+$/g, '') || fallback;
+            }
+
+            function formatBatchOutputFileName(sourceName, mode = getBatchMode()) {
+                const baseName = sanitizeFileBaseName(sourceName, 'batch');
+                const suffix = mode === BATCH_MODE_PLAN_ONLY ? 'goicuoc' : 'result';
+                return `${baseName}_${suffix}.xlsx`;
+            }
+
+            function sanitizeSheetName(name, fallback = 'Sheet') {
+                const cleaned = String(name || '')
+                    .replace(/[:\\/?*\[\]]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                return (cleaned || fallback).slice(0, 31);
+            }
+
+            function createUniqueSheetName(name, usedNames) {
+                const baseName = sanitizeSheetName(name);
+                let candidate = baseName || 'Sheet';
+                let index = 1;
+
+                while (usedNames.has(candidate)) {
+                    const suffix = ` (${index})`;
+                    const truncatedBase = (baseName || 'Sheet').slice(0, Math.max(1, 31 - suffix.length));
+                    candidate = `${truncatedBase}${suffix}`;
+                    index += 1;
+                }
+
+                usedNames.add(candidate);
+                return candidate;
+            }
+
+            function clearBatchDownloads() {
+                batchCombinedDownload = null;
+                batchDownloadItems = [];
+                downloadBatchBtn.disabled = true;
+                downloadBatchBtn.hidden = true;
+                batchDownloadList.innerHTML = '';
+            }
+
+            function renderBatchDownloads() {
+                const outputMode = getBatchOutputMode();
+                downloadBatchBtn.hidden = outputMode !== BATCH_OUTPUT_COMBINED;
+                if (outputMode === BATCH_OUTPUT_COMBINED) {
+                    downloadBatchBtn.disabled = !batchCombinedDownload;
+                    batchDownloadList.innerHTML = '';
+                    return;
+                }
+
+                downloadBatchBtn.disabled = true;
+                const itemsHtml = batchDownloadItems.map((item, index) => `
+                    <div class="batch-download-item">
+                        <div class="batch-download-meta">
+                            <div class="batch-download-name">${escapeHtml(item.filename)}</div>
+                            <div class="batch-download-summary">${escapeHtml(item.summary)}</div>
+                        </div>
+                        <button type="button" class="btn btn-ghost" data-batch-download-index="${index}" ${item.workbook ? '' : 'disabled'}>${item.workbook ? 'Tai file' : 'Khong co file'}</button>
+                    </div>
+                `).join('');
+
+                batchDownloadList.innerHTML = itemsHtml;
             }
 
             function setBatchRunningState(running) {
@@ -538,13 +652,23 @@
                 stopBatchBtn.disabled = !running;
                 batchExcelInput.disabled = running;
                 if (batchModeSelect) batchModeSelect.disabled = running;
+                if (batchOutputSelect) batchOutputSelect.disabled = running;
             }
 
-            function updateBatchProgress(current, total) {
-                const safeTotal = total <= 0 ? 1 : total;
-                const percent = Math.max(0, Math.min(100, Math.round((current / safeTotal) * 100)));
+            function updateBatchProgress(progress = {}) {
+                const totalRows = Number(progress.totalRows) || 0;
+                const processedRows = Number(progress.processedRows) || 0;
+                const totalFiles = Number(progress.totalFiles) || 0;
+                const processedFiles = Number(progress.processedFiles) || 0;
+                const currentFileName = progress.currentFileName ? String(progress.currentFileName) : '';
+                const safeTotal = totalRows <= 0 ? 1 : totalRows;
+                const percent = Math.max(0, Math.min(100, Math.round((processedRows / safeTotal) * 100)));
                 batchProgressFill.style.width = `${percent}%`;
-                batchStatusText.textContent = `Dang xu ly ${current}/${total} (${percent}%)`;
+                const fileSummary = totalFiles > 0 ? `File ${Math.min(processedFiles + (currentFileName ? 1 : 0), totalFiles)}/${totalFiles}` : 'Batch';
+                const rowSummary = `Dong ${processedRows}/${totalRows}`;
+                batchStatusText.textContent = currentFileName
+                    ? `${fileSummary}: ${currentFileName} | ${rowSummary} (${percent}%)`
+                    : `${fileSummary} | ${rowSummary} (${percent}%)`;
             }
 
             function readCookiesFromSheet(workbook) {
@@ -655,11 +779,61 @@
                 return wb;
             }
 
-            async function processBatchCookies(cookies) {
+            function buildLegacyCombinedSheetRows(sourceName, successRows, failedRows) {
+                const rows = [
+                    ['File goc', sourceName],
+                    []
+                ];
+
+                rows.push([
+                    'SUCCESS',
+                    'Trang thai',
+                    'Goi cuoc',
+                    'Quoc gia',
+                    'Man hinh',
+                    'Chat luong',
+                    'Payment Hold',
+                    'Gia goi',
+                    'Ngay lap',
+                    'Thanh toan'
+                ]);
+
+                if (successRows.length > 0) {
+                    rows.push(...successRows);
+                } else {
+                    rows.push(['Khong co du lieu SUCCESS']);
+                }
+
+                rows.push([]);
+                rows.push(['FAILED', 'Error', 'HTTP Status']);
+
+                if (failedRows.length > 0) {
+                    rows.push(...failedRows);
+                } else {
+                    rows.push(['Khong co du lieu FAILED']);
+                }
+
+                return rows;
+            }
+
+            async function processBatchCookies(cookies, progressMeta = {}, onProgress = null) {
                 const successRows = [];
                 const failedRows = [];
                 const total = cookies.length;
-                updateBatchProgress(0, total);
+                let processedCount = 0;
+                const notifyProgress = (processedInFile) => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: (progressMeta.processedRowsBefore || 0) + processedInFile,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress(0);
 
                 for (let i = 0; i < cookies.length; i += 1) {
                     if (batchStopRequested) break;
@@ -688,13 +862,14 @@
                         ]);
                     }
 
-                    updateBatchProgress(i + 1, total);
+                    processedCount = i + 1;
+                    notifyProgress(i + 1);
                     if (i < cookies.length - 1) {
                         await sleep(300);
                     }
                 }
 
-                return { successRows, failedRows };
+                return { successRows, failedRows, processedCount };
             }
 
             function getPlanOnlyBatchEntries(worksheet) {
@@ -750,7 +925,53 @@
                 return { planColumnNumber, paymentHoldColumnNumber };
             }
 
-            async function processPlanOnlyBatchWorkbook(workbook) {
+            function cloneCellValue(value) {
+                return clonePlainObject(value);
+            }
+
+            function copyWorksheetToWorkbook(sourceWorksheet, targetWorkbook, sheetName) {
+                const targetWorksheet = targetWorkbook.addWorksheet(sheetName);
+
+                sourceWorksheet.columns.forEach((column, index) => {
+                    const targetColumn = targetWorksheet.getColumn(index + 1);
+                    targetColumn.width = column.width;
+                    targetColumn.hidden = column.hidden;
+                    targetColumn.style = clonePlainObject(column.style || {}) || {};
+                });
+
+                sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                    const targetRow = targetWorksheet.getRow(rowNumber);
+                    targetRow.height = row.height;
+                    targetRow.hidden = row.hidden;
+                    targetRow.style = clonePlainObject(row.style || {}) || {};
+
+                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                        const targetCell = targetRow.getCell(colNumber);
+                        targetCell.value = cloneCellValue(cell.value);
+                        targetCell.style = clonePlainObject(cell.style || {}) || {};
+                        if (cell.numFmt) targetCell.numFmt = cell.numFmt;
+                        if (cell.alignment) targetCell.alignment = clonePlainObject(cell.alignment);
+                        if (cell.font) targetCell.font = clonePlainObject(cell.font);
+                        if (cell.fill) targetCell.fill = clonePlainObject(cell.fill);
+                        if (cell.border) targetCell.border = clonePlainObject(cell.border);
+                    });
+                });
+
+                const merges = sourceWorksheet.model && Array.isArray(sourceWorksheet.model.merges)
+                    ? sourceWorksheet.model.merges
+                    : [];
+                merges.forEach((range) => {
+                    try {
+                        targetWorksheet.mergeCells(range);
+                    } catch (error) {
+                        // Ignore invalid merge ranges in copied output.
+                    }
+                });
+
+                return targetWorksheet;
+            }
+
+            async function processPlanOnlyBatchWorkbook(workbook, progressMeta = {}, onProgress = null) {
                 const worksheet = workbook.worksheets && workbook.worksheets[0];
                 if (!worksheet) {
                     throw new Error('File Excel khong co sheet du lieu.');
@@ -765,7 +986,20 @@
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
-                updateBatchProgress(0, total);
+                let processedCount = 0;
+                const notifyProgress = (processedInFile) => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: (progressMeta.processedRowsBefore || 0) + processedInFile,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress(0);
 
                 for (let i = 0; i < entries.length; i += 1) {
                     if (batchStopRequested) break;
@@ -795,13 +1029,14 @@
                         }
                     }
 
-                    updateBatchProgress(i + 1, total);
+                    processedCount = i + 1;
+                    notifyProgress(i + 1);
                     if (i < entries.length - 1) {
                         await sleep(300);
                     }
                 }
 
-                return { workbook, successRows, failedRows };
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount };
             }
 
             async function downloadExcelJsWorkbook(workbook, filename) {
@@ -810,6 +1045,14 @@
                     [buffer],
                     { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
                 );
+                downloadBlob(blob, filename);
+            }
+
+            function downloadXlsxWorkbook(workbook, filename) {
+                XLSX.writeFile(workbook, filename);
+            }
+
+            function downloadBlob(blob, filename) {
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -835,6 +1078,15 @@
                 hideAlerts();
                 resultLink.value = '';
                 openResultBtn.href = '#';
+            }
+
+            async function downloadBatchItem(item) {
+                if (!item || !item.workbook) return;
+                if (item.kind === 'exceljs') {
+                    await downloadExcelJsWorkbook(item.workbook, item.filename);
+                    return;
+                }
+                downloadXlsxWorkbook(item.workbook, item.filename);
             }
 
             function setGenerateLoading(isLoading) {
@@ -992,9 +1244,26 @@
                 }
             });
 
+            batchDownloadList.addEventListener('click', async (event) => {
+                const button = event.target.closest('[data-batch-download-index]');
+                if (!button) return;
+
+                const index = Number(button.getAttribute('data-batch-download-index'));
+                const item = batchDownloadItems[index];
+                if (!item) return;
+
+                button.disabled = true;
+                try {
+                    await downloadBatchItem(item);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+
             startBatchBtn.addEventListener('click', async () => {
                 if (batchRunning) return;
                 const mode = getBatchMode();
+                const outputMode = getBatchOutputMode();
 
                 if (typeof XLSX === 'undefined') {
                     batchStatusText.textContent = 'Khong tai duoc thu vien Excel (SheetJS).';
@@ -1005,53 +1274,149 @@
                     return;
                 }
 
-                const file = batchExcelInput.files && batchExcelInput.files[0];
-                if (!file) {
-                    batchStatusText.textContent = 'Vui long chon file .xlsx truoc.';
+                const files = Array.from(batchExcelInput.files || []);
+                if (files.length === 0) {
+                    batchStatusText.textContent = 'Vui long chon it nhat 1 file .xlsx truoc.';
                     return;
                 }
 
-                batchWorkbook = null;
-                batchOutputFilename = '';
-                batchDownloadKind = '';
-                downloadBatchBtn.disabled = true;
+                clearBatchDownloads();
                 batchStopRequested = false;
                 setBatchRunningState(true);
+                batchProgressFill.style.width = '0%';
 
                 try {
-                    const arrayBuffer = await file.arrayBuffer();
-                    let result;
+                    const preparedFiles = [];
+                    let totalRows = 0;
 
-                    if (mode === BATCH_MODE_PLAN_ONLY) {
-                        const workbook = new ExcelJS.Workbook();
-                        await workbook.xlsx.load(arrayBuffer);
-                        const worksheet = workbook.worksheets && workbook.worksheets[0];
-                        const preview = worksheet ? getPlanOnlyBatchEntries(worksheet) : { entries: [] };
-                        batchStatusText.textContent = `Dang bat dau check ${preview.entries.length} dong...`;
-                        result = await processPlanOnlyBatchWorkbook(workbook);
-                        batchWorkbook = result.workbook;
-                        batchDownloadKind = 'exceljs';
-                    } else {
-                        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                        const cookies = readCookiesFromSheet(workbook);
-                        if (cookies.length === 0) {
-                            batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A.';
-                            return;
+                    for (const file of files) {
+                        const arrayBuffer = await file.arrayBuffer();
+                        if (mode === BATCH_MODE_PLAN_ONLY) {
+                            const workbook = new ExcelJS.Workbook();
+                            await workbook.xlsx.load(arrayBuffer);
+                            const worksheet = workbook.worksheets && workbook.worksheets[0];
+                            const preview = worksheet ? getPlanOnlyBatchEntries(worksheet) : { entries: [], validCookieCount: 0 };
+                            const rowCount = preview.entries.length;
+                            preparedFiles.push({ file, workbook, rowCount });
+                            totalRows += rowCount;
+                        } else {
+                            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                            const cookies = readCookiesFromSheet(workbook);
+                            preparedFiles.push({ file, workbook, cookies, rowCount: cookies.length });
+                            totalRows += cookies.length;
                         }
-
-                        batchStatusText.textContent = `Dang bat dau check ${cookies.length} cookie...`;
-                        result = await processBatchCookies(cookies);
-                        batchWorkbook = buildBatchWorkbook(result.successRows, result.failedRows);
-                        batchDownloadKind = 'xlsx';
                     }
 
-                    batchOutputFilename = formatBatchFileName(new Date(), mode);
-                    downloadBatchBtn.disabled = false;
+                    if (totalRows === 0) {
+                        batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A trong cac file da chon.';
+                        return;
+                    }
+
+                    const combinedWorkbook = outputMode === BATCH_OUTPUT_COMBINED
+                        ? (mode === BATCH_MODE_PLAN_ONLY ? new ExcelJS.Workbook() : XLSX.utils.book_new())
+                        : null;
+                    const usedSheetNames = new Set();
+                    let processedFiles = 0;
+                    let processedRows = 0;
+                    let totalSuccess = 0;
+                    let totalFailed = 0;
+
+                    updateBatchProgress({ processedRows: 0, totalRows, processedFiles: 0, totalFiles: preparedFiles.length, currentFileName: preparedFiles[0] ? preparedFiles[0].file.name : '' });
+
+                    for (const prepared of preparedFiles) {
+                        if (batchStopRequested) break;
+
+                        const progressMeta = {
+                            processedRowsBefore: processedRows,
+                            totalRows,
+                            processedFilesBefore: processedFiles,
+                            totalFiles: preparedFiles.length,
+                            currentFileName: prepared.file.name
+                        };
+                        let result = null;
+
+                        try {
+                            if (mode === BATCH_MODE_PLAN_ONLY) {
+                                result = await processPlanOnlyBatchWorkbook(prepared.workbook, progressMeta, updateBatchProgress);
+                                const summary = `File goc: ${prepared.file.name} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                                const item = {
+                                    filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                    summary,
+                                    kind: 'exceljs',
+                                    workbook: result.workbook
+                                };
+
+                                if (outputMode === BATCH_OUTPUT_COMBINED) {
+                                    const sheetName = createUniqueSheetName(prepared.file.name, usedSheetNames);
+                                    copyWorksheetToWorkbook(result.worksheet, combinedWorkbook, sheetName);
+                                } else {
+                                    batchDownloadItems.push(item);
+                                }
+                            } else {
+                                if (!prepared.cookies || prepared.cookies.length === 0) {
+                                    throw new Error('Khong tim thay cookie hop le o cot A.');
+                                }
+
+                                result = await processBatchCookies(prepared.cookies, progressMeta, updateBatchProgress);
+                                const workbook = buildBatchWorkbook(result.successRows, result.failedRows);
+                                const summary = `File goc: ${prepared.file.name} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                                const item = {
+                                    filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                    summary,
+                                    kind: 'xlsx',
+                                    workbook
+                                };
+
+                                if (outputMode === BATCH_OUTPUT_COMBINED) {
+                                    const sheetName = createUniqueSheetName(prepared.file.name, usedSheetNames);
+                                    const sheetRows = buildLegacyCombinedSheetRows(prepared.file.name, result.successRows, result.failedRows);
+                                    XLSX.utils.book_append_sheet(combinedWorkbook, XLSX.utils.aoa_to_sheet(sheetRows), sheetName);
+                                } else {
+                                    batchDownloadItems.push(item);
+                                }
+                            }
+
+                            totalSuccess += result.successRows.length;
+                            totalFailed += result.failedRows.length;
+                        } catch (error) {
+                            totalFailed += 1;
+                            batchDownloadItems.push({
+                                filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                summary: `File goc: ${prepared.file.name} | Loi file: ${error.message || 'Unknown error'}`,
+                                kind: '',
+                                workbook: null
+                            });
+                        }
+
+                        processedFiles += 1;
+                        processedRows += result ? result.processedCount : 0;
+                    }
+
+                    const combinedHasSheets = mode === BATCH_MODE_PLAN_ONLY
+                        ? combinedWorkbook && combinedWorkbook.worksheets && combinedWorkbook.worksheets.length > 0
+                        : combinedWorkbook && combinedWorkbook.SheetNames && combinedWorkbook.SheetNames.length > 0;
+
+                    if (outputMode === BATCH_OUTPUT_COMBINED && combinedHasSheets && !batchStopRequested) {
+                        batchCombinedDownload = {
+                            filename: formatBatchFileName(new Date(), mode, 'combined'),
+                            kind: mode === BATCH_MODE_PLAN_ONLY ? 'exceljs' : 'xlsx',
+                            workbook: combinedWorkbook
+                        };
+                    } else if (outputMode === BATCH_OUTPUT_COMBINED && combinedHasSheets && processedFiles > 0) {
+                        batchCombinedDownload = {
+                            filename: formatBatchFileName(new Date(), mode, 'combined_partial'),
+                            kind: mode === BATCH_MODE_PLAN_ONLY ? 'exceljs' : 'xlsx',
+                            workbook: combinedWorkbook
+                        };
+                    }
+
+                    renderBatchDownloads();
 
                     if (batchStopRequested) {
-                        batchStatusText.textContent = `Da dung batch. Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                        batchStatusText.textContent = `Da dung batch. File xong: ${processedFiles}/${preparedFiles.length} | Thanh cong: ${totalSuccess} | Loi: ${totalFailed}`;
                     } else {
-                        batchStatusText.textContent = `Hoan tat. Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`;
+                        batchProgressFill.style.width = '100%';
+                        batchStatusText.textContent = `Hoan tat ${processedFiles} file. Thanh cong: ${totalSuccess} | Loi: ${totalFailed}`;
                     }
                 } catch (error) {
                     batchStatusText.textContent = `Batch loi: ${error.message || 'Unknown error'}`;
@@ -1067,15 +1432,17 @@
             });
 
             downloadBatchBtn.addEventListener('click', async () => {
-                if (!batchWorkbook) {
+                if (!batchCombinedDownload) {
                     batchStatusText.textContent = 'Chua co ket qua de tai.';
                     return;
                 }
-                if (batchDownloadKind === 'exceljs') {
-                    await downloadExcelJsWorkbook(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date(), BATCH_MODE_PLAN_ONLY));
-                    return;
+
+                downloadBatchBtn.disabled = true;
+                try {
+                    await downloadBatchItem(batchCombinedDownload);
+                } finally {
+                    downloadBatchBtn.disabled = false;
                 }
-                XLSX.writeFile(batchWorkbook, batchOutputFilename || formatBatchFileName(new Date(), BATCH_MODE_LEGACY));
             });
 
             copyResultBtn.addEventListener('click', async () => {
