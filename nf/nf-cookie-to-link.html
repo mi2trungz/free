@@ -1188,13 +1188,15 @@
                 appendedPaymentHoldColumn.width = appendedWidth;
 
                 const headerRowNumber = 1;
-                const headerCell = worksheet.getCell(headerRowNumber, planColumnNumber);
-                const paymentHoldHeaderCell = worksheet.getCell(headerRowNumber, paymentHoldColumnNumber);
-                const styleSourceCell = worksheet.getCell(headerRowNumber, originalLastColumnNumber);
-                copyCellStyle(styleSourceCell, headerCell);
-                copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
-                headerCell.value = 'Goi cuoc';
-                paymentHoldHeaderCell.value = 'Payment Hold';
+                if (hasHeader) {
+                    const headerCell = worksheet.getCell(headerRowNumber, planColumnNumber);
+                    const paymentHoldHeaderCell = worksheet.getCell(headerRowNumber, paymentHoldColumnNumber);
+                    const styleSourceCell = worksheet.getCell(headerRowNumber, originalLastColumnNumber);
+                    copyCellStyle(styleSourceCell, headerCell);
+                    copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
+                    headerCell.value = 'Goi cuoc';
+                    paymentHoldHeaderCell.value = 'Payment Hold';
+                }
 
                 return {
                     planColumnNumber,
@@ -1249,10 +1251,10 @@
 
                 const planHeaderCell = targetWorksheet.getCell(1, metadata.planColumnNumber || 0);
                 const paymentHeaderCell = targetWorksheet.getCell(1, metadata.paymentHoldColumnNumber || 0);
-                if (metadata.planColumnNumber) {
+                if (metadata.hasHeader && metadata.planColumnNumber) {
                     planHeaderCell.value = 'Goi cuoc';
                 }
-                if (metadata.paymentHoldColumnNumber) {
+                if (metadata.hasHeader && metadata.paymentHoldColumnNumber) {
                     paymentHeaderCell.value = 'Payment Hold';
                 }
 
