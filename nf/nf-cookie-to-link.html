@@ -1176,50 +1176,66 @@
 
             function preparePlanOnlyWorksheet(worksheet, hasHeader) {
                 const lastColumnNumber = getWorksheetLastColumnNumber(worksheet);
-                const planColumnNumber = lastColumnNumber + 1;
-                const paymentHoldColumnNumber = lastColumnNumber + 2;
+                const originalLastColumnNumber = lastColumnNumber;
+                const planColumnNumber = originalLastColumnNumber + 1;
+                const paymentHoldColumnNumber = originalLastColumnNumber + 2;
                 const appendedPlanColumn = worksheet.getColumn(planColumnNumber);
                 const appendedPaymentHoldColumn = worksheet.getColumn(paymentHoldColumnNumber);
-                const sourceColumn = worksheet.getColumn(lastColumnNumber);
+                const sourceColumn = worksheet.getColumn(originalLastColumnNumber);
                 const fallbackColumn = worksheet.getColumn(1);
                 const appendedWidth = sourceColumn.width || fallbackColumn.width || 20;
                 appendedPlanColumn.width = appendedWidth;
                 appendedPaymentHoldColumn.width = appendedWidth;
 
-                if (hasHeader) {
-                    const headerCell = worksheet.getCell(1, planColumnNumber);
-                    const paymentHoldHeaderCell = worksheet.getCell(1, paymentHoldColumnNumber);
-                    const styleSourceCell = worksheet.getCell(1, lastColumnNumber);
-                    copyCellStyle(styleSourceCell, headerCell);
-                    copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
-                    headerCell.value = 'Goi cuoc';
-                    paymentHoldHeaderCell.value = 'Payment Hold';
-                }
+                const headerRowNumber = 1;
+                const headerCell = worksheet.getCell(headerRowNumber, planColumnNumber);
+                const paymentHoldHeaderCell = worksheet.getCell(headerRowNumber, paymentHoldColumnNumber);
+                const styleSourceCell = worksheet.getCell(headerRowNumber, originalLastColumnNumber);
+                copyCellStyle(styleSourceCell, headerCell);
+                copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
+                headerCell.value = 'Goi cuoc';
+                paymentHoldHeaderCell.value = 'Payment Hold';
 
-                return { planColumnNumber, paymentHoldColumnNumber };
+                return {
+                    planColumnNumber,
+                    paymentHoldColumnNumber,
+                    originalLastColumnNumber,
+                    exportLastColumnNumber: paymentHoldColumnNumber,
+                    hasHeader
+                };
             }
 
             function cloneCellValue(value) {
                 return clonePlainObject(value);
             }
 
-            function copyWorksheetToWorkbook(sourceWorksheet, targetWorkbook, sheetName) {
+            function copyWorksheetToWorkbook(sourceWorksheet, targetWorkbook, sheetName, metadata = {}) {
                 const targetWorksheet = targetWorkbook.addWorksheet(sheetName);
+                const exportLastColumnNumber = Math.max(
+                    Number(metadata.exportLastColumnNumber) || 0,
+                    Number(metadata.paymentHoldColumnNumber) || 0,
+                    Number(metadata.planColumnNumber) || 0,
+                    getWorksheetLastColumnNumber(sourceWorksheet)
+                );
+                const totalRows = Math.max(sourceWorksheet.rowCount || 0, sourceWorksheet.actualRowCount || 0, 1);
 
-                sourceWorksheet.columns.forEach((column, index) => {
-                    const targetColumn = targetWorksheet.getColumn(index + 1);
+                for (let columnNumber = 1; columnNumber <= exportLastColumnNumber; columnNumber += 1) {
+                    const column = sourceWorksheet.getColumn(columnNumber);
+                    const targetColumn = targetWorksheet.getColumn(columnNumber);
                     targetColumn.width = column.width;
                     targetColumn.hidden = column.hidden;
                     targetColumn.style = clonePlainObject(column.style || {}) || {};
-                });
+                }
 
-                sourceWorksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                for (let rowNumber = 1; rowNumber <= totalRows; rowNumber += 1) {
+                    const row = sourceWorksheet.getRow(rowNumber);
                     const targetRow = targetWorksheet.getRow(rowNumber);
                     targetRow.height = row.height;
                     targetRow.hidden = row.hidden;
                     targetRow.style = clonePlainObject(row.style || {}) || {};
 
-                    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    for (let colNumber = 1; colNumber <= exportLastColumnNumber; colNumber += 1) {
+                        const cell = row.getCell(colNumber);
                         const targetCell = targetRow.getCell(colNumber);
                         targetCell.value = cloneCellValue(cell.value);
                         targetCell.style = clonePlainObject(cell.style || {}) || {};
@@ -1228,8 +1244,17 @@
                         if (cell.font) targetCell.font = clonePlainObject(cell.font);
                         if (cell.fill) targetCell.fill = clonePlainObject(cell.fill);
                         if (cell.border) targetCell.border = clonePlainObject(cell.border);
-                    });
-                });
+                    }
+                }
+
+                const planHeaderCell = targetWorksheet.getCell(1, metadata.planColumnNumber || 0);
+                const paymentHeaderCell = targetWorksheet.getCell(1, metadata.paymentHoldColumnNumber || 0);
+                if (metadata.planColumnNumber) {
+                    planHeaderCell.value = 'Goi cuoc';
+                }
+                if (metadata.paymentHoldColumnNumber) {
+                    paymentHeaderCell.value = 'Payment Hold';
+                }
 
                 const merges = sourceWorksheet.model && Array.isArray(sourceWorksheet.model.merges)
                     ? sourceWorksheet.model.merges
@@ -1256,7 +1281,8 @@
                     throw new Error('Khong tim thay cookie hop le o cot A.');
                 }
 
-                const { planColumnNumber, paymentHoldColumnNumber } = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
@@ -1308,7 +1334,7 @@
                     }
                 }
 
-                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount };
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, planOnlyMetadata };
             }
 
             async function processPlanOnlyBatchWorkbookParallel(workbook, workerCount, progressMeta = {}, onProgress = null) {
@@ -1322,7 +1348,8 @@
                     throw new Error('Khong tim thay cookie hop le o cot A.');
                 }
 
-                const { planColumnNumber, paymentHoldColumnNumber } = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
@@ -1418,7 +1445,7 @@
                     failedRows.push([result.cookie, result.error, result.status]);
                 }
 
-                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount };
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, planOnlyMetadata };
             }
 
             async function downloadExcelJsWorkbook(workbook, filename) {
@@ -1796,6 +1823,7 @@
                                     fileState.output = {
                                         workbook: result.workbook,
                                         worksheet: result.worksheet,
+                                        planOnlyMetadata: result.planOnlyMetadata,
                                         kind: 'exceljs'
                                     };
                                 });
@@ -1901,7 +1929,12 @@
 
                             const sheetName = createUniqueSheetName(prepared.file.name, usedSheetNames);
                             if (mode === BATCH_MODE_PLAN_ONLY) {
-                                copyWorksheetToWorkbook(fileState.output.worksheet, combinedWorkbook, sheetName);
+                                copyWorksheetToWorkbook(
+                                    fileState.output.worksheet,
+                                    combinedWorkbook,
+                                    sheetName,
+                                    fileState.output.planOnlyMetadata || {}
+                                );
                                 return;
                             }
                             const sheetRows = buildLegacyCombinedSheetRows(
