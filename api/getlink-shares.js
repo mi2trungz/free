@@ -37,6 +37,7 @@ function shareDto(record, req) {
         updatedAt: record.updatedAt || '',
         revokedAt: record.revokedAt || '',
         expiresAt: record.expiresAt || '',
+        desktopOnly: !!record.desktopOnly,
         shareUrl: `${origin}/getlink?s=${encodeURIComponent(record.id)}`
     };
 }
@@ -90,7 +91,7 @@ module.exports = async function (req, res) {
         if (req.method === 'POST' && pathname === '/api/getlink-shares') {
             const body = parseBody(req.body);
             const expiresAt = body.expiresAt !== undefined ? normalizeExpiryInput(body.expiresAt) : '';
-            const created = await createShare('', 'guest', expiresAt);
+            const created = await createShare('', 'guest', expiresAt, body.desktopOnly === true);
             const dto = shareDto(created, req);
             return res.status(200).json({ success: true, ...dto, share: dto });
         }
@@ -121,6 +122,7 @@ module.exports = async function (req, res) {
                 id: record.id,
                 cookieStr: resolved.cookieStr,
                 resolvedSlot: resolved.slot,
+                desktopOnly: !!(resolved.share || record).desktopOnly,
                 checks: resolved.checks || [],
                 share: shareDto(resolved.share || record, req)
             });

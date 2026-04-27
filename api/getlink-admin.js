@@ -120,6 +120,7 @@ function toAdminShareDto(record, req) {
         status: record.status,
         cookieRaw: cookies.primary || '',
         cookies,
+        desktopOnly: !!record.desktopOnly,
         createdAt: record.createdAt || '',
         updatedAt: record.updatedAt || '',
         revokedAt: record.revokedAt || '',

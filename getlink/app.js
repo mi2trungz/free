@@ -14,6 +14,7 @@ let adminTokenRefreshPromise = null;
 let adminActiveTab = 'search';
 let adminTabManuallySelected = false;
 let runtimeCookie = '';
+let runtimeShareDesktopOnly = false;
 let currentAdminShare = null;
 let createdAdminShare = null;
 let pendingShareIdFromUrl = '';
@@ -430,9 +431,11 @@ function resetCreatedShareComposer(options = {}) {
         const quickDaysInput = el('shareCreateQuickDaysInput');
         const dateInput = el('shareCreateDateInput');
         const timeInput = el('shareCreateTimeInput');
+        const desktopOnlyInput = el('shareDesktopOnlyInput');
         if (quickDaysInput) quickDaysInput.value = '';
         if (dateInput) dateInput.value = '';
         if (timeInput) timeInput.value = '';
+        if (desktopOnlyInput) desktopOnlyInput.checked = false;
     }
     setShareState('', 'idle');
     setShareCreateExpiryState('', 'idle');
@@ -1166,6 +1169,14 @@ function getRuntimeCookie() {
     return normalizeCookie(runtimeCookie);
 }
 
+function isRuntimeShareDesktopOnly() {
+    return runtimeShareDesktopOnly === true;
+}
+
+function setRuntimeShareDesktopOnly(value) {
+    runtimeShareDesktopOnly = value === true;
+}
+
 function syncAdminCookieInput() {
     return '';
 }
@@ -1225,6 +1236,21 @@ function setRuntimeCookie(rawCookie, options = {}) {
         setLookupState('Không có cookie hợp lệ. Chỉ có thể tiếp tục bằng link được cấp.', 'warning');
     }
     updateReadyState();
+}
+
+function getDesktopOnlyBlockedMessage() {
+    return 'GÓI NETFLIX TẶNG KÈM CHỈ CÓ THỂ XEM ĐƯỢC TRÊN MÁY TÍNH';
+}
+
+function showDesktopOnlyBlockedPopup() {
+    const message = getDesktopOnlyBlockedMessage();
+    setLookupState(message, 'warning');
+    openSupportModal({
+        eyebrow: 'Thông báo',
+        title: 'Thông báo',
+        message,
+        showBh247: false
+    });
 }
 
 function getEntryAlertPopupContent() {
@@ -1345,6 +1371,7 @@ function openSupportModal(payload = null) {
 function closeSupportModal() {
     const modal = el('supportModal');
     if (!modal) return;
+    renderSupportModalContent(getDefaultSupportModalContent());
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
 }
@@ -1762,6 +1789,11 @@ function handleConfirmedDevice(device) {
     const normalized = String(device || '').trim();
     if (!normalized) return;
 
+    if (isRuntimeShareDesktopOnly() && normalized !== 'desktop') {
+        showDesktopOnlyBlockedPopup();
+        return;
+    }
+
     if (normalized === 'tv') {
         openTvGuideModal();
         return;
@@ -1800,6 +1832,7 @@ async function generateShareIdLink() {
     const quickDaysValue = String(el('shareCreateQuickDaysInput') && el('shareCreateQuickDaysInput').value || '').trim();
     const rawDateValue = String(el('shareCreateDateInput') && el('shareCreateDateInput').value || '').trim();
     const rawTimeValue = String(el('shareCreateTimeInput') && el('shareCreateTimeInput').value || '').trim();
+    const desktopOnly = !!(el('shareDesktopOnlyInput') && el('shareDesktopOnlyInput').checked);
     const quickDaysParse = parseQuickDaysExpiryInput(quickDaysValue);
     if (!quickDaysParse.ok) {
         setShareState(quickDaysParse.error || 'Hạn lẹ không hợp lệ.', 'warning');
@@ -1829,7 +1862,8 @@ async function generateShareIdLink() {
     );
     try {
         const data = await apiRequest('/api/getlink-shares', 'POST', {
-            expiresAt
+            expiresAt,
+            desktopOnly
         });
         const shareUrl = String(data.shareUrl || '').trim();
         createdAdminShare = data.share || null;
@@ -1878,12 +1912,14 @@ async function applyCookieFromQuery() {
     const encodedCookie = String(params.get('c') || '').trim();
 
     if (shareId) {
+        setRuntimeShareDesktopOnly(false);
         pendingShareIdFromUrl = shareId;
         showLookupLoadingOverlay('Đang kiểm tra cookie của link ID, vui lòng chờ...');
         setLookupState('Đang thử cookie phù hợp từ link ID...', 'loading');
         try {
             const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}`, 'GET');
             const cookieStr = normalizeCookie(data.cookieStr || '');
+            setRuntimeShareDesktopOnly(!!(data.desktopOnly || (data.share && data.share.desktopOnly)));
             if (!cookieStr) {
                 hideLookupLoadingOverlay();
                 const entryError = {
@@ -1923,6 +1959,7 @@ async function applyCookieFromQuery() {
     }
 
     if (encodedCookie) {
+        setRuntimeShareDesktopOnly(false);
         try {
             const cookieStr = normalizeCookie(fromBase64Url(encodedCookie));
             if (!cookieStr) {

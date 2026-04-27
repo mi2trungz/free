@@ -43,6 +43,17 @@ function parseFirestoreString(valueObj = null) {
     return '';
 }
 
+function parseFirestoreBoolean(valueObj = null, fallback = false) {
+    if (!valueObj || typeof valueObj !== 'object') return !!fallback;
+    if (typeof valueObj.booleanValue === 'boolean') return valueObj.booleanValue;
+    if (typeof valueObj.stringValue === 'string') {
+        const normalized = valueObj.stringValue.trim().toLowerCase();
+        if (normalized === 'true') return true;
+        if (normalized === 'false') return false;
+    }
+    return !!fallback;
+}
+
 function sanitizeCookieRaw(value = '') {
     return String(value || '').trim();
 }
@@ -54,6 +65,10 @@ function sanitizeShareCookies(input = {}) {
         backup1: sanitizeCookieRaw(raw.backup1),
         backup2: sanitizeCookieRaw(raw.backup2)
     };
+}
+
+function sanitizeDesktopOnly(value) {
+    return value === true;
 }
 
 function normalizeSlotName(slot = '') {
@@ -84,6 +99,7 @@ function mapShareFieldsToRecord(fields = {}) {
         id: parseFirestoreString(fields.id),
         cookieRaw: cookies.primary,
         cookies,
+        desktopOnly: parseFirestoreBoolean(fields.desktopOnly, false),
         status: sanitizeShareStatus(parseFirestoreString(fields.status)),
         createdAt: parseFirestoreString(fields.createdAt),
         updatedAt: parseFirestoreString(fields.updatedAt),
@@ -103,6 +119,7 @@ function mapShareRecordToFields(record = {}) {
         cookiePrimaryRaw: toStringValue(cookies.primary || ''),
         cookieBackup1Raw: toStringValue(cookies.backup1 || ''),
         cookieBackup2Raw: toStringValue(cookies.backup2 || ''),
+        desktopOnly: { booleanValue: sanitizeDesktopOnly(record.desktopOnly) },
         status: toStringValue(sanitizeShareStatus(record.status)),
         createdAt: toStringValue(record.createdAt || ''),
         updatedAt: toStringValue(record.updatedAt || ''),
@@ -231,7 +248,8 @@ async function readShareById(shareId = '') {
 async function saveShareRecord(record = {}) {
     const next = {
         ...record,
-        cookies: sanitizeShareCookies(record.cookies || {})
+        cookies: sanitizeShareCookies(record.cookies || {}),
+        desktopOnly: sanitizeDesktopOnly(record.desktopOnly)
     };
     next.cookieRaw = next.cookies.primary || '';
     const ok = await patchDoc(buildShareDocPath(next.id), mapShareRecordToFields(next));
@@ -243,9 +261,10 @@ async function saveShareRecord(record = {}) {
     return next;
 }
 
-async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') {
+async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '', desktopOnly = false) {
     const finalCookie = sanitizeCookieRaw(cookieRaw);
     const finalExpiresAt = normalizeExpiryInput(expiresAt);
+    const finalDesktopOnly = sanitizeDesktopOnly(desktopOnly);
 
     const now = new Date().toISOString();
     for (let i = 0; i < 12; i += 1) {
@@ -261,6 +280,7 @@ async function createShare(cookieRaw = '', createdBy = 'guest', expiresAt = '') 
                 backup1: '',
                 backup2: ''
             },
+            desktopOnly: finalDesktopOnly,
             status: 'active',
             createdAt: now,
             updatedAt: now,

@@ -591,6 +591,37 @@
             gap: 0.5rem;
         }
 
+        .share-create-option-row {
+            margin-top: 0.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .share-option-check {
+            width: 18px;
+            height: 18px;
+            accent-color: #ef233c;
+            cursor: pointer;
+        }
+
+        .share-option-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: #eef4ff;
+            cursor: pointer;
+        }
+
+        .share-option-hint {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #cddcff;
+        }
+
         .share-create-cookie-hint {
             margin: 0;
             font-size: 0.82rem;
@@ -1031,6 +1062,13 @@
                                 <div class="share-create-expiry-grid">
                                     <input id="shareCreateDateInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Ngày: dd/mm hoặc dd/mm/yyyy">
                                     <input id="shareCreateTimeInput" class="text-input share-expiry-input" type="text" inputmode="numeric" placeholder="Giờ: HH:mm">
+                                </div>
+                                <div class="share-create-option-row">
+                                    <label class="share-option-label" for="shareDesktopOnlyInput">
+                                        <input id="shareDesktopOnlyInput" class="share-option-check" type="checkbox">
+                                        <span>Chỉ cho phép xem trên máy tính</span>
+                                    </label>
+                                    <p class="share-option-hint">Bật mục này nếu link chỉ được dùng trên máy tính.</p>
                                 </div>
                                 <div id="shareCreateExpiryState" class="state-text state-idle hidden"></div>
                             </div>
