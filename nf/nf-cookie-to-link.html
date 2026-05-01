@@ -101,6 +101,130 @@
             outline: none;
         }
 
+        .cookie-tool-stack {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+            z-index: 2;
+        }
+
+        .cookie-paste-btn {
+            min-width: 54px;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.92);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .cookie-paste-btn:hover,
+        .cookie-paste-btn:focus-visible {
+            border-color: rgba(255, 255, 255, 0.28);
+            background: rgba(30, 41, 59, 0.96);
+            color: var(--text-base);
+            outline: none;
+        }
+
+        .cookie-toggle-panel {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .cookie-toggle-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .cookie-toggle-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .cookie-toggle-title {
+            display: block;
+            color: var(--text-base);
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .cookie-toggle-hint {
+            margin-top: 3px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.45;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-flex;
+            flex-shrink: 0;
+            width: 50px;
+            height: 30px;
+        }
+
+        .switch input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(15, 23, 42, 0.88);
+            transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+            transition: transform var(--transition-fast), background var(--transition-fast);
+        }
+
+        .switch input:checked + .switch-slider {
+            background: rgba(34, 197, 94, 0.22);
+            border-color: rgba(34, 197, 94, 0.55);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        }
+
+        .switch input:checked + .switch-slider::before {
+            transform: translateX(20px);
+            background: #dcfce7;
+        }
+
+        .switch input:focus-visible + .switch-slider {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
         .inline-error {
             display: none;
             margin-top: 8px;
@@ -418,6 +542,41 @@
             display: inline-block;
         }
 
+        .toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 60;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.84rem;
+            color: #fff;
+            background: #111827;
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42);
+            max-width: min(90vw, 360px);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .toast.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.ok {
+            background: #047857;
+        }
+
+        .toast.warn {
+            background: #b45309;
+        }
+
+        .toast.bad {
+            background: #b91c1c;
+        }
+
         @keyframes spin {
             to {
                 transform: rotate(360deg);
@@ -435,6 +594,20 @@
 
             .action-row {
                 grid-template-columns: 1fr;
+            }
+
+            .cookie-tool-stack {
+                top: 10px;
+                right: 10px;
+                flex-direction: row;
+            }
+
+            .cookie-input-wrap .cookie-textarea {
+                padding-top: 92px;
+            }
+
+            .cookie-toggle-item {
+                align-items: center;
             }
         }
     </style>
@@ -456,7 +629,32 @@
                         <div class="input-group">
                             <div class="cookie-input-wrap">
                                 <button type="button" id="clearCookieBtn" class="cookie-clear-btn" aria-label="Xoa nhanh noi dung cookie">Xoa</button>
+                                <div class="cookie-tool-stack">
+                                    <button type="button" id="pasteCookieBtn" class="cookie-paste-btn" aria-label="Dan clipboard vao o cookie">Dan</button>
+                                </div>
                                 <textarea id="cookieInput" class="text-input cookie-textarea" placeholder="Dan cookie Netflix vao day...&#10;Vi du: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;" required></textarea>
+                            </div>
+                            <div class="cookie-toggle-panel">
+                                <div class="cookie-toggle-item">
+                                    <div class="cookie-toggle-copy">
+                                        <span class="cookie-toggle-title">Tu dong tao link khi dan</span>
+                                        <div class="cookie-toggle-hint">Bat len de tu tao link ngay khi textarea nhan noi dung tu thao tac dan.</div>
+                                    </div>
+                                    <label class="switch" for="autoGenerateToggle">
+                                        <input type="checkbox" id="autoGenerateToggle">
+                                        <span class="switch-slider" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="cookie-toggle-item">
+                                    <div class="cookie-toggle-copy">
+                                        <span class="cookie-toggle-title">Xoa roi dan clipboard</span>
+                                        <div class="cookie-toggle-hint">Bat len de nut Xoa vua xoa noi dung cu vua doc clipboard, dan vao o nhap va thong bao thanh cong.</div>
+                                    </div>
+                                    <label class="switch" for="clearPasteToggle">
+                                        <input type="checkbox" id="clearPasteToggle">
+                                        <span class="switch-slider" aria-hidden="true"></span>
+                                    </label>
+                                </div>
                             </div>
                             <div id="inlineError" class="inline-error" role="alert" aria-live="polite"></div>
 
@@ -527,6 +725,7 @@
             </div>
         </div>
     </main>
+    <div id="pageToast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
@@ -544,9 +743,13 @@
             const MAX_BATCH_CONCURRENCY = 3;
             const DEFAULT_SINGLE_FILE_WORKERS = 5;
             const MAX_SINGLE_FILE_WORKERS = 10;
+            const BATCH_DUPLICATE_MESSAGE = 'Trung cookie, bo qua';
             const form = document.getElementById('linkGeneratorForm');
             const cookieInput = document.getElementById('cookieInput');
             const clearCookieBtn = document.getElementById('clearCookieBtn');
+            const pasteCookieBtn = document.getElementById('pasteCookieBtn');
+            const autoGenerateToggle = document.getElementById('autoGenerateToggle');
+            const clearPasteToggle = document.getElementById('clearPasteToggle');
             const inlineError = document.getElementById('inlineError');
             const deviceSelect = document.getElementById('deviceSelect');
             const generateBtn = document.getElementById('generateBtn');
@@ -567,13 +770,19 @@
             const batchProgressFill = document.getElementById('batchProgressFill');
             const batchStatusText = document.getElementById('batchStatusText');
             const batchFileStatusList = document.getElementById('batchFileStatusList');
+            const pageToast = document.getElementById('pageToast');
             const generateButtonDefaultText = generateBtn.textContent.trim();
+            const STORAGE_KEY_AUTO_GENERATE = 'nf_cookie_to_link_auto_generate_on_paste';
+            const STORAGE_KEY_CLEAR_PASTE = 'nf_cookie_to_link_clear_paste';
             let audioContext = null;
             let batchRunning = false;
             let batchStopRequested = false;
             let batchCombinedDownload = null;
             let batchDownloadItems = [];
             let batchFileStates = [];
+            let toastTimer = null;
+            let generateInFlight = false;
+            let autoSubmitSource = '';
 
             function isNo(value) {
                 return String(value || '').trim().toLowerCase() === 'no';
@@ -641,6 +850,19 @@
                 accountInfoBox.classList.remove('active');
                 inlineError.textContent = msg;
                 inlineError.classList.add('active');
+            }
+
+            function showToast(message, kind = '') {
+                if (!pageToast) return;
+                pageToast.textContent = String(message || '');
+                pageToast.className = `toast ${kind}`.trim();
+                pageToast.classList.add('active');
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                }
+                toastTimer = setTimeout(() => {
+                    pageToast.classList.remove('active');
+                }, 2400);
             }
 
             function sleep(ms) {
@@ -732,10 +954,11 @@
             function getBatchFileStatusMeta(fileState) {
                 const progressText = `Dong ${fileState.processedRows || 0}/${fileState.totalRows || 0}`;
                 const resultText = `Thanh cong: ${fileState.successCount || 0} | Loi: ${fileState.failedCount || 0}`;
+                const duplicateText = `Trung bo qua: ${fileState.duplicateCount || 0}`;
                 const extras = [];
                 if (fileState.modeLabel) extras.push(fileState.modeLabel);
                 if (fileState.workerCount) extras.push(`Worker: ${fileState.workerCount}`);
-                extras.push(progressText, resultText);
+                extras.push(progressText, resultText, duplicateText);
                 if (fileState.errorMessage) extras.push(`Chi tiet: ${fileState.errorMessage}`);
                 return extras.join(' | ');
             }
@@ -782,7 +1005,8 @@
                     processedRows: 0,
                     totalRows: 0,
                     totalSuccess: 0,
-                    totalFailed: 0
+                    totalFailed: 0,
+                    totalDuplicates: 0
                 };
 
                 batchFileStates.forEach((fileState) => {
@@ -790,6 +1014,7 @@
                     totals.totalRows += Number(fileState.totalRows) || 0;
                     totals.totalSuccess += Number(fileState.successCount) || 0;
                     totals.totalFailed += Number(fileState.failedCount) || 0;
+                    totals.totalDuplicates += Number(fileState.duplicateCount) || 0;
 
                     if (fileState.status === BATCH_FILE_STATUS_DONE || fileState.status === BATCH_FILE_STATUS_ERROR) {
                         totals.completedFiles += 1;
@@ -883,6 +1108,20 @@
                     values.shift();
                 }
                 return values;
+            }
+
+            function markDuplicateItems(items, seenCookies, getCookieValue) {
+                return (Array.isArray(items) ? items : []).map((item) => {
+                    const cookieValue = String(getCookieValue(item) || '').trim();
+                    const duplicateSkipped = !!cookieValue && seenCookies.has(cookieValue);
+                    if (cookieValue && !duplicateSkipped) {
+                        seenCookies.add(cookieValue);
+                    }
+                    return {
+                        ...item,
+                        duplicateSkipped
+                    };
+                });
             }
 
             function normalizeCellText(value) {
@@ -1017,6 +1256,7 @@
                 const failedRows = [];
                 const total = cookies.length;
                 let processedCount = 0;
+                let duplicateCount = 0;
                 const notifyProgress = (processedInFile) => {
                     if (typeof onProgress === 'function') {
                         onProgress({
@@ -1032,7 +1272,20 @@
                 notifyProgress(0);
 
                 for (let i = 0; i < cookies.length; i += 1) {
-                    const cookieStr = cookies[i];
+                    const cookieEntry = cookies[i] || {};
+                    const cookieStr = String(cookieEntry.cookie || '').trim();
+                    if (cookieEntry.duplicateSkipped) {
+                        failedRows.push([
+                            cookieStr,
+                            BATCH_DUPLICATE_MESSAGE,
+                            ''
+                        ]);
+                        duplicateCount += 1;
+                        processedCount = i + 1;
+                        notifyProgress(i + 1);
+                        continue;
+                    }
+
                     const result = await fetchBatchCookieInfo(cookieStr);
 
                     if (result.ok) {
@@ -1064,7 +1317,7 @@
                     }
                 }
 
-                return { successRows, failedRows, processedCount };
+                return { successRows, failedRows, processedCount, duplicateCount };
             }
 
             async function processBatchCookiesParallel(cookies, workerCount, progressMeta = {}, onProgress = null) {
@@ -1073,6 +1326,7 @@
                 const total = cookies.length;
                 let nextIndex = 0;
                 let processedCount = 0;
+                let duplicateCount = 0;
                 const notifyProgress = () => {
                     if (typeof onProgress === 'function') {
                         onProgress({
@@ -1095,7 +1349,23 @@
                             return;
                         }
 
-                        const cookieStr = cookies[currentIndex];
+                        const cookieEntry = cookies[currentIndex] || {};
+                        const cookieStr = String(cookieEntry.cookie || '').trim();
+                        if (cookieEntry.duplicateSkipped) {
+                            failedEntries.push({
+                                sourceIndex: currentIndex,
+                                row: [
+                                    cookieStr,
+                                    BATCH_DUPLICATE_MESSAGE,
+                                    ''
+                                ]
+                            });
+                            duplicateCount += 1;
+                            processedCount += 1;
+                            notifyProgress();
+                            continue;
+                        }
+
                         const result = await fetchBatchCookieInfo(cookieStr);
 
                         if (result.ok) {
@@ -1142,7 +1412,8 @@
                 return {
                     successRows: successEntries.map((entry) => entry.row),
                     failedRows: failedEntries.map((entry) => entry.row),
-                    processedCount
+                    processedCount,
+                    duplicateCount
                 };
             }
 
@@ -1278,7 +1549,14 @@
                     throw new Error('File Excel khong co sheet du lieu.');
                 }
 
-                const { entries, hasHeader, validCookieCount } = getPlanOnlyBatchEntries(worksheet);
+                const planOnlyEntries = Array.isArray(workbook.__planOnlyEntries) ? workbook.__planOnlyEntries : null;
+                const { entries, hasHeader, validCookieCount } = planOnlyEntries
+                    ? {
+                        entries: planOnlyEntries,
+                        hasHeader: normalizeCellText(worksheet.getCell('A1').value).trim().toLowerCase() === 'cookie',
+                        validCookieCount: planOnlyEntries.filter((entry) => entry && entry.cookie).length
+                    }
+                    : getPlanOnlyBatchEntries(worksheet);
                 if (validCookieCount === 0) {
                     throw new Error('Khong tim thay cookie hop le o cot A.');
                 }
@@ -1289,6 +1567,7 @@
                 const failedRows = [];
                 const total = entries.length;
                 let processedCount = 0;
+                let duplicateCount = 0;
                 const notifyProgress = (processedInFile) => {
                     if (typeof onProgress === 'function') {
                         onProgress({
@@ -1315,6 +1594,11 @@
                         planCell.value = 'Cookie khong hop le';
                         paymentHoldCell.value = '';
                         failedRows.push([`Dong ${entry.rowNumber}`, 'Cookie khong hop le', '']);
+                    } else if (entry.duplicateSkipped) {
+                        planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        paymentHoldCell.value = '';
+                        failedRows.push([entry.cookie, BATCH_DUPLICATE_MESSAGE, '']);
+                        duplicateCount += 1;
                     } else {
                         const result = await fetchBatchCookieInfo(entry.cookie);
                         if (result.ok) {
@@ -1336,7 +1620,7 @@
                     }
                 }
 
-                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, planOnlyMetadata };
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, duplicateCount, planOnlyMetadata };
             }
 
             async function processPlanOnlyBatchWorkbookParallel(workbook, workerCount, progressMeta = {}, onProgress = null) {
@@ -1345,7 +1629,14 @@
                     throw new Error('File Excel khong co sheet du lieu.');
                 }
 
-                const { entries, hasHeader, validCookieCount } = getPlanOnlyBatchEntries(worksheet);
+                const planOnlyEntries = Array.isArray(workbook.__planOnlyEntries) ? workbook.__planOnlyEntries : null;
+                const { entries, hasHeader, validCookieCount } = planOnlyEntries
+                    ? {
+                        entries: planOnlyEntries,
+                        hasHeader: normalizeCellText(worksheet.getCell('A1').value).trim().toLowerCase() === 'cookie',
+                        validCookieCount: planOnlyEntries.filter((entry) => entry && entry.cookie).length
+                    }
+                    : getPlanOnlyBatchEntries(worksheet);
                 if (validCookieCount === 0) {
                     throw new Error('Khong tim thay cookie hop le o cot A.');
                 }
@@ -1358,6 +1649,7 @@
                 const resultsByIndex = new Array(entries.length);
                 let nextIndex = 0;
                 let processedCount = 0;
+                let duplicateCount = 0;
                 const notifyProgress = () => {
                     if (typeof onProgress === 'function') {
                         onProgress({
@@ -1386,6 +1678,13 @@
                                 type: 'invalid',
                                 rowNumber: entry.rowNumber
                             };
+                        } else if (entry.duplicateSkipped) {
+                            resultsByIndex[currentIndex] = {
+                                type: 'duplicate',
+                                rowNumber: entry.rowNumber,
+                                cookie: entry.cookie
+                            };
+                            duplicateCount += 1;
                         } else {
                             const result = await fetchBatchCookieInfo(entry.cookie);
                             if (result.ok) {
@@ -1435,6 +1734,13 @@
                         continue;
                     }
 
+                    if (result.type === 'duplicate') {
+                        planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        paymentHoldCell.value = '';
+                        failedRows.push([result.cookie, BATCH_DUPLICATE_MESSAGE, '']);
+                        continue;
+                    }
+
                     if (result.type === 'ok') {
                         planCell.value = result.plan;
                         paymentHoldCell.value = result.paymentHold;
@@ -1447,7 +1753,7 @@
                     failedRows.push([result.cookie, result.error, result.status]);
                 }
 
-                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, planOnlyMetadata };
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, duplicateCount, planOnlyMetadata };
             }
 
             async function downloadExcelJsWorkbook(workbook, filename) {
@@ -1485,6 +1791,37 @@
                 inlineError.classList.remove('active');
             }
 
+            function readStoredToggle(key) {
+                try {
+                    return window.localStorage.getItem(key) === '1';
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            function writeStoredToggle(key, enabled) {
+                try {
+                    window.localStorage.setItem(key, enabled ? '1' : '0');
+                } catch (error) {
+                    // Ignore storage errors so toggles still work in-memory.
+                }
+            }
+
+            function syncToggleState(toggle, key) {
+                if (!toggle) return false;
+                const enabled = readStoredToggle(key);
+                toggle.checked = enabled;
+                return enabled;
+            }
+
+            function isAutoGenerateEnabled() {
+                return !!(autoGenerateToggle && autoGenerateToggle.checked);
+            }
+
+            function isClearPasteEnabled() {
+                return !!(clearPasteToggle && clearPasteToggle.checked);
+            }
+
             function resetFormFeedback() {
                 hideAlerts();
                 resultLink.value = '';
@@ -1516,6 +1853,7 @@
                     workerCount: preparedFile.workerCount || 1,
                     successCount: 0,
                     failedCount: 0,
+                    duplicateCount: preparedFile.duplicateCount || 0,
                     errorMessage: '',
                     output: null
                 };
@@ -1544,6 +1882,7 @@
             }
 
             function setGenerateLoading(isLoading) {
+                generateInFlight = isLoading;
                 generateBtn.disabled = isLoading;
                 generateBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
                 generateBtn.lastChild.textContent = isLoading ? ' Dang tao link...' : ` ${generateButtonDefaultText}`;
@@ -1620,14 +1959,78 @@
                         setTimeout(() => {
                             copyResultBtn.textContent = originalText;
                         }, 2000);
+                        showToast('Da sao chep link.', 'ok');
                     }
                     return true;
                 } catch (error) {
                     if (!silent) {
-                        alert('Loi sao chep, vui long copy thu cong.');
+                        showToast('Loi sao chep, vui long copy thu cong.', 'warn');
                     }
                     return false;
                 }
+            }
+
+            function applyCookieText(value) {
+                resetFormFeedback();
+                cookieInput.value = String(value || '');
+                hideInlineError();
+                cookieInput.focus();
+            }
+
+            async function submitFromPaste(source = '') {
+                const normalized = cookieInput.value.trim();
+                if (!isAutoGenerateEnabled() || !normalized || generateInFlight) return false;
+                autoSubmitSource = source;
+                form.requestSubmit(generateBtn);
+                return true;
+            }
+
+            async function pasteClipboardIntoCookieInput({
+                clearFirst = false,
+                autoGenerate = false,
+                showSuccessToast = true,
+                successMessage = 'Dan clipboard thanh cong.'
+            } = {}) {
+                const previousValue = cookieInput.value;
+                if (clearFirst) {
+                    cookieInput.value = '';
+                    resetFormFeedback();
+                }
+
+                let text = '';
+                try {
+                    text = await navigator.clipboard.readText();
+                } catch (error) {
+                    if (clearFirst) {
+                        cookieInput.value = previousValue;
+                        cookieInput.focus();
+                    }
+                    showToast('Khong doc duoc clipboard. Hay cap quyen dan cho trinh duyet.', 'bad');
+                    playErrorSound();
+                    return false;
+                }
+
+                const normalized = String(text || '').trim();
+                if (!normalized) {
+                    if (clearFirst) {
+                        cookieInput.value = previousValue;
+                        cookieInput.focus();
+                    }
+                    showToast('Clipboard dang trong.', 'warn');
+                    playErrorSound();
+                    return false;
+                }
+
+                applyCookieText(normalized);
+                if (showSuccessToast) {
+                    showToast(successMessage, 'ok');
+                }
+                playSuccessSound();
+
+                if (autoGenerate) {
+                    await submitFromPaste('clipboard');
+                }
+                return true;
             }
 
             cookieInput.addEventListener('keydown', (event) => {
@@ -1651,11 +2054,52 @@
                 }
             });
 
-            clearCookieBtn.addEventListener('click', () => {
+            cookieInput.addEventListener('paste', () => {
+                setTimeout(() => {
+                    if (!isAutoGenerateEnabled()) return;
+                    submitFromPaste('paste');
+                }, 0);
+            });
+
+            clearCookieBtn.addEventListener('click', async () => {
+                if (isClearPasteEnabled()) {
+                    await pasteClipboardIntoCookieInput({
+                        clearFirst: true,
+                        autoGenerate: isAutoGenerateEnabled(),
+                        successMessage: 'Da xoa va dan clipboard thanh cong.'
+                    });
+                    return;
+                }
                 cookieInput.value = '';
                 resetFormFeedback();
                 cookieInput.focus();
             });
+
+            if (pasteCookieBtn) {
+                pasteCookieBtn.addEventListener('click', async () => {
+                    await pasteClipboardIntoCookieInput({
+                        clearFirst: false,
+                        autoGenerate: isAutoGenerateEnabled(),
+                        successMessage: 'Dan clipboard thanh cong.'
+                    });
+                });
+            }
+
+            if (autoGenerateToggle) {
+                syncToggleState(autoGenerateToggle, STORAGE_KEY_AUTO_GENERATE);
+                autoGenerateToggle.addEventListener('change', () => {
+                    writeStoredToggle(STORAGE_KEY_AUTO_GENERATE, autoGenerateToggle.checked);
+                    showToast(autoGenerateToggle.checked ? 'Da bat tu dong tao link khi dan.' : 'Da tat tu dong tao link khi dan.', autoGenerateToggle.checked ? 'ok' : 'warn');
+                });
+            }
+
+            if (clearPasteToggle) {
+                syncToggleState(clearPasteToggle, STORAGE_KEY_CLEAR_PASTE);
+                clearPasteToggle.addEventListener('change', () => {
+                    writeStoredToggle(STORAGE_KEY_CLEAR_PASTE, clearPasteToggle.checked);
+                    showToast(clearPasteToggle.checked ? 'Da bat xoa roi dan clipboard.' : 'Da tat xoa roi dan clipboard.', clearPasteToggle.checked ? 'ok' : 'warn');
+                });
+            }
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -1686,6 +2130,9 @@
                         showResult(data.url, data.accountInfo);
                         playSuccessSound();
                         await copyGeneratedLink(data.url, { silent: true });
+                        if (autoSubmitSource) {
+                            showToast('Da tu dong tao link tu clipboard.', 'ok');
+                        }
                     } else {
                         showError('Khong the tao link (Loi khong xac dinh).');
                         playErrorSound();
@@ -1693,7 +2140,11 @@
                 } catch (error) {
                     showError(error.message);
                     playErrorSound();
+                    if (autoSubmitSource) {
+                        showToast(`Tu dong tao link that bai: ${error.message}`, 'bad');
+                    }
                 } finally {
+                    autoSubmitSource = '';
                     setGenerateLoading(false);
                 }
             });
@@ -1757,6 +2208,7 @@
                                 order: fileIndex,
                                 file,
                                 workbook,
+                                entries: preview.entries,
                                 rowCount,
                                 workerCount: useSingleFileParallel ? getSingleFileWorkerCount(rowCount) : 1
                             });
@@ -1768,12 +2220,25 @@
                                 order: fileIndex,
                                 file,
                                 workbook,
-                                cookies,
+                                cookies: cookies.map((cookie) => ({ cookie, duplicateSkipped: false })),
                                 rowCount: cookies.length,
                                 workerCount: useSingleFileParallel ? getSingleFileWorkerCount(cookies.length) : 1
                             });
                         }
                     }
+
+                    const seenBatchCookies = new Set();
+                    preparedFiles.forEach((prepared) => {
+                        if (mode === BATCH_MODE_PLAN_ONLY) {
+                            prepared.entries = markDuplicateItems(prepared.entries || [], seenBatchCookies, (entry) => entry && entry.cookie);
+                            prepared.duplicateCount = prepared.entries.filter((entry) => entry && entry.duplicateSkipped).length;
+                            prepared.workbook.__planOnlyEntries = prepared.entries;
+                            return;
+                        }
+
+                        prepared.cookies = markDuplicateItems(prepared.cookies || [], seenBatchCookies, (entry) => entry && entry.cookie);
+                        prepared.duplicateCount = prepared.cookies.filter((entry) => entry && entry.duplicateSkipped).length;
+                    });
 
                     batchFileStates = preparedFiles.map((preparedFile) => createBatchFileState(preparedFile, mode));
                     renderBatchFileStatuses();
@@ -1822,6 +2287,7 @@
                                     fileState.processedRows = result.processedCount;
                                     fileState.successCount = result.successRows.length;
                                     fileState.failedCount = result.failedRows.length;
+                                    fileState.duplicateCount = result.duplicateCount || 0;
                                     fileState.output = {
                                         workbook: result.workbook,
                                         worksheet: result.worksheet,
@@ -1835,7 +2301,7 @@
                                         id: prepared.id,
                                         order: prepared.order,
                                         filename: formatBatchOutputFileName(prepared.file.name, mode),
-                                        summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`,
+                                        summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length} | Trung bo qua: ${result.duplicateCount || 0}`,
                                         kind: 'exceljs',
                                         workbook: result.workbook
                                     });
@@ -1868,6 +2334,7 @@
                                 fileState.processedRows = result.processedCount;
                                 fileState.successCount = result.successRows.length;
                                 fileState.failedCount = result.failedRows.length;
+                                fileState.duplicateCount = result.duplicateCount || 0;
                                 fileState.output = {
                                     workbook,
                                     successRows: result.successRows,
@@ -1881,7 +2348,7 @@
                                     id: prepared.id,
                                     order: prepared.order,
                                     filename: formatBatchOutputFileName(prepared.file.name, mode),
-                                    summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length}`,
+                                    summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length} | Trung bo qua: ${result.duplicateCount || 0}`,
                                     kind: 'xlsx',
                                     workbook
                                 });
@@ -1965,10 +2432,10 @@
 
                     const aggregate = getBatchAggregateStats();
                     if (batchStopRequested) {
-                        batchStatusText.textContent = `Da dung batch. File xong: ${aggregate.completedFiles}/${aggregate.totalFiles} | Da dung: ${aggregate.stoppedFiles} | Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed}`;
+                        batchStatusText.textContent = `Da dung batch. File xong: ${aggregate.completedFiles}/${aggregate.totalFiles} | Da dung: ${aggregate.stoppedFiles} | Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed} | Trung bo qua: ${aggregate.totalDuplicates}`;
                     } else {
                         batchProgressFill.style.width = '100%';
-                        batchStatusText.textContent = `Hoan tat ${aggregate.completedFiles} file. Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed}`;
+                        batchStatusText.textContent = `Hoan tat ${aggregate.completedFiles} file. Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed} | Trung bo qua: ${aggregate.totalDuplicates}`;
                     }
                 } catch (error) {
                     batchStatusText.textContent = `Batch loi: ${error.message || 'Unknown error'}`;
