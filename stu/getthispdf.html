@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Studocu Downloader & Free PDF Downloader | Get This PDF</title>
+
+    <!-- Primary Meta Tags -->
+    <meta name="description" content="Download Studocu documents as PDF online for free. Paste a Studocu link to fetch study notes, lecture materials, and printable pages fast. More site support is coming soon.">
+    <meta name="keywords" content="studocu downloader, studocu pdf downloader, download studocu pdf, free pdf downloader, study notes downloader, lecture notes pdf, document downloader, get this pdf, slideshare downloader, scribd downloader">
+    <meta name="author" content="Get This PDF">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="theme-color" content="#F7F7F4">
+    <meta name="color-scheme" content="light">
+    <link rel="canonical" href="https://getthispdf.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:locale" content="en_US">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Studocu Downloader & Free PDF Downloader | Get This PDF">
+    <meta property="og:description" content="Download Studocu documents as PDF online for free. Paste a link, fetch printable pages fast, and save your study material with ease.">
+    <meta property="og:site_name" content="Get This PDF">
+    <meta property="og:url" content="https://getthispdf.com/">
+    <meta property="og:image" content="https://getthispdf.com/banner.webp">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/webp">
+    <meta property="og:image:alt" content="Get This PDF Studocu downloader preview banner">
+    <link rel="image_src" href="https://getthispdf.com/banner.webp">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Studocu Downloader & Free PDF Downloader | Get This PDF">
+    <meta name="twitter:description" content="Free Studocu downloader for students. Paste a link, fetch printable pages, and save study documents fast.">
+    <meta name="twitter:image" content="https://getthispdf.com/banner.webp">
+    <meta name="twitter:image:alt" content="Get This PDF Studocu downloader preview banner">
+    <link rel="preconnect" href="https://www.highperformanceformat.com" crossorigin>
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "Organization",
+                    "@id": "https://getthispdf.com/#organization",
+                    "name": "Get This PDF",
+                    "url": "https://getthispdf.com/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "https://getthispdf.com/banner.webp"
+                    }
+                },
+                {
+                    "@type": "WebSite",
+                    "@id": "https://getthispdf.com/#website",
+                    "url": "https://getthispdf.com/",
+                    "name": "Get This PDF",
+                    "publisher": {
+                        "@id": "https://getthispdf.com/#organization"
+                    },
+                    "inLanguage": "en-US"
+                },
+                {
+                    "@type": "SoftwareApplication",
+                    "@id": "https://getthispdf.com/#app",
+                    "name": "Get This PDF",
+                    "applicationCategory": "UtilitiesApplication",
+                    "operatingSystem": "Web",
+                    "url": "https://getthispdf.com/",
+                    "description": "A web-based downloader that helps users fetch printable Studocu study materials as PDF-ready pages, with more document platforms planned in the future.",
+                    "image": "https://getthispdf.com/banner.webp",
+                    "publisher": {
+                        "@id": "https://getthispdf.com/#organization"
+                    }
+                }
+            ]
+        }
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* ===== CONFIG ===== */
+        :root {
+            --bg: #F7F7F4;
+            --surface: #FFFFFF;
+            --surface-hover: #F0F0EC;
+            --border: #E4E4E0;
+            --shadow: rgba(0,0,0,0.07);
+            --shadow-md: rgba(0,0,0,0.11);
+            --text: #18181B;
+            --text-muted: #6B7280;
+            --text-faint: #A1A1AA;
+            --accent: #4F46E5;
+            --accent-hover: #4338CA;
+            --accent-light: rgba(79,70,229,0.08);
+            --accent-green: #059669;
+            --accent-green-light: rgba(5,150,105,0.09);
+        }
+
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* ===== Navbar ===== */
+        .navbar {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(247,247,244,0.9);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 56px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 9px;
+            font-weight: 800; font-size: 17px; color: var(--text);
+        }
+        .nav-brand svg { width: 26px; height: 26px; }
+        .nav-brand .brand-dot { color: var(--accent); }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-links a {
+            padding: 7px 14px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .nav-links a:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        /* ===== Ad Slots ===== */
+        .ad-slot {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; max-width: 728px;
+            margin: 0 auto;
+            min-height: 90px;
+            background: rgba(0,0,0,0.02);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-faint);
+            font-size: 11px;
+            overflow: hidden;
+            position: relative;
+        }
+        .ad-slot-label {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: rgba(24,24,27,0.75);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+        .ad-slot-top { margin-top: 14px; }
+        .ad-slot-mid { margin-top: 28px; }
+        .ad-slot-bottom { margin-top: 28px; margin-bottom: 8px; }
+        .ad-slot-rail {
+            width: 160px;
+            min-height: 600px;
+            max-width: 160px;
+        }
+        .ad-slot-300x250 {
+            width: 300px;
+            min-height: 250px;
+            max-width: 300px;
+        }
+        .ad-slot-leaderboard {
+            width: 100%;
+            min-height: 90px;
+            max-width: 728px;
+        }
+
+        /* ===== Layout ===== */
+        .page-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0;
+            align-items: start;
+        }
+        /* 160x600 sidebar dropped (lowest CPM 0.074 — replaced by floating SocialBar) */
+        .rail-column { display: none !important; }
+        .page-wrap { min-height: 100vh; }
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .rail-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        /* ===== Hero ===== */
+        .hero {
+            text-align: center;
+            padding: 60px 0 0;
+            animation: fadeSlideUp 0.65s ease;
+        }
+        .hero h1 {
+            font-size: 52px; font-weight: 900;
+            letter-spacing: -1.5px;
+            line-height: 1.05;
+            color: var(--text);
+        }
+        .hero h1 .brand-accent {
+            color: var(--accent);
+        }
+        .hero .quote {
+            margin-top: 18px;
+            font-size: 16px; font-weight: 400;
+            color: var(--text-muted);
+            line-height: 1.55;
+            font-style: italic;
+        }
+        .hero .tagline {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--text-faint);
+        }
+        .hero .tagline strong { color: var(--text-muted); font-weight: 600; font-style: normal; }
+
+        @keyframes fadeSlideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ===== Supported Sites ===== */
+        .sites {
+            display: flex; justify-content: center; gap: 10px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+        .site-badge {
+            display: flex; align-items: center; gap: 7px;
+            padding: 8px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            color: var(--text-muted);
+            box-shadow: 0 1px 4px var(--shadow);
+            transition: all 0.2s;
+        }
+        .site-badge.active {
+            border-color: rgba(5,150,105,0.3);
+            color: var(--text);
+            background: var(--accent-green-light);
+        }
+        .site-badge.active .site-dot { background: var(--accent-green); }
+        .site-badge.coming-soon {
+            opacity: 0.45;
+            cursor: default;
+            position: relative;
+        }
+        .site-badge.coming-soon:hover { opacity: 0.7; }
+        .site-badge.coming-soon .site-dot { background: var(--text-faint); }
+        .site-badge .site-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .site-badge.coming-soon::after {
+            content: 'Coming Soon';
+            position: absolute;
+            bottom: calc(100% + 7px); left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: var(--text);
+            color: var(--surface);
+            padding: 5px 12px;
+            border-radius: 7px;
+            font-size: 11px; font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s;
+        }
+        .site-badge.coming-soon::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 1px); left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            border: 5px solid transparent;
+            border-top-color: var(--text);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s;
+        }
+        .site-badge.coming-soon:hover::after,
+        .site-badge.coming-soon:hover::before {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+
+        /* ===== URL Input Card ===== */
+        .card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 28px 24px;
+            margin-top: 32px;
+            box-shadow: 0 2px 12px var(--shadow);
+        }
+        .card label {
+            display: block;
+            font-size: 12px; font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .input-group {
+            display: flex; gap: 0;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 13px 16px;
+            border-radius: 10px 0 0 10px;
+            border: 1.5px solid var(--border);
+            border-right: none;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+            background: var(--surface);
+        }
+        .input-group input::placeholder { color: var(--text-faint); }
+
+        .btn-download {
+            padding: 13px 28px;
+            border-radius: 0 10px 10px 0;
+            border: 1.5px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            font-size: 14px; font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .btn-download:hover:not(:disabled) {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+        .btn-download:disabled {
+            opacity: 0.6; cursor: not-allowed;
+        }
+
+        .hint {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-faint);
+        }
+        .hint code {
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* ===== Status Bar ===== */
+        .status-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: var(--accent-light);
+            border: 1px solid rgba(79,70,229,0.15);
+            font-size: 13px;
+            color: var(--accent);
+        }
+        .spinner {
+            width: 15px; height: 15px;
+            border: 2px solid rgba(79,70,229,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== Progress Info ===== */
+        .progress-info {
+            display: none;
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: 10px;
+            background: var(--accent-green-light);
+            border: 1px solid rgba(5,150,105,0.18);
+        }
+        .progress-info .progress-title {
+            font-size: 11px; font-weight: 700;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        .progress-bar-wrap {
+            width: 100%; height: 5px;
+            background: rgba(5,150,105,0.12);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%; width: 0%;
+            background: var(--accent-green);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex; justify-content: space-between;
+        }
+
+        /* ===== Queue Status ===== */
+        .queue-status {
+            margin-top: 14px;
+            padding: 14px 16px;
+            background: rgba(79,70,229,0.06);
+            border: 1px solid rgba(79,70,229,0.15);
+            border-radius: 10px;
+        }
+        .queue-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .queue-icon { font-size: 16px; }
+        .queue-bar-wrap {
+            height: 4px;
+            background: rgba(79,70,229,0.12);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .queue-bar-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .queue-detail {
+            margin-top: 6px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ===== Download Button (standalone) ===== */
+        .download-btn-wrap {
+            display: flex; justify-content: center;
+            margin-top: 18px;
+        }
+        .btn-get-pdf {
+            padding: 14px 48px;
+            border-radius: 12px;
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            font-size: 16px; font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.25);
+            letter-spacing: -0.2px;
+        }
+        .btn-get-pdf:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+        }
+        .btn-get-pdf:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        /* ===== Countdown Lock Overlay ===== */
+        .fetch-lock-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity 0.4s ease;
+        }
+        .fetch-lock-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .lock-content {
+            text-align: center;
+        }
+        .lock-countdown {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            box-shadow: 0 4px 16px rgba(79,70,229,0.3);
+            animation: countPulse 1s ease-in-out infinite;
+        }
+        .lock-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+        @keyframes countPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        /* ===== Stats Row ===== */
+        .stats-row {
+            display: flex; justify-content: center; gap: 40px;
+            margin-top: 32px;
+            animation: fadeSlideUp 0.9s ease;
+        }
+        .stat-item { text-align: center; }
+        .stat-num {
+            font-size: 22px; font-weight: 800;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 11px; font-weight: 500;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        /* ===== Vote Section ===== */
+        .vote-section {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-top: 20px;
+            padding: 18px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 1px 4px var(--shadow);
+        }
+        .vote-msg { font-size: 13px; color: var(--text-muted); }
+        .vote-btns { display: flex; gap: 8px; }
+        .vote-btn {
+            display: flex; align-items: center; gap: 5px;
+            padding: 7px 14px;
+            border-radius: 9px;
+            border: 1.5px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13px; font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .vote-btn svg { width: 15px; height: 15px; fill: currentColor; }
+        .vote-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+        .vote-btn.like-active { border-color: rgba(5,150,105,0.4); color: var(--accent-green); background: var(--accent-green-light); }
+        .vote-btn.dislike-active { border-color: rgba(239,68,68,0.35); color: #DC2626; background: rgba(220,38,38,0.07); }
+
+        /* ===== Cached Docs ===== */
+        .cached-section {
+            margin-top: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px var(--shadow);
+        }
+        .cached-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 700;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--bg);
+        }
+        .cached-header-left { display: flex; align-items: center; gap: 7px; }
+        .cached-header svg { width: 13px; height: 13px; fill: currentColor; }
+        .cached-count { font-size: 10px; font-weight: 600; background: var(--border); color: var(--text-muted); padding: 2px 8px; border-radius: 10px; }
+        .cached-list { max-height: 280px; overflow-y: auto; }
+        .cached-entry {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 18px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.12s;
+            border-bottom: 1px solid var(--border);
+        }
+        .cached-entry:hover { background: var(--surface-hover); }
+        .cached-entry:last-child { border-bottom: none; }
+        .cached-time { color: var(--text-faint); font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .cached-title { color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cached-delete { width: 24px; height: 24px; border-radius: 6px; border: none; background: transparent; color: var(--text-faint); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+        .cached-delete:hover { background: #FEE2E2; color: #DC2626; }
+        .cached-empty { padding: 24px 18px; text-align: center; color: var(--text-faint); font-size: 12px; line-height: 1.6; }
+
+        /* ===== How It Works ===== */
+        .how-it-works {
+            margin-top: 44px;
+            text-align: center;
+        }
+        .how-it-works h2 {
+            font-size: 18px; font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        .step {
+            padding: 22px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 1px 4px var(--shadow);
+        }
+        .step-num {
+            width: 34px; height: 34px;
+            margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 9px;
+            background: var(--accent-light);
+            font-size: 14px; font-weight: 800;
+            color: var(--accent);
+        }
+        .step h3 {
+            font-size: 13px; font-weight: 700;
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        .step p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            text-align: center;
+            padding: 48px 20px 32px;
+            font-size: 12px;
+            color: var(--text-faint);
+            line-height: 1.7;
+        }
+        .footer a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; }
+        .footer-links {
+            display: flex; justify-content: center; gap: 24px;
+            margin-bottom: 14px;
+        }
+
+        /* ===== Error Popup ===== */
+        .error-overlay {
+            position: fixed; inset: 0; z-index: 50000;
+            background: rgba(24,24,27,0.45);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .error-overlay.visible { opacity: 1; pointer-events: auto; }
+        .error-popup {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px;
+            max-width: 380px; width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+            transform: scale(0.95);
+            transition: transform 0.25s;
+        }
+        .error-overlay.visible .error-popup { transform: scale(1); }
+        .error-popup-icon { font-size: 36px; margin-bottom: 12px; }
+        .error-popup h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+        .err-msg { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; word-break: break-word; }
+        .err-hint { font-size: 12px; color: var(--text-faint); margin-bottom: 20px; }
+        .err-close-btn {
+            padding: 10px 32px; border-radius: 10px;
+            border: none;
+            background: var(--accent);
+            color: #fff; font-size: 13px; font-weight: 600;
+            font-family: inherit; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .err-close-btn:hover { background: var(--accent-hover); }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 36px; letter-spacing: -1px; }
+            .hero .quote { font-size: 14px; }
+            .input-group { flex-direction: column; }
+            .input-group input { border-radius: 10px; border-right: 1.5px solid var(--border); }
+            .btn-download { border-radius: 10px; width: 100%; padding: 13px; margin-top: 8px; }
+            .card { padding: 20px 16px; }
+            .steps { grid-template-columns: 1fr; }
+            .vote-section { flex-direction: column; gap: 12px; text-align: center; }
+            .stats-row { gap: 24px; }
+            .navbar { padding: 0 14px; }
+            .ad-slot { min-height: 60px; }
+        }
+        /* @media 1100px block removed — rail-column is hidden, layout is always single-column */
+
+        /* ===== Ad Banners ===== */
+        .ad-banner { overflow: hidden; }
+        .ad-banner iframe { max-width: 100%; }
+        @media print { .ad-banner, .ad-native, .viewer-side-ad { display: none !important; } }
+
+        /* ===== Ad Interstitial Overlay ===== */
+        #adInterstitial {
+            display: none;
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(0,0,0,0.82);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        #adInterstitial.active { display: flex; }
+        #adInterstitialBox {
+            position: relative;
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+            max-width: 340px; width: 96vw;
+            text-align: center;
+        }
+        #adInterstitialLabel {
+            font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+            color: #6B7280; text-transform: uppercase; margin-bottom: 10px;
+        }
+        #adInterstitialClose {
+            position: absolute; top: -14px; right: -14px;
+            width: 32px; height: 32px; border-radius: 50%;
+            border: none; background: #18181B; color: #fff;
+            font-size: 18px; font-weight: 700; line-height: 1;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        #adInterstitialClose.visible { opacity: 1; pointer-events: auto; }
+        #adInterstitialTimer {
+            margin-top: 10px;
+            font-size: 12px; color: #9CA3AF;
+        }
+
+        /* ===== Viewer Side Ads (outside print area) ===== */
+        .viewer-side-ad {
+            position: fixed;
+            z-index: 10001;
+            overflow: hidden;
+        }
+        .viewer-side-ad-left {
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .viewer-side-ad-right {
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        @media (max-width: 1100px) {
+            .viewer-side-ad { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+    <a href="/" class="nav-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:#4F46E5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        Get This <span class="brand-dot">PDF</span>
+    </a>
+    <div class="nav-links">
+        <a href="/studocu.html">Studocu</a>
+        <a href="/about.html">About</a>
+        <a href="/help.html">Help</a>
+    </div>
+</nav>
+
+<!-- Page Content -->
+<div class="page-shell">
+    <aside class="rail-column">
+        <div class="rail-stack">
+            <div class="ad-slot ad-slot-rail" id="leftRailAd">
+                <div class="ad-slot-label">Sponsored</div>
+                <span>Loading sidebar placement...</span>
+            </div>
+        </div>
+    </aside>
+
+    <div class="page-wrap">
+        <div class="container">
+
+        <!-- Hero -->
+        <div class="hero">
+            <div class="ad-slot ad-slot-leaderboard" id="topLeaderboardAd" style="margin-bottom:18px;">
+                <div class="ad-slot-label">Sponsored</div>
+                <span>Loading top placement...</span>
+            </div>
+            <h1>Get This <span class="brand-accent">PDF</span></h1>
+            <p class="quote">"An investment in knowledge pays the best interest." &mdash; Benjamin Franklin</p>
+            <p class="tagline">Free &bull; Fast &bull; No sign-up &bull; No nonsense</p>
+
+            <!-- Supported Sites -->
+            <div class="sites">
+                <div class="site-badge active">
+                    <div class="site-dot"></div>
+                    StudoCu
+                </div>
+                <div class="site-badge coming-soon">
+                    <div class="site-dot"></div>
+                    Slideshare
+                </div>
+                <div class="site-badge coming-soon">
+                    <div class="site-dot"></div>
+                    Scribd
+                </div>
+            </div>
+        </div>
+
+        <!-- URL Input Card -->
+        <div class="card" id="fetchCard">
+            <!-- Countdown lock overlay -->
+            <div class="fetch-lock-overlay" id="fetchLockOverlay">
+                <div class="lock-content">
+                    <div class="lock-countdown" id="lockCountdown">3</div>
+                    <div class="lock-label">Loading security checks…</div>
+                </div>
+            </div>
+            <label for="url">Paste Document URL</label>
+            <form id="fetchForm" onsubmit="return false">
+                <div class="input-group">
+                    <input type="text" id="url" name="url"
+                        placeholder="https://www.studocu.com/.../document-name/12345678"
+                        autocomplete="off" required disabled style="border-radius:10px;border-right:1.5px solid var(--border);">
+                </div>
+            </form>
+
+            <!-- Status -->
+            <div class="status-bar" id="status">
+                <span class="spinner"></span>
+                <span id="statusText">Fetching document...</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-info" id="progressInfo">
+                <div class="progress-title">Downloading Pages</div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" id="progressBar"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressLabel">0 / 0 pages</span>
+                    <span id="progressPct">0%</span>
+                </div>
+            </div>
+
+            <!-- Queue Status -->
+            <div class="queue-status" id="queueStatus" style="display:none;">
+                <div class="queue-info">
+                    <span class="queue-icon">&#9201;</span>
+                    <span id="queueText">Waiting in queue...</span>
+                </div>
+                <div class="queue-bar-wrap">
+                    <div class="queue-bar-fill" id="queueBar" style="width:0%"></div>
+                </div>
+                <div class="queue-detail" id="queueDetail"></div>
+            </div>
+        </div>
+        <!-- Scroll CTA -->
+        <div style="text-align:center;margin:28px 0 8px;padding:20px 16px;">
+            <div class="scroll-cta-text">Scroll down and Click on GET PDF</div>
+            <div class="scroll-cta-arrow">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+        </div>
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <div class="stat-num" id="swTodayVisits">--</div>
+                <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="swVisits">--</div>
+                <div class="stat-label">Total Visits</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="swDownloads">--</div>
+                <div class="stat-label">Downloads</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" id="swLikes">--</div>
+                <div class="stat-label">Likes</div>
+            </div>
+        </div>
+
+        <!-- Vote -->
+        <div class="vote-section">
+            <div class="vote-msg">Enjoying it? Give us a thumbs up!</div>
+            <div class="vote-btns">
+                <button class="vote-btn" id="likeBtn" onclick="castVote('like')">
+                    <svg viewBox="0 0 24 24"><path d="M2 20h2V8H2v12zm20-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L13.17 0 7.59 5.59C7.22 5.95 7 6.45 7 7v11c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9z"/></svg>
+                    <span id="likeCount">--</span>
+                </button>
+                <button class="vote-btn" id="dislikeBtn" onclick="castVote('dislike')">
+                    <svg viewBox="0 0 24 24"><path d="M22 4h-2v12h2V4zm-4 12V5c0-1.1-.9-2-2-2H7c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73V13c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 22l5.59-5.59c.36-.36.58-.86.58-1.41z"/></svg>
+                    <span id="dislikeCount">--</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Cached Documents -->
+        <div class="cached-section" id="cachedDocsSection">
+            <div class="cached-header">
+                <div class="cached-header-left">
+                    <svg viewBox="0 0 16 16"><path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.5L9.5 0H4zm5 0v3a2 2 0 0 0 2 2h3"/></svg>
+                    <span>Download History</span>
+                </div>
+                <span class="cached-count" id="cachedCount">0</span>
+            </div>
+            <div class="cached-list" id="cachedDocsList">
+                <div class="cached-empty" id="cachedEmpty">No documents yet. Paste a URL above to get started.</div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="how-it-works">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h3>Paste URL</h3>
+                    <p>Copy the document link from StudoCu and paste it above</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h3>We Fetch It</h3>
+                    <p>Our server authenticates and grabs every page for you</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h3>Print as PDF</h3>
+                    <p>View the document and press Ctrl+P to save as PDF</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="download-btn-wrap" style="margin-top:24px;">
+            <div class="ad-slot ad-slot-300x250" id="bottomRailAd">
+                <div class="ad-slot-label">Sponsored</div>
+                <span>Loading bottom placement...</span>
+            </div>
+        </div>
+
+        <!-- Get PDF Button (at bottom so user scrolls past ads) -->
+        <div class="download-btn-wrap" id="getPdfSection">
+            <button type="button" class="btn-get-pdf" id="fetchBtn" disabled
+                onclick="document.getElementById('fetchForm').dispatchEvent(new Event('submit'))">
+                Get PDF
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-links">
+                <a href="/studocu.html">Studocu</a>
+                <a href="/about.html">About</a>
+                <a href="/help.html">Help</a>
+            </div>
+            <p>Get This PDF &mdash; free document downloader.</p>
+            <p style="margin-top:6px;">Education and learning materials should be accessible to everyone.</p>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Ad Interstitial Overlay (fires on Get PDF click) -->
+<div id="adInterstitial">
+    <div id="adInterstitialBox">
+        <div id="adInterstitialLabel">Advertisement</div>
+        <button id="adInterstitialClose" title="Close">&#x2715;</button>
+        <div id="adInterstitialContent" style="min-height:250px;display:flex;align-items:center;justify-content:center;"></div>
+        <div id="adInterstitialTimer">Ad closes in <span id="adInterstitialCountdown">5</span>s</div>
+    </div>
+</div>
+
+<!-- Error Popup -->
+<div class="error-overlay" id="errorOverlay">
+    <div class="error-popup" id="errorPopup">
+        <div class="error-popup-icon" id="errorIcon">&#9888;&#65039;</div>
+        <h2 id="errorTitle">Something Went Wrong</h2>
+        <div class="err-msg" id="errorMsg"></div>
+        <p class="err-hint" id="errorHint">Please wait a moment and try again.</p>
+        <button class="err-close-btn" id="errorCloseBtn">Got it</button>
+    </div>
+</div>
+
+<script>
+// ===== CONFIGURATION =====
+// Auto-detect: use localhost API in dev, production API on live site
+var API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://' + window.location.hostname + ':5000'
+    : 'https://api.getthispdf.com';
+
+function getCookieValue(name) {
+    var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : '';
+}
+
+function getTodayIsoDate() {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
+}
+
+function readJsonCookie(name) {
+    var raw = getCookieValue(name);
+    if (!raw) return null;
+    try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+function writeJsonCookie(name, value) {
+    var midnight = new Date();
+    midnight.setHours(23, 59, 59, 999);
+    document.cookie = name + '=' + encodeURIComponent(JSON.stringify(value)) +
+        ';expires=' + midnight.toUTCString() + ';path=/;SameSite=Lax';
+}
+
+var AD_LIBRARY = {
+    '300x250_1': {
+        key: '300x250_1',
+        name: 'Banner 300x250',
+        type: 'iframe-banner',
+        scriptSrc: 'https://www.highperformanceformat.com/f9d0d54ed8c504626032783b86bdb34f/invoke.js',
+        options: { key: 'f9d0d54ed8c504626032783b86bdb34f', format: 'iframe', height: 250, width: 300, params: {} }
+    },
+    '728x90_1': {
+        key: '728x90_1',
+        name: 'Banner 728x90',
+        type: 'iframe-banner',
+        scriptSrc: 'https://www.highperformanceformat.com/f362d943077b8b6f1f096472cfd5eda4/invoke.js',
+        options: { key: 'f362d943077b8b6f1f096472cfd5eda4', format: 'iframe', height: 90, width: 728, params: {} }
+    },
+    '468x60_1': {
+        key: '468x60_1',
+        name: 'Banner 468x60',
+        type: 'iframe-banner',
+        scriptSrc: 'https://www.highperformanceformat.com/5270ef1fa01a6b0d795df09d214be6f5/invoke.js',
+        options: { key: '5270ef1fa01a6b0d795df09d214be6f5', format: 'iframe', height: 60, width: 468, params: {} }
+    },
+    '320x50_1': {
+        key: '320x50_1',
+        name: 'Banner 320x50',
+        type: 'iframe-banner',
+        scriptSrc: 'https://www.highperformanceformat.com/4d06c0bbf753faee186e1b33e95f3b48/invoke.js',
+        options: { key: '4d06c0bbf753faee186e1b33e95f3b48', format: 'iframe', height: 50, width: 320, params: {} }
+    },
+    /* SocialBar: floating widget — injected via loadSocialBar(), not renderBannerAd() */
+    'SocialBar_1': {
+        key: 'SocialBar_1',
+        name: 'Social Bar',
+        type: 'socialbar',
+        scriptSrc: 'https://pl29060158.profitablecpmratenetwork.com/3d/e7/a9/3de7a9d9c81079c710bd0ae40faec6a9.js'
+    }
+    /* 160x600_1 REMOVED — CPM 0.074 / revenue $0.019, replaced by SocialBar (CPM 0.101) */
+};
+
+function renderBannerAd(slotId, placementKey) {
+    var slot = document.getElementById(slotId);
+    var config = AD_LIBRARY[placementKey];
+    if (!slot || !config || config.type !== 'iframe-banner') return false;
+    if (slot.getAttribute('data-placement-key') === placementKey) return true;
+    slot.innerHTML = '<div class="ad-slot-label">Sponsored</div>';
+    slot.setAttribute('data-placement-key', placementKey);
+    var frame = document.createElement('iframe');
+    frame.width = String(config.options.width);
+    frame.height = String(config.options.height);
+    frame.loading = 'lazy';
+    frame.scrolling = 'no';
+    frame.referrerPolicy = 'no-referrer-when-downgrade';
+    frame.style.cssText = 'border:0;overflow:hidden;background:transparent;display:block;';
+    frame.srcdoc =
+        '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>' +
+        '<body style="margin:0;overflow:hidden;background:transparent;">' +
+        '<script>atOptions=' + JSON.stringify({
+            key: config.options.key,
+            format: config.options.format,
+            height: config.options.height,
+            width: config.options.width,
+            params: config.options.params || {}
+        }) + ';<\/script>' +
+        '<script src="' + config.scriptSrc + '"><\/script>' +
+        '</body></html>';
+    slot.appendChild(frame);
+    return true;
+}
+
+function pickTopBannerPlacement() {
+    var width = window.innerWidth || document.documentElement.clientWidth || 1200;
+    if (width <= 420) return '320x50_1';
+    if (width <= 820) return '468x60_1';
+    return '728x90_1';
+}
+
+var _topBannerKey = '';
+
+function refreshResponsiveTopBanner() {
+    var nextKey = pickTopBannerPlacement();
+    if (_topBannerKey === nextKey) return;
+    _topBannerKey = nextKey;
+    renderBannerAd('topLeaderboardAd', nextKey);
+}
+
+function firstPlacementWithSlot(list, slotName) {
+    return (list || []).find(function(item) {
+        return item.eligible && Array.isArray(item.slots) && item.slots.indexOf(slotName) !== -1;
+    });
+}
+
+/* SocialBar: always load immediately on page load — no API gate needed.
+   It's a floating widget (always eligible, CPM 0.101) that creates its own UI.
+   Loading it early maximises impressions. */
+var _socialBarLoaded = false;
+function loadSocialBar() {
+    if (_socialBarLoaded) return;
+    _socialBarLoaded = true;
+    var s = document.createElement('script');
+    s.src = AD_LIBRARY['SocialBar_1'].scriptSrc;
+    s.async = true;
+    document.body.appendChild(s);
+}
+
+function loadAdPlacements() {
+    refreshResponsiveTopBanner();
+    // 160x600 dropped (CPM 0.074, revenue $0.019) — SocialBar fires immediately below
+    renderBannerAd('bottomRailAd', '300x250_1');
+    loadSocialBar(); // fire right away — no need to wait for API
+
+    fetch(API_BASE + '/api/top-ads', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var topAds = Array.isArray(data.top_ads) ? data.top_ads : [];
+        var otherAds = Array.isArray(data.other_ads) ? data.other_ads : [];
+        var ranked = topAds.concat(otherAds);
+        var displayPlan = data.display_plan || {};
+        var leaderboardAd = displayPlan.leaderboard || firstPlacementWithSlot(ranked, 'leaderboard');
+        var bottomAd = displayPlan.bottom || firstPlacementWithSlot(ranked, 'bottom');
+
+        /* Sidebar slot (160x600) intentionally skipped — lowest earner */
+
+        if (leaderboardAd && window.innerWidth > 820) {
+            _topBannerKey = leaderboardAd.key;
+            renderBannerAd('topLeaderboardAd', leaderboardAd.key);
+        } else {
+            refreshResponsiveTopBanner();
+        }
+        if (bottomAd) renderBannerAd('bottomRailAd', bottomAd.key);
+    })
+    .catch(function() {
+        refreshResponsiveTopBanner();
+        renderBannerAd('bottomRailAd', '300x250_1');
+    });
+}
+
+function applyVoteState(voteType, locked) {
+    var likeBtn = document.getElementById('likeBtn');
+    var dislikeBtn = document.getElementById('dislikeBtn');
+    likeBtn.classList.remove('like-active');
+    dislikeBtn.classList.remove('dislike-active');
+    likeBtn.disabled = !!locked;
+    dislikeBtn.disabled = !!locked;
+    likeBtn.style.opacity = locked ? '0.6' : '';
+    dislikeBtn.style.opacity = locked ? '0.6' : '';
+    if (voteType === 'like') likeBtn.classList.add('like-active');
+    if (voteType === 'dislike') dislikeBtn.classList.add('dislike-active');
+}
+
+// ===== Error Popup =====
+(function() {
+    var eo = document.getElementById('errorOverlay');
+    document.getElementById('errorCloseBtn').addEventListener('click', function() { eo.classList.remove('visible'); });
+    eo.addEventListener('click', function(e) { if (e.target === eo) eo.classList.remove('visible'); });
+    window.showErrorPopup = function(title, message, hint, icon) {
+        document.getElementById('errorTitle').textContent = title || 'Something Went Wrong';
+        document.getElementById('errorMsg').textContent = message || 'An unknown error occurred.';
+        document.getElementById('errorHint').textContent = hint || 'Please wait a moment and try again.';
+        document.getElementById('errorIcon').innerHTML = icon || '&#9888;&#65039;';
+        eo.classList.add('visible');
+    };
+})();
+
+// ===== Load Stats =====
+
+(function() {
+    fetch(API_BASE + '/api/bootstrap', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(function(r) {
+        if (r.status === 503) {
+            r.json().then(function(d) {
+                if (d.error && d.error.toLowerCase().indexOf('maintenance') !== -1) {
+                    showErrorPopup('Under Maintenance', d.error, 'We\'ll be back shortly. Please try again in a few minutes.', '&#128295;');
+                }
+            }).catch(function() {});
+            throw new Error('maintenance');
+        }
+        return r.json();
+    })
+    .then(function(s) {
+        document.getElementById('swTodayVisits').textContent = Number(s.today_visits || 0).toLocaleString();
+        document.getElementById('swVisits').textContent = Number(s.total_visits).toLocaleString();
+        document.getElementById('swDownloads').textContent = Number(s.total_downloads).toLocaleString();
+        document.getElementById('swLikes').textContent = Number(s.likes).toLocaleString();
+        document.getElementById('likeCount').textContent = Number(s.likes).toLocaleString();
+        document.getElementById('dislikeCount').textContent = Number(s.dislikes).toLocaleString();
+        // Restore vote state from cookie
+        var votedCookie = document.cookie.match(/voted_today=([^;]+)/);
+        if (votedCookie && votedCookie[1] === getTodayIsoDate()) {
+            // User voted today but we don't know which — disable both
+            document.getElementById('likeBtn').style.opacity = '0.6';
+            document.getElementById('dislikeBtn').style.opacity = '0.6';
+        }
+        var voteState = readJsonCookie('vote_state');
+        if (voteState && voteState.date === getTodayIsoDate()) applyVoteState(voteState.vote, true);
+        else applyVoteState('', false);
+    }).catch(function() {});
+})();
+
+loadAdPlacements();
+
+var _resizeTimer = null;
+window.addEventListener('resize', function() {
+    if (_resizeTimer) clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(function() {
+        refreshResponsiveTopBanner();
+    }, 150);
+});
+
+// ===== Vote =====
+function castVote(voteType) {
+    // Check if already voted today (cookie-based)
+    var today = getTodayIsoDate();
+    var voteState = readJsonCookie('vote_state');
+    if (voteState && voteState.date === today) {
+        alert('You have already voted today. Come back tomorrow!');
+        return;
+    }
+    var voted = document.cookie.match(/voted_today=([^;]+)/);
+    if (voted && voted[1] === today) {
+        alert('You have already voted today. Come back tomorrow!');
+        return;
+    }
+    fetch(API_BASE + '/api/vote', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({vote: voteType}),
+        credentials: 'include'
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        document.getElementById('likeCount').textContent = Number(data.likes).toLocaleString();
+        document.getElementById('dislikeCount').textContent = Number(data.dislikes).toLocaleString();
+        document.getElementById('swLikes').textContent = Number(data.likes).toLocaleString();
+        // Set voted cookie — expires at midnight
+        var midnight = new Date();
+        midnight.setHours(23, 59, 59, 999);
+        document.cookie = 'voted_today=' + today + ';expires=' + midnight.toUTCString() + ';path=/;SameSite=Lax';
+        writeJsonCookie('vote_state', { date: today, vote: voteType });
+        // Visual feedback
+        var lb = document.getElementById('likeBtn'), db = document.getElementById('dislikeBtn');
+        lb.classList.remove('like-active'); db.classList.remove('dislike-active');
+        if (voteType === 'like') lb.classList.add('like-active');
+        if (voteType === 'dislike') db.classList.add('dislike-active');
+        applyVoteState(voteType, true);
+    });
+}
+
+// ===== Document Cache (IndexedDB) =====
+var docCacheDB = null;
+(function() {
+    try {
+        var req = indexedDB.open('getthispdf_cache', 2);
+        req.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains('documents')) db.createObjectStore('documents', { keyPath: 'doc_id' });
+        };
+        req.onsuccess = function(e) { docCacheDB = e.target.result; validateAndLoadHistory(); };
+        req.onerror = function() { docCacheDB = null; renderHistory(); };
+    } catch(e) { docCacheDB = null; renderHistory(); }
+
+    // --- Save document to cache ---
+    window.cacheDocument = function(docId, title, viewerHtml) {
+        if (docCacheDB) {
+            try {
+                var tx = docCacheDB.transaction('documents', 'readwrite');
+                tx.objectStore('documents').put({ doc_id: docId, title: title, html: viewerHtml, timestamp: Date.now() });
+            } catch(e) {}
+        }
+        try {
+            var list = JSON.parse(localStorage.getItem('cachedDocs') || '[]');
+            list = list.filter(function(d) { return d.id !== docId; });
+            list.unshift({ id: docId, title: title, time: Date.now() });
+            if (list.length > 500) list = list.slice(0, 500);
+            localStorage.setItem('cachedDocs', JSON.stringify(list));
+            renderHistory();
+        } catch(e) {}
+    };
+
+    // --- Retrieve document from cache (refreshes timestamp) ---
+    window.getCachedDocument = function(docId) {
+        return new Promise(function(resolve) {
+            if (!docCacheDB) { resolve(null); return; }
+            try {
+                var tx = docCacheDB.transaction('documents', 'readwrite');
+                var store = tx.objectStore('documents');
+                var r = store.get(docId);
+                r.onsuccess = function() {
+                    var result = r.result || null;
+                    if (result) {
+                        // Refresh timestamp so it stays in cache longer
+                        result.timestamp = Date.now();
+                        try { store.put(result); } catch(e) {}
+                        // Also refresh in localStorage list
+                        try {
+                            var list = JSON.parse(localStorage.getItem('cachedDocs') || '[]');
+                            list = list.map(function(d) { return d.id === docId ? Object.assign({}, d, { time: Date.now() }) : d; });
+                            localStorage.setItem('cachedDocs', JSON.stringify(list));
+                        } catch(e) {}
+                    }
+                    resolve(result);
+                };
+                r.onerror = function() { resolve(null); };
+            } catch(e) { resolve(null); }
+        });
+    };
+
+    window.extractDocId = function(url) {
+        var m = url.match(/\/(\d{5,12})(?:[/?#]|$)/);
+        return m ? m[1] : null;
+    };
+
+    // --- Delete a single cached document ---
+    window.deleteCachedDoc = function(docId) {
+        if (docCacheDB) {
+            try {
+                var tx = docCacheDB.transaction('documents', 'readwrite');
+                tx.objectStore('documents').delete(docId);
+            } catch(e) {}
+        }
+        try {
+            var list = JSON.parse(localStorage.getItem('cachedDocs') || '[]');
+            list = list.filter(function(d) { return d.id !== docId; });
+            localStorage.setItem('cachedDocs', JSON.stringify(list));
+        } catch(e) {}
+        renderHistory();
+    };
+
+    // --- Validate list against IndexedDB, remove orphaned entries ---
+    function validateAndLoadHistory() {
+        var list;
+        try { list = JSON.parse(localStorage.getItem('cachedDocs') || '[]'); } catch(e) { list = []; }
+        if (!list.length || !docCacheDB) { renderHistory(); return; }
+
+        // Check each entry exists in IndexedDB
+        var tx = docCacheDB.transaction('documents', 'readonly');
+        var store = tx.objectStore('documents');
+        var validated = [];
+        var pending = list.length;
+
+        list.forEach(function(doc) {
+            try {
+                var r = store.get(doc.id);
+                r.onsuccess = function() {
+                    if (r.result) validated.push(doc);
+                    pending--;
+                    if (pending === 0) finishValidation(validated, list.length);
+                };
+                r.onerror = function() {
+                    pending--;
+                    if (pending === 0) finishValidation(validated, list.length);
+                };
+            } catch(e) {
+                pending--;
+                if (pending === 0) finishValidation(validated, list.length);
+            }
+        });
+    }
+
+    function finishValidation(validated, originalCount) {
+        // Sort by time descending (most recent first)
+        validated.sort(function(a, b) { return (b.time || 0) - (a.time || 0); });
+        // Save cleaned list if entries were removed
+        if (validated.length !== originalCount) {
+            try { localStorage.setItem('cachedDocs', JSON.stringify(validated)); } catch(e) {}
+        }
+        renderHistory();
+    }
+
+    function formatTimeAgo(ts) {
+        if (!ts) return '';
+        var diff = Date.now() - ts;
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return mins + 'm ago';
+        var hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + 'h ago';
+        var days = Math.floor(hrs / 24);
+        if (days < 30) return days + 'd ago';
+        var d = new Date(ts);
+        return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    }
+
+    function renderHistory() {
+        var container = document.getElementById('cachedDocsList');
+        var countEl = document.getElementById('cachedCount');
+        var emptyEl = document.getElementById('cachedEmpty');
+        if (!container) return;
+
+        var list;
+        try { list = JSON.parse(localStorage.getItem('cachedDocs') || '[]'); } catch(e) { list = []; }
+
+        // Update count badge
+        if (countEl) countEl.textContent = list.length;
+
+        // Clear existing entries (but keep the empty placeholder)
+        var entries = container.querySelectorAll('.cached-entry');
+        for (var i = 0; i < entries.length; i++) entries[i].remove();
+
+        if (!list.length) {
+            if (emptyEl) emptyEl.style.display = '';
+            return;
+        }
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        list.forEach(function(doc) {
+            var row = document.createElement('div');
+            row.className = 'cached-entry';
+
+            var ts = document.createElement('span');
+            ts.className = 'cached-time';
+            ts.textContent = formatTimeAgo(doc.time);
+
+            var tt = document.createElement('span');
+            tt.className = 'cached-title';
+            tt.textContent = doc.title || ('Document ' + doc.id);
+
+            var del = document.createElement('button');
+            del.className = 'cached-delete';
+            del.title = 'Remove from history';
+            del.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+            del.addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteCachedDoc(doc.id);
+            });
+
+            row.appendChild(ts);
+            row.appendChild(tt);
+            row.appendChild(del);
+            row.addEventListener('click', function() { openCachedDoc(doc.id); });
+            container.appendChild(row);
+        });
+    }
+
+    window.openCachedDoc = function(docId) {
+        getCachedDocument(docId).then(function(cached) {
+            if (cached && cached.html) {
+                showViewer(cached.html, docId, cached.title || 'Document');
+            } else {
+                showErrorPopup('Cache Expired', 'This document is no longer in your browser cache.', 'Please paste the URL and fetch it again.', '&#128194;');
+                deleteCachedDoc(docId);
+            }
+        });
+    };
+})();
+
+// ===== Main Download Logic =====
+(function() {
+    var form = document.getElementById('fetchForm');
+    var btn = document.getElementById('fetchBtn');
+    var statusDiv = document.getElementById('status');
+    var statusText = document.getElementById('statusText');
+    var progressInfo = document.getElementById('progressInfo');
+    var progressBar = document.getElementById('progressBar');
+    var progressLabel = document.getElementById('progressLabel');
+    var progressPct = document.getElementById('progressPct');
+    var currentDocUrl = '';
+
+    // Queue management
+    var _queueId = null;
+    var _queueInterval = null;
+    var QUEUE_HEARTBEAT_MS = 10000;
+
+    function showQueueStatus(queueState) {
+        var pos = Number(queueState.position || 0);
+        var total = Number(queueState.total || 0);
+        var ahead = Number(queueState.ahead || Math.max(pos - 1, 0));
+        var maxQueue = Number(queueState.max_queue || 500);
+        var el = document.getElementById('queueStatus');
+        el.style.display = 'block';
+        document.getElementById('queueText').textContent =
+            pos === 1 ? 'Your turn! Starting download...' : 'Waiting in queue...';
+        var pct = total > 0 ? Math.max(5, ((total - pos + 1) / total) * 100) : 0;
+        document.getElementById('queueBar').style.width = pct + '%';
+        document.getElementById('queueDetail').textContent =
+            ahead + ' users ahead of you | Queue ' + total + ' / ' + maxQueue + ' | Your spot: ' + pos;
+    }
+
+    function hideQueueStatus() {
+        document.getElementById('queueStatus').style.display = 'none';
+        if (_queueInterval) { clearInterval(_queueInterval); _queueInterval = null; }
+    }
+
+    function leaveQueue(useKeepalive) {
+        if (_queueId) {
+            fetch(API_BASE + '/api/queue/leave', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({queue_id: _queueId}),
+                credentials: 'include',
+                keepalive: !!useKeepalive
+            }).catch(function(){});
+            _queueId = null;
+        }
+        hideQueueStatus();
+    }
+
+    function reset() {
+        leaveQueue();
+        btn.disabled = false;
+        btn.textContent = 'Get PDF';
+        statusDiv.style.display = 'none';
+        progressInfo.style.display = 'none';
+    }
+
+    function updateStatus(msg) {
+        statusText.textContent = msg;
+    }
+
+    function updateProgress(done, total) {
+        progressInfo.style.display = 'block';
+        var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        progressBar.style.width = pct + '%';
+        progressLabel.textContent = done + ' / ' + total + ' pages';
+        progressPct.textContent = pct + '%';
+    }
+
+    function fetchPage(url) {
+        return fetch(url).then(function(resp) {
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            return resp.text();
+        });
+    }
+
+    function delay(ms) {
+        return new Promise(function(resolve) { setTimeout(resolve, ms); });
+    }
+
+    function refreshAccess(docUrl, totalPages) {
+        return fetch(API_BASE + '/api/refresh-access', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url: docUrl, total_pages: totalPages }),
+            credentials: 'include'
+        }).then(function(resp) {
+            if (resp.ok) return resp.json();
+            return null;
+        }).catch(function() { return null; });
+    }
+
+    function rewritePageUrls(html, assetBase, pngSig) {
+        html = html.replace(/src="(?!https?:\/\/|data:)([^"]*\.png)"/gi, function(m, f) {
+            return 'src="' + assetBase + f + pngSig + '"';
+        });
+        html = html.replace(/src="(?!https?:\/\/|data:)([^"]*\.jpe?g)"/gi, function(m, f) {
+            return 'src="' + assetBase + f + pngSig + '"';
+        });
+        html = html.replace(/url\(["']?(?!https?:\/\/|data:)([^"')\s]*\.png)["']?\)/gi, function(m, f) {
+            return 'url("' + assetBase + f + pngSig + '")';
+        });
+        return html;
+    }
+
+    function escapeHtml(str) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    // --- Download all pages ---
+    function downloadDocument(data) {
+        var docId = data.doc_id, title = data.title, totalPages = data.total_pages;
+        var accessMode = data.access_mode, currentPages = data.pages;
+        var docCss = data.doc_css || '', pngSig = data.png_sig || '', assetBase = data.asset_base || '';
+        var pageResults = {}, completed = 0;
+
+        currentPages.forEach(function(p) {
+            if (p.embedded_html) {
+                pageResults[p.num] = { status: 'ok', html: p.embedded_html, blurred: false };
+                completed++;
+            }
+        });
+
+        var needDownload = currentPages.filter(function(p) { return !p.embedded_html; });
+
+        if (needDownload.length === 0) {
+            finishDocument(pageResults, docCss, title, totalPages, accessMode, docId, data.stats || null);
+            return;
+        }
+
+        updateStatus('Downloading pages from CDN...');
+        updateProgress(completed, totalPages);
+
+        var tokenRefreshed = false;
+        var SEND_GAP = 130;
+
+        function fetchWithRetry(p) {
+            return fetchPage(p.url).then(function(html) {
+                html = rewritePageUrls(html, assetBase, pngSig);
+                pageResults[p.num] = { status: 'ok', html: html, blurred: p.blurred };
+                completed++;
+                updateProgress(completed, totalPages);
+                tokenRefreshed = false;
+            }).catch(function(err) {
+                if (!tokenRefreshed && err.message && err.message.indexOf('403') !== -1) {
+                    tokenRefreshed = true;
+                    updateStatus('Token expired \u2014 refreshing...');
+                    return refreshAccess(currentDocUrl, totalPages).then(function(refreshed) {
+                        if (refreshed && refreshed.pages) {
+                            if (refreshed.png_sig) pngSig = refreshed.png_sig;
+                            if (refreshed.asset_base) assetBase = refreshed.asset_base;
+                            var refreshMap = {};
+                            refreshed.pages.forEach(function(rp) { refreshMap[rp.num] = rp; });
+                            needDownload.forEach(function(nd) {
+                                var updated = refreshMap[nd.num];
+                                if (updated) { nd.url = updated.url; nd.blurred = updated.blurred; }
+                            });
+                            var retryPage = refreshMap[p.num];
+                            if (retryPage) {
+                                return fetchPage(retryPage.url).then(function(html) {
+                                    html = rewritePageUrls(html, assetBase, pngSig);
+                                    pageResults[p.num] = { status: 'ok', html: html, blurred: retryPage.blurred };
+                                    completed++;
+                                    updateProgress(completed, totalPages);
+                                    tokenRefreshed = false;
+                                }).catch(function() { pageResults[p.num] = { status: 'error', blurred: p.blurred }; });
+                            }
+                        }
+                        pageResults[p.num] = { status: 'error', blurred: p.blurred };
+                    });
+                }
+                pageResults[p.num] = { status: 'error', blurred: p.blurred };
+            });
+        }
+
+        var promises = needDownload.map(function(p, i) {
+            return delay(i * SEND_GAP).then(function() { return fetchWithRetry(p); });
+        });
+
+        Promise.all(promises).then(function() {
+            finishDocument(pageResults, docCss, title, totalPages, accessMode, docId, data.stats || null);
+        });
+    }
+
+    function finishDocument(pageResults, docCss, title, totalPages, accessMode, docId, liveStats) {
+        updateStatus('Building document viewer...');
+        progressBar.style.width = '100%';
+        progressPct.textContent = '100%';
+
+        if (liveStats) {
+            document.getElementById('swTodayVisits').textContent = Number(liveStats.today_visits || 0).toLocaleString();
+            document.getElementById('swVisits').textContent = Number(liveStats.total_visits || 0).toLocaleString();
+            document.getElementById('swDownloads').textContent = Number(liveStats.total_downloads || 0).toLocaleString();
+            document.getElementById('swLikes').textContent = Number(liveStats.likes || 0).toLocaleString();
+        }
+
+        if (accessMode === 'FREE') {
+            updateStatus('Premium access unavailable \u2014 some pages may be blurred');
+        }
+
+        setTimeout(function() {
+            var viewerData = buildViewerHtml(pageResults, docCss, title, totalPages, accessMode);
+            showViewer(viewerData, docId, title, totalPages);
+        }, accessMode === 'FREE' ? 1500 : 100);
+    }
+
+    // --- Build viewer HTML (iframe content — pages only, no header) ---
+    function buildViewerHtml(pageResults, docCss, title, totalPages, accessMode) {
+        var pagesHtml = '', hasBlurred = false;
+        for (var i = 1; i <= totalPages; i++) {
+            var page = pageResults[i];
+            if (page && page.status === 'ok' && page.html) {
+                if (page.blurred) {
+                    hasBlurred = true;
+                    pagesHtml += '<div class="pf w0 h0" id="pf'+i+'"><div class="page-num">'+i+'</div><div class="page-error">Page '+i+' — premium content (blurred)</div>'+page.html+'</div>';
+                } else {
+                    pagesHtml += '<div class="pf w0 h0" id="pf'+i+'"><div class="page-num">'+i+'</div>'+page.html+'</div>';
+                }
+            } else {
+                hasBlurred = true;
+                pagesHtml += '<div class="pf w0 h0" id="pf'+i+'"><div class="page-num">'+i+'</div><div class="page-error">Page '+i+' — failed to load</div></div>';
+            }
+        }
+        var premiumBanner = '';
+        if (hasBlurred && accessMode !== 'PREMIUM') {
+            premiumBanner = '<div class="premium-notice">Some pages could not be fully loaded.</div>';
+        }
+        // Return object with html and metadata
+        return {
+            hasBlurred: hasBlurred,
+            html: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+                '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+                '<title>' + escapeHtml(title) + '</title>' +
+                '<style>' + docCss.replace(/<\//gi, '<\\/') + '</style>' +
+                '<style>' +
+                'html,body{margin:0;padding:0;background:#F7F7F4}' +
+                'body{font-family:sans-serif;color:#18181B;min-height:100vh}' +
+                '.premium-notice{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:10px 20px;text-align:center;color:#92400E;font-size:13px;font-weight:500;margin:14px 20px 0;font-family:sans-serif}' +
+                '.p2hv #page-container{position:relative;padding:20px 0 50px}' +
+                '.p2hv .pf{margin:14px auto!important;box-shadow:0 2px 16px rgba(0,0,0,0.1);overflow:hidden!important;border-radius:6px;background:#fff}' +
+                '.p2hv .pc{overflow:hidden!important}' +
+                '.p2hv .bi{margin-top:-4px}' +
+                '.page-num{position:absolute;top:8px;right:8px;background:rgba(79,70,229,0.85);color:#fff;font:600 10px/1 sans-serif;padding:3px 9px;border-radius:10px;z-index:10;pointer-events:none}' +
+                '.page-error{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#F9FAFB;border:1px dashed #D1D5DB;color:#9CA3AF;font:500 13px/1 sans-serif;position:absolute;top:0;left:0}' +
+                '@media print{html,body{background:#fff!important;margin:0;padding:0}.premium-notice{display:none!important}.page-num{display:none!important}.p2hv #page-container{padding:0}.p2hv .pf{margin:0!important;box-shadow:none!important;border:none!important;border-radius:0!important;page-break-after:always;page-break-inside:avoid;overflow:hidden!important}.p2hv .pf:last-child{page-break-after:auto}}' +
+                '</style></head><body>' +
+                premiumBanner +
+                '<div class="p2hv"><div id="page-container">' + pagesHtml + '</div></div>' +
+                '<scr'+'ipt>' +
+                'window.addEventListener("message",function(e){if(e.data==="print"){window.print();}});' +
+                '<\/scr'+'ipt></body></html>'
+        };
+    }
+
+    // --- Show viewer with modern header in parent + iframe for pages ---
+    window.showViewer = function(viewerHtml, docId, title, totalPages) {
+        // viewerHtml can be a string (from cache) or object (from buildViewerHtml)
+        var html = typeof viewerHtml === 'string' ? viewerHtml : viewerHtml.html;
+        var pageCount = totalPages || '';
+
+        document.querySelector('.page-wrap').style.display = 'none';
+        document.querySelector('.navbar').style.display = 'none';
+
+        // Remove existing viewer if any
+        var existing = document.getElementById('viewerWrap');
+        if (existing) existing.remove();
+
+        // --- Viewer overlay container ---
+        var wrap = document.createElement('div');
+        wrap.id = 'viewerWrap';
+        wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:10000;background:#F7F7F4;display:flex;flex-direction:column;';
+
+        // --- Modern sticky header (in parent, NOT in iframe) ---
+        var header = document.createElement('div');
+        header.id = 'viewerHeader';
+        header.innerHTML =
+            '<div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1;">' +
+                '<button id="viewerBackBtn" title="Back to home" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;border:1px solid #E5E7EB;background:#fff;cursor:pointer;transition:all .2s;flex-shrink:0;">' +
+                    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>' +
+                '</button>' +
+                '<div style="min-width:0;flex:1;">' +
+                    '<div id="viewerTitle" style="font-size:14px;font-weight:600;color:#18181B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;"></div>' +
+                    (pageCount ? '<div style="font-size:11px;color:#9CA3AF;margin-top:1px;">' + escapeHtml(String(pageCount)) + ' pages</div>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">' +
+                '<button id="viewerPrintBtn" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;background:#4F46E5;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
+                    'Print / Save PDF' +
+                '</button>' +
+            '</div>';
+
+        // Header styling
+        var headerStyle = document.createElement('style');
+        headerStyle.textContent =
+            '#viewerHeader{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 20px;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid #E4E4E0;box-shadow:0 1px 8px rgba(0,0,0,0.06);font-family:"Inter",sans-serif;flex-shrink:0;z-index:10;}' +
+            '#viewerBackBtn:hover{background:#F3F4F6;border-color:#D1D5DB;}' +
+            '#viewerPrintBtn:hover{background:#4338CA;}' +
+            '#printTipModal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;}' +
+            '#printTipModal.active{display:flex;}' +
+            '@media(max-width:600px){#viewerHeader{padding:8px 12px;gap:10px;}#viewerPrintBtn span.lbl{display:none;}}';
+        wrap.appendChild(headerStyle);
+        wrap.appendChild(header);
+
+        // --- Print tip modal (in parent) ---
+        var printModal = document.createElement('div');
+        printModal.id = 'printTipModal';
+        printModal.innerHTML =
+            '<div style="background:#fff;border:1px solid #E4E4E0;border-radius:16px;padding:28px 30px;max-width:380px;width:90%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.16);font-family:Inter,sans-serif;">' +
+                '<div style="width:48px;height:48px;border-radius:12px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">' +
+                    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>' +
+                '</div>' +
+                '<div style="color:#18181B;font-size:16px;font-weight:700;margin-bottom:8px;">Print Tip</div>' +
+                '<div style="color:#6B7280;font-size:13px;line-height:1.7;margin-bottom:20px;">For best results, go to <strong style="color:#374151;">More settings</strong> &rarr; set <strong style="color:#374151;">Scale</strong> to <strong style="color:#4F46E5;">Custom</strong> and enter <strong style="color:#4F46E5;">200</strong>.</div>' +
+                '<div style="display:flex;gap:10px;justify-content:center;">' +
+                    '<button id="printTipCancel" style="padding:10px 24px;border-radius:10px;background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;">Cancel</button>' +
+                    '<button id="printTipOk" style="padding:10px 24px;border-radius:10px;background:#4F46E5;color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;transition:all .2s;">Print Now</button>' +
+                '</div>' +
+            '</div>';
+        wrap.appendChild(printModal);
+
+        // --- Iframe for document pages ---
+        var iframe = document.createElement('iframe');
+        iframe.id = 'viewerFrame';
+        iframe.style.cssText = 'flex:1;width:100%;border:none;background:#F7F7F4;';
+        iframe.sandbox = 'allow-scripts allow-modals';
+        iframe.srcdoc = html;
+        wrap.appendChild(iframe);
+
+        document.body.appendChild(wrap);
+
+        // Set title safely via textContent
+        document.getElementById('viewerTitle').textContent = title || 'Document';
+
+        // --- Event handlers ---
+        // Back button
+        document.getElementById('viewerBackBtn').addEventListener('click', function() {
+            wrap.remove();
+            document.querySelector('.page-wrap').style.display = '';
+            document.querySelector('.navbar').style.display = '';
+        });
+
+        // Print button -> show tip modal
+        document.getElementById('viewerPrintBtn').addEventListener('click', function() {
+            printModal.classList.add('active');
+        });
+
+        // Print tip cancel
+        document.getElementById('printTipCancel').addEventListener('click', function() {
+            printModal.classList.remove('active');
+        });
+
+        // Print tip OK -> tell iframe to print
+        document.getElementById('printTipOk').addEventListener('click', function() {
+            printModal.classList.remove('active');
+            var frame = document.getElementById('viewerFrame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.postMessage('print', '*');
+            }
+        });
+
+        // Close modal on backdrop click
+        printModal.addEventListener('click', function(e) {
+            if (e.target === printModal) printModal.classList.remove('active');
+        });
+
+        // Keyboard: Escape closes modal or viewer
+        document.addEventListener('keydown', function onViewerKey(e) {
+            if (e.key === 'Escape') {
+                if (printModal.classList.contains('active')) {
+                    printModal.classList.remove('active');
+                } else if (document.getElementById('viewerWrap')) {
+                    document.getElementById('viewerBackBtn').click();
+                    document.removeEventListener('keydown', onViewerKey);
+                }
+            }
+        });
+
+        if (typeof cacheDocument === 'function') cacheDocument(docId, title, html);
+        reset();
+    };
+
+    // --- Ad blocker wall (reusable) ---
+    function showAdBlockWall() {
+        if (document.getElementById('_ab_wall')) return;
+        var o = document.createElement('div'); o.id = '_ab_wall';
+        o.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-family:"Inter",system-ui,sans-serif;padding:20px;';
+        o.innerHTML = '<div style="background:#fff;border-radius:20px;padding:40px 36px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.3);"><div style="width:64px;height:64px;border-radius:16px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div><h2 style="margin:0 0 10px;font-size:20px;font-weight:800;color:#18181B;">Ad Blocker Detected</h2><p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#6B7280;">We rely on ads to keep this service <strong style="color:#374151;">free for everyone</strong>. Please disable your ad blocker for this site to continue using Get This PDF.</p><div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">How to disable:</div><ol style="margin:0;padding-left:18px;font-size:12px;color:#6B7280;line-height:1.8;"><li>Click the ad blocker icon in your browser toolbar</li><li>Select <strong style="color:#374151;">"Pause on this site"</strong> or <strong style="color:#374151;">"Disable"</strong></li><li>Click the refresh button below</li></ol></div><button onclick="window.location.reload()" style="display:inline-flex;align-items:center;gap:8px;background:#4F46E5;color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 2px 8px rgba(79,70,229,0.3);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh Page</button><p style="margin:14px 0 0;font-size:11px;color:#9CA3AF;">Thank you for supporting free education tools.</p></div>';
+        document.body.appendChild(o); document.body.style.overflow = 'hidden';
+    }
+
+    // --- Form submit handler ---
+    // The fetch URL uses /ads/serve/fetch — ad blockers will block requests
+    // containing "ads" in the URL path. If blocked, we detect it and show the wall.
+    function doFetch(url) {
+        fetch(API_BASE + '/ads/serve/fetch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({url: url, queue_id: _queueId}),
+            credentials: 'include'
+        })
+        .then(function(r) {
+            return r.json().catch(function() { throw new Error('Server returned ' + r.status); });
+        })
+        .then(function(data) {
+            if (data.error) {
+                reset();
+                var msg = data.error.toLowerCase();
+                if (msg.indexOf('maintenance') !== -1) {
+                    showErrorPopup('Under Maintenance', data.error, 'We\'ll be back shortly. Please try again in a few minutes.', '&#128295;');
+                } else if (msg.indexOf('busy') !== -1) {
+                    showErrorPopup('Server Is Busy', data.error, 'Please wait a moment and try again.', '&#128679;');
+                } else if (msg.indexOf('limit') !== -1) {
+                    showErrorPopup('Daily Limit Reached', data.error, 'You can download more documents tomorrow.', '&#9203;');
+                } else if (msg.indexOf('invalid') !== -1 || msg.indexOf('url') !== -1) {
+                    showErrorPopup('Invalid URL', data.error, 'Please paste a valid StudoCu document URL.', '&#128279;');
+                } else {
+                    showErrorPopup('Something Went Wrong', data.error, 'Please try again. If this keeps happening, visit our Help page.', '&#9888;&#65039;');
+                }
+                return;
+            }
+            // Increment download counter cookie
+            var dlToday = getTodayIsoDate();
+            var dlC = document.cookie.match(/dl_count=([^;]+)/);
+            var dlD = null;
+            try { dlD = dlC ? JSON.parse(decodeURIComponent(dlC[1])) : null; } catch(e) {}
+            if (!dlD || dlD.date !== dlToday) dlD = { date: dlToday, count: 0 };
+            dlD.count++;
+            var dlMidnight = new Date();
+            dlMidnight.setHours(23, 59, 59, 999);
+            document.cookie = 'dl_count=' + encodeURIComponent(JSON.stringify(dlD)) + ';expires=' + dlMidnight.toUTCString() + ';path=/;SameSite=Lax';
+
+            updateStatus('Got access \u2014 downloading pages from CDN...');
+            downloadDocument(data);
+        })
+        .catch(function(err) {
+            reset();
+            // If fetch was blocked entirely (ad blocker kills the request),
+            // err.message is typically "Failed to fetch" or empty
+            var msg = (err.message || '').toLowerCase();
+            if (msg.indexOf('failed to fetch') !== -1 || msg === '' || msg.indexOf('networkerror') !== -1 || msg.indexOf('load failed') !== -1) {
+                showAdBlockWall();
+            } else {
+                showErrorPopup('Network Error', err.message || 'Could not connect to the server.', 'Check your connection and try again.', '&#128268;');
+            }
+        });
+    }
+
+    function isValidUrl(str) {
+        try { var u = new URL(str); return u.protocol === 'https:'; }
+        catch(e) { return false; }
+    }
+
+    function startQueuedFetch(docUrl) {
+        // Check daily download limit (cookie-based, 30/day)
+        var today = getTodayIsoDate();
+        var dlCookie = document.cookie.match(/dl_count=([^;]+)/);
+        var dlData = null;
+        try { dlData = dlCookie ? JSON.parse(decodeURIComponent(dlCookie[1])) : null; } catch(e) {}
+        if (!dlData || dlData.date !== today) dlData = { date: today, count: 0 };
+        if (dlData.count >= 30) {
+            showErrorPopup('Daily Limit Reached', 'You have reached the daily download limit (30). Please try again tomorrow.', 'The limit resets at midnight.', '&#128683;');
+            reset();
+            return;
+        }
+
+        // Join download queue
+        _queueId = 'q_' + Math.random().toString(36).substr(2, 12) + '_' + Date.now();
+
+        fetch(API_BASE + '/api/queue/join', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({queue_id: _queueId}),
+            credentials: 'include'
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(qData) {
+            if (qData.error) {
+                showErrorPopup('Queue Full', qData.error, 'Too many users downloading. Please wait a moment.', '&#9201;');
+                reset();
+                return;
+            }
+            showQueueStatus(qData);
+
+            if (qData.position === 1) {
+                // Our turn — proceed immediately
+                doFetch(docUrl);
+                return;
+            }
+
+            // Poll for position
+            _queueInterval = setInterval(function() {
+                fetch(API_BASE + '/api/queue/heartbeat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({queue_id: _queueId}),
+                    credentials: 'include'
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(hb) {
+                    showQueueStatus(hb);
+                    if (hb.position === 1) {
+                        clearInterval(_queueInterval);
+                        _queueInterval = null;
+                        doFetch(docUrl);
+                    }
+                })
+                .catch(function() {});
+            }, QUEUE_HEARTBEAT_MS);
+        })
+        .catch(function(err) {
+            reset();
+            showErrorPopup('Queue Error', 'Could not join download queue.', 'Please try again.', '&#9888;');
+        });
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault(); e.stopPropagation();
+        var url = document.getElementById('url').value.trim();
+        if (!url) return;
+
+        if (!isValidUrl(url)) {
+            showErrorPopup('Invalid URL', 'Please paste a valid HTTPS document URL.', 'The URL should start with https://', '&#128279;');
+            return;
+        }
+
+        currentDocUrl = url;
+        btn.disabled = true;
+        btn.textContent = 'Fetching...';
+        statusDiv.style.display = 'flex';
+
+        var docId = extractDocId(url);
+        if (docId && typeof getCachedDocument === 'function') {
+            updateStatus('Checking browser cache...');
+            getCachedDocument(docId).then(function(cached) {
+                if (cached && cached.html) {
+                    updateStatus('Found in cache \u2014 loading instantly...');
+                    setTimeout(function() { showViewer(cached.html, docId, cached.title || 'Document'); }, 200);
+                } else {
+                    updateStatus('Authenticating with StudoCu...');
+                    startQueuedFetch(url);
+                }
+            });
+        } else {
+            updateStatus('Authenticating with StudoCu...');
+            startQueuedFetch(url);
+        }
+    });
+
+    window.addEventListener('pagehide', function() {
+        leaveQueue(true);
+    });
+
+    window.addEventListener('beforeunload', function() {
+        leaveQueue(true);
+    });
+})();
+</script>
+<script>
+/* ===== Ad Engagement System =====
+ * FLOW: Click-first monetization — monetize on INTENT, not page load
+ *
+ * Page Load  → passive banners only (300x250, SocialBar) — NO popunder, NO smartlink
+ * Get PDF ↓  → [1] Popunder (desktop only)
+ *              [2] Smartlink new tab (500ms delay, boosts popunder success)
+ *              [3] Interstitial gate: 728x90 on desktop / 300x250 on mobile
+ *              [4] Form submit + click-anywhere smartlink after fetch
+ *
+ * One-time gate per session (localStorage) prevents spam-blocking.
+ * Mobile: skip popunder (unreliable), prioritize smartlink.
+ */
+(function() {
+    'use strict';
+
+    var SMARTLINK_URL = 'https://www.profitablecpmratenetwork.com/xzbg3kgcm?key=754ed05992cc4cfaf112156095fd26dd';
+    var POPUNDER_SRC  = 'https://pl29060156.profitablecpmratenetwork.com/a1/ee/db/a1eedba473f711d0b2a13dbbd1a50938.js';
+    var SESSION_KEY   = '_adt'; // localStorage one-time gate key
+
+    var _popunderFired   = false;
+    var _interstitialShown = false;
+    var _smartlinkActive = false;
+
+    function isMobile() {
+        return (window.innerWidth || document.documentElement.clientWidth) <= 768;
+    }
+
+    /* ---- Tier 1a: Popunder (desktop only) ---- */
+    function firePopunder() {
+        if (_popunderFired) return;
+        _popunderFired = true;
+        var s = document.createElement('script');
+        s.src = POPUNDER_SRC;
+        s.async = true;
+        document.body.appendChild(s);
+    }
+
+    /* ---- Tier 1b: Smartlink (new tab) ---- */
+    function openSmartlink() {
+        window.open(SMARTLINK_URL, '_blank', 'noopener');
+    }
+
+    /* ---- Tier 2: Interstitial — 728x90 on desktop (highest CPM in forced-view),
+                    300x250 on mobile (fits screen, proven earner) ---- */
+    function buildInterstitialAd() {
+        var container = document.getElementById('adInterstitialContent');
+        if (!container) return;
+        container.innerHTML = '';
+
+        var mobile = isMobile();
+        var adKey = mobile ? 'f9d0d54ed8c504626032783b86bdb34f' : 'f362d943077b8b6f1f096472cfd5eda4';
+        var adW   = mobile ? 300 : 728;
+        var adH   = mobile ? 250 : 90;
+        var adSrc = mobile
+            ? 'https://www.highperformanceformat.com/f9d0d54ed8c504626032783b86bdb34f/invoke.js'
+            : 'https://www.highperformanceformat.com/f362d943077b8b6f1f096472cfd5eda4/invoke.js';
+
+        // Resize the interstitial box to fit the chosen ad
+        var box = document.getElementById('adInterstitialBox');
+        if (box) box.style.maxWidth = mobile ? '340px' : '760px';
+        container.style.minHeight = adH + 'px';
+
+        var frame = document.createElement('iframe');
+        frame.width  = String(adW);
+        frame.height = String(adH);
+        frame.scrolling = 'no';
+        frame.style.cssText = 'border:0;overflow:hidden;display:block;margin:0 auto;';
+        frame.srcdoc =
+            '<!doctype html><html><head><meta charset="utf-8"></head>' +
+            '<body style="margin:0;overflow:hidden;background:#fff;">' +
+            '<script>atOptions={"key":"' + adKey + '","format":"iframe","height":' + adH + ',"width":' + adW + ',"params":{}};<\/script>' +
+            '<script src="' + adSrc + '"><\/script>' +
+            '</body></html>';
+        container.appendChild(frame);
+    }
+
+    function showInterstitial(onDone) {
+        if (_interstitialShown) { onDone(); return; }
+        _interstitialShown = true;
+
+        var overlay     = document.getElementById('adInterstitial');
+        var closeBtn    = document.getElementById('adInterstitialClose');
+        var countdownEl = document.getElementById('adInterstitialCountdown');
+        if (!overlay) { onDone(); return; }
+
+        buildInterstitialAd();
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        var secs = 5;
+        if (countdownEl) countdownEl.textContent = secs;
+
+        var revealTimer = setTimeout(function() {
+            if (closeBtn) closeBtn.classList.add('visible');
+        }, 1500);
+
+        var ticker = setInterval(function() {
+            secs--;
+            if (countdownEl) countdownEl.textContent = Math.max(0, secs);
+            if (secs <= 0) { clearInterval(ticker); closeInterstitial(onDone); }
+        }, 1000);
+
+        function closeInterstitial(cb) {
+            clearTimeout(revealTimer);
+            clearInterval(ticker);
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+            if (cb) cb();
+        }
+
+        if (closeBtn) closeBtn.onclick = function() { closeInterstitial(onDone); };
+    }
+
+    /* ---- Tier 3: Smartlink click-anywhere — activates AFTER PDF fetch completes ---- */
+    function activateSmartlink() {
+        if (_smartlinkActive) return;
+        _smartlinkActive = true;
+        document.body.addEventListener('click', function(e) {
+            var tag = (e.target.tagName || '').toUpperCase();
+            if (tag === 'A' || tag === 'BUTTON' || tag === 'INPUT' || tag === 'TEXTAREA') return;
+            var interstitial = document.getElementById('adInterstitial');
+            if (interstitial && interstitial.contains(e.target)) return;
+            window.open(SMARTLINK_URL, '_blank', 'noopener');
+        });
+    }
+
+    /* ---- Core: fire all tier-1 ads on Get PDF click ---- */
+    function handleGetPDFClick(onDone) {
+        var alreadyFired = false;
+        try { alreadyFired = !!localStorage.getItem(SESSION_KEY); } catch(e) {}
+
+        if (!alreadyFired) {
+            try { localStorage.setItem(SESSION_KEY, '1'); } catch(e) {}
+            // Popunder — desktop only (mobile popunders are unreliable)
+            if (!isMobile()) firePopunder();
+            // Smartlink — 500ms delay so popunder fires first and succeeds
+            setTimeout(openSmartlink, 500);
+        }
+
+        // Interstitial always shows once per session (user is stuck — highest engagement)
+        showInterstitial(function() {
+            onDone();
+            activateSmartlink(); // enable click-anywhere after fetch completes
+        });
+    }
+
+    /* ---- Hook into Get PDF button (capture phase to intercept before other handlers) ---- */
+    window.addEventListener('DOMContentLoaded', function() {
+        var fetchBtn  = document.getElementById('fetchBtn');
+        var fetchForm = document.getElementById('fetchForm');
+        if (!fetchBtn) return;
+
+        fetchBtn.onclick = null; // clear any inline handler
+
+        fetchBtn.addEventListener('click', function(e) {
+            e.stopImmediatePropagation();
+            var urlInput = document.getElementById('url');
+            if (urlInput && !urlInput.value.trim()) {
+                // No URL typed — let normal form validation run, skip ads
+                if (fetchForm) fetchForm.dispatchEvent(new Event('submit'));
+                return;
+            }
+            handleGetPDFClick(function() {
+                if (fetchForm) fetchForm.dispatchEvent(new Event('submit'));
+            });
+        }, true); // capture phase
+    });
+
+    /* Expose globally so post-fetch code can also trigger smartlink if needed */
+    window._activateSmartlink = activateSmartlink;
+})();
+</script>
+<script>
+/* Countdown lock — delays input/button for 3s so ad-block checks finish first */
+(function(){
+  var secs=3,el=document.getElementById('lockCountdown'),
+      overlay=document.getElementById('fetchLockOverlay'),
+      urlInput=document.getElementById('url'),
+      fetchBtn=document.getElementById('fetchBtn');
+  function tick(){
+    if(secs<=0){
+      overlay.classList.add('hidden');
+      urlInput.disabled=false;
+      urlInput.focus();
+      fetchBtn.disabled=false;
+      setTimeout(function(){overlay.remove();},500);
+      return;
+    }
+    el.textContent=secs;
+    secs--;
+    setTimeout(tick,1000);
+  }
+  if(document.readyState==='complete')tick();
+  else window.addEventListener('DOMContentLoaded',tick);
+})();
+</script>
+<script>
+/* Ad Blocker Detection — fully inline (cannot be blocked by network filters)
+ * Strategy 1: Bait DOM element with ad-like classes
+ * Strategy 2: Check if Google AdSense script was blocked
+ * Strategy 3: BlockAdBlock 3.2.1 library (inlined)
+ * Strategy 4: Fetch a known ad-domain URL
+ * Shows overlay if 2+ strategies detect blocking */
+(function(w){var B=function(){this._var={bait:null,checking:false,loop:null,loopNumber:0,event:{detected:[],notDetected:[]}};this._options={checkOnLoad:false,resetOnEnd:true,loopCheckTime:50,loopMaxNumber:5,baitClass:"pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads text-ads text-ad-links ad-text adSense adBlock adContent adBanner",baitStyle:"width:1px!important;height:1px!important;position:absolute!important;left:-10000px!important;top:-1000px!important;"}};B.prototype._creatBait=function(){var b=document.createElement("div");b.setAttribute("class",this._options.baitClass);b.setAttribute("style",this._options.baitStyle);this._var.bait=b;document.body.appendChild(b)};B.prototype._destroyBait=function(){if(this._var.bait!==null){try{document.body.removeChild(this._var.bait)}catch(e){}this._var.bait=null}};B.prototype._checkBait=function(loop){var dominated=false;if(this._var.bait===null)this._creatBait();var el=this._var.bait;if(document.body.getAttribute("abp")!==null||el.offsetParent===null||el.offsetHeight===0||el.offsetLeft===0||el.offsetTop===0||el.offsetWidth===0||el.clientHeight===0||el.clientWidth===0)dominated=true;if(w.getComputedStyle){var s=w.getComputedStyle(el,null);if(s&&(s.getPropertyValue("display")==="none"||s.getPropertyValue("visibility")==="hidden"))dominated=true}if(loop===true){this._var.loopNumber++;if(this._var.loopNumber>=this._options.loopMaxNumber){clearInterval(this._var.loop);this._var.loop=null;this._var.loopNumber=0}}if(dominated){this._destroyBait();this._fire(true);return true}else if(this._var.loop===null||!loop){this._destroyBait();this._fire(false);return false}return false};B.prototype._fire=function(detected){var fns=this._var.event[detected?"detected":"notDetected"];for(var i=0;i<fns.length;i++)fns[i]();if(this._options.resetOnEnd){this._var.event={detected:[],notDetected:[]}}};B.prototype.check=function(){if(this._var.checking)return;this._var.checking=true;if(this._var.bait===null)this._creatBait();var self=this;this._var.loop=setInterval(function(){self._checkBait(true)},this._options.loopCheckTime);setTimeout(function(){self._checkBait(true);self._var.checking=false},1)};B.prototype.onDetected=function(fn){this._var.event.detected.push(fn);return this};B.prototype.onNotDetected=function(fn){this._var.event.notDetected.push(fn);return this};w._bab=B})(window);
+(function(){
+  "use strict";
+  function showWall(){
+    if(document.getElementById("_ab_wall"))return;
+    var o=document.createElement("div");o.id="_ab_wall";
+    o.style.cssText="position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,-apple-system,sans-serif;padding:20px;";
+    o.innerHTML='<div style="background:#fff;border-radius:20px;padding:40px 36px;max-width:440px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.3);">'+'<div style="width:64px;height:64px;border-radius:16px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>'+'<h2 style="margin:0 0 10px;font-size:20px;font-weight:800;color:#18181B;">Ad Blocker Detected</h2>'+'<p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#6B7280;">We rely on ads to keep this service <strong style="color:#374151;">free for everyone</strong>. Please disable your ad blocker for this site to continue using Get This PDF.</p>'+'<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-radius:12px;padding:16px;margin-bottom:24px;text-align:left;"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px;">How to disable:</div><ol style="margin:0;padding-left:18px;font-size:12px;color:#6B7280;line-height:1.8;"><li>Click the ad blocker icon in your browser toolbar</li><li>Select <strong style="color:#374151;">"Pause on this site"</strong> or <strong style="color:#374151;">"Disable"</strong></li><li>Click the refresh button below</li></ol></div>'+'<button onclick="window.location.reload()" style="display:inline-flex;align-items:center;gap:8px;background:#4F46E5;color:#fff;border:none;padding:12px 32px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 2px 8px rgba(79,70,229,0.3);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>Refresh Page</button>'+'<p style="margin:14px 0 0;font-size:11px;color:#9CA3AF;">Thank you for supporting free education tools.</p></div>';
+    document.body.appendChild(o);document.body.style.overflow="hidden";
+    /* Also re-disable the fetch controls so they can't use it behind the wall */
+    try{document.getElementById('url').disabled=true;document.getElementById('fetchBtn').disabled=true;}catch(e){}
+  }
+  function checkBait(){
+    var b=document.createElement("div");
+    b.className="ad_unit ad-zone ads-banner textAd banner_ad pub_300x250 adsbox ad-placement carbon-wrap";
+    b.setAttribute("data-ad-slot","test");b.setAttribute("id","carbonads");
+    b.style.cssText="position:absolute;top:-999px;left:-999px;width:300px;height:250px;background:transparent;pointer-events:none;";
+    b.innerHTML="&nbsp;";document.body.appendChild(b);
+    return new Promise(function(resolve){
+      setTimeout(function(){
+        var blocked=false;
+        if(b){var s=window.getComputedStyle(b);if(b.offsetHeight===0||b.offsetWidth===0||s.display==="none"||s.visibility==="hidden"||s.opacity==="0"||b.parentNode===null)blocked=true;}else blocked=true;
+        try{if(b&&b.parentNode)b.parentNode.removeChild(b)}catch(e){}resolve(blocked);
+      },300);
+    });
+  }
+  function checkAdSense(){
+    var s=document.querySelectorAll('script[src*="adsbygoogle"]');
+    if(s.length===0)return false;
+    return typeof window.adsbygoogle==="undefined";
+  }
+  function checkBAB(){
+    return new Promise(function(resolve){
+      if(typeof window._bab==="undefined"){resolve(false);return;}
+      var bab=new window._bab(),done=false;
+      bab.onDetected(function(){if(!done){done=true;resolve(true);}});
+      bab.onNotDetected(function(){if(!done){done=true;resolve(false);}});
+      bab.check();
+      setTimeout(function(){if(!done){done=true;resolve(false);}},2000);
+    });
+  }
+  function checkFetch(){
+    return new Promise(function(resolve){
+      var img=new Image();img.onload=function(){resolve(false);};img.onerror=function(){resolve(true);};
+      img.src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?t="+Date.now();
+      setTimeout(function(){resolve(true);},2000);
+    });
+  }
+  function run(){
+    Promise.all([checkBait(),checkBAB(),checkFetch()]).then(function(r){
+      var score=0;
+      if(r[0])score++;
+      if(r[1])score++;
+      if(checkAdSense())score++;
+      if(r[2])score++;
+      if(score>=2)showWall();
+    });
+  }
+  if(document.readyState==="complete")setTimeout(run,1500);
+  else window.addEventListener("load",function(){setTimeout(run,1500);});
+})();
+</script>
+</body>
+</html>

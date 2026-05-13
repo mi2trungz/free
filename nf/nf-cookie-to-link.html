@@ -1,0 +1,2478 @@
+﻿<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tao Link Dang Nhap Netflix tu Cookie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/nf/styles.css">
+    <style>
+        .tool-container {
+            max-width: 1160px;
+            margin: 40px auto;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .tool-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-base);
+            text-align: center;
+        }
+
+        .tool-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .tool-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .left-panel,
+        .right-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.02);
+            padding: 14px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .cookie-textarea {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .cookie-input-wrap {
+            position: relative;
+        }
+
+        .cookie-input-wrap .cookie-textarea {
+            padding-top: 52px;
+        }
+
+        .cookie-clear-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            min-width: 32px;
+            height: 32px;
+            padding: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.92);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .cookie-clear-btn:hover,
+        .cookie-clear-btn:focus-visible {
+            border-color: rgba(255, 255, 255, 0.28);
+            background: rgba(30, 41, 59, 0.96);
+            color: var(--text-base);
+            outline: none;
+        }
+
+        .cookie-tool-stack {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+            z-index: 2;
+        }
+
+        .cookie-paste-btn {
+            min-width: 54px;
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.92);
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .cookie-paste-btn:hover,
+        .cookie-paste-btn:focus-visible {
+            border-color: rgba(255, 255, 255, 0.28);
+            background: rgba(30, 41, 59, 0.96);
+            color: var(--text-base);
+            outline: none;
+        }
+
+        .cookie-toggle-panel {
+            display: grid;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .cookie-toggle-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: space-between;
+        }
+
+        .cookie-toggle-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .cookie-toggle-title {
+            display: block;
+            color: var(--text-base);
+            font-size: 0.9rem;
+            font-weight: 700;
+            line-height: 1.35;
+        }
+
+        .cookie-toggle-hint {
+            margin-top: 3px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.45;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-flex;
+            flex-shrink: 0;
+            width: 50px;
+            height: 30px;
+        }
+
+        .switch input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(15, 23, 42, 0.88);
+            transition: background var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+            transition: transform var(--transition-fast), background var(--transition-fast);
+        }
+
+        .switch input:checked + .switch-slider {
+            background: rgba(34, 197, 94, 0.22);
+            border-color: rgba(34, 197, 94, 0.55);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        }
+
+        .switch input:checked + .switch-slider::before {
+            transform: translateX(20px);
+            background: #dcfce7;
+        }
+
+        .switch input:focus-visible + .switch-slider {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .inline-error {
+            display: none;
+            margin-top: 8px;
+            padding: 10px 12px;
+            border: 1px solid rgba(239, 68, 68, 0.32);
+            border-radius: var(--radius-base);
+            background: rgba(239, 68, 68, 0.1);
+            color: #ffb4b4;
+            font-size: 0.88rem;
+            line-height: 1.45;
+        }
+
+        .inline-error.active {
+            display: block;
+        }
+
+        .device-select {
+            padding: 12px;
+            background: var(--surface-hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            color: var(--text-base);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color var(--transition-fast);
+        }
+
+        .device-select:focus {
+            border-color: var(--primary);
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .result-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: var(--radius-base);
+            display: none;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .result-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--text-base);
+        }
+
+        .result-link {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            color: var(--text-base);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .right-panel .result-label {
+            color: var(--info);
+        }
+
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .info-chip {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .info-chip strong {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .info-chip span {
+            font-weight: 700;
+            color: var(--text-base);
+            word-break: break-word;
+        }
+
+        .info-chip.bad {
+            border-color: rgba(239, 68, 68, 0.8);
+            background: rgba(239, 68, 68, 0.14);
+        }
+
+        .info-chip.bad span {
+            color: #ffb4b4;
+        }
+
+        .info-chip.good {
+            border-color: rgba(34, 197, 94, 0.75);
+            background: rgba(34, 197, 94, 0.14);
+        }
+
+        .info-chip.good span {
+            color: #b7ffd5;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        .info-grid strong {
+            color: var(--text-muted);
+        }
+
+        .info-grid span {
+            color: var(--text-base);
+            word-break: break-word;
+        }
+
+        .batch-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .batch-title {
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+            color: var(--text-base);
+        }
+
+        .batch-hint {
+            margin: 0 0 8px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .batch-file-input {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .batch-mode-select {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        .batch-progress-wrap {
+            margin-top: 8px;
+        }
+
+        .batch-progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .batch-progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            transition: width 0.2s ease;
+        }
+
+        .batch-status-text {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .batch-download-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .batch-download-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .batch-download-meta {
+            min-width: 0;
+        }
+
+        .batch-download-name {
+            color: var(--text-base);
+            font-size: 0.9rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .batch-download-summary {
+            margin-top: 2px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            word-break: break-word;
+        }
+
+        .batch-file-status-list {
+            display: grid;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .batch-file-status-item {
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-base);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .batch-file-status-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .batch-file-status-name {
+            min-width: 0;
+            color: var(--text-base);
+            font-size: 0.9rem;
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .batch-file-status-badge {
+            flex-shrink: 0;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            color: var(--text-base);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .batch-file-status-badge[data-tone="queued"] {
+            color: #dbeafe;
+            border-color: rgba(59, 130, 246, 0.45);
+            background: rgba(59, 130, 246, 0.14);
+        }
+
+        .batch-file-status-badge[data-tone="running"] {
+            color: #fde68a;
+            border-color: rgba(245, 158, 11, 0.5);
+            background: rgba(245, 158, 11, 0.14);
+        }
+
+        .batch-file-status-badge[data-tone="done"] {
+            color: #bbf7d0;
+            border-color: rgba(34, 197, 94, 0.45);
+            background: rgba(34, 197, 94, 0.14);
+        }
+
+        .batch-file-status-badge[data-tone="error"] {
+            color: #fecaca;
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.14);
+        }
+
+        .batch-file-status-badge[data-tone="stopped"] {
+            color: #e5e7eb;
+            border-color: rgba(148, 163, 184, 0.45);
+            background: rgba(148, 163, 184, 0.14);
+        }
+
+        .batch-file-status-meta {
+            margin-top: 6px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+            display: none;
+        }
+
+        .btn:disabled .loading-spinner {
+            display: inline-block;
+        }
+
+        .toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 60;
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.84rem;
+            color: #fff;
+            background: #111827;
+            box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42);
+            max-width: min(90vw, 360px);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .toast.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.ok {
+            background: #047857;
+        }
+
+        .toast.warn {
+            background: #b45309;
+        }
+
+        .toast.bad {
+            background: #b91c1c;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .tool-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .highlight-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-row {
+                grid-template-columns: 1fr;
+            }
+
+            .cookie-tool-stack {
+                top: 10px;
+                right: 10px;
+                flex-direction: row;
+            }
+
+            .cookie-input-wrap .cookie-textarea {
+                padding-top: 92px;
+            }
+
+            .cookie-toggle-item {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-layer bg-noise"></div>
+    <div class="bg-layer bg-vignette"></div>
+    <div class="bg-layer bg-neon"></div>
+
+    <main class="nf-shell">
+        <div class="tool-container">
+            <h1 class="tool-title">Tao Link Dang Nhap Truc Tiep</h1>
+            <p class="tool-desc">Dan chuoi cookie (hoac chi phan <code>NetflixId=...</code>) vao o ben trai de tao link va co the import vao Cookie tong.</p>
+
+            <div class="tool-layout">
+                <section class="left-panel">
+                    <form id="linkGeneratorForm">
+                        <div class="input-group">
+                            <div class="cookie-input-wrap">
+                                <button type="button" id="clearCookieBtn" class="cookie-clear-btn" aria-label="Xoa nhanh noi dung cookie">Xoa</button>
+                                <div class="cookie-tool-stack">
+                                    <button type="button" id="pasteCookieBtn" class="cookie-paste-btn" aria-label="Dan clipboard vao o cookie">Dan</button>
+                                </div>
+                                <textarea id="cookieInput" class="text-input cookie-textarea" placeholder="Dan cookie Netflix vao day...&#10;Vi du: NetflixId=v%3D2%...; SecureNetflixId=v%3D2%...;" required></textarea>
+                            </div>
+                            <div class="cookie-toggle-panel">
+                                <div class="cookie-toggle-item">
+                                    <div class="cookie-toggle-copy">
+                                        <span class="cookie-toggle-title">Tu dong tao link khi dan</span>
+                                        <div class="cookie-toggle-hint">Bat len de tu tao link ngay khi textarea nhan noi dung tu thao tac dan.</div>
+                                    </div>
+                                    <label class="switch" for="autoGenerateToggle">
+                                        <input type="checkbox" id="autoGenerateToggle">
+                                        <span class="switch-slider" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="cookie-toggle-item">
+                                    <div class="cookie-toggle-copy">
+                                        <span class="cookie-toggle-title">Xoa roi dan clipboard</span>
+                                        <div class="cookie-toggle-hint">Bat len de nut Xoa vua xoa noi dung cu vua doc clipboard, dan vao o nhap va thong bao thanh cong.</div>
+                                    </div>
+                                    <label class="switch" for="clearPasteToggle">
+                                        <input type="checkbox" id="clearPasteToggle">
+                                        <span class="switch-slider" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="inlineError" class="inline-error" role="alert" aria-live="polite"></div>
+
+                            <select id="deviceSelect" class="device-select">
+                                <option value="desktop">May tinh (Desktop / Web)</option>
+                                <option value="mobile">Dien thoai (Mobile App)</option>
+                                <option value="tv">Tivi (Smart TV)</option>
+                            </select>
+                        </div>
+
+                        <div class="action-row">
+                            <button type="submit" id="generateBtn" class="btn btn-primary">
+                                <span class="loading-spinner"></span>
+                                Tao Link Dang Nhap
+                            </button>
+                            <div></div>
+                        </div>
+                    </form>
+
+                    <div id="resultBox" class="result-box">
+                        <span class="result-label">Link Dang Nhap Cua Ban:</span>
+                        <input type="text" id="resultLink" class="result-link" readonly>
+                        <div class="action-row">
+                            <button type="button" id="copyResultBtn" class="btn btn-primary">Sao chep link</button>
+                            <a id="openResultBtn" href="#" target="_blank" class="btn btn-ghost" style="text-align:center;">Mo thu</a>
+                        </div>
+                    </div>
+
+                    <div class="batch-box">
+                        <h3 class="batch-title">Lay thong tin hang loat tu Excel</h3>
+                        <p class="batch-hint">Nhap mot hoac nhieu file <code>.xlsx</code>, moi cookie 1 dong o cot A (sheet dau tien).</p>
+                        <select id="batchModeSelect" class="device-select batch-mode-select">
+                            <option value="plan-only">Check Goi cuoc + Payment Hold</option>
+                            <option value="legacy">Mode cu: Tach SUCCESS / FAILED</option>
+                        </select>
+                        <select id="batchOutputSelect" class="device-select batch-mode-select">
+                            <option value="separate">Tach tung file ket qua</option>
+                            <option value="combined">Gop 1 file ket qua</option>
+                        </select>
+                        <input id="batchSingleFileWorkerInput" class="device-select batch-mode-select" type="number" min="1" max="999" step="1" value="5" inputmode="numeric" placeholder="So luong worker cho moi file">
+                        <input id="batchFileConcurrencyInput" class="device-select batch-mode-select" type="number" min="1" max="999" step="1" value="3" inputmode="numeric" placeholder="So file check cung luc">
+                        <p class="batch-hint">Moi file deu chay theo so worker da nhap, ke ca khi chon nhieu file.</p>
+                        <input id="batchExcelInput" class="batch-file-input" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple>
+                        <div class="action-row">
+                            <button type="button" id="startBatchBtn" class="btn btn-primary">Bat dau check hang loat</button>
+                            <button type="button" id="stopBatchBtn" class="btn btn-ghost" disabled>Dung</button>
+                        </div>
+                        <div class="action-row">
+                            <button type="button" id="downloadBatchBtn" class="btn btn-ghost" disabled hidden>Tai file tong (.xlsx)</button>
+                            <div></div>
+                        </div>
+                        <div id="batchDownloadList" class="batch-download-list"></div>
+                        <div class="batch-progress-wrap">
+                            <div class="batch-progress-bar">
+                                <div id="batchProgressFill" class="batch-progress-fill"></div>
+                            </div>
+                            <div id="batchStatusText" class="batch-status-text">Chua chay batch.</div>
+                        </div>
+                        <div id="batchFileStatusList" class="batch-file-status-list"></div>
+                    </div>
+                </section>
+
+                <section class="right-panel">
+                    <div id="accountInfoBox" class="result-box" style="margin-top: 0; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">
+                        <span class="result-label">Thong Tin Tai Khoan:</span>
+                        <div id="accountInfoContent" style="font-size: 0.9rem; line-height: 1.6; color: var(--text-base);"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    <div id="pageToast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const BATCH_MODE_PLAN_ONLY = 'plan-only';
+            const BATCH_MODE_LEGACY = 'legacy';
+            const BATCH_OUTPUT_SEPARATE = 'separate';
+            const BATCH_OUTPUT_COMBINED = 'combined';
+            const BATCH_FILE_STATUS_QUEUED = 'queued';
+            const BATCH_FILE_STATUS_RUNNING = 'running';
+            const BATCH_FILE_STATUS_DONE = 'done';
+            const BATCH_FILE_STATUS_ERROR = 'error';
+            const BATCH_FILE_STATUS_STOPPED = 'stopped';
+            const DEFAULT_PER_FILE_WORKERS = 5;
+            const DEFAULT_BATCH_FILE_CONCURRENCY = 3;
+            const MAX_BATCH_SOFT_LIMIT = 999;
+            const BATCH_DUPLICATE_MESSAGE = 'Trung cookie, bo qua';
+            const form = document.getElementById('linkGeneratorForm');
+            const cookieInput = document.getElementById('cookieInput');
+            const clearCookieBtn = document.getElementById('clearCookieBtn');
+            const pasteCookieBtn = document.getElementById('pasteCookieBtn');
+            const autoGenerateToggle = document.getElementById('autoGenerateToggle');
+            const clearPasteToggle = document.getElementById('clearPasteToggle');
+            const inlineError = document.getElementById('inlineError');
+            const deviceSelect = document.getElementById('deviceSelect');
+            const generateBtn = document.getElementById('generateBtn');
+            const resultBox = document.getElementById('resultBox');
+            const resultLink = document.getElementById('resultLink');
+            const copyResultBtn = document.getElementById('copyResultBtn');
+            const openResultBtn = document.getElementById('openResultBtn');
+            const accountInfoBox = document.getElementById('accountInfoBox');
+            const accountInfoContent = document.getElementById('accountInfoContent');
+            const batchExcelInput = document.getElementById('batchExcelInput');
+            const batchModeSelect = document.getElementById('batchModeSelect');
+            const batchOutputSelect = document.getElementById('batchOutputSelect');
+            const batchSingleFileWorkerInput = document.getElementById('batchSingleFileWorkerInput');
+            const batchFileConcurrencyInput = document.getElementById('batchFileConcurrencyInput');
+            const startBatchBtn = document.getElementById('startBatchBtn');
+            const stopBatchBtn = document.getElementById('stopBatchBtn');
+            const downloadBatchBtn = document.getElementById('downloadBatchBtn');
+            const batchDownloadList = document.getElementById('batchDownloadList');
+            const batchProgressFill = document.getElementById('batchProgressFill');
+            const batchStatusText = document.getElementById('batchStatusText');
+            const batchFileStatusList = document.getElementById('batchFileStatusList');
+            const pageToast = document.getElementById('pageToast');
+            const generateButtonDefaultText = generateBtn.textContent.trim();
+            const STORAGE_KEY_AUTO_GENERATE = 'nf_cookie_to_link_auto_generate_on_paste';
+            const STORAGE_KEY_CLEAR_PASTE = 'nf_cookie_to_link_clear_paste';
+            let audioContext = null;
+            let batchRunning = false;
+            let batchStopRequested = false;
+            let batchCombinedDownload = null;
+            let batchDownloadItems = [];
+            let batchFileStates = [];
+            let activeBatchFileConcurrency = 0;
+            let toastTimer = null;
+            let generateInFlight = false;
+            let autoSubmitSource = '';
+
+            function isNo(value) {
+                return String(value || '').trim().toLowerCase() === 'no';
+            }
+
+            function escapeHtml(raw) {
+                return String(raw || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function showResult(url, accountInfo) {
+                resultBox.classList.add('active');
+                hideInlineError();
+                resultLink.value = url;
+                openResultBtn.href = url;
+
+                if (accountInfo) {
+                    accountInfoBox.classList.add('active');
+
+                    const statusText = accountInfo.ok ? 'Hoat dong' : 'Khong hoat dong';
+                    const statusClass = accountInfo.ok ? 'good' : 'bad';
+                    const paymentHoldText = String(accountInfo.on_payment_hold || 'No');
+                    const paymentHoldClass = isNo(paymentHoldText) ? 'good' : 'bad';
+
+                    const topFields = [
+                        { label: 'Trang thai', value: statusText, tone: statusClass },
+                        { label: 'Goi cuoc', value: `${accountInfo.plan || 'Khong ro'} ${accountInfo.premium ? '(Premium)' : ''}`.trim() },
+                        { label: 'Payment Hold', value: paymentHoldText, tone: paymentHoldClass },
+                        { label: 'Quoc gia', value: accountInfo.country || 'N/A' },
+                        { label: 'Man hinh', value: `${accountInfo.max_streams || '?'} man` },
+                        { label: 'Chat luong video', value: accountInfo.video_quality || 'N/A' }
+                    ];
+
+                    const chipHtml = topFields.map((item) => `
+                        <div class="info-chip ${item.tone ? item.tone : ''}">
+                            <strong>${escapeHtml(item.label)}</strong>
+                            <span>${escapeHtml(item.value)}</span>
+                        </div>
+                    `).join('');
+
+                    accountInfoContent.innerHTML = `
+                        <div class="highlight-grid">${chipHtml}</div>
+                        <div class="info-grid">
+                            <strong>Gia goi:</strong> <span>${escapeHtml(accountInfo.plan_price || 'N/A')}</span>
+                            <strong>Ngay lap:</strong> <span>${escapeHtml(accountInfo.member_since || 'N/A')}</span>
+                            <strong>Thanh toan:</strong> <span>${escapeHtml(accountInfo.payment_method || 'N/A')}</span>
+                            <strong>Phone:</strong> <span>${escapeHtml(accountInfo.phone || 'N/A')} (Verified: ${escapeHtml(accountInfo.phone_verified || 'No')})</span>
+                            <strong>Email:</strong> <span>${escapeHtml(String(accountInfo.email || 'N/A').replace(/\\x40/g, '@'))} (Verified: ${escapeHtml(accountInfo.email_verified || 'No')})</span>
+                            <strong>Thanh vien phu:</strong> <span>${escapeHtml(accountInfo.extra_member || 'No')}</span>
+                            <strong>Profiles:</strong> <span>${escapeHtml(accountInfo.profiles || '?')}</span>
+                            <strong>Gia han toi:</strong> <span>${escapeHtml(accountInfo.next_billing || 'N/A')}</span>
+                        </div>
+                    `;
+                } else {
+                    accountInfoBox.classList.remove('active');
+                }
+            }
+
+            function showError(msg) {
+                resultBox.classList.remove('active');
+                accountInfoBox.classList.remove('active');
+                inlineError.textContent = msg;
+                inlineError.classList.add('active');
+            }
+
+            function showToast(message, kind = '') {
+                if (!pageToast) return;
+                pageToast.textContent = String(message || '');
+                pageToast.className = `toast ${kind}`.trim();
+                pageToast.classList.add('active');
+                if (toastTimer) {
+                    clearTimeout(toastTimer);
+                }
+                toastTimer = setTimeout(() => {
+                    pageToast.classList.remove('active');
+                }, 2400);
+            }
+
+            function sleep(ms) {
+                return new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            function toDisplayValue(value, fallback = 'N/A') {
+                const text = String(value === undefined || value === null ? '' : value).trim();
+                return text || fallback;
+            }
+
+            function getBatchMode() {
+                return batchModeSelect ? batchModeSelect.value : BATCH_MODE_PLAN_ONLY;
+            }
+
+            function getBatchOutputMode() {
+                return batchOutputSelect ? batchOutputSelect.value : BATCH_OUTPUT_SEPARATE;
+            }
+
+            function getPerFileWorkerCount(totalRows = 0) {
+                const rawValue = batchSingleFileWorkerInput ? Number(batchSingleFileWorkerInput.value) : DEFAULT_PER_FILE_WORKERS;
+                const fallbackValue = Number.isFinite(rawValue) && rawValue > 0 ? rawValue : DEFAULT_PER_FILE_WORKERS;
+                const safeValue = Math.max(1, Math.min(MAX_BATCH_SOFT_LIMIT, Math.floor(fallbackValue)));
+                if (batchSingleFileWorkerInput) {
+                    batchSingleFileWorkerInput.value = String(safeValue);
+                }
+                if (totalRows > 0) {
+                    return Math.max(1, Math.min(safeValue, totalRows));
+                }
+                return safeValue;
+            }
+
+            function getBatchFileConcurrency(totalFiles = 0) {
+                const rawValue = batchFileConcurrencyInput ? Number(batchFileConcurrencyInput.value) : DEFAULT_BATCH_FILE_CONCURRENCY;
+                const fallbackValue = Number.isFinite(rawValue) && rawValue > 0 ? rawValue : DEFAULT_BATCH_FILE_CONCURRENCY;
+                const safeValue = Math.max(1, Math.min(MAX_BATCH_SOFT_LIMIT, Math.floor(fallbackValue)));
+                if (batchFileConcurrencyInput) {
+                    batchFileConcurrencyInput.value = String(safeValue);
+                }
+                if (totalFiles > 0) {
+                    return Math.max(1, Math.min(safeValue, totalFiles));
+                }
+                return safeValue;
+            }
+
+            function formatBatchFileName(date = new Date(), mode = getBatchMode(), suffix = '') {
+                const yyyy = date.getFullYear();
+                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                const dd = String(date.getDate()).padStart(2, '0');
+                const hh = String(date.getHours()).padStart(2, '0');
+                const min = String(date.getMinutes()).padStart(2, '0');
+                const prefix = mode === BATCH_MODE_PLAN_ONLY ? 'nf_batch_goicuoc' : 'nf_batch_result';
+                return `${prefix}_${yyyy}-${mm}-${dd}_${hh}-${min}${suffix ? `_${suffix}` : ''}.xlsx`;
+            }
+
+            function sanitizeFileBaseName(filename, fallback = 'file') {
+                const raw = String(filename || '').replace(/\.[^.]+$/, '').trim();
+                const normalized = raw.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_').replace(/\s+/g, '_').replace(/_+/g, '_');
+                return normalized.replace(/^_+|_+$/g, '') || fallback;
+            }
+
+            function formatBatchOutputFileName(sourceName, mode = getBatchMode()) {
+                const baseName = sanitizeFileBaseName(sourceName, 'batch');
+                const suffix = mode === BATCH_MODE_PLAN_ONLY ? 'goicuoc' : 'result';
+                return `${baseName}_${suffix}.xlsx`;
+            }
+
+            function sanitizeSheetName(name, fallback = 'Sheet') {
+                const cleaned = String(name || '')
+                    .replace(/[:\\/?*\[\]]/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                return (cleaned || fallback).slice(0, 31);
+            }
+
+            function createUniqueSheetName(name, usedNames) {
+                const baseName = sanitizeSheetName(name);
+                let candidate = baseName || 'Sheet';
+                let index = 1;
+
+                while (usedNames.has(candidate)) {
+                    const suffix = ` (${index})`;
+                    const truncatedBase = (baseName || 'Sheet').slice(0, Math.max(1, 31 - suffix.length));
+                    candidate = `${truncatedBase}${suffix}`;
+                    index += 1;
+                }
+
+                usedNames.add(candidate);
+                return candidate;
+            }
+
+            function clearBatchDownloads() {
+                batchCombinedDownload = null;
+                batchDownloadItems = [];
+                batchFileStates = [];
+                activeBatchFileConcurrency = 0;
+                downloadBatchBtn.disabled = true;
+                downloadBatchBtn.hidden = true;
+                batchDownloadList.innerHTML = '';
+                batchFileStatusList.innerHTML = '';
+            }
+
+            function getBatchFileStatusMeta(fileState) {
+                const progressText = `Dong ${fileState.processedRows || 0}/${fileState.totalRows || 0}`;
+                const resultText = `Thanh cong: ${fileState.successCount || 0} | Loi: ${fileState.failedCount || 0}`;
+                const duplicateText = `Trung bo qua: ${fileState.duplicateCount || 0}`;
+                const extras = [];
+                if (fileState.modeLabel) extras.push(fileState.modeLabel);
+                if (fileState.workerCount) extras.push(`Worker: ${fileState.workerCount}`);
+                extras.push(progressText, resultText, duplicateText);
+                if (fileState.errorMessage) extras.push(`Chi tiet: ${fileState.errorMessage}`);
+                return extras.join(' | ');
+            }
+
+            function getBatchFileStatusBadge(status) {
+                switch (status) {
+                    case BATCH_FILE_STATUS_RUNNING:
+                        return { label: 'Dang chay', tone: 'running' };
+                    case BATCH_FILE_STATUS_DONE:
+                        return { label: 'Hoan tat', tone: 'done' };
+                    case BATCH_FILE_STATUS_ERROR:
+                        return { label: 'Loi', tone: 'error' };
+                    case BATCH_FILE_STATUS_STOPPED:
+                        return { label: 'Da dung', tone: 'stopped' };
+                    case BATCH_FILE_STATUS_QUEUED:
+                    default:
+                        return { label: 'Dang cho', tone: 'queued' };
+                }
+            }
+
+            function renderBatchFileStatuses() {
+                const itemsHtml = batchFileStates.map((fileState) => {
+                    const badge = getBatchFileStatusBadge(fileState.status);
+                    return `
+                        <div class="batch-file-status-item">
+                            <div class="batch-file-status-top">
+                                <div class="batch-file-status-name">${escapeHtml(fileState.name || 'Khong ro ten file')}</div>
+                                <span class="batch-file-status-badge" data-tone="${badge.tone}">${badge.label}</span>
+                            </div>
+                            <div class="batch-file-status-meta">${escapeHtml(getBatchFileStatusMeta(fileState))}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                batchFileStatusList.innerHTML = itemsHtml;
+            }
+
+            function getBatchAggregateStats() {
+                const totals = {
+                    totalFiles: batchFileStates.length,
+                    completedFiles: 0,
+                    runningFiles: 0,
+                    stoppedFiles: 0,
+                    processedRows: 0,
+                    totalRows: 0,
+                    totalSuccess: 0,
+                    totalFailed: 0,
+                    totalDuplicates: 0
+                };
+
+                batchFileStates.forEach((fileState) => {
+                    totals.processedRows += Number(fileState.processedRows) || 0;
+                    totals.totalRows += Number(fileState.totalRows) || 0;
+                    totals.totalSuccess += Number(fileState.successCount) || 0;
+                    totals.totalFailed += Number(fileState.failedCount) || 0;
+                    totals.totalDuplicates += Number(fileState.duplicateCount) || 0;
+
+                    if (fileState.status === BATCH_FILE_STATUS_DONE || fileState.status === BATCH_FILE_STATUS_ERROR) {
+                        totals.completedFiles += 1;
+                    }
+                    if (fileState.status === BATCH_FILE_STATUS_RUNNING) {
+                        totals.runningFiles += 1;
+                    }
+                    if (fileState.status === BATCH_FILE_STATUS_STOPPED) {
+                        totals.stoppedFiles += 1;
+                    }
+                });
+
+                return totals;
+            }
+
+            function renderBatchDownloads() {
+                const outputMode = getBatchOutputMode();
+                downloadBatchBtn.hidden = outputMode !== BATCH_OUTPUT_COMBINED;
+                if (outputMode === BATCH_OUTPUT_COMBINED) {
+                    downloadBatchBtn.disabled = !batchCombinedDownload;
+                    batchDownloadList.innerHTML = '';
+                    return;
+                }
+
+                downloadBatchBtn.disabled = true;
+                batchDownloadItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+                const itemsHtml = batchDownloadItems.map((item, index) => `
+                    <div class="batch-download-item">
+                        <div class="batch-download-meta">
+                            <div class="batch-download-name">${escapeHtml(item.filename)}</div>
+                            <div class="batch-download-summary">${escapeHtml(item.summary)}</div>
+                        </div>
+                        <button type="button" class="btn btn-ghost" data-batch-download-index="${index}" ${item.workbook ? '' : 'disabled'}>${item.workbook ? 'Tai file' : 'Khong co file'}</button>
+                    </div>
+                `).join('');
+
+                batchDownloadList.innerHTML = itemsHtml;
+            }
+
+            function upsertBatchDownloadItem(item) {
+                const existingIndex = batchDownloadItems.findIndex((entry) => entry.id === item.id);
+                if (existingIndex >= 0) {
+                    batchDownloadItems[existingIndex] = item;
+                } else {
+                    batchDownloadItems.push(item);
+                }
+                renderBatchDownloads();
+            }
+
+            function setBatchRunningState(running) {
+                batchRunning = running;
+                startBatchBtn.disabled = running;
+                stopBatchBtn.disabled = !running;
+                batchExcelInput.disabled = running;
+                if (batchModeSelect) batchModeSelect.disabled = running;
+                if (batchOutputSelect) batchOutputSelect.disabled = running;
+                if (batchSingleFileWorkerInput) batchSingleFileWorkerInput.disabled = running;
+                if (batchFileConcurrencyInput) batchFileConcurrencyInput.disabled = running;
+            }
+
+            function updateBatchProgress(progress = {}) {
+                const aggregate = getBatchAggregateStats();
+                const totalRows = Number(progress.totalRows !== undefined ? progress.totalRows : aggregate.totalRows) || 0;
+                const processedRows = Number(progress.processedRows !== undefined ? progress.processedRows : aggregate.processedRows) || 0;
+                const totalFiles = Number(progress.totalFiles !== undefined ? progress.totalFiles : aggregate.totalFiles) || 0;
+                const processedFiles = Number(progress.processedFiles !== undefined ? progress.processedFiles : aggregate.completedFiles) || 0;
+                const currentFileName = progress.currentFileName ? String(progress.currentFileName) : '';
+                const fileConcurrency = Number(progress.fileConcurrency || activeBatchFileConcurrency || 0);
+                const safeTotal = totalRows <= 0 ? 1 : totalRows;
+                const percent = Math.max(0, Math.min(100, Math.round((processedRows / safeTotal) * 100)));
+                batchProgressFill.style.width = `${percent}%`;
+                const fileSummary = totalFiles > 0 ? `File ${Math.min(processedFiles + (currentFileName ? 1 : 0), totalFiles)}/${totalFiles}` : 'Batch';
+                const rowSummary = `Dong ${processedRows}/${totalRows}`;
+                const concurrencySummary = fileConcurrency > 0 ? ` | File dong thoi: ${fileConcurrency}` : '';
+                const prefix = batchStopRequested ? 'Dang dung, khong nhan viec moi | ' : '';
+                batchStatusText.textContent = currentFileName
+                    ? `${prefix}${fileSummary}: ${currentFileName} | ${rowSummary} (${percent}%)${concurrencySummary}`
+                    : `${prefix}${fileSummary} | ${rowSummary} (${percent}%)${concurrencySummary}`;
+            }
+
+            function readCookiesFromSheet(workbook) {
+                const firstSheetName = workbook.SheetNames[0];
+                if (!firstSheetName) return [];
+                const sheet = workbook.Sheets[firstSheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false });
+                const values = [];
+                for (let i = 0; i < rows.length; i += 1) {
+                    const cellValue = rows[i] && rows[i][0] !== undefined ? String(rows[i][0]) : '';
+                    const cookie = cellValue.trim();
+                    if (!cookie) continue;
+                    values.push(cookie);
+                }
+                if (values.length > 0 && values[0].toLowerCase() === 'cookie') {
+                    values.shift();
+                }
+                return values;
+            }
+
+            function markDuplicateItems(items, seenCookies, getCookieValue) {
+                return (Array.isArray(items) ? items : []).map((item) => {
+                    const cookieValue = String(getCookieValue(item) || '').trim();
+                    const duplicateSkipped = !!cookieValue && seenCookies.has(cookieValue);
+                    if (cookieValue && !duplicateSkipped) {
+                        seenCookies.add(cookieValue);
+                    }
+                    return {
+                        ...item,
+                        duplicateSkipped
+                    };
+                });
+            }
+
+            function normalizeCellText(value) {
+                if (value === undefined || value === null) return '';
+                if (typeof value === 'object') {
+                    if (Array.isArray(value.richText)) {
+                        return value.richText.map((item) => String(item && item.text ? item.text : '')).join('');
+                    }
+                    if (value.text !== undefined) return String(value.text);
+                    if (value.result !== undefined) return String(value.result);
+                    if (value.formula !== undefined && value.result === undefined) return '';
+                    if (value.hyperlink !== undefined && value.text !== undefined) return String(value.text);
+                }
+                return String(value);
+            }
+
+            function clonePlainObject(value) {
+                if (value === undefined) return undefined;
+                if (value === null) return null;
+                return JSON.parse(JSON.stringify(value));
+            }
+
+            function copyCellStyle(sourceCell, targetCell) {
+                targetCell.style = clonePlainObject(sourceCell.style || {}) || {};
+            }
+
+            function getBatchPlanLabel(account = {}) {
+                const planName = toDisplayValue(account.plan, 'Khong ro');
+                return `${planName} ${account.premium ? '(Premium)' : ''}`.trim();
+            }
+
+            function toBatchErrorMessage(raw, fallback = 'Request failed') {
+                const text = String(raw || '').trim();
+                if (!text) return fallback;
+                return text.length > 120 ? `${text.slice(0, 117)}...` : text;
+            }
+
+            async function fetchBatchCookieInfo(cookieStr) {
+                const normalizedCookie = String(cookieStr || '').trim();
+                if (!normalizedCookie) {
+                    return { ok: false, error: 'Cookie khong hop le' };
+                }
+
+                try {
+                    const res = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr: normalizedCookie, device: 'desktop' })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok && data.success) {
+                        return { ok: true, account: data.accountInfo || {} };
+                    }
+
+                    return {
+                        ok: false,
+                        error: toBatchErrorMessage(data && data.error, 'Request failed'),
+                        status: String(res.status || '')
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: toBatchErrorMessage(error && error.message, 'Network error'),
+                        status: ''
+                    };
+                }
+            }
+
+            function buildBatchWorkbook(successRows, failedRows) {
+                const successHeader = [[
+                    'Cookie',
+                    'Trang thai',
+                    'Goi cuoc',
+                    'Quoc gia',
+                    'Man hinh',
+                    'Chat luong',
+                    'Payment Hold',
+                    'Gia goi',
+                    'Ngay lap',
+                    'Thanh toan'
+                ]];
+                const failedHeader = [['Cookie', 'Error', 'HTTP Status']];
+
+                const wb = XLSX.utils.book_new();
+                const successSheet = XLSX.utils.aoa_to_sheet([...successHeader, ...successRows]);
+                const failedSheet = XLSX.utils.aoa_to_sheet([...failedHeader, ...failedRows]);
+                XLSX.utils.book_append_sheet(wb, successSheet, 'SUCCESS');
+                XLSX.utils.book_append_sheet(wb, failedSheet, 'FAILED');
+                return wb;
+            }
+
+            function buildLegacyCombinedSheetRows(sourceName, successRows, failedRows) {
+                const rows = [
+                    ['File goc', sourceName],
+                    []
+                ];
+
+                rows.push([
+                    'SUCCESS',
+                    'Trang thai',
+                    'Goi cuoc',
+                    'Quoc gia',
+                    'Man hinh',
+                    'Chat luong',
+                    'Payment Hold',
+                    'Gia goi',
+                    'Ngay lap',
+                    'Thanh toan'
+                ]);
+
+                if (successRows.length > 0) {
+                    rows.push(...successRows);
+                } else {
+                    rows.push(['Khong co du lieu SUCCESS']);
+                }
+
+                rows.push([]);
+                rows.push(['FAILED', 'Error', 'HTTP Status']);
+
+                if (failedRows.length > 0) {
+                    rows.push(...failedRows);
+                } else {
+                    rows.push(['Khong co du lieu FAILED']);
+                }
+
+                return rows;
+            }
+
+            async function processBatchCookies(cookies, progressMeta = {}, onProgress = null) {
+                const successRows = [];
+                const failedRows = [];
+                const total = cookies.length;
+                let processedCount = 0;
+                let duplicateCount = 0;
+                const notifyProgress = (processedInFile) => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: (progressMeta.processedRowsBefore || 0) + processedInFile,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress(0);
+
+                for (let i = 0; i < cookies.length; i += 1) {
+                    const cookieEntry = cookies[i] || {};
+                    const cookieStr = String(cookieEntry.cookie || '').trim();
+                    if (cookieEntry.duplicateSkipped) {
+                        failedRows.push([
+                            cookieStr,
+                            BATCH_DUPLICATE_MESSAGE,
+                            ''
+                        ]);
+                        duplicateCount += 1;
+                        processedCount = i + 1;
+                        notifyProgress(i + 1);
+                        continue;
+                    }
+
+                    const result = await fetchBatchCookieInfo(cookieStr);
+
+                    if (result.ok) {
+                        const account = result.account || {};
+                        successRows.push([
+                            cookieStr,
+                            account.ok ? 'Hoat dong' : 'Khong hoat dong',
+                            getBatchPlanLabel(account),
+                            toDisplayValue(account.country),
+                            toDisplayValue(account.max_streams, '?'),
+                            toDisplayValue(account.video_quality),
+                            toDisplayValue(account.on_payment_hold, 'No'),
+                            toDisplayValue(account.plan_price),
+                            toDisplayValue(account.member_since),
+                            toDisplayValue(account.payment_method)
+                        ]);
+                    } else {
+                        failedRows.push([
+                            cookieStr,
+                            toDisplayValue(result.error, 'Request failed'),
+                            String(result.status || '')
+                        ]);
+                    }
+
+                    processedCount = i + 1;
+                    notifyProgress(i + 1);
+                    if (i < cookies.length - 1) {
+                        await sleep(300);
+                    }
+                }
+
+                return { successRows, failedRows, processedCount, duplicateCount };
+            }
+
+            async function processBatchCookiesParallel(cookies, workerCount, progressMeta = {}, onProgress = null) {
+                const successEntries = [];
+                const failedEntries = [];
+                const total = cookies.length;
+                let nextIndex = 0;
+                let processedCount = 0;
+                let duplicateCount = 0;
+                const notifyProgress = () => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: processedCount,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress();
+
+                const worker = async () => {
+                    while (!batchStopRequested) {
+                        const currentIndex = nextIndex;
+                        nextIndex += 1;
+                        if (currentIndex >= cookies.length) {
+                            return;
+                        }
+
+                        const cookieEntry = cookies[currentIndex] || {};
+                        const cookieStr = String(cookieEntry.cookie || '').trim();
+                        if (cookieEntry.duplicateSkipped) {
+                            failedEntries.push({
+                                sourceIndex: currentIndex,
+                                row: [
+                                    cookieStr,
+                                    BATCH_DUPLICATE_MESSAGE,
+                                    ''
+                                ]
+                            });
+                            duplicateCount += 1;
+                            processedCount += 1;
+                            notifyProgress();
+                            continue;
+                        }
+
+                        const result = await fetchBatchCookieInfo(cookieStr);
+
+                        if (result.ok) {
+                            const account = result.account || {};
+                            successEntries.push({
+                                sourceIndex: currentIndex,
+                                row: [
+                                    cookieStr,
+                                    account.ok ? 'Hoat dong' : 'Khong hoat dong',
+                                    getBatchPlanLabel(account),
+                                    toDisplayValue(account.country),
+                                    toDisplayValue(account.max_streams, '?'),
+                                    toDisplayValue(account.video_quality),
+                                    toDisplayValue(account.on_payment_hold, 'No'),
+                                    toDisplayValue(account.plan_price),
+                                    toDisplayValue(account.member_since),
+                                    toDisplayValue(account.payment_method)
+                                ]
+                            });
+                        } else {
+                            failedEntries.push({
+                                sourceIndex: currentIndex,
+                                row: [
+                                    cookieStr,
+                                    toDisplayValue(result.error, 'Request failed'),
+                                    String(result.status || '')
+                                ]
+                            });
+                        }
+
+                        processedCount += 1;
+                        notifyProgress();
+                        if (!batchStopRequested && currentIndex < cookies.length - 1) {
+                            await sleep(300);
+                        }
+                    }
+                };
+
+                const safeWorkerCount = Math.max(1, Math.min(workerCount || 1, cookies.length || 1));
+                await Promise.all(Array.from({ length: safeWorkerCount }, () => worker()));
+                successEntries.sort((a, b) => a.sourceIndex - b.sourceIndex);
+                failedEntries.sort((a, b) => a.sourceIndex - b.sourceIndex);
+
+                return {
+                    successRows: successEntries.map((entry) => entry.row),
+                    failedRows: failedEntries.map((entry) => entry.row),
+                    processedCount,
+                    duplicateCount
+                };
+            }
+
+            function getPlanOnlyBatchEntries(worksheet) {
+                const totalRows = Math.max(worksheet.rowCount || 0, worksheet.actualRowCount || 0);
+                const firstValue = normalizeCellText(worksheet.getCell('A1').value).trim();
+                const hasHeader = firstValue.toLowerCase() === 'cookie';
+                const startRow = hasHeader ? 2 : 1;
+                const entries = [];
+                let validCookieCount = 0;
+
+                for (let rowNumber = startRow; rowNumber <= totalRows; rowNumber += 1) {
+                    const cookie = normalizeCellText(worksheet.getCell(`A${rowNumber}`).value).trim();
+                    if (cookie) validCookieCount += 1;
+                    entries.push({ rowNumber, cookie });
+                }
+
+                return { entries, hasHeader, validCookieCount };
+            }
+
+            function getWorksheetLastColumnNumber(worksheet) {
+                let lastColumnNumber = Math.max(worksheet.columnCount || 0, worksheet.actualColumnCount || 0);
+                if (lastColumnNumber > 0) return lastColumnNumber;
+
+                worksheet.eachRow({ includeEmpty: true }, (row) => {
+                    const cellCount = Math.max(row.cellCount || 0, row.actualCellCount || 0);
+                    if (cellCount > lastColumnNumber) lastColumnNumber = cellCount;
+                });
+                return Math.max(lastColumnNumber, 1);
+            }
+
+            function preparePlanOnlyWorksheet(worksheet, hasHeader) {
+                const lastColumnNumber = getWorksheetLastColumnNumber(worksheet);
+                const originalLastColumnNumber = lastColumnNumber;
+                const planColumnNumber = originalLastColumnNumber + 1;
+                const paymentHoldColumnNumber = originalLastColumnNumber + 2;
+                const appendedPlanColumn = worksheet.getColumn(planColumnNumber);
+                const appendedPaymentHoldColumn = worksheet.getColumn(paymentHoldColumnNumber);
+                const sourceColumn = worksheet.getColumn(originalLastColumnNumber);
+                const fallbackColumn = worksheet.getColumn(1);
+                const appendedWidth = sourceColumn.width || fallbackColumn.width || 20;
+                appendedPlanColumn.width = appendedWidth;
+                appendedPaymentHoldColumn.width = appendedWidth;
+
+                const headerRowNumber = 1;
+                if (hasHeader) {
+                    const headerCell = worksheet.getCell(headerRowNumber, planColumnNumber);
+                    const paymentHoldHeaderCell = worksheet.getCell(headerRowNumber, paymentHoldColumnNumber);
+                    const styleSourceCell = worksheet.getCell(headerRowNumber, originalLastColumnNumber);
+                    copyCellStyle(styleSourceCell, headerCell);
+                    copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
+                    headerCell.value = 'Goi cuoc';
+                    paymentHoldHeaderCell.value = 'Payment Hold';
+                }
+
+                return {
+                    planColumnNumber,
+                    paymentHoldColumnNumber,
+                    originalLastColumnNumber,
+                    exportLastColumnNumber: paymentHoldColumnNumber,
+                    hasHeader
+                };
+            }
+
+            function cloneCellValue(value) {
+                return clonePlainObject(value);
+            }
+
+            function copyWorksheetToWorkbook(sourceWorksheet, targetWorkbook, sheetName, metadata = {}) {
+                const targetWorksheet = targetWorkbook.addWorksheet(sheetName);
+                const exportLastColumnNumber = Math.max(
+                    Number(metadata.exportLastColumnNumber) || 0,
+                    Number(metadata.paymentHoldColumnNumber) || 0,
+                    Number(metadata.planColumnNumber) || 0,
+                    getWorksheetLastColumnNumber(sourceWorksheet)
+                );
+                const totalRows = Math.max(sourceWorksheet.rowCount || 0, sourceWorksheet.actualRowCount || 0, 1);
+
+                for (let columnNumber = 1; columnNumber <= exportLastColumnNumber; columnNumber += 1) {
+                    const column = sourceWorksheet.getColumn(columnNumber);
+                    const targetColumn = targetWorksheet.getColumn(columnNumber);
+                    targetColumn.width = column.width;
+                    targetColumn.hidden = column.hidden;
+                    targetColumn.style = clonePlainObject(column.style || {}) || {};
+                }
+
+                for (let rowNumber = 1; rowNumber <= totalRows; rowNumber += 1) {
+                    const row = sourceWorksheet.getRow(rowNumber);
+                    const targetRow = targetWorksheet.getRow(rowNumber);
+                    targetRow.height = row.height;
+                    targetRow.hidden = row.hidden;
+                    targetRow.style = clonePlainObject(row.style || {}) || {};
+
+                    for (let colNumber = 1; colNumber <= exportLastColumnNumber; colNumber += 1) {
+                        const cell = row.getCell(colNumber);
+                        const targetCell = targetRow.getCell(colNumber);
+                        targetCell.value = cloneCellValue(cell.value);
+                        targetCell.style = clonePlainObject(cell.style || {}) || {};
+                        if (cell.numFmt) targetCell.numFmt = cell.numFmt;
+                        if (cell.alignment) targetCell.alignment = clonePlainObject(cell.alignment);
+                        if (cell.font) targetCell.font = clonePlainObject(cell.font);
+                        if (cell.fill) targetCell.fill = clonePlainObject(cell.fill);
+                        if (cell.border) targetCell.border = clonePlainObject(cell.border);
+                    }
+                }
+
+                const planHeaderCell = targetWorksheet.getCell(1, metadata.planColumnNumber || 0);
+                const paymentHeaderCell = targetWorksheet.getCell(1, metadata.paymentHoldColumnNumber || 0);
+                if (metadata.hasHeader && metadata.planColumnNumber) {
+                    planHeaderCell.value = 'Goi cuoc';
+                }
+                if (metadata.hasHeader && metadata.paymentHoldColumnNumber) {
+                    paymentHeaderCell.value = 'Payment Hold';
+                }
+
+                const merges = sourceWorksheet.model && Array.isArray(sourceWorksheet.model.merges)
+                    ? sourceWorksheet.model.merges
+                    : [];
+                merges.forEach((range) => {
+                    try {
+                        targetWorksheet.mergeCells(range);
+                    } catch (error) {
+                        // Ignore invalid merge ranges in copied output.
+                    }
+                });
+
+                return targetWorksheet;
+            }
+
+            async function processPlanOnlyBatchWorkbook(workbook, progressMeta = {}, onProgress = null) {
+                const worksheet = workbook.worksheets && workbook.worksheets[0];
+                if (!worksheet) {
+                    throw new Error('File Excel khong co sheet du lieu.');
+                }
+
+                const planOnlyEntries = Array.isArray(workbook.__planOnlyEntries) ? workbook.__planOnlyEntries : null;
+                const { entries, hasHeader, validCookieCount } = planOnlyEntries
+                    ? {
+                        entries: planOnlyEntries,
+                        hasHeader: normalizeCellText(worksheet.getCell('A1').value).trim().toLowerCase() === 'cookie',
+                        validCookieCount: planOnlyEntries.filter((entry) => entry && entry.cookie).length
+                    }
+                    : getPlanOnlyBatchEntries(worksheet);
+                if (validCookieCount === 0) {
+                    throw new Error('Khong tim thay cookie hop le o cot A.');
+                }
+
+                const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
+                const successRows = [];
+                const failedRows = [];
+                const total = entries.length;
+                let processedCount = 0;
+                let duplicateCount = 0;
+                const notifyProgress = (processedInFile) => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: (progressMeta.processedRowsBefore || 0) + processedInFile,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress(0);
+
+                for (let i = 0; i < entries.length; i += 1) {
+                    const entry = entries[i];
+                    const sourceCell = worksheet.getCell(entry.rowNumber, 1);
+                    const planCell = worksheet.getCell(entry.rowNumber, planColumnNumber);
+                    const paymentHoldCell = worksheet.getCell(entry.rowNumber, paymentHoldColumnNumber);
+                    copyCellStyle(sourceCell, planCell);
+                    copyCellStyle(sourceCell, paymentHoldCell);
+
+                    if (!entry.cookie) {
+                        planCell.value = 'Cookie khong hop le';
+                        paymentHoldCell.value = '';
+                        failedRows.push([`Dong ${entry.rowNumber}`, 'Cookie khong hop le', '']);
+                    } else if (entry.duplicateSkipped) {
+                        planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        paymentHoldCell.value = '';
+                        failedRows.push([entry.cookie, BATCH_DUPLICATE_MESSAGE, '']);
+                        duplicateCount += 1;
+                    } else {
+                        const result = await fetchBatchCookieInfo(entry.cookie);
+                        if (result.ok) {
+                            const account = result.account || {};
+                            planCell.value = getBatchPlanLabel(account);
+                            paymentHoldCell.value = toDisplayValue(account.on_payment_hold, 'No');
+                            successRows.push(entry.rowNumber);
+                        } else {
+                            planCell.value = `Loi: ${toDisplayValue(result.error, 'Request failed')}`;
+                            paymentHoldCell.value = '';
+                            failedRows.push([entry.cookie, toDisplayValue(result.error, 'Request failed'), String(result.status || '')]);
+                        }
+                    }
+
+                    processedCount = i + 1;
+                    notifyProgress(i + 1);
+                    if (i < entries.length - 1) {
+                        await sleep(300);
+                    }
+                }
+
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, duplicateCount, planOnlyMetadata };
+            }
+
+            async function processPlanOnlyBatchWorkbookParallel(workbook, workerCount, progressMeta = {}, onProgress = null) {
+                const worksheet = workbook.worksheets && workbook.worksheets[0];
+                if (!worksheet) {
+                    throw new Error('File Excel khong co sheet du lieu.');
+                }
+
+                const planOnlyEntries = Array.isArray(workbook.__planOnlyEntries) ? workbook.__planOnlyEntries : null;
+                const { entries, hasHeader, validCookieCount } = planOnlyEntries
+                    ? {
+                        entries: planOnlyEntries,
+                        hasHeader: normalizeCellText(worksheet.getCell('A1').value).trim().toLowerCase() === 'cookie',
+                        validCookieCount: planOnlyEntries.filter((entry) => entry && entry.cookie).length
+                    }
+                    : getPlanOnlyBatchEntries(worksheet);
+                if (validCookieCount === 0) {
+                    throw new Error('Khong tim thay cookie hop le o cot A.');
+                }
+
+                const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
+                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
+                const successRows = [];
+                const failedRows = [];
+                const total = entries.length;
+                const resultsByIndex = new Array(entries.length);
+                let nextIndex = 0;
+                let processedCount = 0;
+                let duplicateCount = 0;
+                const notifyProgress = () => {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            processedRows: processedCount,
+                            totalRows: progressMeta.totalRows || total,
+                            processedFiles: progressMeta.processedFilesBefore || 0,
+                            totalFiles: progressMeta.totalFiles || 1,
+                            currentFileName: progressMeta.currentFileName || ''
+                        });
+                    }
+                };
+
+                notifyProgress();
+
+                const worker = async () => {
+                    while (!batchStopRequested) {
+                        const currentIndex = nextIndex;
+                        nextIndex += 1;
+                        if (currentIndex >= entries.length) {
+                            return;
+                        }
+
+                        const entry = entries[currentIndex];
+                        if (!entry.cookie) {
+                            resultsByIndex[currentIndex] = {
+                                type: 'invalid',
+                                rowNumber: entry.rowNumber
+                            };
+                        } else if (entry.duplicateSkipped) {
+                            resultsByIndex[currentIndex] = {
+                                type: 'duplicate',
+                                rowNumber: entry.rowNumber,
+                                cookie: entry.cookie
+                            };
+                            duplicateCount += 1;
+                        } else {
+                            const result = await fetchBatchCookieInfo(entry.cookie);
+                            if (result.ok) {
+                                const account = result.account || {};
+                                resultsByIndex[currentIndex] = {
+                                    type: 'ok',
+                                    rowNumber: entry.rowNumber,
+                                    plan: getBatchPlanLabel(account),
+                                    paymentHold: toDisplayValue(account.on_payment_hold, 'No')
+                                };
+                            } else {
+                                resultsByIndex[currentIndex] = {
+                                    type: 'error',
+                                    rowNumber: entry.rowNumber,
+                                    cookie: entry.cookie,
+                                    error: toDisplayValue(result.error, 'Request failed'),
+                                    status: String(result.status || '')
+                                };
+                            }
+                        }
+
+                        processedCount += 1;
+                        notifyProgress();
+                        if (!batchStopRequested && currentIndex < entries.length - 1) {
+                            await sleep(300);
+                        }
+                    }
+                };
+
+                const safeWorkerCount = Math.max(1, Math.min(workerCount || 1, entries.length || 1));
+                await Promise.all(Array.from({ length: safeWorkerCount }, () => worker()));
+
+                for (let i = 0; i < resultsByIndex.length; i += 1) {
+                    const result = resultsByIndex[i];
+                    if (!result) continue;
+
+                    const sourceCell = worksheet.getCell(result.rowNumber, 1);
+                    const planCell = worksheet.getCell(result.rowNumber, planColumnNumber);
+                    const paymentHoldCell = worksheet.getCell(result.rowNumber, paymentHoldColumnNumber);
+                    copyCellStyle(sourceCell, planCell);
+                    copyCellStyle(sourceCell, paymentHoldCell);
+
+                    if (result.type === 'invalid') {
+                        planCell.value = 'Cookie khong hop le';
+                        paymentHoldCell.value = '';
+                        failedRows.push([`Dong ${result.rowNumber}`, 'Cookie khong hop le', '']);
+                        continue;
+                    }
+
+                    if (result.type === 'duplicate') {
+                        planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        paymentHoldCell.value = '';
+                        failedRows.push([result.cookie, BATCH_DUPLICATE_MESSAGE, '']);
+                        continue;
+                    }
+
+                    if (result.type === 'ok') {
+                        planCell.value = result.plan;
+                        paymentHoldCell.value = result.paymentHold;
+                        successRows.push(result.rowNumber);
+                        continue;
+                    }
+
+                    planCell.value = `Loi: ${result.error}`;
+                    paymentHoldCell.value = '';
+                    failedRows.push([result.cookie, result.error, result.status]);
+                }
+
+                return { workbook, worksheet, successRows, failedRows, totalRows: total, processedCount, duplicateCount, planOnlyMetadata };
+            }
+
+            async function downloadExcelJsWorkbook(workbook, filename) {
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob(
+                    [buffer],
+                    { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+                );
+                downloadBlob(blob, filename);
+            }
+
+            function downloadXlsxWorkbook(workbook, filename) {
+                XLSX.writeFile(workbook, filename);
+            }
+
+            function downloadBlob(blob, filename) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+
+            function hideAlerts() {
+                resultBox.classList.remove('active');
+                accountInfoBox.classList.remove('active');
+                hideInlineError();
+            }
+
+            function hideInlineError() {
+                inlineError.textContent = '';
+                inlineError.classList.remove('active');
+            }
+
+            function readStoredToggle(key) {
+                try {
+                    return window.localStorage.getItem(key) === '1';
+                } catch (error) {
+                    return false;
+                }
+            }
+
+            function writeStoredToggle(key, enabled) {
+                try {
+                    window.localStorage.setItem(key, enabled ? '1' : '0');
+                } catch (error) {
+                    // Ignore storage errors so toggles still work in-memory.
+                }
+            }
+
+            function syncToggleState(toggle, key) {
+                if (!toggle) return false;
+                const enabled = readStoredToggle(key);
+                toggle.checked = enabled;
+                return enabled;
+            }
+
+            function isAutoGenerateEnabled() {
+                return !!(autoGenerateToggle && autoGenerateToggle.checked);
+            }
+
+            function isClearPasteEnabled() {
+                return !!(clearPasteToggle && clearPasteToggle.checked);
+            }
+
+            function resetFormFeedback() {
+                hideAlerts();
+                resultLink.value = '';
+                openResultBtn.href = '#';
+            }
+
+            async function downloadBatchItem(item) {
+                if (!item || !item.workbook) return;
+                if (item.kind === 'exceljs') {
+                    await downloadExcelJsWorkbook(item.workbook, item.filename);
+                    return;
+                }
+                downloadXlsxWorkbook(item.workbook, item.filename);
+            }
+
+            function getBatchModeLabel(mode) {
+                return mode === BATCH_MODE_PLAN_ONLY ? 'Check Goi cuoc + Payment Hold' : 'Mode cu: Tach SUCCESS / FAILED';
+            }
+
+            function createBatchFileState(preparedFile, mode) {
+                return {
+                    id: preparedFile.id,
+                    order: preparedFile.order,
+                    name: preparedFile.file.name,
+                    modeLabel: getBatchModeLabel(mode),
+                    status: BATCH_FILE_STATUS_QUEUED,
+                    processedRows: 0,
+                    totalRows: preparedFile.rowCount || 0,
+                    workerCount: preparedFile.workerCount || 1,
+                    successCount: 0,
+                    failedCount: 0,
+                    duplicateCount: preparedFile.duplicateCount || 0,
+                    errorMessage: '',
+                    output: null
+                };
+            }
+
+            function updateBatchFileState(fileId, updater) {
+                const target = batchFileStates.find((item) => item.id === fileId);
+                if (!target) return;
+                updater(target);
+                renderBatchFileStatuses();
+                updateBatchProgress();
+            }
+
+            function finalizeStoppedQueuedFiles() {
+                let changed = false;
+                batchFileStates.forEach((fileState) => {
+                    if (fileState.status === BATCH_FILE_STATUS_QUEUED) {
+                        fileState.status = BATCH_FILE_STATUS_STOPPED;
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    renderBatchFileStatuses();
+                    updateBatchProgress();
+                }
+            }
+
+            function setGenerateLoading(isLoading) {
+                generateInFlight = isLoading;
+                generateBtn.disabled = isLoading;
+                generateBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+                generateBtn.lastChild.textContent = isLoading ? ' Dang tao link...' : ` ${generateButtonDefaultText}`;
+            }
+
+            function getAudioContext() {
+                const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContextCtor) return null;
+                if (!audioContext) {
+                    audioContext = new AudioContextCtor();
+                }
+                return audioContext;
+            }
+
+            async function playToneSequence(tones = []) {
+                const ctx = getAudioContext();
+                if (!ctx || !Array.isArray(tones) || tones.length === 0) return;
+
+                try {
+                    if (ctx.state === 'suspended') {
+                        await ctx.resume();
+                    }
+
+                    let startAt = ctx.currentTime + 0.01;
+                    tones.forEach((tone) => {
+                        const duration = Math.max(0.04, Number(tone.duration) || 0.08);
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+
+                        oscillator.type = tone.type || 'sine';
+                        oscillator.frequency.setValueAtTime(Number(tone.frequency) || 440, startAt);
+
+                        gainNode.gain.setValueAtTime(0.0001, startAt);
+                        gainNode.gain.linearRampToValueAtTime(Number(tone.volume) || 0.12, startAt + 0.015);
+                        gainNode.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        oscillator.start(startAt);
+                        oscillator.stop(startAt + duration + 0.02);
+
+                        startAt += duration + (Number(tone.gap) || 0.03);
+                    });
+                } catch (error) {
+                    // Ignore audio failures so submit flow keeps working.
+                }
+            }
+
+            function playSuccessSound() {
+                return playToneSequence([
+                    { frequency: 880, duration: 0.07, volume: 0.09, type: 'sine', gap: 0.015 },
+                    { frequency: 1320, duration: 0.11, volume: 0.12, type: 'triangle', gap: 0.02 }
+                ]);
+            }
+
+            function playErrorSound() {
+                return playToneSequence([
+                    { frequency: 300, duration: 0.08, volume: 0.12, type: 'square', gap: 0.035 },
+                    { frequency: 220, duration: 0.14, volume: 0.13, type: 'sawtooth', gap: 0.02 }
+                ]);
+            }
+
+            async function copyTextToClipboard(text) {
+                await navigator.clipboard.writeText(text);
+            }
+
+            async function copyGeneratedLink(url, { silent = false } = {}) {
+                if (!url) return false;
+                try {
+                    await copyTextToClipboard(url);
+                    if (!silent) {
+                        const originalText = copyResultBtn.textContent;
+                        copyResultBtn.textContent = 'Da sao chep!';
+                        setTimeout(() => {
+                            copyResultBtn.textContent = originalText;
+                        }, 2000);
+                        showToast('Da sao chep link.', 'ok');
+                    }
+                    return true;
+                } catch (error) {
+                    if (!silent) {
+                        showToast('Loi sao chep, vui long copy thu cong.', 'warn');
+                    }
+                    return false;
+                }
+            }
+
+            function applyCookieText(value) {
+                resetFormFeedback();
+                cookieInput.value = String(value || '');
+                hideInlineError();
+                cookieInput.focus();
+            }
+
+            async function submitFromPaste(source = '') {
+                const normalized = cookieInput.value.trim();
+                if (!isAutoGenerateEnabled() || !normalized || generateInFlight) return false;
+                autoSubmitSource = source;
+                form.requestSubmit(generateBtn);
+                return true;
+            }
+
+            async function pasteClipboardIntoCookieInput({
+                clearFirst = false,
+                autoGenerate = false,
+                showSuccessToast = true,
+                successMessage = 'Dan clipboard thanh cong.'
+            } = {}) {
+                const previousValue = cookieInput.value;
+                if (clearFirst) {
+                    cookieInput.value = '';
+                    resetFormFeedback();
+                }
+
+                let text = '';
+                try {
+                    text = await navigator.clipboard.readText();
+                } catch (error) {
+                    if (clearFirst) {
+                        cookieInput.value = previousValue;
+                        cookieInput.focus();
+                    }
+                    showToast('Khong doc duoc clipboard. Hay cap quyen dan cho trinh duyet.', 'bad');
+                    playErrorSound();
+                    return false;
+                }
+
+                const normalized = String(text || '').trim();
+                if (!normalized) {
+                    if (clearFirst) {
+                        cookieInput.value = previousValue;
+                        cookieInput.focus();
+                    }
+                    showToast('Clipboard dang trong.', 'warn');
+                    playErrorSound();
+                    return false;
+                }
+
+                applyCookieText(normalized);
+                if (showSuccessToast) {
+                    showToast(successMessage, 'ok');
+                }
+                playSuccessSound();
+
+                if (autoGenerate) {
+                    await submitFromPaste('clipboard');
+                }
+                return true;
+            }
+
+            cookieInput.addEventListener('keydown', (event) => {
+                if (
+                    event.key === 'Enter' &&
+                    !event.shiftKey &&
+                    !event.ctrlKey &&
+                    !event.altKey &&
+                    !event.metaKey
+                ) {
+                    event.preventDefault();
+                    if (!generateBtn.disabled) {
+                        form.requestSubmit(generateBtn);
+                    }
+                }
+            });
+
+            cookieInput.addEventListener('input', () => {
+                if (inlineError.classList.contains('active')) {
+                    hideInlineError();
+                }
+            });
+
+            cookieInput.addEventListener('paste', () => {
+                setTimeout(() => {
+                    if (!isAutoGenerateEnabled()) return;
+                    submitFromPaste('paste');
+                }, 0);
+            });
+
+            clearCookieBtn.addEventListener('click', async () => {
+                if (isClearPasteEnabled()) {
+                    await pasteClipboardIntoCookieInput({
+                        clearFirst: true,
+                        autoGenerate: isAutoGenerateEnabled(),
+                        successMessage: 'Da xoa va dan clipboard thanh cong.'
+                    });
+                    return;
+                }
+                cookieInput.value = '';
+                resetFormFeedback();
+                cookieInput.focus();
+            });
+
+            if (pasteCookieBtn) {
+                pasteCookieBtn.addEventListener('click', async () => {
+                    await pasteClipboardIntoCookieInput({
+                        clearFirst: false,
+                        autoGenerate: isAutoGenerateEnabled(),
+                        successMessage: 'Dan clipboard thanh cong.'
+                    });
+                });
+            }
+
+            if (autoGenerateToggle) {
+                syncToggleState(autoGenerateToggle, STORAGE_KEY_AUTO_GENERATE);
+                autoGenerateToggle.addEventListener('change', () => {
+                    writeStoredToggle(STORAGE_KEY_AUTO_GENERATE, autoGenerateToggle.checked);
+                    showToast(autoGenerateToggle.checked ? 'Da bat tu dong tao link khi dan.' : 'Da tat tu dong tao link khi dan.', autoGenerateToggle.checked ? 'ok' : 'warn');
+                });
+            }
+
+            if (clearPasteToggle) {
+                syncToggleState(clearPasteToggle, STORAGE_KEY_CLEAR_PASTE);
+                clearPasteToggle.addEventListener('change', () => {
+                    writeStoredToggle(STORAGE_KEY_CLEAR_PASTE, clearPasteToggle.checked);
+                    showToast(clearPasteToggle.checked ? 'Da bat xoa roi dan clipboard.' : 'Da tat xoa roi dan clipboard.', clearPasteToggle.checked ? 'ok' : 'warn');
+                });
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                resetFormFeedback();
+
+                const cookieStr = cookieInput.value.trim();
+                const device = deviceSelect.value;
+
+                if (!cookieStr) {
+                    showError('Vui long nhap cookie.');
+                    playErrorSound();
+                    return;
+                }
+
+                setGenerateLoading(true);
+
+                try {
+                    const res = await fetch('/api/nf-cookie-to-link', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cookieStr, device })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Server error');
+
+                    if (data.success && data.url) {
+                        showResult(data.url, data.accountInfo);
+                        playSuccessSound();
+                        await copyGeneratedLink(data.url, { silent: true });
+                        if (autoSubmitSource) {
+                            showToast('Da tu dong tao link tu clipboard.', 'ok');
+                        }
+                    } else {
+                        showError('Khong the tao link (Loi khong xac dinh).');
+                        playErrorSound();
+                    }
+                } catch (error) {
+                    showError(error.message);
+                    playErrorSound();
+                    if (autoSubmitSource) {
+                        showToast(`Tu dong tao link that bai: ${error.message}`, 'bad');
+                    }
+                } finally {
+                    autoSubmitSource = '';
+                    setGenerateLoading(false);
+                }
+            });
+
+            batchDownloadList.addEventListener('click', async (event) => {
+                const button = event.target.closest('[data-batch-download-index]');
+                if (!button) return;
+
+                const index = Number(button.getAttribute('data-batch-download-index'));
+                const item = batchDownloadItems[index];
+                if (!item) return;
+
+                button.disabled = true;
+                try {
+                    await downloadBatchItem(item);
+                } finally {
+                    button.disabled = false;
+                }
+            });
+
+            startBatchBtn.addEventListener('click', async () => {
+                if (batchRunning) return;
+                const mode = getBatchMode();
+                const outputMode = getBatchOutputMode();
+
+                if (typeof XLSX === 'undefined') {
+                    batchStatusText.textContent = 'Khong tai duoc thu vien Excel (SheetJS).';
+                    return;
+                }
+                if (mode === BATCH_MODE_PLAN_ONLY && typeof ExcelJS === 'undefined') {
+                    batchStatusText.textContent = 'Khong tai duoc thu vien Excel giu dinh dang.';
+                    return;
+                }
+
+                const files = Array.from(batchExcelInput.files || []);
+                if (files.length === 0) {
+                    batchStatusText.textContent = 'Vui long chon it nhat 1 file .xlsx truoc.';
+                    return;
+                }
+
+                clearBatchDownloads();
+                batchStopRequested = false;
+                setBatchRunningState(true);
+                batchProgressFill.style.width = '0%';
+
+                try {
+                    const preparedFiles = [];
+                    const fileWorkerCount = getBatchFileConcurrency(files.length);
+                    activeBatchFileConcurrency = fileWorkerCount;
+
+                    for (let fileIndex = 0; fileIndex < files.length; fileIndex += 1) {
+                        const file = files[fileIndex];
+                        const arrayBuffer = await file.arrayBuffer();
+                        if (mode === BATCH_MODE_PLAN_ONLY) {
+                            const workbook = new ExcelJS.Workbook();
+                            await workbook.xlsx.load(arrayBuffer);
+                            const worksheet = workbook.worksheets && workbook.worksheets[0];
+                            const preview = worksheet ? getPlanOnlyBatchEntries(worksheet) : { entries: [], validCookieCount: 0 };
+                            const rowCount = preview.entries.length;
+                            preparedFiles.push({
+                                id: `batch-file-${fileIndex}`,
+                                order: fileIndex,
+                                file,
+                                workbook,
+                                entries: preview.entries,
+                                rowCount,
+                                workerCount: getPerFileWorkerCount(rowCount)
+                            });
+                        } else {
+                            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                            const cookies = readCookiesFromSheet(workbook);
+                            preparedFiles.push({
+                                id: `batch-file-${fileIndex}`,
+                                order: fileIndex,
+                                file,
+                                workbook,
+                                cookies: cookies.map((cookie) => ({ cookie, duplicateSkipped: false })),
+                                rowCount: cookies.length,
+                                workerCount: getPerFileWorkerCount(cookies.length)
+                            });
+                        }
+                    }
+
+                    const seenBatchCookies = new Set();
+                    preparedFiles.forEach((prepared) => {
+                        if (mode === BATCH_MODE_PLAN_ONLY) {
+                            prepared.entries = markDuplicateItems(prepared.entries || [], seenBatchCookies, (entry) => entry && entry.cookie);
+                            prepared.duplicateCount = prepared.entries.filter((entry) => entry && entry.duplicateSkipped).length;
+                            prepared.workbook.__planOnlyEntries = prepared.entries;
+                            return;
+                        }
+
+                        prepared.cookies = markDuplicateItems(prepared.cookies || [], seenBatchCookies, (entry) => entry && entry.cookie);
+                        prepared.duplicateCount = prepared.cookies.filter((entry) => entry && entry.duplicateSkipped).length;
+                    });
+
+                    batchFileStates = preparedFiles.map((preparedFile) => createBatchFileState(preparedFile, mode));
+                    renderBatchFileStatuses();
+
+                    const totalRows = batchFileStates.reduce((sum, fileState) => sum + (Number(fileState.totalRows) || 0), 0);
+                    if (totalRows === 0) {
+                        batchStatusText.textContent = 'Khong tim thay cookie hop le o cot A trong cac file da chon.';
+                        return;
+                    }
+
+                    updateBatchProgress({ processedRows: 0, totalRows, processedFiles: 0, totalFiles: preparedFiles.length, currentFileName: '', fileConcurrency: fileWorkerCount });
+
+                    let nextFileIndex = 0;
+                    const runPreparedFile = async (prepared) => {
+                        updateBatchFileState(prepared.id, (fileState) => {
+                            fileState.status = BATCH_FILE_STATUS_RUNNING;
+                            fileState.errorMessage = '';
+                        });
+
+                        const progressMeta = {
+                            totalRows,
+                            totalFiles: preparedFiles.length,
+                            currentFileName: prepared.file.name
+                        };
+
+                        try {
+                            let result;
+                            if (mode === BATCH_MODE_PLAN_ONLY) {
+                                result = await processPlanOnlyBatchWorkbookParallel(prepared.workbook, prepared.workerCount, progressMeta, (progress) => {
+                                    updateBatchFileState(prepared.id, (fileState) => {
+                                        fileState.processedRows = progress.processedRows;
+                                    });
+                                });
+
+                                updateBatchFileState(prepared.id, (fileState) => {
+                                    const stoppedEarly = batchStopRequested && result.processedCount < prepared.rowCount;
+                                    fileState.status = stoppedEarly ? BATCH_FILE_STATUS_STOPPED : BATCH_FILE_STATUS_DONE;
+                                    fileState.processedRows = result.processedCount;
+                                    fileState.successCount = result.successRows.length;
+                                    fileState.failedCount = result.failedRows.length;
+                                    fileState.duplicateCount = result.duplicateCount || 0;
+                                    fileState.output = {
+                                        workbook: result.workbook,
+                                        worksheet: result.worksheet,
+                                        planOnlyMetadata: result.planOnlyMetadata,
+                                        kind: 'exceljs'
+                                    };
+                                });
+
+                                if (outputMode === BATCH_OUTPUT_SEPARATE) {
+                                    upsertBatchDownloadItem({
+                                        id: prepared.id,
+                                        order: prepared.order,
+                                        filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                        summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length} | Trung bo qua: ${result.duplicateCount || 0}`,
+                                        kind: 'exceljs',
+                                        workbook: result.workbook
+                                    });
+                                }
+                                return;
+                            }
+
+                            if (!prepared.cookies || prepared.cookies.length === 0) {
+                                throw new Error('Khong tim thay cookie hop le o cot A.');
+                            }
+
+                            result = await processBatchCookiesParallel(prepared.cookies, prepared.workerCount, progressMeta, (progress) => {
+                                updateBatchFileState(prepared.id, (fileState) => {
+                                    fileState.processedRows = progress.processedRows;
+                                });
+                            });
+                            const workbook = buildBatchWorkbook(result.successRows, result.failedRows);
+
+                            updateBatchFileState(prepared.id, (fileState) => {
+                                const stoppedEarly = batchStopRequested && result.processedCount < prepared.rowCount;
+                                fileState.status = stoppedEarly ? BATCH_FILE_STATUS_STOPPED : BATCH_FILE_STATUS_DONE;
+                                fileState.processedRows = result.processedCount;
+                                fileState.successCount = result.successRows.length;
+                                fileState.failedCount = result.failedRows.length;
+                                fileState.duplicateCount = result.duplicateCount || 0;
+                                fileState.output = {
+                                    workbook,
+                                    successRows: result.successRows,
+                                    failedRows: result.failedRows,
+                                    kind: 'xlsx'
+                                };
+                            });
+
+                            if (outputMode === BATCH_OUTPUT_SEPARATE) {
+                                upsertBatchDownloadItem({
+                                    id: prepared.id,
+                                    order: prepared.order,
+                                    filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                    summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Thanh cong: ${result.successRows.length} | Loi: ${result.failedRows.length} | Trung bo qua: ${result.duplicateCount || 0}`,
+                                    kind: 'xlsx',
+                                    workbook
+                                });
+                            }
+                        } catch (error) {
+                            updateBatchFileState(prepared.id, (fileState) => {
+                                fileState.status = BATCH_FILE_STATUS_ERROR;
+                                fileState.errorMessage = error.message || 'Unknown error';
+                                fileState.failedCount = Math.max(fileState.failedCount || 0, 1);
+                            });
+
+                            if (outputMode === BATCH_OUTPUT_SEPARATE) {
+                                upsertBatchDownloadItem({
+                                    id: prepared.id,
+                                    order: prepared.order,
+                                    filename: formatBatchOutputFileName(prepared.file.name, mode),
+                                    summary: `File goc: ${prepared.file.name} | Worker: ${prepared.workerCount} | Loi file: ${error.message || 'Unknown error'}`,
+                                    kind: '',
+                                    workbook: null
+                                });
+                            }
+                        }
+                    };
+
+                    const worker = async () => {
+                        while (!batchStopRequested) {
+                            const assignedIndex = nextFileIndex;
+                            nextFileIndex += 1;
+                            if (assignedIndex >= preparedFiles.length) {
+                                return;
+                            }
+                            await runPreparedFile(preparedFiles[assignedIndex]);
+                        }
+                    };
+
+                    await Promise.all(Array.from({ length: fileWorkerCount }, () => worker()));
+                    finalizeStoppedQueuedFiles();
+
+                    if (outputMode === BATCH_OUTPUT_COMBINED) {
+                        const usedSheetNames = new Set();
+                        const combinedWorkbook = mode === BATCH_MODE_PLAN_ONLY ? new ExcelJS.Workbook() : XLSX.utils.book_new();
+
+                        preparedFiles.forEach((prepared) => {
+                            const fileState = batchFileStates.find((entry) => entry.id === prepared.id);
+                            if (!fileState || !fileState.output) return;
+
+                            const sheetName = createUniqueSheetName(prepared.file.name, usedSheetNames);
+                            if (mode === BATCH_MODE_PLAN_ONLY) {
+                                copyWorksheetToWorkbook(
+                                    fileState.output.worksheet,
+                                    combinedWorkbook,
+                                    sheetName,
+                                    fileState.output.planOnlyMetadata || {}
+                                );
+                                return;
+                            }
+                            const sheetRows = buildLegacyCombinedSheetRows(
+                                prepared.file.name,
+                                fileState.output.successRows || [],
+                                fileState.output.failedRows || []
+                            );
+                            XLSX.utils.book_append_sheet(combinedWorkbook, XLSX.utils.aoa_to_sheet(sheetRows), sheetName);
+                        });
+
+                        const combinedHasSheets = mode === BATCH_MODE_PLAN_ONLY
+                            ? combinedWorkbook.worksheets && combinedWorkbook.worksheets.length > 0
+                            : combinedWorkbook.SheetNames && combinedWorkbook.SheetNames.length > 0;
+
+                        if (combinedHasSheets) {
+                            batchCombinedDownload = {
+                                filename: formatBatchFileName(new Date(), mode, batchStopRequested ? 'combined_partial' : 'combined'),
+                                kind: mode === BATCH_MODE_PLAN_ONLY ? 'exceljs' : 'xlsx',
+                                workbook: combinedWorkbook
+                            };
+                        }
+                    }
+
+                    renderBatchDownloads();
+                    renderBatchFileStatuses();
+
+                    const aggregate = getBatchAggregateStats();
+                    if (batchStopRequested) {
+                        batchStatusText.textContent = `Da dung batch. File xong: ${aggregate.completedFiles}/${aggregate.totalFiles} | Da dung: ${aggregate.stoppedFiles} | Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed} | Trung bo qua: ${aggregate.totalDuplicates} | File dong thoi: ${activeBatchFileConcurrency || 0}`;
+                    } else {
+                        batchProgressFill.style.width = '100%';
+                        batchStatusText.textContent = `Hoan tat ${aggregate.completedFiles} file. Thanh cong: ${aggregate.totalSuccess} | Loi: ${aggregate.totalFailed} | Trung bo qua: ${aggregate.totalDuplicates} | File dong thoi: ${activeBatchFileConcurrency || 0}`;
+                    }
+                } catch (error) {
+                    batchStatusText.textContent = `Batch loi: ${error.message || 'Unknown error'}`;
+                } finally {
+                    setBatchRunningState(false);
+                }
+            });
+
+            stopBatchBtn.addEventListener('click', () => {
+                if (!batchRunning) return;
+                batchStopRequested = true;
+                batchStatusText.textContent = 'Dang dung batch...';
+            });
+
+            downloadBatchBtn.addEventListener('click', async () => {
+                if (!batchCombinedDownload) {
+                    batchStatusText.textContent = 'Chua co ket qua de tai.';
+                    return;
+                }
+
+                downloadBatchBtn.disabled = true;
+                try {
+                    await downloadBatchItem(batchCombinedDownload);
+                } finally {
+                    downloadBatchBtn.disabled = false;
+                }
+            });
+
+            copyResultBtn.addEventListener('click', async () => {
+                await copyGeneratedLink(resultLink.value);
+            });
+        });
+    </script>
+</body>
+
+</html>
