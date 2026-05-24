@@ -81,6 +81,30 @@ async function resolveShareCookie(record) {
     };
 }
 
+async function checkShareCookiesHealth(record) {
+    const candidates = getCookieListFromRecord(record);
+    const checks = [];
+
+    for (const candidate of candidates) {
+        if (!candidate.cookieRaw) {
+            checks.push({ slot: candidate.slot, ok: false, error: 'Cookie trong.', summary: null });
+            continue;
+        }
+        const result = await evaluateGetlinkCookie(candidate.cookieRaw);
+        checks.push({
+            slot: candidate.slot,
+            ok: !!result.ok,
+            error: String(result.error || '').trim(),
+            summary: result.summary || null
+        });
+    }
+
+    return {
+        checks,
+        liveCount: checks.filter((item) => item && item.ok).length
+    };
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -129,6 +153,29 @@ module.exports = async function (req, res) {
         }
 
         if (req.method === 'POST') {
+            const checkHealthMatch = pathname.match(/^\/api\/getlink-shares\/([^/]+)\/check-cookies-health$/);
+            if (checkHealthMatch) {
+                const shareId = decodeURIComponent(checkHealthMatch[1] || '');
+                if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+
+                const record = await readShareById(shareId);
+                if (!record) return res.status(404).json({ error: 'Share link not found' });
+                if (record.status !== 'active') {
+                    return res.status(410).json({ error: 'Share link has been revoked' });
+                }
+                if (isShareExpired(record)) {
+                    return res.status(410).json({ error: 'Share link has expired' });
+                }
+
+                const health = await checkShareCookiesHealth(record);
+                return res.status(200).json({
+                    success: true,
+                    id: record.id,
+                    liveCount: health.liveCount,
+                    checks: health.checks
+                });
+            }
+
             const rotateMatch = pathname.match(/^\/api\/getlink-shares\/([^/]+)\/rotate-cookie$/);
             if (rotateMatch) {
                 const shareId = decodeURIComponent(rotateMatch[1] || '');

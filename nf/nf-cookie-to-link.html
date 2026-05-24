@@ -1469,28 +1469,35 @@
                 const lastColumnNumber = getWorksheetLastColumnNumber(worksheet);
                 const originalLastColumnNumber = lastColumnNumber;
                 const planColumnNumber = originalLastColumnNumber + 1;
-                const paymentHoldColumnNumber = originalLastColumnNumber + 2;
+                const screenColumnNumber = originalLastColumnNumber + 2;
+                const paymentHoldColumnNumber = originalLastColumnNumber + 3;
                 const appendedPlanColumn = worksheet.getColumn(planColumnNumber);
+                const appendedScreenColumn = worksheet.getColumn(screenColumnNumber);
                 const appendedPaymentHoldColumn = worksheet.getColumn(paymentHoldColumnNumber);
                 const sourceColumn = worksheet.getColumn(originalLastColumnNumber);
                 const fallbackColumn = worksheet.getColumn(1);
                 const appendedWidth = sourceColumn.width || fallbackColumn.width || 20;
                 appendedPlanColumn.width = appendedWidth;
+                appendedScreenColumn.width = appendedWidth;
                 appendedPaymentHoldColumn.width = appendedWidth;
 
                 const headerRowNumber = 1;
                 if (hasHeader) {
                     const headerCell = worksheet.getCell(headerRowNumber, planColumnNumber);
+                    const screenHeaderCell = worksheet.getCell(headerRowNumber, screenColumnNumber);
                     const paymentHoldHeaderCell = worksheet.getCell(headerRowNumber, paymentHoldColumnNumber);
                     const styleSourceCell = worksheet.getCell(headerRowNumber, originalLastColumnNumber);
                     copyCellStyle(styleSourceCell, headerCell);
+                    copyCellStyle(styleSourceCell, screenHeaderCell);
                     copyCellStyle(styleSourceCell, paymentHoldHeaderCell);
                     headerCell.value = 'Goi cuoc';
+                    screenHeaderCell.value = 'So man hinh';
                     paymentHoldHeaderCell.value = 'Payment Hold';
                 }
 
                 return {
                     planColumnNumber,
+                    screenColumnNumber,
                     paymentHoldColumnNumber,
                     originalLastColumnNumber,
                     exportLastColumnNumber: paymentHoldColumnNumber,
@@ -1507,6 +1514,7 @@
                 const exportLastColumnNumber = Math.max(
                     Number(metadata.exportLastColumnNumber) || 0,
                     Number(metadata.paymentHoldColumnNumber) || 0,
+                    Number(metadata.screenColumnNumber) || 0,
                     Number(metadata.planColumnNumber) || 0,
                     getWorksheetLastColumnNumber(sourceWorksheet)
                 );
@@ -1541,9 +1549,13 @@
                 }
 
                 const planHeaderCell = targetWorksheet.getCell(1, metadata.planColumnNumber || 0);
+                const screenHeaderCell = targetWorksheet.getCell(1, metadata.screenColumnNumber || 0);
                 const paymentHeaderCell = targetWorksheet.getCell(1, metadata.paymentHoldColumnNumber || 0);
                 if (metadata.hasHeader && metadata.planColumnNumber) {
                     planHeaderCell.value = 'Goi cuoc';
+                }
+                if (metadata.hasHeader && metadata.screenColumnNumber) {
+                    screenHeaderCell.value = 'So man hinh';
                 }
                 if (metadata.hasHeader && metadata.paymentHoldColumnNumber) {
                     paymentHeaderCell.value = 'Payment Hold';
@@ -1582,7 +1594,7 @@
                 }
 
                 const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
-                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
+                const { planColumnNumber, screenColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
@@ -1606,16 +1618,20 @@
                     const entry = entries[i];
                     const sourceCell = worksheet.getCell(entry.rowNumber, 1);
                     const planCell = worksheet.getCell(entry.rowNumber, planColumnNumber);
+                    const screenCell = worksheet.getCell(entry.rowNumber, screenColumnNumber);
                     const paymentHoldCell = worksheet.getCell(entry.rowNumber, paymentHoldColumnNumber);
                     copyCellStyle(sourceCell, planCell);
+                    copyCellStyle(sourceCell, screenCell);
                     copyCellStyle(sourceCell, paymentHoldCell);
 
                     if (!entry.cookie) {
                         planCell.value = 'Cookie khong hop le';
+                        screenCell.value = '';
                         paymentHoldCell.value = '';
                         failedRows.push([`Dong ${entry.rowNumber}`, 'Cookie khong hop le', '']);
                     } else if (entry.duplicateSkipped) {
                         planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        screenCell.value = '';
                         paymentHoldCell.value = '';
                         failedRows.push([entry.cookie, BATCH_DUPLICATE_MESSAGE, '']);
                         duplicateCount += 1;
@@ -1624,10 +1640,12 @@
                         if (result.ok) {
                             const account = result.account || {};
                             planCell.value = getBatchPlanLabel(account);
+                            screenCell.value = toDisplayValue(account.max_streams, '?');
                             paymentHoldCell.value = toDisplayValue(account.on_payment_hold, 'No');
                             successRows.push(entry.rowNumber);
                         } else {
                             planCell.value = `Loi: ${toDisplayValue(result.error, 'Request failed')}`;
+                            screenCell.value = '';
                             paymentHoldCell.value = '';
                             failedRows.push([entry.cookie, toDisplayValue(result.error, 'Request failed'), String(result.status || '')]);
                         }
@@ -1662,7 +1680,7 @@
                 }
 
                 const planOnlyMetadata = preparePlanOnlyWorksheet(worksheet, hasHeader);
-                const { planColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
+                const { planColumnNumber, screenColumnNumber, paymentHoldColumnNumber } = planOnlyMetadata;
                 const successRows = [];
                 const failedRows = [];
                 const total = entries.length;
@@ -1713,6 +1731,7 @@
                                     type: 'ok',
                                     rowNumber: entry.rowNumber,
                                     plan: getBatchPlanLabel(account),
+                                    screen: toDisplayValue(account.max_streams, '?'),
                                     paymentHold: toDisplayValue(account.on_payment_hold, 'No')
                                 };
                             } else {
@@ -1743,12 +1762,15 @@
 
                     const sourceCell = worksheet.getCell(result.rowNumber, 1);
                     const planCell = worksheet.getCell(result.rowNumber, planColumnNumber);
+                    const screenCell = worksheet.getCell(result.rowNumber, screenColumnNumber);
                     const paymentHoldCell = worksheet.getCell(result.rowNumber, paymentHoldColumnNumber);
                     copyCellStyle(sourceCell, planCell);
+                    copyCellStyle(sourceCell, screenCell);
                     copyCellStyle(sourceCell, paymentHoldCell);
 
                     if (result.type === 'invalid') {
                         planCell.value = 'Cookie khong hop le';
+                        screenCell.value = '';
                         paymentHoldCell.value = '';
                         failedRows.push([`Dong ${result.rowNumber}`, 'Cookie khong hop le', '']);
                         continue;
@@ -1756,6 +1778,7 @@
 
                     if (result.type === 'duplicate') {
                         planCell.value = BATCH_DUPLICATE_MESSAGE;
+                        screenCell.value = '';
                         paymentHoldCell.value = '';
                         failedRows.push([result.cookie, BATCH_DUPLICATE_MESSAGE, '']);
                         continue;
@@ -1763,12 +1786,14 @@
 
                     if (result.type === 'ok') {
                         planCell.value = result.plan;
+                        screenCell.value = result.screen;
                         paymentHoldCell.value = result.paymentHold;
                         successRows.push(result.rowNumber);
                         continue;
                     }
 
                     planCell.value = `Loi: ${result.error}`;
+                    screenCell.value = '';
                     paymentHoldCell.value = '';
                     failedRows.push([result.cookie, result.error, result.status]);
                 }

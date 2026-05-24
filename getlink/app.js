@@ -1678,8 +1678,45 @@ function normalizeOverloadFixErrorMessage(error) {
         || normalized.includes('không đủ cookie dự phòng')) {
         return 'Link này đã hết cookie dự phòng. Vui lòng bấm CẦN HỖ TRỢ / BẢO HÀNH để được hỗ trợ.';
     }
+    if (normalized.includes('khong du cookie song truoc khi rotate')
+        || normalized.includes('không đủ cookie sống trước khi rotate')) {
+        if (normalized.includes('livecount=0') || normalized.includes('livecount:0')) {
+            return 'Link này đã hết cookie sống, không thể dùng Sửa lỗi quá tải. Vui lòng bấm CẦN HỖ TRỢ / BẢO HÀNH để được hỗ trợ.';
+        }
+        return 'Link này chỉ còn 1 cookie sống, không thể dùng Sửa lỗi quá tải. Vui lòng bấm CẦN HỖ TRỢ / BẢO HÀNH để được hỗ trợ.';
+    }
 
     return rawMessage;
+}
+
+async function checkOverloadFixCookieHealth(shareId = '') {
+    const normalizedShareId = String(shareId || '').trim();
+    if (!normalizedShareId) {
+        const error = new Error('Không đủ cookie sống trước khi rotate.');
+        error.code = 'PRECHECK_INVALID_SHARE';
+        throw error;
+    }
+
+    let data = null;
+    try {
+        data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(normalizedShareId)}/check-cookies-health`, 'POST');
+    } catch (error) {
+        const normalized = String(error && error.message ? error.message : '').toLowerCase();
+        if (normalized.includes('revoked')
+            || normalized.includes('expired')
+            || normalized.includes('not found')
+            || normalized.includes('invalid share id')) {
+            throw error;
+        }
+        const fallbackError = new Error('Không thể kiểm tra cookie lúc này. Vui lòng thử lại sau.');
+        fallbackError.code = 'PRECHECK_FAILED';
+        throw fallbackError;
+    }
+
+    const checks = Array.isArray(data && data.checks) ? data.checks : [];
+    const apiLiveCount = Number(data && data.liveCount);
+    const liveCount = Number.isFinite(apiLiveCount) ? apiLiveCount : checks.filter((item) => item && item.ok).length;
+    return { checks, liveCount };
 }
 
 async function rotateOverloadShareCookie() {
@@ -1699,6 +1736,13 @@ async function rotateOverloadShareCookie() {
     setOverloadFixState('Đang đổi cookie chính, vui lòng chờ...', 'loading');
 
     try {
+        const health = await checkOverloadFixCookieHealth(shareId);
+        const liveCount = Number(health.liveCount) || 0;
+        if (liveCount < 2) {
+            const precheckError = new Error(`Không đủ cookie sống trước khi rotate. liveCount=${liveCount}`);
+            throw precheckError;
+        }
+
         const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}/rotate-cookie`, 'POST');
         const nextCookie = normalizeCookie(data.cookieStr || '');
         if (nextCookie) {
