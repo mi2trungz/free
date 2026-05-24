@@ -36,6 +36,8 @@ module.exports = async function (req, res) {
 
         if (tokenResult.outcome === 'ok' && tokenResult.nftoken) {
             const accountInfo = tokenResult.accountInfo || null;
+            const accountInfoStatus = accountInfo ? 'ok' : 'unavailable';
+            const accountInfoError = accountInfo ? '' : String(tokenResult.accountInfoError || 'Khong lay duoc thong tin cookie.');
             const overcap = detectPlaybackOverCapacity(accountInfo);
             let overloadOutcome = 'unknown';
             let overloadMessage = 'Cookie LIVE nhung khong du du lieu de ket luan qua tai.';
@@ -55,6 +57,8 @@ module.exports = async function (req, res) {
                 device,
                 url,
                 accountInfo,
+                accountInfoStatus,
+                accountInfoError,
                 overloadOutcome,
                 overloadSignal: overcap.signal || '',
                 overloadMessage

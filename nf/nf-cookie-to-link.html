@@ -800,15 +800,14 @@
                     .replace(/'/g, '&#039;');
             }
 
-            function showResult(url, accountInfo) {
+            function showResult(url, accountInfo, meta = {}) {
                 resultBox.classList.add('active');
                 hideInlineError();
                 resultLink.value = url;
                 openResultBtn.href = url;
 
+                accountInfoBox.classList.add('active');
                 if (accountInfo) {
-                    accountInfoBox.classList.add('active');
-
                     const statusText = accountInfo.ok ? 'Hoat dong' : 'Khong hoat dong';
                     const statusClass = accountInfo.ok ? 'good' : 'bad';
                     const paymentHoldText = String(accountInfo.on_payment_hold || 'No');
@@ -844,7 +843,24 @@
                         </div>
                     `;
                 } else {
-                    accountInfoBox.classList.remove('active');
+                    const errorText = String(meta.accountInfoError || '').trim();
+                    const statusText = String(meta.accountInfoStatus || 'unavailable').trim();
+                    accountInfoContent.innerHTML = `
+                        <div class="highlight-grid">
+                            <div class="info-chip good">
+                                <strong>Link dang nhap</strong>
+                                <span>Da tao thanh cong</span>
+                            </div>
+                            <div class="info-chip bad">
+                                <strong>Thong tin cookie</strong>
+                                <span>Chua lay duoc</span>
+                            </div>
+                        </div>
+                        <div class="info-grid">
+                            <strong>Trang thai:</strong> <span>${escapeHtml(statusText || 'unavailable')}</span>
+                            <strong>Chi tiet:</strong> <span>${escapeHtml(errorText || 'API phu chua tra ve thong tin tai khoan.')}</span>
+                        </div>
+                    `;
                 }
             }
 
@@ -2172,7 +2188,7 @@
                     if (!res.ok) throw new Error(data.error || 'Server error');
 
                     if (data.success && data.url) {
-                        showResult(data.url, data.accountInfo);
+                        showResult(data.url, data.accountInfo, data);
                         playSuccessSound();
                         await copyGeneratedLink(data.url, { silent: true });
                         if (autoSubmitSource) {

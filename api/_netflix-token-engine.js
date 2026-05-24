@@ -60,10 +60,55 @@ function detectPlaybackOverCapacity(accountInfo = null) {
     return { overloaded: false, signal: 'no_overload_signal' };
 }
 
-function callNfCheckerApi(netflixId) {
+function buildNfCheckerCookieContent(netflixId = '', secureNetflixId = '') {
+    const safeNetflixId = String(netflixId || '').trim();
+    const safeSecureNetflixId = String(secureNetflixId || '').trim();
+    let content = safeNetflixId ? `NetflixId=${safeNetflixId}` : '';
+    if (safeSecureNetflixId) content += `${content ? '; ' : ''}SecureNetflixId=${safeSecureNetflixId}`;
+    return content;
+}
+
+function getObjectByPath(source = null, path = []) {
+    return path.reduce((current, key) => {
+        if (!current || typeof current !== 'object') return null;
+        return current[key];
+    }, source);
+}
+
+function normalizeNfCheckerAccountInfo(parsed = null) {
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const candidates = [
+        parsed.account_info,
+        parsed.accountInfo,
+        getObjectByPath(parsed, ['data', 'account_info']),
+        getObjectByPath(parsed, ['data', 'accountInfo']),
+        getObjectByPath(parsed, ['result', 'account_info']),
+        getObjectByPath(parsed, ['result', 'accountInfo']),
+        getObjectByPath(parsed, ['token_result', 'account_info']),
+        getObjectByPath(parsed, ['token_result', 'accountInfo'])
+    ];
+
+    return candidates.find((item) => item && typeof item === 'object' && !Array.isArray(item)) || null;
+}
+
+function normalizeNfCheckerToken(parsed = null) {
+    if (!parsed || typeof parsed !== 'object') return '';
+    const candidates = [
+        getObjectByPath(parsed, ['token_result', 'token']),
+        getObjectByPath(parsed, ['tokenResult', 'token']),
+        getObjectByPath(parsed, ['data', 'token_result', 'token']),
+        getObjectByPath(parsed, ['data', 'tokenResult', 'token']),
+        parsed.nftoken,
+        parsed.token
+    ];
+    return String(candidates.find((item) => item) || '').trim();
+}
+
+function callNfCheckerApi(netflixId, secureNetflixId = '') {
     return new Promise((resolve) => {
         const payload = JSON.stringify({
-            content: `NetflixId=${netflixId}`,
+            content: buildNfCheckerCookieContent(netflixId, secureNetflixId),
             mode: 'fullinfo'
         });
 
@@ -79,11 +124,12 @@ function callNfCheckerApi(netflixId) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(data || '{}');
-                    if (parsed.status === 'success' && parsed.token_result && parsed.token_result.status === 'Success') {
+                    const nftoken = normalizeNfCheckerToken(parsed);
+                    if (nftoken) {
                         return resolve({
                             ok: true,
-                            nftoken: parsed.token_result.token,
-                            accountInfo: parsed.account_info || null
+                            nftoken,
+                            accountInfo: normalizeNfCheckerAccountInfo(parsed)
                         });
                     }
                     return resolve({ ok: false, error: parsed.message || 'nfchecker failed' });
@@ -99,10 +145,10 @@ function callNfCheckerApi(netflixId) {
     });
 }
 
-function callNfCheckerAccountInfo(netflixId) {
+function callNfCheckerAccountInfo(netflixId, secureNetflixId = '') {
     return new Promise((resolve) => {
         const payload = JSON.stringify({
-            content: `NetflixId=${netflixId}`,
+            content: buildNfCheckerCookieContent(netflixId, secureNetflixId),
             mode: 'fullinfo'
         });
 
@@ -118,8 +164,9 @@ function callNfCheckerAccountInfo(netflixId) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(data || '{}');
-                    if (parsed && parsed.account_info) {
-                        return resolve({ ok: true, accountInfo: parsed.account_info });
+                    const accountInfo = normalizeNfCheckerAccountInfo(parsed);
+                    if (accountInfo) {
+                        return resolve({ ok: true, accountInfo });
                     }
                     return resolve({ ok: false, error: parsed.message || 'Missing account info' });
                 } catch (e) {
@@ -251,10 +298,12 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
     const result = classifyNetflixTokenResult(raw);
 
     if (result.outcome === 'ok' && result.nftoken) {
-        const infoResult = await callNfCheckerAccountInfo(netflixId);
+        const infoResult = await callNfCheckerAccountInfo(netflixId, secureNetflixId || '');
         const enriched = {
             ...result,
-            accountInfo: infoResult.ok ? (infoResult.accountInfo || null) : null
+            accountInfo: infoResult.ok ? (infoResult.accountInfo || null) : null,
+            accountInfoStatus: infoResult.ok ? 'ok' : 'unavailable',
+            accountInfoError: infoResult.ok ? '' : String(infoResult.error || 'Missing account info')
         };
         setCachedTokenResult(cacheKey, enriched);
         return enriched;
@@ -266,7 +315,7 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
     }
 
     if (result.outcome === 'sbd_blocked' || (result.outcome === 'dead' && !secureNetflixId)) {
-        const fallback = await callNfCheckerApi(netflixId);
+        const fallback = await callNfCheckerApi(netflixId, secureNetflixId || '');
         if (fallback.ok && fallback.nftoken) {
             const fallbackResult = {
                 outcome: 'ok',
@@ -274,7 +323,9 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
                 statusCode: 200,
                 error: '',
                 source: 'nfchecker_fallback',
-                accountInfo: fallback.accountInfo || null
+                accountInfo: fallback.accountInfo || null,
+                accountInfoStatus: fallback.accountInfo ? 'ok' : 'unavailable',
+                accountInfoError: fallback.accountInfo ? '' : 'Missing account info'
             };
             setCachedTokenResult(cacheKey, fallbackResult);
             return fallbackResult;
