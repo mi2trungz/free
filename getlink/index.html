@@ -921,6 +921,47 @@
             font-weight: 700;
         }
 
+        .support-modal-loading {
+            display: grid;
+            justify-items: center;
+            gap: 0.85rem;
+            padding: 0.4rem 0 0.1rem;
+        }
+
+        .support-modal-loading.hidden {
+            display: none;
+        }
+
+        .support-modal-spinner {
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            border: 4px solid rgba(148, 163, 184, 0.28);
+            border-top-color: var(--accent);
+            animation: support-spin 0.9s linear infinite;
+        }
+
+        .support-modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .support-modal-actions.hidden {
+            display: none;
+        }
+
+        @keyframes support-spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .btn-overload-fix.hidden {
             display: none;
         }
@@ -1280,7 +1321,7 @@
                 </section>
 
                 <section id="deviceSection">
-                    <h3 class="device-section-title">Hãy chọn thiết bị bạn đang dùng để tiến hành sử dụng Netflix</h3>
+                    <h3 class="device-section-title">Hãy chọn thiết bị bạn muốn dùng để xem Netflix</h3>
                     <div class="device-grid">
                         <button class="btn btn-device" type="button" data-device="desktop" disabled>
                             <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -1329,7 +1370,14 @@
             <div class="support-body dynamic-support-body">
                 <p id="supportModalMessage" class="support-modal-note">Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.</p>
                 <p id="supportModalBh247" class="support-modal-note support-modal-bh247 hidden">Hãy nhắn chính xác cú pháp BH247 vào page để được hỗ trợ và bảo hành.</p>
-                <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage TRÀ ĐÁ 3K</a>
+                <div id="supportModalLoading" class="support-modal-loading hidden" aria-live="polite">
+                    <div class="support-modal-spinner" aria-hidden="true"></div>
+                    <p id="supportModalLoadingText" class="support-modal-note">Đang tiến hành sửa lỗi tự động, vui lòng đợi trong giây lát.</p>
+                </div>
+                <div id="supportModalActions" class="support-modal-actions">
+                    <button id="supportModalAutoFixBtn" class="btn btn-primary hidden" type="button">SỬA LỖI TỰ ĐỘNG</button>
+                    <a id="supportFanpageLink" class="btn btn-primary support-link-btn" href="https://www.facebook.com/trada3k.vn/" target="_blank" rel="noopener noreferrer">Truy cập fanpage TRÀ ĐÁ 3K</a>
+                </div>
             </div>
         </div>
     </section>
@@ -1390,24 +1438,29 @@
 
     <section id="tvGuideModal" class="modal hidden" aria-hidden="true">
         <div class="modal-backdrop" data-close-tv-guide="1"></div>
-        <div class="modal-card support-card">
+        <div class="modal-card mobile-link-card">
             <header class="modal-head">
                 <div>
-                    <span class="eyebrow">Hướng dẫn TV</span>
-                    <h2>Hướng dẫn cách đăng nhập lên Tivi</h2>
+                    <span class="eyebrow">Đăng nhập TV</span>
+                    <h2>Tạo link đăng nhập thành công</h2>
                 </div>
                 <button id="tvGuideCloseBtn" class="btn btn-ghost" type="button">Đóng</button>
             </header>
-            <div class="support-body">
-                <div class="tv-guide-list">
-                    <p><strong>(LƯU Ý CÁCH NÀY CHỈ THỰC HIỆN ĐƯỢC TRÊN MÁY TÍNH)</strong></p>
+            <div class="mobile-link-body">
+                <label class="mobile-link-label" for="tvGuideOutput">Link đăng nhập:</label>
+                <input id="tvGuideOutput" class="text-input mobile-link-output mono" type="text" readonly>
+                <button id="copyTvGuideLinkBtn" class="btn btn-primary mobile-link-copy-btn" type="button">Sao chép link</button>
+
+                <div class="mobile-link-guide">
+                    <h3>Hướng dẫn đăng nhập trên Tivi</h3>
                     <p><strong>Bước 1:</strong> Vào Netflix trên TIVI để lấy mã đăng nhập Netflix</p>
-                    <p><strong>Bước 2:</strong> Đăng nhập Netflix trên máy tính</p>
-                    <p><strong>Bước 3:</strong> Vào trang <a href="https://www.netflix.com/tv2" target="_blank" rel="noopener noreferrer">Netflix.com/tv2</a> và nhập mã ở bước 1 vào</p>
-                    <p>Nếu không có máy tính, hãy gửi mã để Admin đăng nhập giúp</p>
+                    <p><strong>Bước 2:</strong> Copy đường link phía trên và dán vào trình duyệt của bạn</p>
+                    <div class="mobile-link-guide-row">
+                        <p class="mobile-link-guide-step"><strong>Bước 3:</strong> Truy cập tiếp <span class="mobile-guide-link-text">Netflix.com/tv2</span></p>
+                        <button id="copyTv2LinkBtn" class="btn btn-ghost mobile-guide-copy-btn" type="button">Sao chép link</button>
+                    </div>
+                    <p><strong>Bước 4:</strong> Nhập mã ở bước 1 vào</p>
                 </div>
-                <button id="tvGuideDesktopLoginBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" type="button">ĐĂNG NHẬP MÁY TÍNH</button>
-                <a id="tvGuideStartBtn" class="btn btn-primary support-link-btn btn-tv-guide-start" href="https://www.netflix.com/tv2" target="_blank" rel="noopener noreferrer">MỞ NETFLIX.COM/TV2</a>
             </div>
         </div>
     </section>

@@ -7,9 +7,12 @@ const {
     normalizeExpiryInput,
     getCookieListFromRecord,
     promoteShareCookieSlot,
-    rotateShareCookies
+    rotateShareCookies,
+    updateShareCookies,
+    SHARE_COOKIE_SLOTS
 } = require('./_getlink-share-store');
 const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
+const sheetCookieImport = require('./_getlink-sheet-cookie-import');
 
 function setCors(res) {
     res.setHeader('Access-Control-Allow-Credentials', true);
@@ -105,6 +108,24 @@ async function checkShareCookiesHealth(record) {
     };
 }
 
+function buildAutoFixedCookies(assigned = []) {
+    const nextCookies = {
+        primary: '',
+        backup1: '',
+        backup2: ''
+    };
+
+    const safeAssigned = Array.isArray(assigned) ? assigned : [];
+    safeAssigned.forEach((item) => {
+        const slot = String(item && item.slot ? item.slot : '').trim();
+        const cookie = String(item && item.cookie ? item.cookie : '').trim();
+        if (!SHARE_COOKIE_SLOTS.includes(slot) || !cookie) return;
+        nextCookies[slot] = cookie;
+    });
+
+    return nextCookies;
+}
+
 module.exports = async function (req, res) {
     setCors(res);
     if (req.method === 'OPTIONS') return res.status(200).end();
@@ -197,6 +218,53 @@ module.exports = async function (req, res) {
                     rotatedToSlot: 'backup1',
                     cookieStr: rotated.cookieRaw || '',
                     share: shareDto(rotated, req)
+                });
+            }
+
+            const autoFixMatch = pathname.match(/^\/api\/getlink-shares\/([^/]+)\/auto-fix-cookies$/);
+            if (autoFixMatch) {
+                const shareId = decodeURIComponent(autoFixMatch[1] || '');
+                if (!isValidShareId(shareId)) return res.status(400).json({ error: 'Invalid share id' });
+
+                const record = await readShareById(shareId);
+                if (!record) return res.status(404).json({ error: 'Share link not found' });
+                if (record.status !== 'active') {
+                    return res.status(410).json({ error: 'Share link has been revoked' });
+                }
+                if (isShareExpired(record)) {
+                    return res.status(410).json({ error: 'Share link has expired' });
+                }
+
+                const health = await checkShareCookiesHealth(record);
+                if (health.liveCount > 0) {
+                    return res.status(409).json({
+                        error: 'Share still has live cookies',
+                        liveCount: health.liveCount,
+                        checks: health.checks
+                    });
+                }
+
+                const allocation = await sheetCookieImport.allocateCookiesFromSheetForSlots(SHARE_COOKIE_SLOTS);
+                const assigned = Array.isArray(allocation.assigned) ? allocation.assigned : [];
+                if (assigned.length === 0) {
+                    return res.status(422).json({
+                        error: 'Khong lay duoc cookie PASS nao tu Google Sheet.',
+                        assignedCount: 0,
+                        assigned: [],
+                        unfilledSlots: Array.isArray(allocation.unfilledSlots) ? allocation.unfilledSlots : SHARE_COOKIE_SLOTS,
+                        checks: health.checks
+                    });
+                }
+
+                const nextCookies = buildAutoFixedCookies(assigned);
+                const updatedShare = await updateShareCookies(shareId, nextCookies, 'guest-auto-fix');
+                return res.status(200).json({
+                    success: true,
+                    id: updatedShare.id,
+                    assignedCount: assigned.length,
+                    assigned,
+                    unfilledSlots: Array.isArray(allocation.unfilledSlots) ? allocation.unfilledSlots : [],
+                    share: shareDto(updatedShare, req)
                 });
             }
         }

@@ -1,10 +1,12 @@
 ﻿
 const UNSUPPORTED_URL = 'https://www.netflix.com/unsupported';
+const TV2_URL = 'https://www.netflix.com/tv2';
 const SUPPORT_FANPAGE_URL = 'https://www.facebook.com/trada3k.vn/';
 const GETLINK_ADMIN_AUTH_STORAGE_KEY = 'getlink_admin_auth_v1';
 
 let busy = false;
 let mobileGeneratedLink = '';
+let tvGeneratedLink = '';
 let adminAuthenticated = false;
 let adminIdToken = '';
 let adminRefreshToken = '';
@@ -36,6 +38,8 @@ let overloadFixReadyAt = 0;
 let overloadFixTimer = null;
 let overloadFixBusy = false;
 let entryAlertState = null;
+let supportModalState = null;
+let shareAutoFixBusy = false;
 const SHARE_COOKIE_SLOTS = [
     { key: 'primary', label: 'Cookie chính', viewInputId: 'currentShareCookiePrimaryDisplay', viewStateId: 'currentShareCookiePrimaryState', viewCheckBtnId: 'viewCheckPrimaryCookieBtn', viewUseBtnId: 'viewUsePrimaryCookieBtn' },
     { key: 'backup1', label: 'Cookie phụ 1', viewInputId: 'currentShareCookieBackup1Display', viewStateId: 'currentShareCookieBackup1State', viewCheckBtnId: 'viewCheckBackup1CookieBtn', viewUseBtnId: 'viewUseBackup1CookieBtn' },
@@ -88,40 +92,58 @@ function getDefaultSupportModalContent() {
         eyebrow: 'Hỗ trợ / Bảo hành',
         title: 'Cần hỗ trợ tài khoản Netflix?',
         message: 'Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.',
-        showBh247: false
+        showBh247: false,
+        closable: true,
+        showAutoFix: false,
+        isLoading: false,
+        loadingText: 'Đang tiến hành sửa lỗi tự động, vui lòng đợi trong giây lát.',
+        reloadOnClose: false,
+        fanpageText: 'Truy cập fanpage TRÀ ĐÁ 3K'
     };
 }
 
 function renderSupportModalContent(payload = null) {
-    const content = payload && typeof payload === 'object' ? payload : getDefaultSupportModalContent();
+    const content = {
+        ...getDefaultSupportModalContent(),
+        ...(payload && typeof payload === 'object' ? payload : {})
+    };
+    supportModalState = { ...content };
     const eyebrow = el('supportModalEyebrow');
     const title = el('supportModalTitle');
     const message = el('supportModalMessage');
     const bh247 = el('supportModalBh247');
+    const loadingWrap = el('supportModalLoading');
+    const loadingText = el('supportModalLoadingText');
+    const actions = el('supportModalActions');
+    const closeBtn = el('supportModalCloseBtn');
+    const autoFixBtn = el('supportModalAutoFixBtn');
     const fanpageLink = el('supportFanpageLink');
     if (eyebrow) eyebrow.textContent = String(content.eyebrow || 'Hỗ trợ / Bảo hành').trim();
     if (title) title.textContent = String(content.title || 'Cần hỗ trợ tài khoản Netflix?').trim();
     if (message) message.textContent = String(content.message || '').trim();
     if (bh247) bh247.classList.toggle('hidden', !content.showBh247);
+    if (loadingWrap) loadingWrap.classList.toggle('hidden', !content.isLoading);
+    if (loadingText) loadingText.textContent = String(content.loadingText || '').trim();
+    if (actions) actions.classList.toggle('hidden', !!content.isLoading);
+    if (closeBtn) closeBtn.classList.toggle('hidden', !content.closable);
+    if (autoFixBtn) {
+        autoFixBtn.classList.toggle('hidden', !content.showAutoFix);
+        autoFixBtn.disabled = !!content.isLoading || shareAutoFixBusy;
+    }
     if (fanpageLink) {
         fanpageLink.href = SUPPORT_FANPAGE_URL;
-        fanpageLink.textContent = 'Truy cập fanpage TRÀ ĐÁ 3K';
+        fanpageLink.textContent = String(content.fanpageText || 'Truy cập fanpage TRÀ ĐÁ 3K').trim();
     }
 }
 
 function showEntryAlertPopup(payload = {}) {
     if (!canShowPromotionalPopups()) return;
-    openSupportModal({
-        eyebrow: 'Thông báo / Hỗ trợ',
-        title: String(payload.title || 'Cần hỗ trợ tài khoản Netflix?').trim(),
-        message: String(payload.message || 'Vui lòng nhắn tin qua fanpage để được hỗ trợ bảo hành nhanh nhất.').trim(),
-        showBh247: !!payload.showBh247
-    });
+    openSupportModal(payload);
 }
 
 function hideEntryAlertPopup() {
     renderSupportModalContent(getDefaultSupportModalContent());
-    closeSupportModal();
+    closeSupportModal({ force: true });
 }
 
 function setShareState(text, mode = 'idle') {
@@ -1468,7 +1490,9 @@ function getEntryAlertPopupContent() {
             eyebrow: 'Thông báo / Hỗ trợ',
             title: titleMap[state.reason] || 'Cookie đang lỗi',
             message,
-            showBh247: true
+            showBh247: true,
+            closable: state.reason !== 'share_no_live_cookie',
+            showAutoFix: state.reason === 'share_no_live_cookie'
         };
     }
     const titleMap = {
@@ -1482,7 +1506,8 @@ function getEntryAlertPopupContent() {
         eyebrow: 'Thông báo / Hỗ trợ',
         title: titleMap[state.reason] || 'Link không hợp lệ',
         message,
-        showBh247: false
+        showBh247: false,
+        closable: state.reason !== 'share_expired'
     };
 }
 
@@ -1521,9 +1546,9 @@ function classifyShareEntryError(error) {
         return {
             type: 'cookie',
             reason: 'share_no_live_cookie',
-            lookupMessage: 'Link này đã hết cookie hợp lệ. Vui lòng liên hệ admin để được bảo hành.',
+            lookupMessage: 'Link này đã hết cookie hợp lệ. Bạn có thể bấm SỬA LỖI TỰ ĐỘNG để hệ thống thử khắc phục.',
             guardTitle: 'Link đã hết cookie hợp lệ',
-            guardMessage: 'Link này vẫn tồn tại nhưng hiện không còn cookie dùng được. Vui lòng nhắn fanpage để được hỗ trợ bảo hành.'
+            guardMessage: 'Link này vẫn còn hạn nhưng hiện không còn cookie dùng được. Bạn có thể bấm SỬA LỖI TỰ ĐỘNG hoặc nhắn fanpage để được hỗ trợ bảo hành.'
         };
     }
     return {
@@ -1566,12 +1591,21 @@ function openSupportModal(payload = null) {
     modal.setAttribute('aria-hidden', 'false');
 }
 
-function closeSupportModal() {
+function closeSupportModal(options = {}) {
     const modal = el('supportModal');
-    if (!modal) return;
+    const force = !!(options && options.force);
+    const state = supportModalState && typeof supportModalState === 'object' ? supportModalState : getDefaultSupportModalContent();
+    if (!modal) return false;
+    if (!force && state.closable === false) return false;
     renderSupportModalContent(getDefaultSupportModalContent());
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
+    const shouldReload = !force && !!state.reloadOnClose;
+    supportModalState = null;
+    if (shouldReload) {
+        window.location.reload();
+    }
+    return true;
 }
 
 function openMobileLinkModal(url, mobileOs = 'android') {
@@ -1611,8 +1645,11 @@ function closeMobileLinkModal() {
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
 }
-function openTvGuideModal() {
+function openTvGuideModal(url = '') {
     const modal = el('tvGuideModal');
+    const output = el('tvGuideOutput');
+    tvGeneratedLink = String(url || '').trim();
+    if (output) output.value = tvGeneratedLink;
     if (!modal) return;
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
@@ -1620,6 +1657,9 @@ function openTvGuideModal() {
 
 function closeTvGuideModal() {
     const modal = el('tvGuideModal');
+    const output = el('tvGuideOutput');
+    if (output) output.value = '';
+    tvGeneratedLink = '';
     if (!modal) return;
     modal.classList.add('hidden');
     modal.setAttribute('aria-hidden', 'true');
@@ -1887,6 +1927,82 @@ function normalizeOverloadFixErrorMessage(error) {
     return rawMessage;
 }
 
+function getAutoFixFailureMessage() {
+    return 'Sửa lỗi không thành công, hãy nhắn tin vào fanpage cú pháp BH247 để được hỗ trợ bảo hành.';
+}
+
+async function autoFixShareCookies() {
+    const shareId = String(pendingShareIdFromUrl || '').trim();
+    if (!shareId || shareAutoFixBusy) return;
+
+    shareAutoFixBusy = true;
+    openSupportModal({
+        eyebrow: 'Sửa lỗi tự động',
+        title: 'Đang tiến hành sửa lỗi tự động',
+        message: 'Hệ thống đang tự động lấy cookie hợp lệ từ Google Sheet cho link của bạn.',
+        showBh247: false,
+        closable: false,
+        showAutoFix: false,
+        isLoading: true,
+        loadingText: 'Đang tiến hành sửa lỗi tự động, vui lòng đợi trong giây lát.'
+    });
+
+    try {
+        const data = await apiRequest(`/api/getlink-shares/${encodeURIComponent(shareId)}/auto-fix-cookies`, 'POST');
+        const assignedCount = Number(data && data.assignedCount);
+        if (!Number.isFinite(assignedCount) || assignedCount < 1) {
+            throw new Error(getAutoFixFailureMessage());
+        }
+        setLookupState(`Sửa lỗi tự động thành công. Hệ thống đã cập nhật ${assignedCount} cookie hợp lệ cho link này.`, 'success');
+        openSupportModal({
+            eyebrow: 'Sửa lỗi thành công',
+            title: 'Sửa lỗi tự động thành công',
+            message: `Đã sửa lỗi thành công và cập nhật ${assignedCount} cookie hợp lệ. Bấm Đóng để tải lại trang và tiếp tục sử dụng.`,
+            showBh247: false,
+            closable: true,
+            showAutoFix: false,
+            isLoading: false,
+            reloadOnClose: true
+        });
+    } catch (error) {
+        const status = Number(error && error.httpStatus ? error.httpStatus : 0);
+        if (status === 404 || status === 410) {
+            const mappedError = classifyShareEntryError(error);
+            setEntryAlertState({
+                type: mappedError.type,
+                reason: mappedError.reason,
+                message: mappedError.lookupMessage
+            });
+            setGuestGuard(true, mappedError.guardMessage, {
+                title: mappedError.guardTitle,
+                kind: mappedError.type
+            });
+            setLookupState(mappedError.lookupMessage, mappedError.type === 'cookie' ? 'error' : 'warning');
+            openSupportModal(getEntryAlertPopupContent());
+            return;
+        }
+        const normalized = String(error && error.message ? error.message : '').trim();
+        const message = normalized || getAutoFixFailureMessage();
+        setLookupState(message, 'error');
+        openSupportModal({
+            eyebrow: 'Thông báo / Hỗ trợ',
+            title: 'Sửa lỗi không thành công',
+            message: getAutoFixFailureMessage(),
+            showBh247: true,
+            closable: false,
+            showAutoFix: true,
+            isLoading: false
+        });
+    } finally {
+        shareAutoFixBusy = false;
+        if (!el('supportModal') || el('supportModal').classList.contains('hidden')) {
+            supportModalState = null;
+        } else {
+            renderSupportModalContent(supportModalState || getDefaultSupportModalContent());
+        }
+    }
+}
+
 async function checkOverloadFixCookieHealth(shareId = '') {
     const normalizedShareId = String(shareId || '').trim();
     if (!normalizedShareId) {
@@ -2009,6 +2125,9 @@ async function generateDeviceLink(device, mobileOs = 'android') {
             if (deferredPopup && !deferredPopup.closed) deferredPopup.location.href = data.url;
             else window.location.href = data.url;
             setLookupState('Đã tạo link thành công. Đang mở Netflix...', 'success');
+        } else if (frontendDevice === 'tv') {
+            openTvGuideModal(data.url);
+            setLookupState('Tạo link TV thành công. Hãy sao chép link và làm theo hướng dẫn.', 'success');
         } else {
             openMobileLinkModal(data.url, mobileOs);
             const typeLabel = frontendDevice === 'tablet' ? 'tablet' : 'điện thoại';
@@ -2036,13 +2155,13 @@ function handleConfirmedDevice(device) {
         return;
     }
 
-    if (normalized === 'tv') {
-        openTvGuideModal();
+    if (normalized === 'mobile' || normalized === 'tablet') {
+        openMobileOsModal(normalized);
         return;
     }
 
-    if (normalized === 'mobile' || normalized === 'tablet') {
-        openMobileOsModal(normalized);
+    if (normalized === 'tv') {
+        generateDeviceLink('tv', 'android');
         return;
     }
 
@@ -2167,10 +2286,10 @@ async function applyCookieFromQuery() {
                 const entryError = {
                     type: 'cookie',
                     reason: 'share_no_live_cookie',
-                    message: 'Link này đã hết cookie hợp lệ. Vui lòng liên hệ admin để được bảo hành.'
+                    message: 'Link này đã hết cookie hợp lệ. Bạn có thể bấm SỬA LỖI TỰ ĐỘNG để hệ thống thử khắc phục.'
                 };
                 setEntryAlertState(entryError);
-                setGuestGuard(true, 'Link này vẫn tồn tại nhưng hiện không còn cookie dùng được. Vui lòng nhắn fanpage để được hỗ trợ bảo hành.', {
+                setGuestGuard(true, 'Link này vẫn còn hạn nhưng hiện không còn cookie dùng được. Bạn có thể bấm SỬA LỖI TỰ ĐỘNG hoặc nhắn fanpage để được hỗ trợ bảo hành.', {
                     title: 'Link đã hết cookie hợp lệ',
                     kind: 'cookie'
                 });
@@ -2302,7 +2421,7 @@ function renderAdminWorkspace() {
         clearSheetImportSelections('create');
     }
     if (shouldBypassPromotionalPopups()) {
-        closeSupportModal();
+        closeSupportModal({ force: true });
     }
     if (shouldBypassPromotionalPopups() && disclaimerVisible) {
         closeDisclaimerModal(true);
@@ -2832,6 +2951,9 @@ function bindEvents() {
     const supportCloseBtn = el('supportModalCloseBtn');
     if (supportCloseBtn) supportCloseBtn.addEventListener('click', closeSupportModal);
 
+    const supportAutoFixBtn = el('supportModalAutoFixBtn');
+    if (supportAutoFixBtn) supportAutoFixBtn.addEventListener('click', autoFixShareCookies);
+
     const supportModal = el('supportModal');
     if (supportModal) {
         supportModal.addEventListener('click', (event) => {
@@ -2983,17 +3105,22 @@ function bindEvents() {
     const tvGuideCloseBtn = el('tvGuideCloseBtn');
     if (tvGuideCloseBtn) tvGuideCloseBtn.addEventListener('click', closeTvGuideModal);
 
-    const tvGuideDesktopLoginBtn = el('tvGuideDesktopLoginBtn');
-    if (tvGuideDesktopLoginBtn) {
-        tvGuideDesktopLoginBtn.addEventListener('click', () => {
-            generateDeviceLink('desktop', 'android');
+    const copyTvGuideLinkBtn = el('copyTvGuideLinkBtn');
+    if (copyTvGuideLinkBtn) {
+        copyTvGuideLinkBtn.addEventListener('click', async () => {
+            const link = String(el('tvGuideOutput') && el('tvGuideOutput').value || tvGeneratedLink || '').trim();
+            if (!link) {
+                setLookupState('Chưa có link TV để sao chép.', 'warning');
+                return;
+            }
+            await copyText(link, 'Đã sao chép link đăng nhập TV.');
         });
     }
 
-    const tvGuideStartBtn = el('tvGuideStartBtn');
-    if (tvGuideStartBtn) {
-        tvGuideStartBtn.addEventListener('click', () => {
-            closeTvGuideModal();
+    const copyTv2LinkBtn = el('copyTv2LinkBtn');
+    if (copyTv2LinkBtn) {
+        copyTv2LinkBtn.addEventListener('click', async () => {
+            await copyText(TV2_URL, 'Đã sao chép netflix.com/tv2.');
         });
     }
 

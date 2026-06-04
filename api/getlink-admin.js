@@ -15,6 +15,7 @@ const {
     isShareExpired
 } = require('./_getlink-share-store');
 const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
+const sheetCookieImport = require('./_getlink-sheet-cookie-import');
 
 const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
 const GETLINK_SHEET_APPS_SCRIPT_URL = String(process.env.GETLINK_SHEET_APPS_SCRIPT_URL || '').trim();
@@ -539,7 +540,7 @@ module.exports = async function (req, res) {
         if (pathname === '/api/getlink-admin/sheet-cookie-import' && req.method === 'POST') {
             const body = parseBody(req.body);
             const slots = normalizeSheetSlots(body && body.slots);
-            const result = await allocateCookiesFromSheetForSlots(slots);
+            const result = await sheetCookieImport.allocateCookiesFromSheetForSlots(slots);
             return res.status(200).json(result);
         }
 
