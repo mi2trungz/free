@@ -124,15 +124,18 @@ function pullRows(payload) {
   const lastRow = sheet.getLastRow();
   if (lastRow <= 0 || startRow > lastRow) return [];
 
-  const totalRows = Math.min(limit, (lastRow - startRow) + 1);
+  const totalRows = (lastRow - startRow) + 1;
   const range = sheet.getRange(startRow, 1, totalRows, 2);
   const values = range.getValues();
   const items = [];
 
   for (let index = 0; index < values.length && items.length < limit; index += 1) {
+    const rowNumber = startRow + index;
+    if (sheet.isRowHiddenByFilter(rowNumber)) continue;
+
     const row = values[index] || [];
     items.push({
-      rowNumber: startRow + index,
+      rowNumber,
       cookie: String(row[0] || '').trim(),
       mark: String(row[1] || '').trim()
     });

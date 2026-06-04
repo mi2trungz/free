@@ -20,6 +20,7 @@ const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGF
 const GETLINK_SHEET_APPS_SCRIPT_URL = String(process.env.GETLINK_SHEET_APPS_SCRIPT_URL || '').trim();
 const GETLINK_SHEET_FETCH_LIMIT = Math.max(20, Math.min(5000, Number(process.env.GETLINK_SHEET_FETCH_LIMIT || 50) || 50));
 const GETLINK_SHEET_BATCH_SIZE = Math.max(5, Math.min(200, Number(process.env.GETLINK_SHEET_BATCH_SIZE || 20) || 20));
+const GETLINK_SHEET_CHECK_CONCURRENCY = Math.max(1, Math.min(10, Number(process.env.GETLINK_SHEET_CHECK_CONCURRENCY || 3) || 3));
 const ALLOWED_SHEET_SLOTS = new Set(['primary', 'backup1', 'backup2']);
 const MAX_APPS_SCRIPT_REDIRECTS = 5;
 
@@ -252,77 +253,115 @@ async function allocateCookiesFromSheetForSlots(slots = []) {
         throw error;
     }
 
+    const totalStartedAt = Date.now();
     const assigned = [];
     const skipped = [];
     const seenCookies = new Set();
+    const timings = {
+        sheetFetchMs: 0,
+        cookieCheckMs: 0,
+        sheetUpdateMs: 0,
+        totalMs: 0
+    };
     let nextStartRow = 1;
 
     while (assigned.length < targetSlots.length && nextStartRow <= GETLINK_SHEET_FETCH_LIMIT) {
+        const fetchStartedAt = Date.now();
         const rows = await listGetlinkSheetRows({
             startRow: nextStartRow,
             limit: Math.min(GETLINK_SHEET_BATCH_SIZE, GETLINK_SHEET_FETCH_LIMIT - nextStartRow + 1)
         });
+        timings.sheetFetchMs += Date.now() - fetchStartedAt;
         if (rows.length === 0) break;
 
         const pendingUpdates = [];
+        const candidateRows = [];
         for (const row of rows) {
-            if (assigned.length >= targetSlots.length) break;
             if (!row || !row.cookie || !isSheetRowEligible(row.mark)) continue;
             if (seenCookies.has(row.cookie)) continue;
             seenCookies.add(row.cookie);
-
-            const cookieResult = await evaluateGetlinkCookie(row.cookie);
-            if (!cookieResult.ok) {
-                const failReason = mapSheetFailReason(cookieResult.reason || '');
-                pendingUpdates.push({
-                    rowNumber: row.rowNumber,
-                    mark: failReason
-                });
-                skipped.push({
-                    rowNumber: row.rowNumber,
-                    reason: failReason
-                });
-                continue;
-            }
-
-            const slot = targetSlots[assigned.length];
-            const nextMark = getNextSheetUsageMark(row.mark);
-            pendingUpdates.push({
-                rowNumber: row.rowNumber,
-                mark: nextMark
-            });
-            assigned.push({
-                slot,
-                rowNumber: row.rowNumber,
-                cookie: row.cookie,
-                previousMark: String(row.mark || '').trim(),
-                newMark: nextMark,
-                result: {
-                    slot,
-                    ok: true,
-                    error: '',
-                    summary: cookieResult.summary || {},
-                    accountInfo: cookieResult.accountInfo || null,
-                    overloadOutcome: cookieResult.overloadOutcome || '',
-                    overloadSignal: cookieResult.overloadSignal || '',
-                    overloadMessage: cookieResult.overloadMessage || ''
-                }
-            });
+            candidateRows.push(row);
         }
 
-        await updateGetlinkSheetRows(pendingUpdates);
+        for (let index = 0; index < candidateRows.length && assigned.length < targetSlots.length; index += GETLINK_SHEET_CHECK_CONCURRENCY) {
+            const windowRows = candidateRows.slice(index, index + GETLINK_SHEET_CHECK_CONCURRENCY);
+            if (windowRows.length === 0) continue;
+
+            const checkStartedAt = Date.now();
+            const windowResults = await Promise.all(windowRows.map(async (row) => ({
+                row,
+                cookieResult: await evaluateGetlinkCookie(row.cookie)
+            })));
+            timings.cookieCheckMs += Date.now() - checkStartedAt;
+
+            for (const { row, cookieResult } of windowResults) {
+                if (assigned.length >= targetSlots.length) break;
+
+                if (!cookieResult.ok) {
+                    const failReason = mapSheetFailReason(cookieResult.reason || '');
+                    pendingUpdates.push({
+                        rowNumber: row.rowNumber,
+                        mark: failReason
+                    });
+                    skipped.push({
+                        rowNumber: row.rowNumber,
+                        reason: failReason
+                    });
+                    continue;
+                }
+
+                const slot = targetSlots[assigned.length];
+                const nextMark = getNextSheetUsageMark(row.mark);
+                pendingUpdates.push({
+                    rowNumber: row.rowNumber,
+                    mark: nextMark
+                });
+                assigned.push({
+                    slot,
+                    rowNumber: row.rowNumber,
+                    cookie: row.cookie,
+                    previousMark: String(row.mark || '').trim(),
+                    newMark: nextMark,
+                    result: {
+                        slot,
+                        ok: true,
+                        error: '',
+                        summary: cookieResult.summary || {},
+                        accountInfo: cookieResult.accountInfo || null,
+                        overloadOutcome: cookieResult.overloadOutcome || '',
+                        overloadSignal: cookieResult.overloadSignal || '',
+                        overloadMessage: cookieResult.overloadMessage || ''
+                    }
+                });
+            }
+        }
+
+        if (pendingUpdates.length > 0) {
+            const updateStartedAt = Date.now();
+            await updateGetlinkSheetRows(pendingUpdates);
+            timings.sheetUpdateMs += Date.now() - updateStartedAt;
+        }
         nextStartRow = rows[rows.length - 1].rowNumber + 1;
     }
 
+    timings.totalMs = Date.now() - totalStartedAt;
     const filledSlots = new Set(assigned.map((item) => item.slot));
     const unfilledSlots = targetSlots.filter((slot) => !filledSlots.has(slot));
     const message = `Assigned ${assigned.length} cookies, skipped ${skipped.length} failed cookies`;
+    console.log('[getlink sheet import]', {
+        slots: targetSlots.length,
+        assigned: assigned.length,
+        skipped: skipped.length,
+        unfilled: unfilledSlots.length,
+        timings
+    });
     return {
         success: true,
         assigned,
         skipped,
         unfilledSlots,
-        message
+        message,
+        timings
     };
 }
 

@@ -294,11 +294,22 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
     const cached = getCachedTokenResult(cacheKey);
     if (cached) return cached;
 
+    const fullinfoPromise = callNfCheckerApi(netflixId, secureNetflixId || '');
     const raw = await callNetflixCreateAutoLoginToken(netflixId, secureNetflixId || '');
     const result = classifyNetflixTokenResult(raw);
 
     if (result.outcome === 'ok' && result.nftoken) {
-        const infoResult = await callNfCheckerAccountInfo(netflixId, secureNetflixId || '');
+        const fullinfoResult = await fullinfoPromise;
+        let infoResult = {
+            ok: Boolean(fullinfoResult && fullinfoResult.ok && fullinfoResult.accountInfo),
+            accountInfo: fullinfoResult && fullinfoResult.ok ? (fullinfoResult.accountInfo || null) : null,
+            error: fullinfoResult && !fullinfoResult.ok ? String(fullinfoResult.error || 'Missing account info') : ''
+        };
+
+        if (!infoResult.ok) {
+            infoResult = await callNfCheckerAccountInfo(netflixId, secureNetflixId || '');
+        }
+
         const enriched = {
             ...result,
             accountInfo: infoResult.ok ? (infoResult.accountInfo || null) : null,
@@ -315,7 +326,7 @@ async function requestNetflixToken(netflixId, secureNetflixId) {
     }
 
     if (result.outcome === 'sbd_blocked' || (result.outcome === 'dead' && !secureNetflixId)) {
-        const fallback = await callNfCheckerApi(netflixId, secureNetflixId || '');
+        const fallback = await fullinfoPromise;
         if (fallback.ok && fallback.nftoken) {
             const fallbackResult = {
                 outcome: 'ok',
