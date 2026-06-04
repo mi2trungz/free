@@ -20,6 +20,7 @@ const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGF
 const GETLINK_SHEET_APPS_SCRIPT_URL = String(process.env.GETLINK_SHEET_APPS_SCRIPT_URL || '').trim();
 const GETLINK_SHEET_FETCH_LIMIT = Math.max(20, Math.min(5000, Number(process.env.GETLINK_SHEET_FETCH_LIMIT || 500) || 500));
 const ALLOWED_SHEET_SLOTS = new Set(['primary', 'backup1', 'backup2']);
+const MAX_APPS_SCRIPT_REDIRECTS = 5;
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -34,7 +35,34 @@ function httpRequest(options, body) {
     });
 }
 
-function postJsonToAbsoluteUrl(rawUrl, payload = {}) {
+function buildAppsScriptInvalidResponseError(statusCode = 0, responseBody = '', contentType = '') {
+    const bodyText = String(responseBody || '').trim();
+    const typeText = String(contentType || '').trim().toLowerCase();
+    const isHtml = typeText.includes('text/html') || /^<!doctype html/i.test(bodyText) || /^<html/i.test(bodyText);
+    let message = 'Apps Script tra ve du lieu khong hop le.';
+
+    if (statusCode === 404) {
+        message = 'Apps Script URL khong hop le hoac ban chua deploy dung Web App /exec.';
+    } else if (statusCode === 401 || statusCode === 403) {
+        message = 'Apps Script bi chan quyen. Hay deploy Web App voi quyen truy cap phu hop.';
+    } else if (isHtml) {
+        message = 'Apps Script dang tra ve HTML thay vi JSON. Hay kiem tra lai URL /exec va deploy Web App.';
+    }
+
+    const error = new Error(message);
+    error.httpStatus = 502;
+    return error;
+}
+
+function parseAppsScriptJsonResponse(statusCode = 0, responseBody = '', contentType = '') {
+    try {
+        return JSON.parse(String(responseBody || '{}'));
+    } catch (error) {
+        throw buildAppsScriptInvalidResponseError(statusCode, responseBody, contentType);
+    }
+}
+
+function postJsonToAbsoluteUrl(rawUrl, payload = {}, redirectCount = 0) {
     return new Promise((resolve, reject) => {
         let parsedUrl;
         try {
@@ -56,23 +84,47 @@ function postJsonToAbsoluteUrl(rawUrl, payload = {}) {
                 'Content-Length': Buffer.byteLength(body)
             }
         }, (res) => {
-            let data = '';
-            res.on('data', (chunk) => { data += chunk; });
-            res.on('end', () => {
-                let parsed = {};
-                try {
-                    parsed = JSON.parse(data || '{}');
-                } catch (error) {
-                    const err = new Error('Apps Script tra ve du lieu khong hop le.');
+            const statusCode = Number(res.statusCode || 0);
+            const location = String(res.headers.location || '').trim();
+            const contentType = String(res.headers['content-type'] || '').trim();
+
+            if (statusCode >= 300 && statusCode < 400 && location) {
+                if (redirectCount >= MAX_APPS_SCRIPT_REDIRECTS) {
+                    const err = new Error('Apps Script redirect qua nhieu lan.');
                     err.httpStatus = 502;
                     reject(err);
                     return;
                 }
 
-                if (Number(res.statusCode || 0) < 200 || Number(res.statusCode || 0) >= 300) {
+                const nextUrl = new URL(location, parsedUrl).toString();
+                res.resume();
+                postJsonToAbsoluteUrl(nextUrl, payload, redirectCount + 1).then(resolve).catch(reject);
+                return;
+            }
+
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                if (statusCode < 200 || statusCode >= 300) {
+                    let parsed = null;
+                    try {
+                        parsed = parseAppsScriptJsonResponse(statusCode, data, contentType);
+                    } catch (invalidError) {
+                        reject(invalidError);
+                        return;
+                    }
+
                     const err = new Error(String(parsed && parsed.error ? parsed.error : 'Apps Script request failed.').trim() || 'Apps Script request failed.');
                     err.httpStatus = 502;
                     reject(err);
+                    return;
+                }
+
+                let parsed = null;
+                try {
+                    parsed = parseAppsScriptJsonResponse(statusCode, data, contentType);
+                } catch (invalidError) {
+                    reject(invalidError);
                     return;
                 }
 
