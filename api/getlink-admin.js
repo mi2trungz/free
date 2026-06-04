@@ -18,7 +18,8 @@ const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
 
 const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
 const GETLINK_SHEET_APPS_SCRIPT_URL = String(process.env.GETLINK_SHEET_APPS_SCRIPT_URL || '').trim();
-const GETLINK_SHEET_FETCH_LIMIT = Math.max(20, Math.min(5000, Number(process.env.GETLINK_SHEET_FETCH_LIMIT || 500) || 500));
+const GETLINK_SHEET_FETCH_LIMIT = Math.max(20, Math.min(5000, Number(process.env.GETLINK_SHEET_FETCH_LIMIT || 50) || 50));
+const GETLINK_SHEET_BATCH_SIZE = Math.max(5, Math.min(200, Number(process.env.GETLINK_SHEET_BATCH_SIZE || 20) || 20));
 const ALLOWED_SHEET_SLOTS = new Set(['primary', 'backup1', 'backup2']);
 const MAX_APPS_SCRIPT_REDIRECTS = 5;
 
@@ -204,8 +205,10 @@ async function callGetlinkSheetScript(action, payload = {}) {
     return response && typeof response === 'object' ? response : {};
 }
 
-async function listGetlinkSheetRows() {
-    const response = await callGetlinkSheetScript('pullRows', { limit: GETLINK_SHEET_FETCH_LIMIT });
+async function listGetlinkSheetRows(options = {}) {
+    const startRow = Math.max(1, Number(options.startRow || 1) || 1);
+    const limit = Math.max(1, Math.min(GETLINK_SHEET_FETCH_LIMIT, Number(options.limit || GETLINK_SHEET_BATCH_SIZE) || GETLINK_SHEET_BATCH_SIZE));
+    const response = await callGetlinkSheetScript('pullRows', { startRow, limit });
     const rows = Array.isArray(response.items) ? response.items.map(normalizeSheetRow).filter(Boolean) : [];
     rows.sort((a, b) => a.rowNumber - b.rowNumber);
     return rows;
@@ -224,6 +227,23 @@ async function updateGetlinkSheetRow(rowNumber, mark) {
     });
 }
 
+async function updateGetlinkSheetRows(updates = []) {
+    const normalized = Array.isArray(updates)
+        ? updates
+            .map((item) => ({
+                rowNumber: Number(item && item.rowNumber),
+                mark: String(item && item.mark !== undefined && item.mark !== null ? item.mark : '').trim()
+            }))
+            .filter((item) => Number.isInteger(item.rowNumber) && item.rowNumber > 0)
+        : [];
+
+    if (normalized.length === 0) return;
+
+    await callGetlinkSheetScript('updateRows', {
+        updates: JSON.stringify(normalized)
+    });
+}
+
 async function allocateCookiesFromSheetForSlots(slots = []) {
     const targetSlots = normalizeSheetSlots(slots);
     if (targetSlots.length === 0) {
@@ -232,45 +252,66 @@ async function allocateCookiesFromSheetForSlots(slots = []) {
         throw error;
     }
 
-    const rows = await listGetlinkSheetRows();
     const assigned = [];
     const skipped = [];
+    const seenCookies = new Set();
+    let nextStartRow = 1;
 
-    for (const row of rows) {
-        if (assigned.length >= targetSlots.length) break;
-        if (!row || !row.cookie || !isSheetRowEligible(row.mark)) continue;
+    while (assigned.length < targetSlots.length && nextStartRow <= GETLINK_SHEET_FETCH_LIMIT) {
+        const rows = await listGetlinkSheetRows({
+            startRow: nextStartRow,
+            limit: Math.min(GETLINK_SHEET_BATCH_SIZE, GETLINK_SHEET_FETCH_LIMIT - nextStartRow + 1)
+        });
+        if (rows.length === 0) break;
 
-        const cookieResult = await evaluateGetlinkCookie(row.cookie);
-        if (!cookieResult.ok) {
-            const failReason = mapSheetFailReason(cookieResult.reason || '');
-            await updateGetlinkSheetRow(row.rowNumber, failReason);
-            skipped.push({
+        const pendingUpdates = [];
+        for (const row of rows) {
+            if (assigned.length >= targetSlots.length) break;
+            if (!row || !row.cookie || !isSheetRowEligible(row.mark)) continue;
+            if (seenCookies.has(row.cookie)) continue;
+            seenCookies.add(row.cookie);
+
+            const cookieResult = await evaluateGetlinkCookie(row.cookie);
+            if (!cookieResult.ok) {
+                const failReason = mapSheetFailReason(cookieResult.reason || '');
+                pendingUpdates.push({
+                    rowNumber: row.rowNumber,
+                    mark: failReason
+                });
+                skipped.push({
+                    rowNumber: row.rowNumber,
+                    reason: failReason
+                });
+                continue;
+            }
+
+            const slot = targetSlots[assigned.length];
+            const nextMark = getNextSheetUsageMark(row.mark);
+            pendingUpdates.push({
                 rowNumber: row.rowNumber,
-                reason: failReason
+                mark: nextMark
             });
-            continue;
+            assigned.push({
+                slot,
+                rowNumber: row.rowNumber,
+                cookie: row.cookie,
+                previousMark: String(row.mark || '').trim(),
+                newMark: nextMark,
+                result: {
+                    slot,
+                    ok: true,
+                    error: '',
+                    summary: cookieResult.summary || {},
+                    accountInfo: cookieResult.accountInfo || null,
+                    overloadOutcome: cookieResult.overloadOutcome || '',
+                    overloadSignal: cookieResult.overloadSignal || '',
+                    overloadMessage: cookieResult.overloadMessage || ''
+                }
+            });
         }
 
-        const slot = targetSlots[assigned.length];
-        const nextMark = getNextSheetUsageMark(row.mark);
-        await updateGetlinkSheetRow(row.rowNumber, nextMark);
-        assigned.push({
-            slot,
-            rowNumber: row.rowNumber,
-            cookie: row.cookie,
-            previousMark: String(row.mark || '').trim(),
-            newMark: nextMark,
-            result: {
-                slot,
-                ok: true,
-                error: '',
-                summary: cookieResult.summary || {},
-                accountInfo: cookieResult.accountInfo || null,
-                overloadOutcome: cookieResult.overloadOutcome || '',
-                overloadSignal: cookieResult.overloadSignal || '',
-                overloadMessage: cookieResult.overloadMessage || ''
-            }
-        });
+        await updateGetlinkSheetRows(pendingUpdates);
+        nextStartRow = rows[rows.length - 1].rowNumber + 1;
     }
 
     const filledSlots = new Set(assigned.map((item) => item.slot));

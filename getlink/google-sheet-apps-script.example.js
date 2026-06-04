@@ -27,6 +27,11 @@ function doGet(e) {
       return jsonResponse({ success: true });
     }
 
+    if (action === 'updateRows') {
+      updateRows(payload);
+      return jsonResponse({ success: true });
+    }
+
     return jsonResponse({
       success: false,
       error: 'Unsupported action'
@@ -53,6 +58,11 @@ function doPost(e) {
 
     if (action === 'updateRow') {
       updateRow(payload);
+      return jsonResponse({ success: true });
+    }
+
+    if (action === 'updateRows') {
+      updateRows(payload);
       return jsonResponse({ success: true });
     }
 
@@ -85,8 +95,11 @@ function getQueryPayload_(e) {
   return {
     action: String(params.action || '').trim(),
     limit: params.limit,
+    startRow: params.startRow,
+    offset: params.offset,
     rowNumber: params.rowNumber,
-    mark: params.mark
+    mark: params.mark,
+    updates: params.updates
   };
 }
 
@@ -106,18 +119,20 @@ function getSheet_() {
 
 function pullRows(payload) {
   const limit = clampLimit_(payload && payload.limit);
+  const startRow = getStartRow_(payload);
   const sheet = getSheet_();
   const lastRow = sheet.getLastRow();
-  if (lastRow <= 0) return [];
+  if (lastRow <= 0 || startRow > lastRow) return [];
 
-  const range = sheet.getRange(1, 1, lastRow, 2);
+  const totalRows = Math.min(limit, (lastRow - startRow) + 1);
+  const range = sheet.getRange(startRow, 1, totalRows, 2);
   const values = range.getValues();
   const items = [];
 
   for (let index = 0; index < values.length && items.length < limit; index += 1) {
     const row = values[index] || [];
     items.push({
-      rowNumber: index + 1,
+      rowNumber: startRow + index,
       cookie: String(row[0] || '').trim(),
       mark: String(row[1] || '').trim()
     });
@@ -137,10 +152,59 @@ function updateRow(payload) {
   sheet.getRange(rowNumber, 2).setValue(mark);
 }
 
+function updateRows(payload) {
+  const updates = normalizeUpdates_(payload && payload.updates);
+  if (updates.length === 0) {
+    throw new Error('Missing updates');
+  }
+
+  const sheet = getSheet_();
+  updates.forEach((item) => {
+    sheet.getRange(item.rowNumber, 2).setValue(item.mark);
+  });
+}
+
 function clampLimit_(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return DEFAULT_PULL_LIMIT;
   return Math.max(1, Math.min(MAX_PULL_LIMIT, Math.floor(numeric)));
+}
+
+function getStartRow_(payload) {
+  const startRowRaw = Number(payload && payload.startRow);
+  if (Number.isInteger(startRowRaw) && startRowRaw > 0) {
+    return startRowRaw;
+  }
+
+  const offsetRaw = Number(payload && payload.offset);
+  if (Number.isInteger(offsetRaw) && offsetRaw >= 0) {
+    return offsetRaw + 1;
+  }
+
+  return 1;
+}
+
+function normalizeUpdates_(value) {
+  let parsed = value;
+  if (typeof parsed === 'string') {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch (error) {
+      throw new Error('Invalid updates payload');
+    }
+  }
+
+  const source = Array.isArray(parsed) ? parsed : [];
+  return source.map((item) => {
+    const rowNumber = Number(item && item.rowNumber);
+    if (!Number.isInteger(rowNumber) || rowNumber <= 0) {
+      throw new Error('Invalid rowNumber in updates');
+    }
+    return {
+      rowNumber,
+      mark: String(item && item.mark !== undefined && item.mark !== null ? item.mark : '').trim()
+    };
+  });
 }
 
 function getErrorMessage_(error, fallback) {
