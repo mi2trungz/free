@@ -62,7 +62,7 @@ function parseAppsScriptJsonResponse(statusCode = 0, responseBody = '', contentT
     }
 }
 
-function postJsonToAbsoluteUrl(rawUrl, payload = {}, redirectCount = 0) {
+function getJsonFromAbsoluteUrl(rawUrl, redirectCount = 0) {
     return new Promise((resolve, reject) => {
         let parsedUrl;
         try {
@@ -72,17 +72,12 @@ function postJsonToAbsoluteUrl(rawUrl, payload = {}, redirectCount = 0) {
             return;
         }
 
-        const body = JSON.stringify(payload || {});
         const req = https.request({
             protocol: parsedUrl.protocol,
             hostname: parsedUrl.hostname,
             port: parsedUrl.port || 443,
             path: `${parsedUrl.pathname || '/'}${parsedUrl.search || ''}`,
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(body)
-            }
+            method: 'GET'
         }, (res) => {
             const statusCode = Number(res.statusCode || 0);
             const location = String(res.headers.location || '').trim();
@@ -98,7 +93,7 @@ function postJsonToAbsoluteUrl(rawUrl, payload = {}, redirectCount = 0) {
 
                 const nextUrl = new URL(location, parsedUrl).toString();
                 res.resume();
-                postJsonToAbsoluteUrl(nextUrl, payload, redirectCount + 1).then(resolve).catch(reject);
+                getJsonFromAbsoluteUrl(nextUrl, redirectCount + 1).then(resolve).catch(reject);
                 return;
             }
 
@@ -136,7 +131,6 @@ function postJsonToAbsoluteUrl(rawUrl, payload = {}, redirectCount = 0) {
             err.httpStatus = 502;
             reject(err);
         });
-        req.write(body);
         req.end();
     });
 }
@@ -194,10 +188,14 @@ async function callGetlinkSheetScript(action, payload = {}) {
         throw error;
     }
 
-    const response = await postJsonToAbsoluteUrl(GETLINK_SHEET_APPS_SCRIPT_URL, {
-        action,
-        ...payload
+    const url = new URL(GETLINK_SHEET_APPS_SCRIPT_URL);
+    url.searchParams.set('action', String(action || '').trim());
+    Object.entries(payload || {}).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        url.searchParams.set(key, String(value));
     });
+
+    const response = await getJsonFromAbsoluteUrl(url.toString());
     if (response && response.success === false) {
         const error = new Error(String(response.error || response.message || 'Apps Script request failed.').trim() || 'Apps Script request failed.');
         error.httpStatus = 502;

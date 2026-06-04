@@ -3,11 +3,40 @@ const SHEET_NAME = 'Sheet1';
 const DEFAULT_PULL_LIMIT = 500;
 const MAX_PULL_LIMIT = 5000;
 
-function doGet() {
-  return jsonResponse({
-    success: true,
-    message: 'Apps Script is running'
-  });
+function doGet(e) {
+  try {
+    const payload = getQueryPayload_(e);
+    const action = String(payload.action || '').trim();
+
+    if (!action) {
+      return jsonResponse({
+        success: true,
+        message: 'Apps Script is running'
+      });
+    }
+
+    if (action === 'pullRows') {
+      return jsonResponse({
+        success: true,
+        items: pullRows(payload)
+      });
+    }
+
+    if (action === 'updateRow') {
+      updateRow(payload);
+      return jsonResponse({ success: true });
+    }
+
+    return jsonResponse({
+      success: false,
+      error: 'Unsupported action'
+    });
+  } catch (error) {
+    return jsonResponse({
+      success: false,
+      error: getErrorMessage_(error, 'Unexpected Apps Script error')
+    });
+  }
 }
 
 function doPost(e) {
@@ -49,6 +78,16 @@ function parseJsonBody_(e) {
   } catch (error) {
     throw new Error('Invalid JSON payload');
   }
+}
+
+function getQueryPayload_(e) {
+  const params = e && e.parameter && typeof e.parameter === 'object' ? e.parameter : {};
+  return {
+    action: String(params.action || '').trim(),
+    limit: params.limit,
+    rowNumber: params.rowNumber,
+    mark: params.mark
+  };
 }
 
 function getSheet_() {
