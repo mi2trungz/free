@@ -161,7 +161,7 @@ function normalizeSheetRow(item = {}) {
 
 function isSheetRowEligible(mark = '') {
     const text = String(mark || '').trim();
-    return !text || /^\d+$/.test(text);
+    return !text;
 }
 
 function mapSheetFailReason(reason = '') {
