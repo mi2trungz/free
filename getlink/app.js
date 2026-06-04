@@ -46,6 +46,11 @@ const CREATED_SHARE_COOKIE_SLOTS = [
     { key: 'backup1', label: 'Cookie phụ 1', viewInputId: 'creatorShareCookieBackup1Input', viewStateId: 'creatorShareCookieBackup1State', viewCheckBtnId: 'creatorCheckBackup1CookieBtn', viewUseBtnId: 'creatorUseBackup1CookieBtn' },
     { key: 'backup2', label: 'Cookie phụ 2', viewInputId: 'creatorShareCookieBackup2Input', viewStateId: 'creatorShareCookieBackup2State', viewCheckBtnId: 'creatorCheckBackup2CookieBtn', viewUseBtnId: 'creatorUseBackup2CookieBtn' }
 ];
+const SHEET_IMPORT_SLOT_META = [
+    { key: 'primary', label: 'Cookie chính' },
+    { key: 'backup1', label: 'Cookie phụ 1' },
+    { key: 'backup2', label: 'Cookie phụ 2' }
+];
 
 function el(id) {
     return document.getElementById(id);
@@ -177,6 +182,42 @@ function setShareCreateExpiryState(text, mode = 'idle') {
     node.textContent = normalized;
     node.classList.toggle('hidden', !normalized);
     setStateClass(node, mode);
+}
+
+function getCookieSlotLabel(slotKey = '') {
+    const found = SHEET_IMPORT_SLOT_META.find((item) => item.key === slotKey);
+    return found ? found.label : String(slotKey || '').trim();
+}
+
+function getSheetImportStateId(scope = 'current') {
+    return scope === 'create' ? 'creatorSheetImportState' : 'currentSheetImportState';
+}
+
+function setSheetImportState(scope = 'current', text = '', mode = 'idle') {
+    const node = el(getSheetImportStateId(scope));
+    if (!node) return;
+    const normalized = String(text || '').trim();
+    node.textContent = normalized;
+    node.classList.toggle('hidden', !normalized);
+    setStateClass(node, mode);
+}
+
+function getSelectedSheetImportSlots(scope = 'current') {
+    const prefix = scope === 'create' ? 'creator' : 'current';
+    return SHEET_IMPORT_SLOT_META
+        .filter((slot) => {
+            const input = el(`${prefix}SheetSlot${slot.key === 'primary' ? 'Primary' : (slot.key === 'backup1' ? 'Backup1' : 'Backup2')}`);
+            return !!(input && input.checked);
+        })
+        .map((slot) => slot.key);
+}
+
+function clearSheetImportSelections(scope = 'current') {
+    const prefix = scope === 'create' ? 'creator' : 'current';
+    ['Primary', 'Backup1', 'Backup2'].forEach((suffix) => {
+        const input = el(`${prefix}SheetSlot${suffix}`);
+        if (input) input.checked = false;
+    });
 }
 
 function setOverloadFixState(text, mode = 'idle') {
@@ -440,6 +481,8 @@ function resetCreatedShareComposer(options = {}) {
     setShareState('', 'idle');
     setShareCreateExpiryState('', 'idle');
     setCreatorCookieInfoState('Tạo hoặc cập nhật cookie rồi bấm check để xem kết quả ngay tại đây.', 'idle');
+    setSheetImportState('create', '', 'idle');
+    clearSheetImportSelections('create');
 }
 
 async function runCookieChecksForShare(
@@ -510,6 +553,161 @@ async function runCookieChecksForShare(
     renderCards(results);
     setInfoState('Đã check xong các cookie đã nhập.', results.every((item) => item.ok) ? 'success' : 'warning');
     return results;
+}
+
+function buildSheetImportSummary(data = {}) {
+    const assigned = Array.isArray(data.assigned) ? data.assigned : [];
+    const skipped = Array.isArray(data.skipped) ? data.skipped : [];
+    const unfilledSlots = Array.isArray(data.unfilledSlots) ? data.unfilledSlots : [];
+    const assignedText = assigned.length
+        ? `Đã nhập ${assigned.length} cookie PASS`
+        : 'Chưa nhập được cookie PASS nào';
+    const skippedText = skipped.length
+        ? `skip ${skipped.length} cookie fail`
+        : 'không có cookie fail';
+    const unfilledText = unfilledSlots.length
+        ? `Thiếu: ${unfilledSlots.map(getCookieSlotLabel).join(', ')}.`
+        : 'Đã đủ slot được chọn.';
+    return `${assignedText}, ${skippedText}. ${unfilledText}`;
+}
+
+function setImportedCookiesToCreateShare(nextCookies = {}) {
+    const normalized = {
+        primary: normalizeCookie(nextCookies.primary || ''),
+        backup1: normalizeCookie(nextCookies.backup1 || ''),
+        backup2: normalizeCookie(nextCookies.backup2 || '')
+    };
+    if (createdAdminShare && typeof createdAdminShare === 'object') {
+        createdAdminShare = {
+            ...createdAdminShare,
+            cookieRaw: normalized.primary || '',
+            cookies: normalized
+        };
+    }
+    setCreatedShareCookieOutputs(normalized);
+}
+
+function setImportedCookiesToCurrentShare(nextCookies = {}) {
+    const normalized = {
+        primary: normalizeCookie(nextCookies.primary || ''),
+        backup1: normalizeCookie(nextCookies.backup1 || ''),
+        backup2: normalizeCookie(nextCookies.backup2 || '')
+    };
+    if (currentAdminShare && typeof currentAdminShare === 'object') {
+        currentAdminShare = {
+            ...currentAdminShare,
+            cookieRaw: normalized.primary || '',
+            cookies: normalized
+        };
+    }
+    setShareCookieViewOutputs(normalized);
+}
+
+function getSheetImportContext(scope = 'current') {
+    if (scope === 'create') {
+        return {
+            share: createdAdminShare,
+            getCookies: getCreatedShareEditableCookies,
+            setCookies: setImportedCookiesToCreateShare,
+            slotConfigs: CREATED_SHARE_COOKIE_SLOTS,
+            setSlotState: setCreatedShareCookieSlotState,
+            renderCards: renderCreatorCookieCheckCards,
+            setInfoState: setCreatorCookieInfoState,
+            setPrimaryState: setShareState
+        };
+    }
+    return {
+        share: currentAdminShare,
+        getCookies: getShareCookiesForCurrentMode,
+        setCookies: setImportedCookiesToCurrentShare,
+        slotConfigs: SHARE_COOKIE_SLOTS,
+        setSlotState: setShareCookieSlotState,
+        renderCards: renderCookieCheckCards,
+        setInfoState: setAdminCookieInfoState,
+        setPrimaryState: setAdminSearchState
+    };
+}
+
+async function importCookiesFromSheet(scope = 'current') {
+    const context = getSheetImportContext(scope);
+    if (!context.share || !context.share.id) {
+        if (scope === 'create') setShareState('Hãy tạo link ID server trước khi nhập cookie từ Sheet.', 'warning');
+        else setAdminSearchState('Hãy tìm link ID trước khi nhập cookie từ Sheet.', 'warning');
+        return;
+    }
+
+    const slots = getSelectedSheetImportSlots(scope);
+    if (slots.length === 0) {
+        setSheetImportState(scope, 'Vui lòng chọn ít nhất 1 slot cookie.', 'warning');
+        return;
+    }
+
+    const btn = el(scope === 'create' ? 'creatorImportCookiesFromSheetBtn' : 'currentImportCookiesFromSheetBtn');
+    setButtonBusy(btn, true, 'Đang quét Sheet...');
+    setSheetImportState(scope, `Đang quét Google Sheet và check ${slots.length} cookie...`, 'loading');
+    context.setInfoState('Đang lấy cookie từ Google Sheet...', 'loading');
+
+    try {
+        const data = await apiRequest('/api/getlink-admin/sheet-cookie-import', 'POST', { slots });
+        const assigned = Array.isArray(data.assigned) ? data.assigned : [];
+        const skipped = Array.isArray(data.skipped) ? data.skipped : [];
+        const unfilledSlots = Array.isArray(data.unfilledSlots) ? data.unfilledSlots : [];
+        const nextCookies = {
+            primary: normalizeCookie(context.getCookies().primary || ''),
+            backup1: normalizeCookie(context.getCookies().backup1 || ''),
+            backup2: normalizeCookie(context.getCookies().backup2 || '')
+        };
+        const results = [];
+
+        if (scope === 'current' && !isInlineEditMode) {
+            setInlineEditMode(true);
+        }
+
+        assigned.forEach((item) => {
+            const slotKey = String(item && item.slot ? item.slot : '').trim();
+            const cookieRaw = normalizeCookie(item && item.cookie ? item.cookie : '');
+            if (!slotKey || !cookieRaw) return;
+            nextCookies[slotKey] = cookieRaw;
+            context.setSlotState(slotKey, 'PASS', true);
+            if (item && item.result && typeof item.result === 'object') {
+                results.push(item.result);
+            }
+        });
+
+        unfilledSlots.forEach((slotKey) => {
+            context.setSlotState(slotKey, 'Thiếu PASS', false);
+        });
+
+        context.setCookies(nextCookies);
+        if (nextCookies.primary) {
+            setRuntimeCookie(nextCookies.primary, { source: 'admin', silent: true });
+        }
+
+        if (results.length > 0) {
+            context.renderCards(results);
+            context.setInfoState(
+                unfilledSlots.length > 0
+                    ? 'Đã nhập một phần cookie PASS từ Sheet.'
+                    : 'Đã nhập và check xong cookie từ Sheet.',
+                unfilledSlots.length > 0 || skipped.length > 0 ? 'warning' : 'success'
+            );
+        } else {
+            context.renderCards([]);
+            context.setInfoState('Không tìm được cookie PASS nào từ Sheet.', 'warning');
+        }
+
+        setSheetImportState(
+            scope,
+            buildSheetImportSummary({ assigned, skipped, unfilledSlots }),
+            unfilledSlots.length > 0 || assigned.length === 0 || skipped.length > 0 ? 'warning' : 'success'
+        );
+        clearSheetImportSelections(scope);
+    } catch (error) {
+        setSheetImportState(scope, error.message || 'Không nhập được cookie từ Sheet.', 'error');
+        context.setInfoState(error.message || 'Không nhập được cookie từ Sheet.', 'error');
+    } finally {
+        setButtonBusy(btn, false);
+    }
 }
 
 function escapeHtml(raw) {
@@ -2098,6 +2296,10 @@ function renderAdminWorkspace() {
         setCreatedShareCookieOutputs({ primary: '', backup1: '', backup2: '' });
         resetShareCookieSlotStates();
         resetCreatedShareCookieSlotStates();
+        setSheetImportState('current', '', 'idle');
+        setSheetImportState('create', '', 'idle');
+        clearSheetImportSelections('current');
+        clearSheetImportSelections('create');
     }
     if (shouldBypassPromotionalPopups()) {
         closeSupportModal();
@@ -2128,6 +2330,8 @@ function renderAdminShare(share = null) {
         isInlineEditMode = false;
         setShareCookieViewOutputs({ primary: '', backup1: '', backup2: '' });
         resetShareCookieSlotStates();
+        setSheetImportState('current', '', 'idle');
+        clearSheetImportSelections('current');
         return;
     }
 
@@ -2618,6 +2822,12 @@ function bindEvents() {
             updateReadyState();
         });
     }
+
+    const creatorImportBtn = el('creatorImportCookiesFromSheetBtn');
+    if (creatorImportBtn) creatorImportBtn.addEventListener('click', () => importCookiesFromSheet('create'));
+
+    const currentImportBtn = el('currentImportCookiesFromSheetBtn');
+    if (currentImportBtn) currentImportBtn.addEventListener('click', () => importCookiesFromSheet('current'));
 
     const supportCloseBtn = el('supportModalCloseBtn');
     if (supportCloseBtn) supportCloseBtn.addEventListener('click', closeSupportModal);

@@ -17,6 +17,9 @@ const {
 const { evaluateGetlinkCookie } = require('./_getlink-cookie-health');
 
 const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || 'AIzaSyAVV-3HxGFpT_eiAri1SGPWGwu3EL8On58').trim();
+const GETLINK_SHEET_APPS_SCRIPT_URL = String(process.env.GETLINK_SHEET_APPS_SCRIPT_URL || '').trim();
+const GETLINK_SHEET_FETCH_LIMIT = Math.max(20, Math.min(5000, Number(process.env.GETLINK_SHEET_FETCH_LIMIT || 500) || 500));
+const ALLOWED_SHEET_SLOTS = new Set(['primary', 'backup1', 'backup2']);
 
 function httpRequest(options, body) {
     return new Promise((resolve, reject) => {
@@ -29,6 +32,207 @@ function httpRequest(options, body) {
         if (body) req.write(body);
         req.end();
     });
+}
+
+function postJsonToAbsoluteUrl(rawUrl, payload = {}) {
+    return new Promise((resolve, reject) => {
+        let parsedUrl;
+        try {
+            parsedUrl = new URL(String(rawUrl || '').trim());
+        } catch (error) {
+            reject(new Error('GETLINK_SHEET_APPS_SCRIPT_URL is invalid.'));
+            return;
+        }
+
+        const body = JSON.stringify(payload || {});
+        const req = https.request({
+            protocol: parsedUrl.protocol,
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port || 443,
+            path: `${parsedUrl.pathname || '/'}${parsedUrl.search || ''}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+                let parsed = {};
+                try {
+                    parsed = JSON.parse(data || '{}');
+                } catch (error) {
+                    const err = new Error('Apps Script tra ve du lieu khong hop le.');
+                    err.httpStatus = 502;
+                    reject(err);
+                    return;
+                }
+
+                if (Number(res.statusCode || 0) < 200 || Number(res.statusCode || 0) >= 300) {
+                    const err = new Error(String(parsed && parsed.error ? parsed.error : 'Apps Script request failed.').trim() || 'Apps Script request failed.');
+                    err.httpStatus = 502;
+                    reject(err);
+                    return;
+                }
+
+                resolve(parsed);
+            });
+        });
+        req.on('error', (error) => {
+            const err = new Error(`Khong ket noi duoc Apps Script: ${error && error.message ? error.message : 'Unknown error'}`);
+            err.httpStatus = 502;
+            reject(err);
+        });
+        req.write(body);
+        req.end();
+    });
+}
+
+function normalizeSheetSlots(input) {
+    const source = Array.isArray(input) ? input : [];
+    const seen = new Set();
+    const slots = [];
+    source.forEach((item) => {
+        const normalized = String(item || '').trim().toLowerCase();
+        if (!ALLOWED_SHEET_SLOTS.has(normalized) || seen.has(normalized)) return;
+        seen.add(normalized);
+        slots.push(normalized);
+    });
+    return slots;
+}
+
+function normalizeSheetRow(item = {}) {
+    const rowNumber = Number(item && item.rowNumber);
+    if (!Number.isInteger(rowNumber) || rowNumber <= 0) return null;
+    return {
+        rowNumber,
+        cookie: sanitizeCookieRaw(item && item.cookie ? item.cookie : ''),
+        mark: String(item && item.mark !== undefined && item.mark !== null ? item.mark : '').trim()
+    };
+}
+
+function isSheetRowEligible(mark = '') {
+    const text = String(mark || '').trim();
+    return !text || /^\d+$/.test(text);
+}
+
+function mapSheetFailReason(reason = '') {
+    const normalized = String(reason || '').trim().toLowerCase();
+    if (!normalized) return 'token_error';
+    if (normalized === 'sbd_blocked') return 'sbd';
+    if (normalized === 'missing_account_info') return 'missing_info';
+    if (normalized === 'invalid_cookie') return 'invalid_cookie';
+    if (normalized === 'dead') return 'dead';
+    if (normalized === 'payment_hold') return 'payment_hold';
+    if (normalized === 'unknown_plan') return 'unknown_plan';
+    return 'token_error';
+}
+
+function getNextSheetUsageMark(mark = '') {
+    const current = String(mark || '').trim();
+    const count = /^\d+$/.test(current) ? Number(current) : 0;
+    return String(count + 1);
+}
+
+async function callGetlinkSheetScript(action, payload = {}) {
+    if (!GETLINK_SHEET_APPS_SCRIPT_URL) {
+        const error = new Error('Chua cau hinh GETLINK_SHEET_APPS_SCRIPT_URL tren server.');
+        error.httpStatus = 500;
+        throw error;
+    }
+
+    const response = await postJsonToAbsoluteUrl(GETLINK_SHEET_APPS_SCRIPT_URL, {
+        action,
+        ...payload
+    });
+    if (response && response.success === false) {
+        const error = new Error(String(response.error || response.message || 'Apps Script request failed.').trim() || 'Apps Script request failed.');
+        error.httpStatus = 502;
+        throw error;
+    }
+    return response && typeof response === 'object' ? response : {};
+}
+
+async function listGetlinkSheetRows() {
+    const response = await callGetlinkSheetScript('pullRows', { limit: GETLINK_SHEET_FETCH_LIMIT });
+    const rows = Array.isArray(response.items) ? response.items.map(normalizeSheetRow).filter(Boolean) : [];
+    rows.sort((a, b) => a.rowNumber - b.rowNumber);
+    return rows;
+}
+
+async function updateGetlinkSheetRow(rowNumber, mark) {
+    const safeRowNumber = Number(rowNumber);
+    if (!Number.isInteger(safeRowNumber) || safeRowNumber <= 0) {
+        const error = new Error('Apps Script update rowNumber khong hop le.');
+        error.httpStatus = 500;
+        throw error;
+    }
+    await callGetlinkSheetScript('updateRow', {
+        rowNumber: safeRowNumber,
+        mark: String(mark || '').trim()
+    });
+}
+
+async function allocateCookiesFromSheetForSlots(slots = []) {
+    const targetSlots = normalizeSheetSlots(slots);
+    if (targetSlots.length === 0) {
+        const error = new Error('Vui long chon it nhat 1 slot cookie.');
+        error.httpStatus = 400;
+        throw error;
+    }
+
+    const rows = await listGetlinkSheetRows();
+    const assigned = [];
+    const skipped = [];
+
+    for (const row of rows) {
+        if (assigned.length >= targetSlots.length) break;
+        if (!row || !row.cookie || !isSheetRowEligible(row.mark)) continue;
+
+        const cookieResult = await evaluateGetlinkCookie(row.cookie);
+        if (!cookieResult.ok) {
+            const failReason = mapSheetFailReason(cookieResult.reason || '');
+            await updateGetlinkSheetRow(row.rowNumber, failReason);
+            skipped.push({
+                rowNumber: row.rowNumber,
+                reason: failReason
+            });
+            continue;
+        }
+
+        const slot = targetSlots[assigned.length];
+        const nextMark = getNextSheetUsageMark(row.mark);
+        await updateGetlinkSheetRow(row.rowNumber, nextMark);
+        assigned.push({
+            slot,
+            rowNumber: row.rowNumber,
+            cookie: row.cookie,
+            previousMark: String(row.mark || '').trim(),
+            newMark: nextMark,
+            result: {
+                slot,
+                ok: true,
+                error: '',
+                summary: cookieResult.summary || {},
+                accountInfo: cookieResult.accountInfo || null,
+                overloadOutcome: cookieResult.overloadOutcome || '',
+                overloadSignal: cookieResult.overloadSignal || '',
+                overloadMessage: cookieResult.overloadMessage || ''
+            }
+        });
+    }
+
+    const filledSlots = new Set(assigned.map((item) => item.slot));
+    const unfilledSlots = targetSlots.filter((slot) => !filledSlots.has(slot));
+    const message = `Assigned ${assigned.length} cookies, skipped ${skipped.length} failed cookies`;
+    return {
+        success: true,
+        assigned,
+        skipped,
+        unfilledSlots,
+        message
+    };
 }
 
 function getBearerToken(headers = {}) {
@@ -201,6 +405,13 @@ module.exports = async function (req, res) {
 
         const adminUser = await ensureAdmin(req, res);
         if (!adminUser) return;
+
+        if (pathname === '/api/getlink-admin/sheet-cookie-import' && req.method === 'POST') {
+            const body = parseBody(req.body);
+            const slots = normalizeSheetSlots(body && body.slots);
+            const result = await allocateCookiesFromSheetForSlots(slots);
+            return res.status(200).json(result);
+        }
 
         if (pathname === '/api/getlink-admin/search' && req.method === 'POST') {
             const body = parseBody(req.body);

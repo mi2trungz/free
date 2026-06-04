@@ -165,6 +165,53 @@
             align-items: center;
         }
 
+        .sheet-import-box {
+            margin-top: 0.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.24);
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.32);
+            padding: 0.72rem;
+            display: grid;
+            gap: 0.6rem;
+        }
+
+        .sheet-import-title {
+            margin: 0;
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #eef4ff;
+        }
+
+        .sheet-import-check-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem 0.8rem;
+        }
+
+        .sheet-import-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.42rem;
+            font-size: 0.8rem;
+            color: #d6e2fb;
+        }
+
+        .sheet-import-label input {
+            accent-color: var(--accent);
+        }
+
+        .sheet-import-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .sheet-import-state {
+            margin-top: 0;
+            font-size: 0.8rem;
+        }
+
         .share-expiry-wrap {
             margin-top: 0.65rem;
             display: grid;
@@ -1118,6 +1165,27 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="sheet-import-box">
+                                    <p class="sheet-import-title">Lấy cookie từ Google Sheet</p>
+                                    <div class="sheet-import-check-row">
+                                        <label class="sheet-import-label" for="creatorSheetSlotPrimary">
+                                            <input id="creatorSheetSlotPrimary" type="checkbox">
+                                            <span>Cookie chính</span>
+                                        </label>
+                                        <label class="sheet-import-label" for="creatorSheetSlotBackup1">
+                                            <input id="creatorSheetSlotBackup1" type="checkbox">
+                                            <span>Cookie phụ 1</span>
+                                        </label>
+                                        <label class="sheet-import-label" for="creatorSheetSlotBackup2">
+                                            <input id="creatorSheetSlotBackup2" type="checkbox">
+                                            <span>Cookie phụ 2</span>
+                                        </label>
+                                    </div>
+                                    <div class="sheet-import-actions">
+                                        <button id="creatorImportCookiesFromSheetBtn" class="btn btn-ghost" type="button">Nhập cookie từ Sheet</button>
+                                    </div>
+                                    <div id="creatorSheetImportState" class="state-text state-idle hidden sheet-import-state"></div>
+                                </div>
                                 <div class="share-summary-actions">
                                     <button id="saveCreatedShareCookiesBtn" class="btn btn-primary" type="button">Lưu cookie</button>
                                     <button id="creatorCheckAllShareCookiesBtn" class="btn btn-ghost" type="button">Check toàn bộ</button>
@@ -1170,6 +1238,27 @@
                                             <button id="viewUseBackup2CookieBtn" class="btn btn-ghost" type="button">Dùng runtime</button>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="sheet-import-box">
+                                    <p class="sheet-import-title">Lấy cookie từ Google Sheet</p>
+                                    <div class="sheet-import-check-row">
+                                        <label class="sheet-import-label" for="currentSheetSlotPrimary">
+                                            <input id="currentSheetSlotPrimary" type="checkbox">
+                                            <span>Cookie chính</span>
+                                        </label>
+                                        <label class="sheet-import-label" for="currentSheetSlotBackup1">
+                                            <input id="currentSheetSlotBackup1" type="checkbox">
+                                            <span>Cookie phụ 1</span>
+                                        </label>
+                                        <label class="sheet-import-label" for="currentSheetSlotBackup2">
+                                            <input id="currentSheetSlotBackup2" type="checkbox">
+                                            <span>Cookie phụ 2</span>
+                                        </label>
+                                    </div>
+                                    <div class="sheet-import-actions">
+                                        <button id="currentImportCookiesFromSheetBtn" class="btn btn-ghost" type="button">Nhập cookie từ Sheet</button>
+                                    </div>
+                                    <div id="currentSheetImportState" class="state-text state-idle hidden sheet-import-state"></div>
                                 </div>
                                 <div class="share-summary-actions">
                                     <button id="editCurrentShareBtn" class="btn btn-primary" type="button">Sửa</button>
