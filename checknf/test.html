@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix Direct Login Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <ion-icon name="film-outline" class="logo-icon"></ion-icon>
+            </div>
+            <h1>Cookie <span class="highlight">Direct</span> Login</h1>
+            <p>Paste your Netflix cookies below to generate a direct login URL securely.</p>
+        </header>
+
+        <main>
+            <div class="card glass-effect">
+                <div class="input-group">
+                    <label for="cookieInput">
+                        <ion-icon name="document-text-outline"></ion-icon> Paste Netscape Cookies
+                    </label>
+                    <textarea id="cookieInput" placeholder=".netflix.com&#9;TRUE&#9;/&#9;TRUE&#9;1775233435&#9;NetflixId&#9;ct%3D..."></textarea>
+                </div>
+
+                <button id="generateBtn" class="btn-primary">
+                    <span>Generate URL</span>
+                    <ion-icon name="flash-outline"></ion-icon>
+                </button>
+
+                <div class="output-container" id="outputContainer" style="display: none;">
+                    <div class="success-message">
+                        <ion-icon name="checkmark-circle-outline"></ion-icon> URL Generated Successfully
+                    </div>
+                    <div class="result-box">
+                        <textarea id="resultUrl" readonly></textarea>
+                        <button id="copyBtn" class="btn-icon tooltip" aria-label="Copy to Clipboard">
+                            <ion-icon name="copy-outline"></ion-icon>
+                            <span class="tooltiptext">Copy</span>
+                        </button>
+                    </div>
+                    <a id="openLinkBtn" href="#" target="_blank" class="btn-secondary">
+                        <span>Open Login Link</span>
+                        <ion-icon name="open-outline"></ion-icon>
+                    </a>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;">
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span id="errorText">Invalid cookie format.</span>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2026 Crime Prevention Tech Project. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

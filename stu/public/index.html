@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studocu Premium Downloader</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div id="app-wrapper">
+        <div id="page-content" class="container">
+            <div class="hero animation-fade-slide-up">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>StuPDF</span>
+                </div>
+                <h1>Unlock <span class="text-gradient">Knowledge</span></h1>
+                <p>Paste any Studocu link to download it as a high-quality PDF. Free, fast, and beautifully designed.</p>
+            </div>
+
+            <div class="glass-card animation-fade-slide-up" style="animation-delay: 0.1s;">
+                <form id="fetchForm" onsubmit="return false">
+                    <label for="url">Document Link</label>
+                    <div class="input-group">
+                        <input type="url" id="url" name="url" placeholder="https://www.studocu.com/..." autocomplete="off" required>
+                        <button type="submit" id="fetchBtn" class="btn-primary">
+                            <span>Get PDF</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                        </button>
+                    </div>
+                </form>
+
+                <div class="status-box" id="status" style="display: none;">
+                    <div class="spinner"></div>
+                    <span id="statusText">Fetching document...</span>
+                </div>
+
+                <!-- Queue Status -->
+                <div class="status-box highlight-box" id="queueStatus" style="display:none;">
+                    <div class="queue-info">
+                        <span id="queueText">Waiting in queue...</span>
+                    </div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill queue-bar-fill" id="queueBar" style="width:0%"></div>
+                    </div>
+                    <div class="queue-detail" id="queueDetail"></div>
+                </div>
+
+                <!-- Progress Info -->
+                <div class="status-box success-box" id="progressInfo" style="display: none;">
+                    <div class="progress-title">Downloading Pages</div>
+                    <div class="progress-bar-wrap">
+                        <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressLabel">0 / 0 pages</span>
+                        <span id="progressPct">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="features animation-fade-slide-up" style="animation-delay: 0.2s;">
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Bypasses blur and fetches pages instantly through our premium optimized infrastructure.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Private & Secure</h3>
+                    <p>No registration, no tracking. Your downloads remain completely anonymous.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">✨</div>
+                    <h3>High Quality</h3>
+                    <p>Crisp, clear pages ready to be printed or saved seamlessly as PDF files.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Popup -->
+    <div class="error-overlay" id="errorOverlay">
+        <div class="error-popup" id="errorPopup">
+            <div class="error-popup-icon" id="errorIcon">⚠️</div>
+            <h2 id="errorTitle">Something Went Wrong</h2>
+            <div class="err-msg" id="errorMsg"></div>
+            <p class="err-hint" id="errorHint">Please wait a moment and try again.</p>
+            <button class="btn-primary" style="margin: 0 auto;" id="errorCloseBtn">Got it</button>
+        </div>
+    </div>
+
+    <!-- Viewer logic requires a wrapper -->
+    <div id="viewerWrap" style="display:none;"></div>
+
+    <script src="main.js"></script>
+</body>
+</html>
