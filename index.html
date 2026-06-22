@@ -3508,7 +3508,7 @@
                 </svg>
             </button>
             <div id="alertDialogBody" class="px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-7">
-                <div
+                <div id="alertIconWrap"
                     class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_10px_24px_rgba(245,158,11,0.14)] ring-1 ring-amber-200/70">
                     <div id="alertIcon" class="flex h-11 w-11 items-center justify-center rounded-[1rem]">
                     <!-- Icon sẽ được thay đổi động -->
@@ -5023,6 +5023,7 @@
             const modal = document.getElementById('alertModal');
             const dialogEl = document.getElementById('alertDialog');
             const dialogBodyEl = document.getElementById('alertDialogBody');
+            const iconWrapEl = document.getElementById('alertIconWrap');
             const iconDiv = document.getElementById('alertIcon');
             const titleEl = document.getElementById('alertTitle');
             const messageEl = document.getElementById('alertMessage');
@@ -5049,28 +5050,28 @@
 
             titleEl.textContent = title;
             messageEl.className = alertDisplayMode === 'toast'
-                ? 'mt-1 text-sm font-medium leading-6 text-slate-600 whitespace-pre-line'
+                ? 'mt-1 pr-8 text-sm font-medium leading-5 text-slate-600 whitespace-pre-line'
                 : 'mb-5 text-[16px] font-medium leading-7 text-slate-500 whitespace-pre-line';
             titleEl.className = alertDisplayMode === 'toast'
-                ? 'text-[1rem] font-black tracking-tight text-slate-900 sm:text-[1.05rem]'
+                ? 'pr-8 text-sm font-black tracking-tight text-slate-900'
                 : 'mb-2 text-[1.45rem] font-black tracking-tight text-slate-900 sm:text-[1.55rem]';
             modal.className = alertDisplayMode === 'toast'
-                ? 'fixed inset-x-0 bottom-0 z-[120] flex items-end justify-center bg-transparent p-3 sm:p-4 pointer-events-none'
+                ? 'fixed inset-0 z-[120] flex items-start justify-end bg-transparent p-3 sm:p-4 pointer-events-none'
                 : 'fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in';
 
             if (dialogEl) {
                 dialogEl.className = alertDisplayMode === 'toast'
-                    ? 'pointer-events-auto relative w-full max-w-md overflow-hidden rounded-[1.4rem] border border-slate-200/90 bg-white/95 shadow-[0_20px_48px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-sm'
+                    ? 'pointer-events-auto relative w-full max-w-[21rem] overflow-hidden rounded-[1rem] border border-slate-200/90 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.14)] ring-1 ring-black/5'
                     : 'w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/65 bg-[linear-gradient(160deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_52%,rgba(240,253,250,0.96)_100%)] shadow-[0_22px_56px_rgba(15,23,42,0.18)] relative';
             }
             if (dialogBodyEl) {
                 dialogBodyEl.className = alertDisplayMode === 'toast'
-                    ? 'px-4 pb-4 pt-4 text-left sm:px-5'
+                    ? 'px-4 py-3 text-left'
                     : 'px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-7';
             }
             if (actionsWrap) {
                 actionsWrap.className = alertDisplayMode === 'toast'
-                    ? 'mt-4 flex items-center justify-end gap-2'
+                    ? 'hidden'
                     : 'space-y-3';
             }
             if (actionBtn) {
@@ -5080,13 +5081,25 @@
                 confirmBtn.className = alertDisplayMode === 'toast'
                     ? 'inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 hover:bg-slate-800'
                     : 'w-full rounded-[1rem] bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 px-4 py-3.5 text-[15px] font-black text-white shadow-[0_14px_28px_rgba(99,102,241,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(99,102,241,0.3)]';
-                confirmBtn.classList.remove('hidden');
+                if (alertDisplayMode === 'toast') {
+                    confirmBtn.classList.add('hidden');
+                } else {
+                    confirmBtn.classList.remove('hidden');
+                }
             }
             if (iconDiv) {
                 iconDiv.classList.remove('hidden');
                 iconDiv.className = alertDisplayMode === 'toast'
                     ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl'
                     : 'flex h-11 w-11 items-center justify-center rounded-[1rem]';
+            }
+            if (iconWrapEl) {
+                if (alertDisplayMode === 'toast') {
+                    iconWrapEl.className = 'hidden';
+                } else {
+                    iconWrapEl.classList.remove('hidden');
+                    iconWrapEl.className = 'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_10px_24px_rgba(245,158,11,0.14)] ring-1 ring-amber-200/70';
+                }
             }
 
             if (options && options.dialogClassName && dialogEl) {
@@ -5131,6 +5144,9 @@
             }
             if (options && options.hideIcon) {
                 iconDiv.classList.add('hidden');
+                if (iconWrapEl) {
+                    iconWrapEl.classList.add('hidden');
+                }
             }
 
             if (actionBtn) {
@@ -5188,7 +5204,7 @@
                         <div class="text-[1.05rem] sm:text-[1.12rem] font-semibold leading-7 text-slate-600">
                             <span class="font-black text-orange-600">Nhắn tin ngay</span> vào
                         </div>
-                        <a href="${FANPAGE_URL}" target="_blank" rel="noopener noreferrer" class="mt-2 text-[1.45rem] sm:text-[1.85rem] font-black tracking-tight text-blue-700 underline decoration-transparent transition hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded-lg">
+                        <a href="${FANPAGE_URL}" target="_blank" rel="noopener noreferrer" class="mt-2 text-[2rem] sm:text-[2.5rem] font-black tracking-tight text-blue-700 underline decoration-transparent transition hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded-lg">
                             FANPAGE TRÀ ĐÁ 3K
                         </a>
                         <div class="mt-3 text-[1.02rem] sm:text-[1.08rem] font-semibold leading-7 text-slate-700">
