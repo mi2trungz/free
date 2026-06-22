@@ -204,6 +204,41 @@
             animation: shimmer 3s infinite;
         }
 
+        @keyframes toastShakeIn {
+            0% {
+                opacity: 0;
+                transform: translate3d(-6px, 10px, 0) scale(0.98);
+            }
+
+            22% {
+                opacity: 1;
+                transform: translate3d(6px, 0, 0) scale(1);
+            }
+
+            42% {
+                transform: translate3d(-5px, 0, 0) scale(1);
+            }
+
+            62% {
+                transform: translate3d(4px, 0, 0) scale(1);
+            }
+
+            82% {
+                transform: translate3d(-2px, 0, 0) scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+        }
+
+        .toast-shake-in {
+            animation: toastShakeIn 480ms cubic-bezier(0.22, 1, 0.36, 1) 1 both;
+            transform-origin: center bottom;
+            will-change: transform, opacity;
+        }
+
         /* Badge Animation */
         @keyframes badgePulse {
 
@@ -2017,7 +2052,8 @@
             .netflix-cta-item,
             .instruction-fanpage-cta,
             .instruction-fanpage-icon,
-            .password-guide-cta-bounce {
+            .password-guide-cta-bounce,
+            .toast-shake-in {
                 animation: none !important;
                 transform: none !important;
             }
@@ -2249,37 +2285,155 @@
             animation: noticeDealPulse 1.4s ease-in-out infinite;
         }
 
+        .account-detail-compact #accountDetailCardInner {
+            padding: 0;
+        }
+
+        .account-detail-compact .account-detail-header {
+            padding: 0.98rem 0.92rem 1.12rem;
+        }
+
+        .account-detail-compact .account-detail-header::after {
+            height: 4rem;
+        }
+
+        .account-detail-compact #modalAccountIcon {
+            width: 4rem;
+            height: 4rem;
+            padding: 0.62rem;
+            border-radius: 1.2rem;
+        }
+
+        .account-detail-compact #modalAccountName {
+            font-size: 1.12rem;
+            line-height: 1.05;
+        }
+
+        .account-detail-compact #modalAccountSubtitle {
+            margin-top: 0.34rem;
+            font-size: 0.73rem;
+        }
+
+        .account-detail-compact .account-detail-body {
+            padding: 0.64rem 0.72rem 0.72rem;
+        }
+
+        .account-detail-compact .account-detail-stack {
+            gap: 0.58rem;
+        }
+
         .account-detail-compact #modalAccountUsernameSection,
         .account-detail-compact #modalAccountPasswordSection {
-            max-width: 460px;
+            max-width: 100%;
             margin-left: auto;
             margin-right: auto;
         }
 
-        .account-detail-compact #modalOtpSection {
-            max-width: 520px;
-            margin-left: auto;
-            margin-right: auto;
+        .account-detail-compact .account-detail-field {
+            gap: 0.54rem;
+            padding: 0.6rem 0.72rem;
+            border-radius: 0.98rem;
         }
 
-        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10 {
+        .account-detail-compact .account-detail-field input {
+            font-size: 0.88rem;
+        }
+
+        .account-detail-compact .account-detail-copy-btn {
+            padding: 0.64rem 0.88rem;
+            border-radius: 0.88rem;
+            font-size: 0.72rem;
+        }
+
+        .account-detail-compact #modalPasswordHint {
+            margin-top: 0.38rem;
+            border-radius: 999px;
+            padding: 0.28rem 0.62rem;
+            font-size: 0.68rem;
+            line-height: 1.35;
+            display: flex;
+            width: fit-content;
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
             justify-content: center;
-            position: relative;
-        }
-
-        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:first-child {
             text-align: center;
         }
 
-        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:first-child .flex.items-center.gap-3 {
-            justify-content: center;
+        .account-detail-compact #modalOtpSection {
+            max-width: 100%;
+            margin-left: auto;
+            margin-right: auto;
         }
 
-        .account-detail-compact #modalOtpSection .flex.items-center.justify-between.relative.z-10>div:last-child {
+        .account-detail-compact .account-otp-shell {
+            margin-top: 0;
+            padding: 0.66rem 0.72rem 0.66rem;
+            border-radius: 1.05rem;
+        }
+
+        .account-detail-compact #modalOtpSection .account-otp-main {
+            justify-content: center;
+            position: relative;
+            gap: 0.75rem;
+        }
+
+        .account-detail-compact #modalOtpSection .account-otp-copy-area {
+            text-align: center;
+        }
+
+        .account-detail-compact #modalOtpSection .account-otp-copy-wrap {
+            margin-top: 0.32rem;
+            justify-content: center;
+            gap: 0.55rem;
+            align-items: center;
+        }
+
+        .account-detail-compact #modalOtpValue {
+            font-size: 1.48rem;
+            letter-spacing: 0.15em;
+        }
+
+        .account-detail-compact .account-otp-copy-btn {
+            padding: 0.64rem 0.9rem;
+            border-radius: 0.88rem;
+        }
+
+        .account-detail-compact .account-otp-warning {
+            margin-top: 0.46rem;
+            padding: 0.44rem 0.6rem;
+            border-radius: 0.88rem;
+            font-size: 0.67rem;
+            line-height: 1.4;
+            border-color: rgba(252, 165, 165, 0.9);
+            background: rgba(254, 242, 242, 0.96);
+            color: #b91c1c;
+        }
+
+        .account-detail-compact #modalOtpSection .account-otp-timer {
             position: absolute;
             right: 0;
             top: 50%;
             transform: translateY(-50%);
+            width: 2.9rem;
+            height: 2.9rem;
+        }
+
+        .account-detail-compact #modalOtpSection .account-otp-timer svg {
+            width: 2.9rem;
+            height: 2.9rem;
+        }
+
+        .account-detail-compact #modalTimerText {
+            font-size: 0.85rem;
+        }
+
+        .account-detail-compact .account-detail-report-btn {
+            margin-top: 0.62rem;
+            padding-top: 0.62rem;
+            padding-bottom: 0.62rem;
+            border-radius: 0.95rem;
+            font-size: 0.86rem;
         }
 
 
@@ -2626,33 +2780,28 @@
 
     <!-- MODAL NHẬP MẬT KHẨU -->
     <div id="passwordModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4 fade-in">
-        <div class="relative w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 shadow-[0_18px_46px_rgba(15,23,42,0.14)]">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/72 backdrop-blur-md p-3 sm:p-4 fade-in">
+        <div class="relative w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.98)_100%)] shadow-[0_28px_70px_rgba(15,23,42,0.3)]">
             <button onclick="closePasswordModal()"
-                class="absolute right-3.5 top-3.5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"><svg
-                    xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24"
+                class="absolute right-4 top-5 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/12 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/22"><svg
+                    xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg></button>
-            <div class="p-5 text-center sm:p-6">
-                <div id="passwordModalBadge" class="mx-auto inline-flex h-12 items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3.5 text-[10px] font-extrabold uppercase tracking-[0.11em] text-indigo-700 shadow-sm">
-                    <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-indigo-600 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </span>
-                    <span id="passwordModalBadgeText">Bảo mật truy cập</span>
-                </div>
-                <h3 id="passwordModalTitle" class="mt-4 text-[1.55rem] font-black tracking-tight text-slate-900 sm:text-[1.75rem]">Yêu cầu bảo mật</h3>
-                <p id="passwordModalSubtitle" class="mt-1.5 text-[13px] font-medium leading-relaxed text-slate-500 sm:text-sm">Nhập mật mã 4 số để mở danh mục này.</p>
-                <div class="mt-5 space-y-3">
+            <div class="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_38%),linear-gradient(135deg,#0f766e_0%,#10b981_48%,#14b8a6_100%)] px-4 pb-4.5 pt-6 text-center">
+                <div class="pointer-events-none absolute inset-x-0 bottom-0 h-11 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.08)_100%)]"></div>
+                <div class="pointer-events-none absolute -left-10 top-6 h-24 w-24 rounded-full bg-white/7 blur-2xl"></div>
+                <div class="pointer-events-none absolute -right-8 bottom-3 h-20 w-20 rounded-full bg-emerald-200/14 blur-2xl"></div>
+                <h3 id="passwordModalTitle" class="relative z-10 mt-4 text-[1.42rem] font-black tracking-tight leading-[1.08] text-white sm:text-[1.58rem]">Yêu cầu bảo mật</h3>
+                <p id="passwordModalSubtitle" class="relative z-10 mt-2 text-[12.5px] font-semibold leading-relaxed text-emerald-50/90 sm:text-[13px]">Nhập mật mã 4 số để mở danh mục này.</p>
+            </div>
+            <div class="px-4 pb-5 pt-3.5 text-center sm:px-5 sm:pb-6">
+                <div class="space-y-3">
                     <input type="password" id="modalPasswordInput"
-                        class="w-full rounded-[1.1rem] border border-slate-300 bg-white px-4 py-3 text-center text-[1.4rem] font-black tracking-[0.34em] text-slate-800 shadow-[inset_0_1px_3px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:tracking-[0.34em] placeholder:text-slate-300 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                        class="w-full rounded-[1.2rem] border border-emerald-300 bg-white px-4 py-3 text-center text-[1.4rem] font-black tracking-[0.34em] text-slate-800 shadow-[0_12px_28px_rgba(15,23,42,0.06)] outline-none transition-all placeholder:tracking-[0.34em] placeholder:text-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                         placeholder="• • • •" maxlength="4" oninput="checkModalAutoLogin()">
-                    <div class="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/90 px-3.5 py-2.5 text-left shadow-sm">
-                        <span class="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    <div class="flex items-start gap-2.5 rounded-[1.1rem] border border-amber-200 bg-amber-50/95 px-3.5 py-3 text-left shadow-sm">
+                        <span class="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.3"
@@ -2662,7 +2811,7 @@
                         <p class="pt-0.5 text-[13px] font-semibold leading-relaxed text-amber-800">Mật mã thay đổi thường xuyên để hạn chế các thành phần spam.</p>
                     </div>
                     <button onclick="openInstructions()"
-                        class="password-guide-cta-bounce flex w-full items-center justify-center gap-2 rounded-[1rem] bg-slate-900 py-3 text-[15px] font-black text-white shadow-[0_10px_22px_rgba(15,23,42,0.16)] transition-all hover:-translate-y-0.5 hover:bg-slate-800">
+                        class="password-guide-cta-bounce flex w-full items-center justify-center gap-2 rounded-[1.1rem] bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-[15px] font-black text-white shadow-[0_14px_28px_rgba(16,185,129,0.22)] transition-all hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-700">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2672,7 +2821,7 @@
                     </button>
 
                     <button onclick="checkModalPassword()"
-                        class="w-full rounded-[1rem] border border-slate-300 bg-white py-3 text-[15px] font-bold text-slate-700 transition-all hover:border-slate-400 hover:bg-slate-50">
+                        class="w-full rounded-[1.1rem] border border-emerald-200 bg-white py-3 text-[15px] font-black text-emerald-700 shadow-[0_10px_24px_rgba(15,23,42,0.04)] transition-all hover:border-emerald-300 hover:bg-emerald-50/70">
                         Mở Khóa
                     </button>
 
@@ -3619,118 +3768,113 @@
 
     <!-- MODAL CHI TIẾT TÀI KHOẢN -->
     <div id="accountDetailModal" onclick="if(event.target === this) closeAccountDetailModal()"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
+        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/72 backdrop-blur-md p-3 sm:p-4 fade-in">
         <div id="accountDetailCard"
-            class="bg-white rounded-2xl shadow-2xl max-w-sm sm:max-w-xl md:max-w-2xl w-full overflow-hidden relative">
+            class="w-full max-w-[22.75rem] sm:max-w-[24rem] md:max-w-[24rem] overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.98)_100%)] shadow-[0_28px_70px_rgba(15,23,42,0.34)] relative">
             <button onclick="closeAccountDetailModal()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                class="absolute top-4 right-4 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/12 text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/22">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-0 overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4 text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-full opacity-10">
-                        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                            <path d="M0 100 C 20 0 50 0 100 100 Z" fill="white" />
-                        </svg>
-                    </div>
+            <div id="accountDetailCardInner" class="p-0 overflow-hidden">
+                <div class="account-detail-header relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_40%),linear-gradient(135deg,#0f766e_0%,#10b981_48%,#14b8a6_100%)] px-3.5 pb-3.5 pt-4 text-center">
+                    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,0.1)_100%)]"></div>
+                    <div class="pointer-events-none absolute -left-8 top-8 h-28 w-28 rounded-full bg-white/8 blur-2xl"></div>
+                    <div class="pointer-events-none absolute -right-6 bottom-4 h-24 w-24 rounded-full bg-emerald-200/16 blur-2xl"></div>
                     <div id="modalAccountIcon"
-                        class="w-16 h-16 rounded-xl mx-auto mb-2 flex items-center justify-center overflow-hidden bg-white/20 backdrop-blur-sm border-2 border-white/30 shadow-lg relative z-10">
+                        class="relative z-10 mx-auto flex h-[4.35rem] w-[4.35rem] items-center justify-center overflow-hidden rounded-[1.32rem] border border-white/30 bg-white/14 p-[0.72rem] shadow-[0_14px_30px_rgba(15,23,42,0.18)] backdrop-blur-md">
                         <!-- Icon here -->
                     </div>
-                </div>
-                <div class="px-4 pb-4 pt-3">
-                    <div class="text-center mb-4">
-                        <h3 id="modalAccountName" class="text-lg font-bold text-gray-800">Account Name</h3>
-                        <p id="modalAccountSubtitle" class="text-xs text-gray-500 font-mono mt-1">Username</p>
+                    <div class="relative z-10 mt-2.5 text-center">
+                        <h3 id="modalAccountName" class="text-[1.38rem] sm:text-[1.58rem] font-black tracking-tight text-white">Account Name</h3>
+                        <p id="modalAccountSubtitle" class="mt-0.5 text-[0.8rem] font-semibold text-emerald-50/90 font-mono break-all">Username</p>
                     </div>
-
-                    <div class="space-y-3">
+                </div>
+                <div class="account-detail-body px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3">
+                    <div class="account-detail-stack space-y-4">
                         <div id="modalAccountUsernameSection" class="relative">
                             <label
-                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Tài
+                                class="mb-2 ml-1 block text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Tài
                                 khoản</label>
                             <div
-                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2.5 rounded-lg hover:border-indigo-300 transition-colors group">
+                                class="account-detail-field flex items-center gap-3 rounded-[1.25rem] border border-emerald-100 bg-white px-2.5 py-2.5 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition-colors hover:border-emerald-200">
                                 <input type="text" id="modalAccountUsername" readonly
-                                    class="bg-transparent outline-none text-sm text-gray-800 font-mono w-full font-bold">
+                                    class="w-full bg-transparent text-[1.02rem] font-black tracking-[-0.02em] text-slate-800 font-mono outline-none">
                                 <button
                                     onclick="copyToClipboardText(document.getElementById('modalAccountUsername').value, this)"
-                                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors px-3 py-1.5 rounded-lg border border-indigo-200 whitespace-nowrap">Sao
+                                    class="account-detail-copy-btn whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2 text-xs font-black text-emerald-700 transition-colors hover:bg-emerald-100">Sao
                                     chép</button>
                             </div>
                         </div>
 
                         <div id="modalAccountPasswordSection" class="relative">
                             <label
-                                class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">Mật
+                                class="mb-2 ml-1 block text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Mật
                                 khẩu</label>
                             <div
-                                class="flex items-center gap-2 bg-gray-50 border border-gray-200 p-2.5 rounded-lg hover:border-indigo-300 transition-colors group">
+                                class="account-detail-field flex items-center gap-3 rounded-[1.25rem] border border-emerald-100 bg-white px-2.5 py-2.5 shadow-[0_10px_26px_rgba(15,23,42,0.05)] transition-colors hover:border-emerald-200">
                                 <input type="text" id="modalAccountPassword" readonly
-                                    class="bg-transparent outline-none text-sm text-gray-800 font-mono w-full font-bold">
+                                    class="w-full bg-transparent text-[1.02rem] font-black tracking-[-0.02em] text-slate-800 font-mono outline-none">
                                 <button
                                     onclick="copyToClipboardText(document.getElementById('modalAccountPassword').value, this)"
-                                    class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 transition-colors px-3 py-1.5 rounded-lg border border-indigo-200 whitespace-nowrap">Sao
+                                    class="account-detail-copy-btn whitespace-nowrap rounded-xl border border-emerald-200 bg-emerald-50/80 px-3.5 py-2 text-xs font-black text-emerald-700 transition-colors hover:bg-emerald-100">Sao
                                     chép</button>
                             </div>
-                            <p id="modalPasswordHint" class="text-[10px] text-gray-500 italic mt-1.5 ml-1">⚠️ Mật khẩu có thể thay đổi, vui
-                                lòng
-                                kiểm tra kỹ.</p>
+                            <p id="modalPasswordHint" class="mt-1.5 flex w-fit max-w-full items-center justify-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-center text-[11px] font-semibold text-amber-800 mx-auto">⚠️ Mật khẩu có thể thay đổi, vui lòng kiểm tra kỹ.</p>
                         </div>
 
                         <div id="modalOtpSection" class="hidden">
                             <div
-                                class="bg-indigo-50 border border-indigo-100 p-3 rounded-lg mt-3 relative overflow-hidden">
-                                <div class="absolute top-0 right-0 p-2 opacity-10"><svg
-                                        xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-indigo-600" fill="none"
+                                class="account-otp-shell relative mt-0.5 overflow-hidden rounded-[1.45rem] border border-emerald-200 bg-[linear-gradient(135deg,rgba(236,253,245,0.96)_0%,rgba(255,255,255,0.98)_45%,rgba(240,253,250,0.98)_100%)] p-3 shadow-[0_16px_34px_rgba(16,185,129,0.1)]">
+                                <div class="absolute top-0 right-0 p-2 opacity-[0.1]"><svg
+                                        xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-emerald-600" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg></div>
 
-                                <div class="flex items-center justify-between relative z-10">
-                                    <div>
+                                <div class="account-otp-main flex items-center justify-between relative z-10 gap-4">
+                                    <div class="account-otp-copy-area min-w-0">
                                         <span
-                                            class="text-[10px] text-indigo-800 font-bold uppercase tracking-wider block mb-1">Mã
+                                            class="block text-[11px] font-black uppercase tracking-[0.16em] text-emerald-700">Mã
                                             xác minh 2FA</span>
-                                        <div class="flex flex-col items-center gap-2">
+                                        <div class="account-otp-copy-wrap mt-1.5 flex flex-col items-center gap-2">
                                             <button type="button"
                                                 onclick="copyOtpCode()"
-                                                class="font-mono font-bold text-indigo-700 text-2xl tracking-widest hover:text-indigo-800 transition-colors cursor-pointer"
+                                                class="cursor-pointer font-mono text-[2rem] font-black tracking-[0.22em] text-emerald-700 transition-colors hover:text-emerald-800 sm:text-[2.2rem]"
                                                 id="modalOtpValue">... ...</button>
                                             <button type="button"
                                                 onclick="copyOtpCode(this)"
-                                                class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm active:scale-95">Sao
+                                                class="account-otp-copy-btn rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-black text-white shadow-[0_12px_24px_rgba(16,185,129,0.2)] transition-all hover:from-emerald-700 hover:to-teal-700 active:scale-95">Sao
                                                 chép</button>
                                         </div>
                                     </div>
-                                    <div class="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
+                                    <div class="account-otp-timer relative flex h-12 w-12 flex-shrink-0 items-center justify-center">
                                         <svg class="transform -rotate-90 w-12 h-12">
-                                            <circle cx="24" cy="24" r="18" stroke="#e0e7ff" stroke-width="3"
+                                            <circle cx="24" cy="24" r="18" stroke="#d1fae5" stroke-width="3"
                                                 fill="transparent" />
-                                            <circle id="modalTimerRing" cx="24" cy="24" r="18" stroke="#4f46e5"
+                                            <circle id="modalTimerRing" cx="24" cy="24" r="18" stroke="#10b981"
                                                 stroke-width="3" fill="transparent" class="progress-ring"
                                                 stroke-dasharray="113.1" stroke-dashoffset="0" />
                                         </svg>
                                         <span id="modalTimerText"
-                                            class="absolute text-sm font-bold text-indigo-900">30</span>
+                                            class="absolute text-sm font-black text-emerald-900">30</span>
                                     </div>
                                 </div>
                                 <p
-                                    class="text-[10px] text-red-800 font-medium mt-2 bg-red-200 inline-block px-2 py-1 rounded w-full text-center gentle-pulse">
+                                    class="account-otp-warning mt-2 inline-block w-full rounded-xl border border-red-200 bg-red-50 px-2.5 py-1.5 text-center text-[11px] font-semibold text-red-700 gentle-pulse">
                                     ⚠️ Mã sẽ bị vô hiệu sau mỗi 30 giây, sau mỗi 30 giây vui lòng dùng mã mới</p>
                             </div>
                         </div>
 
-                        <div id="modalAdminControls" class="hidden mt-4 pt-4 border-t border-gray-100 flex gap-3">
+                        <div id="modalAdminControls" class="hidden mt-4 border-t border-slate-200 pt-4 flex gap-3">
                             <!-- Admin buttons injected here -->
                         </div>
 
-                        <div id="modalNetflixActions" class="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
-                            <p class="text-center text-xs sm:text-sm font-black uppercase tracking-wide text-indigo-700">
+                        <div id="modalNetflixActions" class="hidden mt-4 space-y-3 border-t border-slate-200 pt-4">
+                            <p class="text-center text-xs sm:text-sm font-black uppercase tracking-wide text-emerald-700">
                                 HÃY CHỌN NỀN TẢNG BẠN MUỐN XEM
                             </p>
                             <div class="grid grid-cols-3 gap-2 sm:gap-4">
@@ -3770,7 +3914,7 @@
 
                         <!-- Nút báo lỗi -->
                         <button onclick="openContactSupportModal()"
-                            class="mt-4 w-full bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                            class="account-detail-report-btn mt-3 flex w-full items-center justify-center gap-2 rounded-[1.2rem] bg-gradient-to-r from-rose-500 to-orange-500 px-4 py-2.5 text-sm font-black text-white shadow-[0_14px_28px_rgba(244,63,94,0.22)] transition-all hover:-translate-y-0.5 hover:from-rose-600 hover:to-orange-600 hover:shadow-[0_18px_36px_rgba(244,63,94,0.28)]">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -4213,7 +4357,7 @@
                     class="rounded-[1.75rem] bg-gradient-to-r from-blue-600 to-indigo-600 p-5 sm:p-6 text-white shadow-lg">
                     <p class="text-[13px] sm:text-sm font-semibold text-blue-100">Chi tiết dịch vụ</p>
                     <div id="pricingDetailModalDescription"
-                        class="mt-3 text-[15px] sm:text-base leading-relaxed font-medium whitespace-pre-line"></div>
+                        class="mt-3 text-[16px] sm:text-[1.1rem] leading-relaxed font-medium whitespace-pre-line"></div>
                 </div>
                 <p id="pricingDetailModalFallback"
                     class="hidden mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500 whitespace-pre-line">
@@ -5056,12 +5200,12 @@
                 ? 'pr-8 text-sm font-black tracking-tight text-slate-900'
                 : 'mb-2 text-[1.45rem] font-black tracking-tight text-slate-900 sm:text-[1.55rem]';
             modal.className = alertDisplayMode === 'toast'
-                ? 'fixed inset-0 z-[120] flex items-start justify-end bg-transparent p-3 sm:p-4 pointer-events-none'
+                ? 'fixed inset-0 z-[120] flex items-end justify-center bg-transparent p-3 sm:p-4 pointer-events-none'
                 : 'fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in';
 
             if (dialogEl) {
                 dialogEl.className = alertDisplayMode === 'toast'
-                    ? 'pointer-events-auto relative w-full max-w-[21rem] overflow-hidden rounded-[1rem] border border-slate-200/90 bg-white shadow-[0_14px_34px_rgba(15,23,42,0.14)] ring-1 ring-black/5'
+                    ? 'toast-shake-in pointer-events-auto relative w-full max-w-[21rem] overflow-hidden rounded-[1rem] border-2 border-slate-300/95 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.16)] ring-1 ring-slate-300/70'
                     : 'w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/65 bg-[linear-gradient(160deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_52%,rgba(240,253,250,0.96)_100%)] shadow-[0_22px_56px_rgba(15,23,42,0.18)] relative';
             }
             if (dialogBodyEl) {
@@ -5130,15 +5274,31 @@
             }
 
             if (type === 'success') {
+                if (alertDisplayMode === 'toast' && dialogEl) {
+                    dialogEl.classList.remove('border-slate-300/95', 'ring-slate-300/70');
+                    dialogEl.classList.add('border-emerald-300', 'ring-emerald-200');
+                }
                 iconDiv.classList.add('bg-emerald-100', 'text-emerald-600');
                 iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             } else if (type === 'error') {
+                if (alertDisplayMode === 'toast' && dialogEl) {
+                    dialogEl.classList.remove('border-slate-300/95', 'ring-slate-300/70');
+                    dialogEl.classList.add('border-rose-300', 'ring-rose-200');
+                }
                 iconDiv.classList.add('bg-rose-100', 'text-rose-600');
                 iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             } else if (type === 'warning') {
+                if (alertDisplayMode === 'toast' && dialogEl) {
+                    dialogEl.classList.remove('border-slate-300/95', 'ring-slate-300/70');
+                    dialogEl.classList.add('border-amber-300', 'ring-amber-200');
+                }
                 iconDiv.classList.add('bg-amber-100', 'text-amber-600');
                 iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
             } else {
+                if (alertDisplayMode === 'toast' && dialogEl) {
+                    dialogEl.classList.remove('border-slate-300/95', 'ring-slate-300/70');
+                    dialogEl.classList.add('border-sky-300', 'ring-sky-200');
+                }
                 iconDiv.classList.add('bg-sky-100', 'text-sky-600');
                 iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             }
@@ -5204,7 +5364,7 @@
                         <div class="text-[1.05rem] sm:text-[1.12rem] font-semibold leading-7 text-slate-600">
                             <span class="font-black text-orange-600">Nhắn tin ngay</span> vào
                         </div>
-                        <a href="${FANPAGE_URL}" target="_blank" rel="noopener noreferrer" class="mt-2 text-[2rem] sm:text-[2.5rem] font-black tracking-tight text-blue-700 underline decoration-transparent transition hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded-lg">
+                        <a href="${FANPAGE_URL}" target="_blank" rel="noopener noreferrer" class="mt-2 text-[1.45rem] sm:text-[1.85rem] font-black tracking-tight text-blue-700 underline decoration-transparent transition hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 rounded-lg">
                             FANPAGE TRÀ ĐÁ 3K
                         </a>
                         <div class="mt-3 text-[1.02rem] sm:text-[1.08rem] font-semibold leading-7 text-slate-700">
@@ -5226,7 +5386,7 @@
                     dialogBodyClassName: 'p-8 sm:p-9 text-center',
                     titleClassName: 'hidden',
                     messageClassName: 'mb-0 text-center',
-                    actionClassName: 'mt-7 py-4 text-[15px] font-black rounded-[1.15rem] shadow-[0_16px_32px_rgba(249,115,22,0.28)]'
+                    actionClassName: 'mt-7 py-[1.05rem] text-[1.1rem] sm:text-[1.22rem] font-black rounded-[1.15rem] shadow-[0_16px_32px_rgba(249,115,22,0.28)]'
                 }
             );
         }
@@ -5986,7 +6146,6 @@
         const lastUpdateLabel = document.getElementById('lastUpdateLabel');
         const introSection = document.getElementById('introSection');
         const passwordModal = document.getElementById('passwordModal');
-        const passwordModalBadgeText = document.getElementById('passwordModalBadgeText');
         const passwordModalTitle = document.getElementById('passwordModalTitle');
         const passwordModalSubtitle = document.getElementById('passwordModalSubtitle');
         const modalPasswordInput = document.getElementById('modalPasswordInput');
@@ -6304,9 +6463,6 @@
 
         function configurePasswordModalContent(context = '') {
             const isStudocuPrint = context === 'studocu_print';
-            if (passwordModalBadgeText) {
-                passwordModalBadgeText.textContent = isStudocuPrint ? 'Bảo mật tải file' : 'Bảo mật truy cập';
-            }
             if (passwordModalTitle) {
                 passwordModalTitle.textContent = isStudocuPrint ? 'Yêu cầu bảo mật để tải file' : 'Yêu cầu bảo mật';
             }
@@ -9280,13 +9436,13 @@
 
             if (accountDetailCard) {
                 if (netflixFolderActive) {
-                    accountDetailCard.classList.remove('sm:max-w-md', 'md:max-w-lg', 'account-detail-compact');
+                    accountDetailCard.classList.remove('max-w-[22.75rem]', 'sm:max-w-[24rem]', 'md:max-w-[24rem]', 'account-detail-compact');
                     accountDetailCard.classList.add('sm:max-w-xl', 'md:max-w-2xl');
                     accountDetailCard.style.maxWidth = '';
                 } else {
                     accountDetailCard.classList.remove('sm:max-w-xl', 'md:max-w-2xl');
-                    accountDetailCard.classList.add('sm:max-w-md', 'md:max-w-lg', 'account-detail-compact');
-                    accountDetailCard.style.maxWidth = '22rem';
+                    accountDetailCard.classList.add('max-w-[22.75rem]', 'sm:max-w-[24rem]', 'md:max-w-[24rem]', 'account-detail-compact');
+                    accountDetailCard.style.maxWidth = '';
                 }
             }
 
@@ -9307,13 +9463,13 @@
             if (isAdmin()) {
                 adminControls.classList.remove('hidden');
                 adminControls.innerHTML = `
-                        <button onclick="closeAccountDetailModal(); editAccount(${currentFolderIndex}, ${accIndex})" class="flex-1 bg-indigo-50 text-indigo-700 px-3 py-2.5 rounded-lg text-sm font-semibold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1 border border-indigo-200">
+                        <button onclick="closeAccountDetailModal(); editAccount(${currentFolderIndex}, ${accIndex})" class="flex flex-1 items-center justify-center gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-black text-emerald-700 transition-colors hover:bg-emerald-100">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                             Sửa
                         </button>
-                        <button onclick="closeAccountDetailModal(); deleteAccount(${currentFolderIndex}, ${accIndex})" class="flex-1 bg-red-50 text-red-700 px-3 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-100 transition-colors flex items-center justify-center gap-1 border border-red-200">
+                        <button onclick="closeAccountDetailModal(); deleteAccount(${currentFolderIndex}, ${accIndex})" class="flex flex-1 items-center justify-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm font-black text-rose-700 transition-colors hover:bg-rose-100">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
@@ -9342,13 +9498,13 @@
                     modalNetflixDesktopBtn.classList.remove('opacity-60', 'cursor-not-allowed');
                     setModalNetflixProButtonsDisabled(false);
                     modalNetflixCookieState.textContent = 'Chọn nền tảng xem: Xem trên máy tính (miễn phí), xem trên điện thoại/tivi (PRO)';
-                    modalNetflixCookieState.className = 'text-[11px] text-gray-500 mt-2 text-center';
+                    modalNetflixCookieState.className = 'text-[11px] text-slate-500 mt-2 text-center font-semibold';
                 } else {
                     modalNetflixDesktopBtn.disabled = true;
                     modalNetflixDesktopBtn.classList.add('opacity-60', 'cursor-not-allowed');
                     setModalNetflixProButtonsDisabled(true);
                     modalNetflixCookieState.textContent = 'Tài khoản này chưa có cookie Netflix';
-                    modalNetflixCookieState.className = 'text-[11px] text-red-500 mt-2 text-center font-semibold';
+                    modalNetflixCookieState.className = 'text-[11px] text-rose-500 mt-2 text-center font-semibold';
                 }
             } else {
                 modalNetflixActions.classList.add('hidden');
@@ -9555,13 +9711,12 @@
             const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el);
             if (btnElement) {
                 const original = btnElement.innerHTML;
+                const originalClassName = btnElement.className;
                 btnElement.innerHTML = 'Đã sao chép';
-                btnElement.classList.add('bg-green-50', 'text-green-600', 'border-green-300');
-                btnElement.classList.remove('text-indigo-600', 'hover:text-indigo-700', 'hover:bg-indigo-50', 'border-indigo-200');
+                btnElement.className = 'whitespace-nowrap rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-xs font-black text-emerald-700 shadow-sm transition-colors';
                 setTimeout(() => {
                     btnElement.innerHTML = original;
-                    btnElement.classList.remove('bg-green-50', 'text-green-600', 'border-green-300');
-                    btnElement.classList.add('text-indigo-600', 'hover:text-indigo-700', 'hover:bg-indigo-50', 'border-indigo-200');
+                    btnElement.className = originalClassName;
                 }, 1000);
             }
         }
