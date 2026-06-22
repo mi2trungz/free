@@ -56,6 +56,8 @@
         window.firebaseUpdateDoc = updateDoc;
     </script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
         .hidden {
             display: none !important;
         }
@@ -84,8 +86,6 @@
                 radial-gradient(circle at 12% 88%, rgba(220, 38, 38, 0.16) 0%, rgba(220, 38, 38, 0) 46%),
                 linear-gradient(130deg, rgba(2, 6, 23, 0.94) 0%, rgba(15, 23, 42, 0.94) 42%, rgba(16, 45, 58, 0.93) 100%);
         }
-
-        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap');
 
         /* --- GLOBAL & BACKGROUND --- */
         body {
@@ -3053,6 +3053,11 @@
                     <div class="bg-gray-50 rounded-xl p-4 border-2 border-gray-200 mt-4">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Link banner quảng cáo (Popup lúc mới
                             vào)</label>
+                        <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+                            <input type="checkbox" id="welcomeAdEnabledInput"
+                                class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span>Bật popup quảng cáo khi người dùng mới vào trang</span>
+                        </label>
                         <input type="text" id="popupAdImageUrlInput"
                             class="w-full px-4 py-2 rounded-lg border-2 border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm"
                             placeholder="https://... (URL hình ảnh banner popup)">
@@ -3492,28 +3497,32 @@
 
     <!-- MODAL THÔNG BÁO -->
     <div id="alertModal"
-        class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div id="alertDialog" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in">
+        <div id="alertDialog"
+            class="w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/65 bg-[linear-gradient(160deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_52%,rgba(240,253,250,0.96)_100%)] shadow-[0_22px_56px_rgba(15,23,42,0.18)] relative">
             <button onclick="closeAlertModal()"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                class="absolute right-3.5 top-3.5 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-slate-400 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:bg-white hover:text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div id="alertDialogBody" class="p-6 text-center">
-                <div id="alertIcon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div id="alertDialogBody" class="px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-7">
+                <div
+                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-amber-50 via-amber-100 to-orange-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_10px_24px_rgba(245,158,11,0.14)] ring-1 ring-amber-200/70">
+                    <div id="alertIcon" class="flex h-11 w-11 items-center justify-center rounded-[1rem]">
                     <!-- Icon sẽ được thay đổi động -->
+                    </div>
                 </div>
-                <h3 id="alertTitle" class="text-xl font-bold text-gray-800 mb-2">Thông báo</h3>
-                <div id="alertMessage" class="text-sm text-gray-600 mb-6 whitespace-pre-line"></div>
+                <h3 id="alertTitle" class="mb-2 text-[1.45rem] font-black tracking-tight text-slate-900 sm:text-[1.55rem]">Thông báo</h3>
+                <div id="alertMessage" class="mb-5 text-[16px] font-medium leading-7 text-slate-500 whitespace-pre-line"></div>
                 <div id="alertActionsWrap" class="space-y-3">
                     <a id="alertActionBtn" href="#" target="_blank" rel="noopener noreferrer"
-                        class="hidden w-full items-center justify-center bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl">
+                        class="hidden w-full items-center justify-center rounded-[1rem] bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 px-4 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(249,115,22,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(249,115,22,0.3)]">
                         Báo lỗi
                     </a>
                     <button id="alertConfirmBtn" onclick="closeAlertModal(true)"
-                        class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+                        class="w-full rounded-[1rem] bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 px-4 py-3.5 text-[15px] font-black text-white shadow-[0_14px_28px_rgba(99,102,241,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(99,102,241,0.3)]">
                         Đã hiểu
                     </button>
                 </div>
@@ -3523,32 +3532,36 @@
 
     <!-- MODAL XÁC NHẬN -->
     <div id="confirmModal"
-        class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative">
+        class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in">
+        <div
+            class="w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/65 bg-[linear-gradient(160deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_52%,rgba(255,247,237,0.96)_100%)] shadow-[0_22px_56px_rgba(15,23,42,0.18)] relative">
             <button onclick="closeConfirmModal(false)"
-                class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                class="absolute right-3.5 top-3.5 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/85 text-slate-400 shadow-sm ring-1 ring-black/5 transition-all hover:-translate-y-0.5 hover:bg-white hover:text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
-            <div class="p-6 text-center">
-                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none"
+            <div class="px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-7">
+                <div
+                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-rose-50 via-orange-50 to-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_10px_24px_rgba(251,146,60,0.14)] ring-1 ring-orange-200/70">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-[1rem]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-orange-500" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
+                    </div>
                 </div>
-                <h3 id="confirmTitle" class="text-xl font-bold text-gray-800 mb-2">Xác nhận</h3>
-                <p id="confirmMessage" class="text-sm text-gray-600 mb-6"></p>
+                <h3 id="confirmTitle" class="mb-2 text-[1.45rem] font-black tracking-tight text-slate-900 sm:text-[1.55rem]">Xác nhận</h3>
+                <p id="confirmMessage" class="mb-5 text-[16px] font-medium leading-7 text-slate-500"></p>
                 <div class="flex gap-3">
                     <button onclick="closeConfirmModal(false)"
-                        class="flex-1 bg-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-300 transition-all">
+                        class="flex-1 rounded-[1rem] border border-slate-200 bg-white/90 px-4 py-3 text-sm font-bold text-slate-600 shadow-[0_8px_20px_rgba(148,163,184,0.1)] transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:text-slate-800">
                         Hủy
                     </button>
                     <button onclick="closeConfirmModal(true)" id="confirmOkBtn"
-                        class="flex-1 bg-gradient-to-r from-red-600 to-pink-600 text-white font-semibold py-3 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl">
+                        class="flex-1 rounded-[1rem] bg-gradient-to-r from-rose-600 via-red-500 to-orange-500 px-4 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(239,68,68,0.22)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(239,68,68,0.28)]">
                         Xác nhận
                     </button>
                 </div>
@@ -4906,6 +4919,7 @@
         let GLOBAL_ACCESS_PASSWORD = ''; // Mã bảo mật chung cho tất cả danh mục
         let AD_BANNER_URL = 'https://sf-static.upanhlaylink.com/img/image_20251229f2a69a3abb74fe9bbc97ff3de21848ec.jpg'; // Link banner quảng cáo
         let POPUP_AD_IMAGE_URL = 'popupqc.png'; // Link banner popup lúc mới vào
+        let WELCOME_AD_ENABLED = true; // Bật/tắt popup quảng cáo lúc mới vào trang
         const WELCOME_AD_LAST_SHOWN_KEY = 'trada_welcome_ad_last_shown_at';
         const WELCOME_AD_COOLDOWN_MS = 10 * 60 * 1000;
         const WELCOME_AD_SKIP_SECONDS = 4;
@@ -4946,6 +4960,8 @@
         let currentAdminFolderIndex = -1;
         let confirmCallback = null;
         let alertConfirmCallback = null;
+        let alertAutoHideTimer = null;
+        let alertDisplayMode = 'modal';
         let editingPricingProductIndex = -1;
         let currentView = 'home';
         let currentPricingCategoryFilter = 'all';
@@ -4996,6 +5012,13 @@
         }
 
         // Custom Alert Modal
+        function clearAlertAutoHideTimer() {
+            if (alertAutoHideTimer) {
+                clearTimeout(alertAutoHideTimer);
+                alertAutoHideTimer = null;
+            }
+        }
+
         function showAlert(title, message, type = 'info', options = {}) {
             const modal = document.getElementById('alertModal');
             const dialogEl = document.getElementById('alertDialog');
@@ -5006,28 +5029,64 @@
             const actionsWrap = document.getElementById('alertActionsWrap');
             const actionBtn = document.getElementById('alertActionBtn');
             const confirmBtn = document.getElementById('alertConfirmBtn');
+            const usesSpecialLayout = Boolean(
+                options.actionLabel ||
+                options.actionUrl ||
+                options.dialogClassName ||
+                options.dialogBodyClassName ||
+                options.actionClassName ||
+                options.titleClassName ||
+                options.messageClassName ||
+                options.confirmClassName ||
+                options.allowHtml ||
+                options.hideConfirm ||
+                options.hideIcon
+            );
+
+            clearAlertAutoHideTimer();
+            alertDisplayMode = usesSpecialLayout ? 'modal' : 'toast';
+            alertConfirmCallback = options && typeof options.onConfirm === 'function' ? options.onConfirm : null;
 
             titleEl.textContent = title;
-            messageEl.className = 'text-sm text-gray-600 mb-6 whitespace-pre-line';
-            titleEl.className = 'text-xl font-bold text-gray-800 mb-2';
+            messageEl.className = alertDisplayMode === 'toast'
+                ? 'mt-1 text-sm font-medium leading-6 text-slate-600 whitespace-pre-line'
+                : 'mb-5 text-[16px] font-medium leading-7 text-slate-500 whitespace-pre-line';
+            titleEl.className = alertDisplayMode === 'toast'
+                ? 'text-[1rem] font-black tracking-tight text-slate-900 sm:text-[1.05rem]'
+                : 'mb-2 text-[1.45rem] font-black tracking-tight text-slate-900 sm:text-[1.55rem]';
+            modal.className = alertDisplayMode === 'toast'
+                ? 'fixed inset-x-0 bottom-0 z-[120] flex items-end justify-center bg-transparent p-3 sm:p-4 pointer-events-none'
+                : 'fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in';
+
             if (dialogEl) {
-                dialogEl.className = 'bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden relative';
+                dialogEl.className = alertDisplayMode === 'toast'
+                    ? 'pointer-events-auto relative w-full max-w-md overflow-hidden rounded-[1.4rem] border border-slate-200/90 bg-white/95 shadow-[0_20px_48px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-sm'
+                    : 'w-full max-w-[24rem] overflow-hidden rounded-[1.6rem] border border-white/65 bg-[linear-gradient(160deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_52%,rgba(240,253,250,0.96)_100%)] shadow-[0_22px_56px_rgba(15,23,42,0.18)] relative';
             }
             if (dialogBodyEl) {
-                dialogBodyEl.className = 'p-6 text-center';
+                dialogBodyEl.className = alertDisplayMode === 'toast'
+                    ? 'px-4 pb-4 pt-4 text-left sm:px-5'
+                    : 'px-5 pb-5 pt-6 text-center sm:px-6 sm:pb-6 sm:pt-7';
             }
             if (actionsWrap) {
-                actionsWrap.className = 'space-y-3';
+                actionsWrap.className = alertDisplayMode === 'toast'
+                    ? 'mt-4 flex items-center justify-end gap-2'
+                    : 'space-y-3';
             }
             if (actionBtn) {
-                actionBtn.className = 'hidden w-full items-center justify-center bg-gradient-to-r from-rose-500 to-orange-500 text-white font-semibold py-3 rounded-xl hover:from-rose-600 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl';
+                actionBtn.className = 'hidden w-full items-center justify-center rounded-[1rem] bg-gradient-to-r from-orange-500 via-amber-500 to-rose-500 px-4 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(249,115,22,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_16px_30px_rgba(249,115,22,0.3)]';
             }
             if (confirmBtn) {
-                confirmBtn.className = 'w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl';
+                confirmBtn.className = alertDisplayMode === 'toast'
+                    ? 'inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-black text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] transition-all hover:-translate-y-0.5 hover:bg-slate-800'
+                    : 'w-full rounded-[1rem] bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 px-4 py-3.5 text-[15px] font-black text-white shadow-[0_14px_28px_rgba(99,102,241,0.24)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(99,102,241,0.3)]';
                 confirmBtn.classList.remove('hidden');
             }
             if (iconDiv) {
                 iconDiv.classList.remove('hidden');
+                iconDiv.className = alertDisplayMode === 'toast'
+                    ? 'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl'
+                    : 'flex h-11 w-11 items-center justify-center rounded-[1rem]';
             }
 
             if (options && options.dialogClassName && dialogEl) {
@@ -5056,22 +5115,19 @@
             } else {
                 messageEl.textContent = message;
             }
-            alertConfirmCallback = options && typeof options.onConfirm === 'function' ? options.onConfirm : null;
 
-            // Set icon based on type
-            iconDiv.className = 'w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4';
             if (type === 'success') {
-                iconDiv.classList.add('bg-green-100');
-                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                iconDiv.classList.add('bg-emerald-100', 'text-emerald-600');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             } else if (type === 'error') {
-                iconDiv.classList.add('bg-red-100');
-                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                iconDiv.classList.add('bg-rose-100', 'text-rose-600');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             } else if (type === 'warning') {
-                iconDiv.classList.add('bg-yellow-100');
-                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+                iconDiv.classList.add('bg-amber-100', 'text-amber-600');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
             } else {
-                iconDiv.classList.add('bg-blue-100');
-                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                iconDiv.classList.add('bg-sky-100', 'text-sky-600');
+                iconDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
             }
             if (options && options.hideIcon) {
                 iconDiv.classList.add('hidden');
@@ -5101,12 +5157,20 @@
 
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            if (alertDisplayMode === 'toast') {
+                alertAutoHideTimer = setTimeout(() => {
+                    closeAlertModal(false);
+                }, 3500);
+            }
         }
 
         function closeAlertModal(confirmed = false) {
             const modal = document.getElementById('alertModal');
+            clearAlertAutoHideTimer();
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            modal.className = 'hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/58 backdrop-blur-md p-3 sm:p-4 fade-in';
+            alertDisplayMode = 'modal';
             if (confirmed && typeof alertConfirmCallback === 'function') {
                 const callback = alertConfirmCallback;
                 alertConfirmCallback = null;
@@ -5456,6 +5520,7 @@
                     if (
                         typeof hasShownWelcomeAdThisSession !== 'undefined' &&
                         !hasShownWelcomeAdThisSession &&
+                        WELCOME_AD_ENABLED &&
                         shouldShowWelcomeAd() &&
                         !IS_PRICING_ROUTE
                     ) {
@@ -5610,6 +5675,7 @@
                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD || '');
                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                 localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+                localStorage.setItem('trada_welcome_ad_enabled', WELCOME_AD_ENABLED ? '1' : '0');
                 localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
                 localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL || '');
                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
@@ -5627,6 +5693,7 @@
                             globalAccessPassword: GLOBAL_ACCESS_PASSWORD || '',
                             adBannerUrl: AD_BANNER_URL,
                             popupAdImageUrl: POPUP_AD_IMAGE_URL,
+                            welcomeAdEnabled: WELCOME_AD_ENABLED,
                             netflixDesktopFallbackEnabled: NETFLIX_DESKTOP_FALLBACK_ENABLED,
                             netflixDesktopFallbackUrl: NETFLIX_DESKTOP_FALLBACK_URL || '',
                             accountSectionDesc: ACCOUNT_SECTION_DESC,
@@ -5723,6 +5790,13 @@
                                     if (savedPopupBanner) {
                                         POPUP_AD_IMAGE_URL = savedPopupBanner;
                                     }
+                                }
+                                if (firestoreData.welcomeAdEnabled !== undefined) {
+                                    WELCOME_AD_ENABLED = parseBooleanSetting(firestoreData.welcomeAdEnabled, true);
+                                    localStorage.setItem('trada_welcome_ad_enabled', WELCOME_AD_ENABLED ? '1' : '0');
+                                } else {
+                                    const savedWelcomeAdEnabled = localStorage.getItem('trada_welcome_ad_enabled');
+                                    WELCOME_AD_ENABLED = parseBooleanSetting(savedWelcomeAdEnabled, true);
                                 }
                                 // Load fallback link cho Netflix desktop
                                 if (firestoreData.netflixDesktopFallbackEnabled !== undefined) {
@@ -5832,6 +5906,8 @@
                     if (savedPopupBannerUrl) {
                         POPUP_AD_IMAGE_URL = savedPopupBannerUrl;
                     }
+                    const savedWelcomeAdEnabled = localStorage.getItem('trada_welcome_ad_enabled');
+                    WELCOME_AD_ENABLED = parseBooleanSetting(savedWelcomeAdEnabled, true);
                     const savedFallbackEnabled = localStorage.getItem('trada_netflix_desktop_fallback_enabled');
                     NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(savedFallbackEnabled, true);
                     const savedFallbackUrl = localStorage.getItem('trada_netflix_desktop_fallback_url');
@@ -5856,6 +5932,8 @@
                     if (saved) {
                         DATA = JSON.parse(saved);
                     }
+                    const savedWelcomeAdEnabled = localStorage.getItem('trada_welcome_ad_enabled');
+                    WELCOME_AD_ENABLED = parseBooleanSetting(savedWelcomeAdEnabled, true);
                     const savedFallbackEnabled = localStorage.getItem('trada_netflix_desktop_fallback_enabled');
                     NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(savedFallbackEnabled, true);
                     const savedFallbackUrl = localStorage.getItem('trada_netflix_desktop_fallback_url');
@@ -5957,6 +6035,9 @@
                                 if (firestoreData.popupAdImageUrl !== undefined) {
                                     POPUP_AD_IMAGE_URL = firestoreData.popupAdImageUrl || 'popupqc.png';
                                 }
+                                if (firestoreData.welcomeAdEnabled !== undefined) {
+                                    WELCOME_AD_ENABLED = parseBooleanSetting(firestoreData.welcomeAdEnabled, true);
+                                }
                                 if (firestoreData.netflixDesktopFallbackEnabled !== undefined) {
                                     NETFLIX_DESKTOP_FALLBACK_ENABLED = parseBooleanSetting(firestoreData.netflixDesktopFallbackEnabled, true);
                                 }
@@ -5981,6 +6062,7 @@
                                 localStorage.setItem('trada_global_password', GLOBAL_ACCESS_PASSWORD);
                                 localStorage.setItem('trada_ad_banner_url', AD_BANNER_URL);
                                 localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+                                localStorage.setItem('trada_welcome_ad_enabled', WELCOME_AD_ENABLED ? '1' : '0');
                                 localStorage.setItem('trada_netflix_desktop_fallback_enabled', NETFLIX_DESKTOP_FALLBACK_ENABLED ? '1' : '0');
                                 localStorage.setItem('trada_netflix_desktop_fallback_url', NETFLIX_DESKTOP_FALLBACK_URL || '');
                                 localStorage.setItem('trada_account_section_desc', ACCOUNT_SECTION_DESC);
@@ -9786,6 +9868,7 @@
         // Save Popup Ad Image URL
         function savePopupAdImageUrl() {
             const urlInput = document.getElementById('popupAdImageUrlInput');
+            const welcomeAdEnabledInput = document.getElementById('welcomeAdEnabledInput');
             let url = urlInput.value.trim();
 
             // Nếu người dùng paste HTML tag, tự động extract URL
@@ -9797,26 +9880,29 @@
             }
 
             POPUP_AD_IMAGE_URL = url || 'popupqc.png';
+            WELCOME_AD_ENABLED = welcomeAdEnabledInput ? !!welcomeAdEnabledInput.checked : true;
             localStorage.setItem('trada_popup_ad_image_url', POPUP_AD_IMAGE_URL);
+            localStorage.setItem('trada_welcome_ad_enabled', WELCOME_AD_ENABLED ? '1' : '0');
 
             // Save to Firestore if available
             if (window.firebaseDb && window.firebaseDoc && window.firebaseUpdateDoc) {
                 try {
                     const dataRef = window.firebaseDoc(window.firebaseDb, 'app_data', 'main');
                     window.firebaseUpdateDoc(dataRef, {
-                        popupAdImageUrl: POPUP_AD_IMAGE_URL
+                        popupAdImageUrl: POPUP_AD_IMAGE_URL,
+                        welcomeAdEnabled: WELCOME_AD_ENABLED
                     }).then(() => {
-                        showAlert("Thành công", "Đã lưu link banner popup lên Firestore!\n\nTất cả người dùng sẽ thấy popup mới khi tải lại trang.", 'success');
+                        showAlert("Thành công", "Đã lưu cài đặt popup welcome lên Firestore!\n\nTất cả người dùng sẽ thấy thay đổi khi tải lại trang.", 'success');
                     }).catch((error) => {
-                        console.error("Error saving popup ad banner URL:", error);
-                        showAlert("Lỗi", "Không thể lưu link banner popup lên Firestore, đã lưu vào localStorage", 'warning');
+                        console.error("Error saving popup ad settings:", error);
+                        showAlert("Lỗi", "Không thể lưu cài đặt popup welcome lên Firestore, đã lưu vào localStorage", 'warning');
                     });
                 } catch (error) {
-                    console.error("Error saving popup ad banner URL:", error);
-                    showAlert("Lỗi", "Không thể lưu link banner popup lên Firestore, đã lưu vào localStorage", 'warning');
+                    console.error("Error saving popup ad settings:", error);
+                    showAlert("Lỗi", "Không thể lưu cài đặt popup welcome lên Firestore, đã lưu vào localStorage", 'warning');
                 }
             } else {
-                showAlert("Thành công", "Đã lưu link banner popup vào localStorage!", 'success');
+                showAlert("Thành công", "Đã lưu cài đặt popup welcome vào localStorage!", 'success');
             }
         }
 
@@ -9890,6 +9976,10 @@
             const popupAdImageUrlInput = document.getElementById('popupAdImageUrlInput');
             if (popupAdImageUrlInput) {
                 popupAdImageUrlInput.value = POPUP_AD_IMAGE_URL || '';
+            }
+            const welcomeAdEnabledInput = document.getElementById('welcomeAdEnabledInput');
+            if (welcomeAdEnabledInput) {
+                welcomeAdEnabledInput.checked = !!WELCOME_AD_ENABLED;
             }
 
             // Load section descriptions
