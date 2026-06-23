@@ -5067,6 +5067,8 @@
         const WELCOME_AD_LAST_SHOWN_KEY = 'trada_welcome_ad_last_shown_at';
         const WELCOME_AD_COOLDOWN_MS = 10 * 60 * 1000;
         const WELCOME_AD_SKIP_SECONDS = 4;
+        const GLOBAL_ACCESS_VERIFIED_UNTIL_KEY = 'trada_global_access_verified_until';
+        const GLOBAL_ACCESS_REMEMBER_MS = 3 * 60 * 1000;
         let NETFLIX_DESKTOP_FALLBACK_ENABLED = true; // Bật fallback link desktop khi API nftoken trả 503
         let NETFLIX_DESKTOP_FALLBACK_URL = ''; // Link fallback desktop do admin cấu hình
         let ACCOUNT_SECTION_DESC = 'Tài khoản premium các ứng dụng phổ biến'; // Mô tả section dịch vụ FREE
@@ -5097,6 +5099,25 @@
         function shouldShowWelcomeAd() {
             const lastShownAt = getWelcomeAdLastShownAt();
             return !lastShownAt || (Date.now() - lastShownAt) >= WELCOME_AD_COOLDOWN_MS;
+        }
+        function clearExpiredGlobalAccessVerification() {
+            localStorage.removeItem(GLOBAL_ACCESS_VERIFIED_UNTIL_KEY);
+        }
+        function setGlobalAccessVerifiedUntil() {
+            localStorage.setItem(GLOBAL_ACCESS_VERIFIED_UNTIL_KEY, String(Date.now() + GLOBAL_ACCESS_REMEMBER_MS));
+        }
+        function hasRecentGlobalAccessVerification() {
+            const rawValue = localStorage.getItem(GLOBAL_ACCESS_VERIFIED_UNTIL_KEY);
+            const verifiedUntil = rawValue ? Number(rawValue) : 0;
+            if (!Number.isFinite(verifiedUntil) || verifiedUntil <= 0) {
+                clearExpiredGlobalAccessVerification();
+                return false;
+            }
+            if (verifiedUntil <= Date.now()) {
+                clearExpiredGlobalAccessVerification();
+                return false;
+            }
+            return true;
         }
         let adBannerTimer = null; // Timer cho countdown banner
         let editingFolderIndex = -1;
@@ -6336,6 +6357,15 @@
             // Kiểm tra nếu có mã bảo mật chung và folder không được miễn mã
             const isPasswordBypassedForFolder = folder && folder.skipGlobalPassword === true;
             if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin() && !isPasswordBypassedForFolder) {
+                if (hasRecentGlobalAccessVerification()) {
+                    if (shouldOpenNetflixPackageSelector(index)) {
+                        pendingFolderIndex = -1;
+                        showNetflixPackageSelectorModal();
+                        return;
+                    }
+                    showDisclaimer(index);
+                    return;
+                }
                 openPasswordModal(index);
                 return;
             }
@@ -6499,6 +6529,7 @@
             if (hasPendingFolder || isPendingNetflixFreePackage || isPendingStudocuPrint) {
                 const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
                 if (val === correctPassword) {
+                    setGlobalAccessVerifiedUntil();
                     const unlockedFolderIndex = pendingFolderIndex;
                     const wasStudocuPrint = isPendingStudocuPrint;
                     passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
@@ -6535,6 +6566,7 @@
             if (hasPendingFolder || isPendingNetflixFreePackage || isPendingStudocuPrint) {
                 const correctPassword = GLOBAL_ACCESS_PASSWORD || '';
                 if (val === correctPassword) {
+                    setGlobalAccessVerifiedUntil();
                     const unlockedFolderIndex = pendingFolderIndex;
                     const wasStudocuPrint = isPendingStudocuPrint;
                     passwordModal.classList.add('hidden'); passwordModal.classList.remove('flex');
@@ -7488,6 +7520,10 @@
 
         function requestStudocuPrintAccess() {
             if (isAdmin() || !GLOBAL_ACCESS_PASSWORD || !GLOBAL_ACCESS_PASSWORD.trim()) {
+                showStudocuPrintGuideAndPrint();
+                return;
+            }
+            if (hasRecentGlobalAccessVerification()) {
                 showStudocuPrintGuideAndPrint();
                 return;
             }
@@ -9140,6 +9176,10 @@
                 return;
             }
             if (GLOBAL_ACCESS_PASSWORD && GLOBAL_ACCESS_PASSWORD.trim() !== '' && !isAdmin()) {
+                if (hasRecentGlobalAccessVerification()) {
+                    showNetflixPage();
+                    return;
+                }
                 pendingProtectedAction = 'netflix_free_package';
                 openPasswordModal(-1);
                 return;
