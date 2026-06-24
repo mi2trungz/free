@@ -276,9 +276,8 @@ function normalizeSheetRow(item = {}) {
     };
 }
 
-function isSheetRowEligible(mark = '') {
-    const text = String(mark || '').trim();
-    return !text;
+function isSheetRowEligible(_mark = '') {
+    return true;
 }
 
 function mapSheetFailReason(reason = '') {
@@ -365,18 +364,6 @@ function buildSheetScanDebug(rows = []) {
                     hasCookie: false,
                     mark: String(row.mark || '').trim(),
                     reason: 'empty_cookie'
-                });
-            }
-            return;
-        }
-        if (!isSheetRowEligible(row.mark)) {
-            stats.rejectedByMark += 1;
-            if (stats.debugSamples.length < 8) {
-                stats.debugSamples.push({
-                    rowNumber: row.rowNumber,
-                    hasCookie: true,
-                    mark: String(row.mark || '').trim(),
-                    reason: 'mark_not_empty'
                 });
             }
             return;

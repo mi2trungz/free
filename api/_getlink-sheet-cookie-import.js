@@ -166,9 +166,8 @@ function cloneSheetRow(item = {}) {
     return normalizeSheetRow(item) || null;
 }
 
-function isSheetRowEligible(mark = '') {
-    const text = String(mark || '').trim();
-    return !text;
+function isSheetRowEligible(_mark = '') {
+    return true;
 }
 
 function mapSheetFailReason(reason = '') {
@@ -309,7 +308,7 @@ function pushSheetDebugSample(debug = {}, row = {}, reason = '') {
 function buildEmptyQueueDebugMessage(state = {}) {
     const debug = normalizeSheetImportDebug(state.debug);
     const stoppedAtRow = Math.max(debug.lastScannedUntilRow, debug.scanStoppedAtRow, 0);
-    return `Da quet den row ${stoppedAtRow}. Visible ${debug.visibleRowsSeen}, eligible ${debug.eligibleRowsSeen}, reject mark ${debug.rejectedByMark}, empty cookie ${debug.rejectedByEmptyCookie}, duplicate ${debug.rejectedByDuplicate}.`;
+    return `Da quet den row ${stoppedAtRow}. Visible ${debug.visibleRowsSeen}, eligible ${debug.eligibleRowsSeen}, empty cookie ${debug.rejectedByEmptyCookie}, duplicate ${debug.rejectedByDuplicate}.`;
 }
 
 function buildEmptyVisibleBatchMessage(state = {}) {
@@ -485,11 +484,6 @@ async function runSheetImportChunk(stateInput = {}) {
                 if (!row.cookie) {
                     state.debug.rejectedByEmptyCookie += 1;
                     pushSheetDebugSample(state.debug, row, 'empty_cookie');
-                    return;
-                }
-                if (!isSheetRowEligible(row.mark)) {
-                    state.debug.rejectedByMark += 1;
-                    pushSheetDebugSample(state.debug, row, 'mark_not_empty');
                     return;
                 }
                 if (seenSet.has(row.cookie)) {
