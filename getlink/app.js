@@ -2319,11 +2319,11 @@ async function autoFixShareCookies() {
             throw new Error(getAutoFixFailureMessage());
         }
         const timingText = formatAutoFixTimings(data && data.timings);
-        setLookupState(`Sửa lỗi tự động thành công. Hệ thống đã cập nhật ${assignedCount} cookie hợp lệ cho link này.`, 'success');
+        setLookupState('Sửa lỗi tự động thành công. Hệ thống đã cập nhật 1 cookie chính hợp lệ cho link này.', 'success');
         openSupportModal({
             eyebrow: 'Sửa lỗi thành công',
             title: 'Sửa lỗi tự động thành công',
-            message: `Đã sửa lỗi thành công và cập nhật ${assignedCount} cookie hợp lệ.${timingText ? `\n${timingText}` : ''} Bấm Đóng để tải lại trang và tiếp tục sử dụng.`,
+            message: `Đã sửa lỗi thành công và cập nhật 1 cookie chính hợp lệ.${timingText ? `\n${timingText}` : ''} Bấm Đóng để tải lại trang và tiếp tục sử dụng.`,
             showBh247: false,
             closable: true,
             showAutoFix: false,
@@ -2477,11 +2477,11 @@ async function resumePendingAutoFixOperation() {
             throw new Error(getAutoFixFailureMessage());
         }
         const timingText = formatAutoFixTimings(snapshot && snapshot.timings);
-        setLookupState(`Sửa lỗi tự động thành công. Hệ thống đã cập nhật ${assignedCount} cookie hợp lệ cho link này.`, 'success');
+        setLookupState('Sửa lỗi tự động thành công. Hệ thống đã cập nhật 1 cookie chính hợp lệ cho link này.', 'success');
         openSupportModal({
             eyebrow: 'Sửa lỗi thành công',
             title: 'Sửa lỗi tự động thành công',
-            message: `Đã sửa lỗi thành công và cập nhật ${assignedCount} cookie hợp lệ.${timingText ? `\n${timingText}` : ''} Bấm Đóng để tải lại trang và tiếp tục sử dụng.`,
+            message: `Đã sửa lỗi thành công và cập nhật 1 cookie chính hợp lệ.${timingText ? `\n${timingText}` : ''} Bấm Đóng để tải lại trang và tiếp tục sử dụng.`,
             showBh247: false,
             closable: true,
             showAutoFix: false,

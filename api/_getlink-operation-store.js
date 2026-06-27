@@ -206,14 +206,10 @@ function normalizeOperationResultTimings(result = {}) {
 }
 
 function buildAutoFixCookies(assigned = []) {
-    const nextCookies = {
-        primary: '',
-        backup1: '',
-        backup2: ''
-    };
+    const nextCookies = {};
     (Array.isArray(assigned) ? assigned : []).forEach((item) => {
         const slot = String(item && item.slot ? item.slot : '').trim();
-        if (!slot || !(slot in nextCookies)) return;
+        if (slot !== 'primary') return;
         nextCookies[slot] = String(item && item.cookie ? item.cookie : '').trim();
     });
     return nextCookies;
@@ -321,7 +317,7 @@ async function createSheetImportOperation(slots = [], scope = '') {
 }
 
 async function createAutoFixOperation(shareId = '') {
-    const state = createSheetImportState(SHARE_COOKIE_SLOTS);
+    const state = createSheetImportState(['primary']);
     return createGetlinkOperation({
         type: 'auto_fix',
         shareId,
@@ -382,7 +378,7 @@ async function advanceGetlinkOperation(operationInput = {}) {
             nextState.timings.shareUpdateMs = Math.max(0, Number(nextState.timings.shareUpdateMs || 0) || 0) + (Date.now() - shareUpdateStartedAt);
             nextState.timings.totalMs = Math.max(0, Number(nextState.timings.totalMs || 0) || 0) + (Date.now() - shareUpdateStartedAt);
             nextState.phase = 'completed';
-            nextState.message = `Da cap nhat ${nextResult.assigned.length} cookie hop le cho link.`;
+            nextState.message = 'Da cap nhat 1 cookie hop le cho link.';
             nextResult = buildSheetImportResult(nextState);
         }
 
